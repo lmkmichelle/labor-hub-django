@@ -7,19 +7,22 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+RUN apt-get update && apt-get install -y netcat
+
 # install psycopg2 dependencies
 RUN pip install --upgrade pip
 
-COPY requirements.txt  /app/
-
-# run this command to install all dependencies
+COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Django project to the container
-COPY . /app/
+COPY ./entrypoint.sh .
+RUN sed -i 's/\r$//g' /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Expose the Django port
 EXPOSE 8000
-
+COPY . .
 # Run Django’s development server
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "nole.wsgi:application"]
+# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "nole.wsgi:application"]
+ENTRYPOINT ["/app/entrypoint.sh"]
