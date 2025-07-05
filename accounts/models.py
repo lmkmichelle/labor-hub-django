@@ -52,7 +52,11 @@ class CustomUser(AbstractUser):
 
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
     position = models.CharField(max_length=100)
     education = models.CharField(max_length=100)
     biography = models.TextField()
     research_interests = ArrayField(models.CharField(max_length=100))
+
+    def __str__(self):
+        return self.user.email
