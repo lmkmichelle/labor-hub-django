@@ -1,3 +1,29 @@
+:root {
+    --primary: #B31B1B;
+    --black: #222222;
+    --white: #ffffff;
+}
+
+@font-face {
+    font-family: "Replica-Bold", sans-serif;
+    src: url("../fonts/Replica-Bold.ttf") format("truetype");
+}
+@font-face {
+    font-family: "Replica-Light", sans-serif;
+    src: url("../fonts/replica-light.ttf") format("truetype");
+}
+
+body {
+    font-family: "Replica-Light", sans-serif !important;
+    color: var(--black) !important;
+    font-weight: 200;
+}
+
+.navbar a:focus,
+.navbar a:hover{
+    color: var(--black) !important;
+}
+
 .navbar a{
     font-family: "Replica-Bold", sans-serif !important;
     font-size: 16px !important;
@@ -10,15 +36,26 @@
   border-color: #ffffff;
 }
 
-body {
-    font-family: "Replica-Light", sans-serif !important;
-    font-weight: 200;
+.navbar-nav svg {
+    vertical-align: middle;
+    display: block;
 }
-@font-face {
-    font-family: "Replica-Bold", sans-serif;
-    src: url("../fonts/Replica-Bold.ttf") format("truetype");
+
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:visited,
+.btn-primary:focus {
+    color: var(--black) !important;
+    cursor: pointer;
 }
-@font-face {
-    font-family: "Replica-Light", sans-serif;
-    src: url("../fonts/replica-light.ttf") format("truetype");
+
+.btn-primary {
+    background: none !important;
+    border: none;
+    padding: 0 !important;
+    font-family: "Replica-Bold", sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    text-transform: uppercase !important;
+    cursor: pointer;
 }

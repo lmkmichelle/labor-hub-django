@@ -1,7 +1,6 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.template import loader
 
-def login(request):
-    template = loader.get_template('../templates/accounts/login.html')
-    return HttpResponse(template.render())
+@login_required
+def profile(request):
+    return render(request, 'accounts/profile.html')
