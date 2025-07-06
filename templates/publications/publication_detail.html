@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ publication.title }}{% endblock %}
+
+{% block content %}
+
+
+<h5>{{ publication.title }}</h5>
+<p>
+    <strong>Authors:</strong>
+    {% for author in publication.authors.all %}
+        {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+</p>
+<p><strong>Year:</strong> {{ publication.year }}</p>
+<p><strong>Abstract:</strong> {{ publication.abstract }}</p>
+<p><strong>Country:</strong> {{ publication.country }}</p>
+<p><strong>Keywords:</strong> {{ publication.keywords|join:", " }}</p>
+<p><strong>Sample Size:</strong> {{ publication.sample_size }}</p>
+<p><strong>Study URL:</strong> <a href="{{ publication.study_url }}" target="_blank">{{ publication.study_url }}</a></p>
+<p><strong>Job Market Paper:</strong> {{ publication.is_job_market|yesno:"Yes,No" }}</p>
+<a href="{% url 'publications' %}">← Back to publications</a>
+{% endblock %}

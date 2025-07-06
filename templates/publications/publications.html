@@ -5,8 +5,24 @@
 
 {% block content %}
 <p>
-    The IZA Discussion Paper Series (ISSN: 2365-9793) disseminates high-quality research by IZA network members to the scientific community and the interested public worldwide before they are later published in academic journals. Comprising more than 17,000 papers, IZA's publication flagship is the most influential working paper series in labor economics.
+    The IZA Discussion Paper Series (ISSN: 2365-9793) disseminates high-quality research by IZA network members to the
+    scientific community and the interested public worldwide before they are later published in academic journals.
+    Comprising more than 17,000 papers, IZA's publication flagship is the most influential working paper series in labor
+    economics.
 </p>
+<div class="list-group">
+    {% for publication in publications %}
+    <a href="{% url 'publication_detail' publication.id %}" class="list-group-item list-group-item-action" aria-current="true">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mt-2">{{ publication.title }}</h5>
+        </div>
+        <p class="mb-1">
+            {% for author in publication.authors.all %}
+                {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </a>
+    {% endfor %}
 
-<p>hi</p>
+</div>
 {% endblock %}

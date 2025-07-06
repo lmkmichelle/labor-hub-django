@@ -23,7 +23,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('', include('core.urls')),
-    path('', include('publications.urls')),
+    path('publications/', include('publications.urls')),
     path('', include('accounts.urls')),
     path('admin/', admin.site.urls),
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html', redirect_authenticated_user=True), name='login'),
