@@ -13,12 +13,108 @@
     src: url("../fonts/replica-light.ttf") format("truetype");
 }
 
-body {
-    font-family: "Replica-Light", sans-serif !important;
-    color: var(--black) !important;
-    font-weight: 200;
+.h2, h2{
+    font-family: "Replica-Light", sans-serif;
+    font-size: 1.0625rem;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--primary);
+    padding-bottom: 15px;
+    -webkit-font-smoothing: antialiased;
 }
 
+.h3, h3 {
+    font-size: 1rem;
+    font-family: "Replica-Bold", sans-serif;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--primary);
+}
+
+.list-title {
+    font-size: 1.1rem;
+    padding-top: 0.2rem;
+    font-family: "Replica-Bold", sans-serif;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--primary);
+}
+
+.list-description {
+    font-size: .9rem;
+    margin-bottom: 0.2rem;
+}
+
+body {
+    font-family: "Replica-Light", sans-serif;
+    color: var(--black);
+    font-weight: 200;
+}
+a {
+    margin-bottom: 0.5rem;
+}
+ul {
+    padding-inline-start: 0;
+}
+
+.list-group a div {
+    font-size: 1.075rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+.copy-expandable {
+    margin-bottom: 20px;
+}
+
+.small-headline {
+    font-size: .9rem;
+    padding-bottom: 0px;
+    color:gray;
+    font-weight: 600;
+}
+
+.box-list-headline {
+    font-size: .9rem;
+    padding-bottom: 0px;
+    color:gray;
+    font-weight: 600;
+    line-height: 2;
+}
+div.box-list {
+    margin : 0;
+    padding: 0;
+}
+.box-list ul li {
+    display: inline-block;
+    margin-right: 5px;
+}
+.box-list ul li a,
+.box-list ul li a:visited {
+    display: inline-block;
+    text-align: center;
+    padding: 2px 10px;
+    background-color: var(--primary);
+    line-height: 1.75;
+    border-radius: 3px;
+    font-size: .95rem;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.authors {
+    font-family: "Replica-Light", sans-serif;
+    color: var(--black);
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.publications-header {
+    margin-bottom: 10px;
+}
 .profile-details {
     margin-bottom: 1px;
 }
