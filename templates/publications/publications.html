@@ -7,6 +7,14 @@
 <p>
     Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
 </p>
+<form method="get" action="" class="mb-4">
+    <input
+        type="text"
+        name="q"
+        class="form-control"
+        placeholder="Search publications..."
+        value="{{ query|default:'' }}">
+</form>
 <div class="list-group">
     {% for publication in publications %}
     <a href="{% url 'publication_detail' publication.id %}" class="list-group-item list-group-item-action" aria-current="true">
