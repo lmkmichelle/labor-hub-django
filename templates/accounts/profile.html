@@ -4,20 +4,60 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex align-items-start gap-5">
-        <div>
-            <img src="{{ user.profile.avatar.url }}" alt="Profile picture"  width="150">
+    <div class="row">
+        <!-- Business Card -->
+        <div class="col-md-6 col-sm-12">
+            <div class="element-business-card">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <div class="element-image">
+                            <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="img-fluid rounded"
+                                 width="150">
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="contact-info">
+                            <h3 class="person-title">
+                                {{ user.first_name }} {{ user.last_name }}
+                            </h3>
+                            <h4>{{ user.profile.education }}</h4>
+                        </div>
+                        <div class="contact-details">
+                            <h4>{{ user.email }}</h4>
+                            {% if user.profile.website %}
+                            <h4>
+                                <a href="{{ user.profile.website }}" target="_blank">{{ user.profile.website }}</a>
+                            </h4>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="profile-details">
-            <div>{{ user.first_name }} {{ user.last_name }}</div>
-            <div>{{ user.profile.education }}</div>
-            <div> {{ user.date_joined|date:"F j, Y" }}</div>
+        <div class="col-md-6 col-sm-12">
+            <div class="element-business-card-details">
+                <h3 class="box-list-headline">Research Interests</h3>
+                <div class="box-list">
+                    <ul>
+                        {% for interest in user.profile.research_interests %}
+                        <li>
+                            <a href="#">{{ interest }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                </div>
+            </div>
         </div>
+
     </div>
     <div class="row mt-4">
         <div class="col">
-            <h5>Biography</h5>
+            <h3>Biography</h3>
             <p>{{ user.profile.biography }}</p>
+
+            <h2>NOLE Publications</h2>
+            {% include 'partials/_publications_list.html' %}
         </div>
     </div>
 </div>

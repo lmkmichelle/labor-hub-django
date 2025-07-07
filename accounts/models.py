@@ -55,6 +55,7 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
     position = models.CharField(max_length=100)
     education = models.CharField(max_length=100)
+    website = models.URLField(blank=True)
     biography = models.TextField()
     research_interests = ArrayField(models.CharField(max_length=100))
 

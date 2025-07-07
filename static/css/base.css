@@ -8,12 +8,13 @@
     font-family: "Replica-Bold", sans-serif;
     src: url("../fonts/Replica-Bold.ttf") format("truetype");
 }
+
 @font-face {
     font-family: "Replica-Light", sans-serif;
     src: url("../fonts/replica-light.ttf") format("truetype");
 }
 
-.h2, h2{
+.h2, h2 {
     font-family: "Replica-Light", sans-serif;
     font-size: 1.0625rem;
     font-weight: 400;
@@ -50,9 +51,11 @@ body {
     color: var(--black);
     font-weight: 200;
 }
+
 a {
     margin-bottom: 0.5rem;
 }
+
 ul {
     padding-inline-start: 0;
 }
@@ -63,6 +66,7 @@ ul {
     line-height: 1;
     cursor: pointer;
 }
+
 .copy-expandable {
     margin-bottom: 20px;
 }
@@ -70,25 +74,28 @@ ul {
 .small-headline {
     font-size: .9rem;
     padding-bottom: 0px;
-    color:gray;
+    color: gray;
     font-weight: 600;
 }
 
 .box-list-headline {
-    font-size: .9rem;
+    font-size: 1rem;
     padding-bottom: 0px;
-    color:gray;
-    font-weight: 600;
+    color: gray;
+    font-weight: 400;
     line-height: 2;
 }
+
 div.box-list {
-    margin : 0;
+    margin: 0;
     padding: 0;
 }
+
 .box-list ul li {
     display: inline-block;
     margin-right: 5px;
 }
+
 .box-list ul li a,
 .box-list ul li a:visited {
     display: inline-block;
@@ -115,15 +122,51 @@ div.box-list {
 .publications-header {
     margin-bottom: 10px;
 }
+
 .profile-details {
     margin-bottom: 1px;
 }
+
+.element-business-card {
+    background-color: var(--white); /* light gray */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.element-business-card .element-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter:grayscale(1);
+}
+
+.element-business-card h3 {
+    color: var(--primary);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    margin-bottom: 0rem;
+    padding-bottom: 5px;
+}
+
+.element-business-card h4 {
+    color: var(--black);
+    font-size: 1rem;
+    font-weight: 200;
+    line-height: 1.5;
+    margin-bottom: 0px;
+}
+
+.element-business-card-details {
+    padding: 8px 5px 17px 15px;
+}
+
 .navbar a:focus,
-.navbar a:hover{
+.navbar a:hover {
     color: var(--black) !important;
 }
 
-.navbar a{
+.navbar a {
     font-family: "Replica-Bold", sans-serif !important;
     font-size: 16px !important;
     font-weight: 400 !important;
@@ -131,8 +174,8 @@ div.box-list {
 }
 
 .navbar.navbar-default {
-  background-color: #ffffff;
-  border-color: #ffffff;
+    background-color: #ffffff;
+    border-color: #ffffff;
 }
 
 .navbar-nav svg {
@@ -158,3 +201,5 @@ div.box-list {
     text-transform: uppercase !important;
     cursor: pointer;
 }
+
+

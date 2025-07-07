@@ -1,0 +1,14 @@
+<div class="list-group">
+    {% for publication in publications %}
+    <a href="{% url 'publication_detail' publication.id %}" class="list-group-item list-group-item-action" aria-current="true">
+        <div class="d-flex w-100 justify-content-between">
+            <h3 class="list-title">{{ publication.title }}</h3>
+        </div>
+        <p class="list-description">
+            {% for author in publication.authors.all %}
+                {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </a>
+    {% endfor %}
+</div>
