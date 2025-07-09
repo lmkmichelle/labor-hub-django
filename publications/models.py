@@ -19,8 +19,7 @@ class Author(models.Model):
     class Meta:
         unique_together = [('user', 'name')]
 
-class Publication(models.Model):
-    MONTH_CHOICES = [
+MONTH_CHOICES = [
         ('January', 'January'),
         ('February', 'February'),
         ('March', 'March'),
@@ -35,6 +34,7 @@ class Publication(models.Model):
         ('December', 'December'),
     ]
 
+class Publication(models.Model):
     title = models.CharField(max_length=200)
     authors = models.ManyToManyField(Author, related_name='publications')
     month = models.CharField(max_length=20, choices=MONTH_CHOICES)
@@ -42,9 +42,10 @@ class Publication(models.Model):
     abstract = models.TextField()
     country = models.CharField(max_length=200)
     keywords = ArrayField(models.CharField(max_length=200))
-    sample_size = models.IntegerField()
     study_url = models.URLField()
     is_job_market = models.BooleanField()
+    pdf = models.FileField(upload_to='publications/pdf', null=True, blank=True)
+    approved = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

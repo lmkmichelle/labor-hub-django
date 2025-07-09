@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import Q
+
+from publications.forms import PublicationForm
 from publications.models import Publication
 
 def publications(request):
@@ -23,3 +25,14 @@ def publications(request):
 def publication_detail(request, pk):
     publication = Publication.objects.get(pk=pk)
     return render(request, 'publications/publication_detail.html', {'publication': publication})
+
+def upload_publication(request):
+    if request.method == 'POST':
+        form = PublicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('/publications/')
+
+    else:
+        form = PublicationForm()
+    return render(request, 'publications/publication_form.html', {'form': form})

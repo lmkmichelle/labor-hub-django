@@ -23,8 +23,6 @@
     <div class="copy-expandable">
         {{ publication.country }}
     </div>
-    <h3 class="small-headline">Sample Size</h3>
-    <p>{{ publication.sample_size }}</p>
     <h3 class="small-headline">Link to study</h3>
     <a href="{{ publication.study_url }}">{{ publication.study_url }}</a>
     <div>
@@ -44,12 +42,5 @@
             </ul>
         </div>
     </div>
-
 </div>
-<!--<p><strong>Country:</strong> {{ publication.country }}</p>-->
-<!--<p><strong>Keywords:</strong> {{ publication.keywords|join:", " }}</p>-->
-<!--<p><strong>Sample Size:</strong> {{ publication.sample_size }}</p>-->
-<!--<p><strong>Study URL:</strong> <a href="{{ publication.study_url }}" target="_blank">{{ publication.study_url }}</a></p>-->
-<!--<p><strong>Job Market Paper:</strong> {{ publication.is_job_market|yesno:"Yes,No" }}</p>-->
-<!--<a href="{% url 'publications' %}">← Back to publications</a>-->
 {% endblock %}

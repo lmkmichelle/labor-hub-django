@@ -3,4 +3,17 @@ from .models import Publication
 import datetime
 
 class PublicationForm(forms.ModelForm):
-    month = forms.ChoiceField(choices=[('January', 'January'),])
+    class Meta:
+        model = Publication
+        fields = [
+            'title',
+            'authors',
+            'month',
+            'year',
+            'abstract',
+            'country',
+            'keywords',
+            'study_url',
+            'is_job_market',
+            'pdf'
+        ]

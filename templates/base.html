@@ -22,7 +22,7 @@
     <nav class="navbar navbar-default navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <img src="{% static 'images/logo.tif' %}" alt="logo" width="150">
+                <img src="{% static 'images/logo.png' %}" alt="logo" width=200px>
             </a>
             <button class="navbar-toggler"
                     type="button"
@@ -78,8 +78,11 @@
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item justify-content-end">
-                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    <li class="nav-item px-2 justify-content-end">
+                        <a class="nav-link" href="{% url 'login' %}">Log in</a>
+                    </li>
+                    <li class="nav-item px-2 justify-content-end">
+                        <a class="nav-link" href="{% url 'signup' %}">Sign up</a>
                     </li>
                     {% endif %}
                 </ul>
