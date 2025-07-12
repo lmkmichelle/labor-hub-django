@@ -7,7 +7,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y netcat
+RUN apt-get update && apt-get install -y netcat build-essential libjpeg-dev zlib1g-dev python3-tk
 
 # install psycopg2 dependencies
 RUN pip install --upgrade pip

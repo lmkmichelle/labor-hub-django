@@ -1,7 +1,10 @@
 import json
+from io import BytesIO
+from PIL import Image
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
@@ -61,8 +64,11 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             user_form.save()
             profile = profile_form.save(commit=False)
 
+            if 'avatar' in request.FILES:
+                profile.avatar = self._crop(request.FILES['avatar'])
             raw_interests = self.request.POST.get('research_interests_input', '[]')
             profile.research_interests = self._handle_research_interests(raw_interests)
+
 
             profile.save()
             messages.success(request, "Profile updated successfully")
@@ -82,33 +88,40 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
         return keywords
 
+    def _crop(self, image_file, output_size=(218, 300)):
+        with Image.open(image_file) as img:
+            img = img.convert("RGB")
 
-# @login_required
-# def profile(request):
-#     user = request.user
-#     authored_publications = Publication.objects.filter(
-#         authors__user=user
-#     ).distinct().prefetch_related('authors__user')
-#
-#     if request.method == "POST":
-#         user_form = UpdateUserForm(request.POST, instance=request.user)
-#         profile_form = UpdateProfileForm(request.POST, request.FILES, instance=request.user.profile)
-#
-#         if user_form.is_valid() and profile_form.is_valid():
-#             user_form.save()
-#             profile_form.save()
-#             messages.success(request, "Profile updated successfully.")
-#             return redirect("profile")
-#     else:
-#         user_form = UpdateUserForm(instance=request.user)
-#         profile_form = UpdateProfileForm(instance=request.user.profile)
-#
-#     return render(request, 'accounts/profile.html', {
-#         'user_form': user_form,
-#         'profile_form': profile_form,
-#         'publications': authored_publications
-#     })
+            target_ratio = output_size[0] / output_size[1]
+            img_ratio = img.width / img.height
 
+            if img_ratio > target_ratio:
+                new_height = output_size[1]
+                new_width = int(new_height * img_ratio)
+            else:
+                new_width = output_size[0]
+                new_height = int(new_width / img_ratio)
+
+            img = img.resize((new_width, new_height), Image.LANCZOS)
+
+            left = (new_width - output_size[0]) // 2
+            top = (new_height - output_size[1]) // 2
+            right = left + output_size[0]
+            bottom = top + output_size[1]
+            img = img.crop((left, top, right, bottom))
+
+            buffer = BytesIO()
+            img.save(buffer, format="JPEG")
+            buffer.seek(0)
+
+            return InMemoryUploadedFile(
+                buffer,
+                field_name='avatar',
+                name='avatar.jpg',
+                content_type='image/jpeg',
+                size=buffer.tell(),
+                charset=None
+            )
 
 @require_GET
 def search_accounts(request):
