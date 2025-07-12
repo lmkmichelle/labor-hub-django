@@ -1,8 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Submit
 from django import forms
-
-import publications
 from .models import Publication
 
 

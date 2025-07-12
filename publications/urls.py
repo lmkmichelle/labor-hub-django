@@ -1,8 +1,9 @@
 from django.urls import path
 from . import views
+from .views import PublicationListView, PublicationCreateView, PublicationDetailView
 
 urlpatterns = [
-    path('', views.publications, name='publications'),
-    path('<int:pk>/', views.publication_detail, name='publication_detail'),
-    path('upload/', views.upload_publication, name='upload_publication'),
+    path('', PublicationListView.as_view(), name='publications'),
+    path('<int:pk>/', PublicationDetailView.as_view(), name='publication_detail'),
+    path('upload/', PublicationCreateView.as_view(), name='upload_publication'),
 ]
