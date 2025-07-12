@@ -171,6 +171,12 @@ div.box-list {
     padding: 8px 5px 17px 15px;
 }
 
+.edit-link a {
+    color: var(--primary);
+    font-size: 16px;
+    font-weight: 400;
+}
+
 .navbar a:focus,
 .navbar a:hover {
     color: var(--black) !important;

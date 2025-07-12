@@ -12,7 +12,6 @@
 <h2 class="title">Upload paper</h2>
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-<!--    {{ form|crispy }}-->
     {% crispy form %}
     {% if form.errors %}
       <div class="alert alert-danger">
