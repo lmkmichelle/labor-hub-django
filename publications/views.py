@@ -1,5 +1,6 @@
 import json
 
+from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
 from django.shortcuts import render, redirect
@@ -15,7 +16,7 @@ class PublicationListView(ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('q')
-        queryset = Publication.objects.prefetch_related('authors__user')
+        queryset = Publication.objects.prefetch_related('authors__user').filter(approved=True)
 
         if query:
             queryset = queryset.filter(
@@ -37,6 +38,19 @@ class PublicationDetailView(DetailView):
     model = Publication
     template_name = 'publications/publication_detail.html'
     context_object_name = 'publication'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+
+        if obj.approved:
+            return obj
+
+        authors_users = [author.user for author in obj.authors.all() if author.user]
+
+        if self.request.user.is_authenticated and self.request.user in authors_users:
+            return obj
+
+        raise Http404("This publication is not available.")
 
 class PublicationCreateView(CreateView):
     model = Publication
