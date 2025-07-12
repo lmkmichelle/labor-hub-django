@@ -31,7 +31,7 @@ def publication_detail(request, pk):
     return render(request, 'publications/publication_detail.html', {'publication': publication})
 
 
-def handle_authors_input(raw_input):
+def authors_input(raw_input):
     authors = []
     for entry in json.loads(raw_input):
         name = entry['value']
@@ -44,20 +44,34 @@ def handle_authors_input(raw_input):
 
     return authors
 
+def keywords_input(raw_input):
+    keywords = []
+    for entry in json.loads(raw_input):
+        keyword = entry['value']
+        keywords.append(keyword)
+
+    return keywords
+
 
 def upload_publication(request):
     if request.method == 'POST':
         form = PublicationForm(request.POST, request.FILES)
         if form.is_valid():
             publication = form.save(commit=False)
+
+            raw_keywords = request.POST.get('keywords_input', '[]')
+            keywords = keywords_input(raw_keywords)
+            publication.keywords = keywords
+
             publication.save()
 
             raw_authors = request.POST.get('authors_input', '[]')
-            authors = handle_authors_input(raw_authors)
+            authors = authors_input(raw_authors)
             publication.authors.set(authors)
 
-            return redirect('/publications/')
+            publication.save()
 
+            return redirect('/publications/')
     else:
         form = PublicationForm()
     return render(request, 'publications/publication_form.html', {'form': form})

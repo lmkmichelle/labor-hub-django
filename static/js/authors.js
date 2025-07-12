@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
       enabled: 1,
       maxItems: 10,
       position: 'auto',
-      classname: 'users-list'
     }
   });
 

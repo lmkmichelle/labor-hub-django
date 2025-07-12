@@ -10,12 +10,18 @@
 <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
 
 <h2 class="title">Upload paper</h2>
-<form method="POST" class="post-form">
+<form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
 <!--    {{ form|crispy }}-->
     {% crispy form %}
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        {{ form.errors }}
+      </div>
+    {% endif %}
 </form>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" />
 <script src="{% static 'js/authors.js' %}"></script>
+<script src="{% static 'js/keywords.js' %}"></script>
 {% endblock %}

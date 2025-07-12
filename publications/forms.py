@@ -9,16 +9,16 @@ from .models import Publication
 class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
-        fields = ['title','month','year','abstract','country','keywords','study_url','is_job_market','pdf']
+        fields = ['title','month','year','abstract','country','study_url','is_job_market','pdf']
 
     authors_input = forms.CharField(
-        required=False,
+        required=True,
         label='Authors',
         widget=forms.TextInput(attrs={'id': 'authors-input'}),
     )
 
     keywords_input = forms.CharField(
-        required=False,
+        required=True,
         label='Keywords',
         widget=forms.TextInput(attrs={'id': 'keywords-input'}),
     )
@@ -32,7 +32,7 @@ class PublicationForm(forms.ModelForm):
             'year',
             'abstract',
             'country',
-            'keywords',
+            'keywords_input',
             'study_url',
             'is_job_market',
             'pdf'
