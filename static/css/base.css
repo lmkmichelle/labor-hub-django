@@ -14,22 +14,27 @@
     src: url("../fonts/replica-light.ttf") format("truetype");
 }
 
-.h2, h2 {
-    font-family: "Replica-Light", sans-serif;
-    font-size: 1.0625rem;
-    font-weight: 400;
-    line-height: 1.2;
-    color: var(--primary);
-    padding-bottom: 15px;
-    -webkit-font-smoothing: antialiased;
-}
-
 .h3, h3 {
     font-size: 1rem;
     font-family: "Replica-Bold", sans-serif;
     font-weight: 400;
     line-height: 1.2;
     color: var(--primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+h3.title {
+    padding-bottom: 15px;
+}
+
+h2.title {
+    font-size: 1.5rem;
+    font-family: "Replica-Bold", sans-serif;
+    font-weight: 400;
+    padding-bottom: 15px;
+    line-height: 1.2;
+    color: var(--primary);
+    -webkit-font-smoothing: antialiased;
 }
 
 .list-title {
@@ -192,13 +197,13 @@ div.box-list {
 }
 
 .btn-primary {
-    background: none !important;
+    background-color: var(--primary);
     border: none;
-    padding: 0 !important;
-    font-family: "Replica-Bold", sans-serif !important;
-    font-size: 16px !important;
-    font-weight: 400 !important;
-    text-transform: uppercase !important;
+    padding: 0.70rem 0.80rem .6rem .8rem;
+    border-radius: 0.5rem;
+    font-size: 16px;
+    font-weight: 400;
+    text-transform: uppercase;
     cursor: pointer;
 }
 

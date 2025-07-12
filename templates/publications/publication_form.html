@@ -3,47 +3,19 @@
 {% block title %}Upload Paper{% endblock %}
 
 {% block content %}
-<h1>Upload paper</h1>
-<form method="POST">
+{% load crispy_forms_tags %}
+{% load static %}
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+
+<h2 class="title">Upload paper</h2>
+<form method="POST" class="post-form">
     {% csrf_token %}
-    {{ form.title.label_tag }} {{ form.title }}
-    {{ form.authors_input.label_tag }} {{ form.authors_input }}
-    {{ form.month.label_tag }} {{ form.month }}
-    {{ form.year.label_tag }} {{ form.year }}
-    {{ form.abstract.label_tag }} {{ form.abstract }}
-    {{ form.country.label_tag }} {{ form.country }}
-    {{ form.keywords.label_tag }} {{ form.keywords }}
-    {{ form.study_url.label_tag }} {{ form.study_url }}
-    {{ form.is_job_market.label_tag }} {{ form.is_job_market }}
-    {{ form.pdf.label_tag }} {{ form.pdf }}
-    <button type="submit">Upload paper</button>
+<!--    {{ form|crispy }}-->
+    {% crispy form %}
 </form>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" />
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const input = document.querySelector("#authors-input");
-        const tagify = new Tagify(input, {
-            whitelist: [],
-            enforceWhitelist: false,
-            dropdown: {
-                enabled: 1,
-                maxItems: 10,
-                position: 'auto',
-                classname: 'users-list'
-            }
-        });
-
-        tagify.on('input', function (e) {
-            const value = e.detail.value;
-            fetch(`/api/accounts/search/?q=${encodeURIComponent(value)}`)
-                .then(res => res.json())
-                .then(data => {
-                    tagify.settings.whitelist = data;
-                    tagify.dropdown.show.call(tagify, value);
-                });
-        });
-    });
-</script>
+<script src="{% static 'js/authors.js' %}"></script>
 {% endblock %}

@@ -7,7 +7,7 @@
 
 <div class="row publications-header">
     <p style="margin-bottom: 0">{{ publication.formatted_date }}</p>
-    <h2>{{ publication.title }}</h2>
+    <h3 class="title">{{ publication.title }}</h3>
     <div class="authors">
         {% for author in publication.authors.all %}
         {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %}, {% endif %}
