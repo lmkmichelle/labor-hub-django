@@ -1,9 +1,53 @@
 import json
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML
 from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from .constants import COUNTRY_CHOICES
 from .models import Profile, CustomUser
 
+class CreateCustomUserForm(UserCreationForm):
+    country_code = forms.ChoiceField(choices=COUNTRY_CHOICES, required=True, label="Country")
+
+    class Meta:
+        model = CustomUser
+        fields = ("email", "first_name", "last_name", "country_code", "password1", "password2")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            'email',
+            'first_name',
+            'last_name',
+            'country_code',
+            'password1',
+            'password2',
+            ButtonHolder(
+                Submit('submit', "Sign Up", css_class='btn btn-primary me-3'),
+                HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
+            )
+        )
+
+class CustomLoginForm(AuthenticationForm):
+    class Meta:
+        model = CustomUser
+        fields = ("username", "password")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            'username',
+            'password',
+            ButtonHolder(
+                Submit('submit', "Log in", css_class='btn btn-primary me-3'),
+                HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
+            )
+        )
 
 class UpdateUserForm(forms.ModelForm):
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))

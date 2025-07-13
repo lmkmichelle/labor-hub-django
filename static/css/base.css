@@ -209,10 +209,12 @@ div.box-list {
     padding-top: 0.1rem
 }
 
-.navbar.btn-primary:hover,
-.navbar.btn-primary:active,
-.navbar.btn-primary:visited,
-.navbar.btn-primary:focus {
+.navbar .btn-primary:hover,
+.navbar .btn-primary:active,
+.navbar .btn-primary:visited,
+.navbar .btn-primary:focus {
+    background-color: transparent;
+    border: none;
     color: var(--black) !important;
     cursor: pointer;
 }
@@ -276,4 +278,14 @@ div.box-list {
     width: 218px;
     height: 300px;
     border-radius: 0.5rem;
+}
+
+svg path:hover {
+    stroke: black;
+    stroke-width: 1.5;
+    cursor: pointer;
+}
+
+.filled {
+    fill: #4CAF50 !important;
 }

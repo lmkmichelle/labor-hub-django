@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
+from .constants import COUNTRY_CHOICES
 
 class CustomUserManager(BaseUserManager):
 
@@ -55,7 +56,12 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
     position = models.CharField(max_length=100)
     education = models.CharField(max_length=100)
-    country = models.CharField(max_length=200, default="United States")
+    country_code = models.CharField(
+        max_length=2,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        null=True
+    )
     website = models.URLField(blank=True)
     biography = models.TextField()
     research_interests = ArrayField(models.CharField(max_length=100))

@@ -4,6 +4,7 @@ from PIL import Image
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
@@ -13,15 +14,21 @@ from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, UpdateView
 
 from publications.models import Publication
-from .forms import UpdateProfileForm, UpdateUserForm
+from .forms import UpdateProfileForm, UpdateUserForm, CreateCustomUserForm, CustomLoginForm
 from .models import CustomUser, Profile
 
 
 class SignUpView(CreateView):
-    form_class = UserCreationForm
+    model = CustomUser
+    form_class = CreateCustomUserForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
+class CustomLoginView(LoginView):
+    model = CustomUser
+    form_class = CustomLoginForm
+    success_url = reverse_lazy("/")
+    template_name = "registration/login.html"
 
 class ProfileView(View):
     template_name = "accounts/profile.html"
@@ -139,3 +146,20 @@ def search_accounts(request):
         {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
         for u in users
     ], safe=False)
+
+@require_GET
+def country_users(request):
+    users = CustomUser.objects.exclude(country__isnull=True).exclude(country='')
+    country_dict = {}
+    for user in users:
+        code = user.country_code.upper()
+        if code not in country_dict:
+            country_dict[code] = []
+
+        country_dict[code].append({
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        })
+
+    return JsonResponse(country_dict)
