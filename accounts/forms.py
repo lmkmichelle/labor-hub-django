@@ -7,9 +7,11 @@ from .models import Profile, CustomUser
 
 class UpdateUserForm(forms.ModelForm):
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+
     class Meta:
         model = CustomUser
         fields = ['email']
+
 
 class UpdateProfileForm(forms.ModelForm):
     class Meta:
@@ -50,6 +52,3 @@ class UpdateProfileForm(forms.ModelForm):
             'biography',
             'research_interests_input'
         )
-
-        self.helper.add_input(Submit('submit', 'Submit'))
-

@@ -5,17 +5,15 @@
 {% block content %}
 <div class="container">
     <div class="row">
-        <!-- Business Card -->
         <div class="col-md-6 col-sm-12">
             <div class="element-business-card">
                 <div class="row">
-                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                    <div class="col-md-4 col-sm-6 text-center">
                         <div class="element-image">
-                            <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="img-fluid rounded"
-                                 width="150">
+                            <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="img-fluid rounded" width="150">
                         </div>
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-8 col-sm-6">
                         <div class="contact-info pb-2">
                             <h3 class="person-title">
                                 {{ user.first_name }} {{ user.last_name }}
@@ -50,7 +48,7 @@
                 </div>
             </div>
         </div>
-        <div class="{% if request.user == user %}col-md-4{% else %}col-md-6{% endif %} col-sm-12">
+        <div class="{% if request.user == user %}col-md-4{% else %}col-md-6{% endif %} col-sm-6">
             <div class="element-business-card-details">
                 <h3 class="box-list-headline">Research Interests</h3>
                 <div class="box-list">
@@ -66,7 +64,7 @@
             </div>
         </div>
         {% if request.user == user %}
-        <div class="col-md-2">
+        <div class="col-md-2 col-sm-4">
             <div class="element-business-card-details">
                 <a href="{% url 'edit_profile' %}" class="nav-link"
                    style="color: var(--primary); text-decoration-line: underline">Edit Profile</a>

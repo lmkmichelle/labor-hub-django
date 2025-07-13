@@ -1,7 +1,6 @@
 import json
 from .models import Author
 
-
 def handle_authors(raw_input):
     authors = []
     for entry in json.loads(raw_input):
@@ -21,7 +20,6 @@ def handle_keywords(raw_input):
         keyword = entry['value']
         keywords.append(keyword)
     return keywords
-
 
 def process_publication_form(request, form):
     publication = form.save(commit=False)

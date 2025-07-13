@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
@@ -9,6 +10,7 @@ from .utils import process_publication_form
 
 from publications.forms import PublicationForm
 from publications.models import Publication, Author
+
 
 class PublicationListView(ListView):
     model = Publication
@@ -21,11 +23,11 @@ class PublicationListView(ListView):
 
         if query:
             queryset = queryset.filter(
-            Q(title__icontains=query) |
-            Q(abstract__icontains=query) |
-            Q(country__icontains=query) |
-            Q(keywords__icontains=query) |
-            Q(authors__name__icontains=query)
+                Q(title__icontains=query) |
+                Q(abstract__icontains=query) |
+                Q(country__icontains=query) |
+                Q(keywords__icontains=query) |
+                Q(authors__name__icontains=query)
             ).distinct()
 
         return queryset
@@ -34,6 +36,7 @@ class PublicationListView(ListView):
         context = super().get_context_data(**kwargs)
         context['query'] = self.request.GET.get('q', '')
         return context
+
 
 class PublicationDetailView(DetailView):
     model = Publication
@@ -53,14 +56,16 @@ class PublicationDetailView(DetailView):
 
         raise Http404("This publication is not available.")
 
+
 class PublicationCreateView(CreateView):
     model = Publication
     form_class = PublicationForm
     template_name = 'publications/publication_form.html'
 
     def form_valid(self, form):
-        publication = process_publication_form(self.request, form)
+        process_publication_form(self.request, form)
         return redirect(reverse_lazy('publications'))
+
 
 class PublicationUpdateView(UpdateView):
     model = Publication
@@ -68,7 +73,17 @@ class PublicationUpdateView(UpdateView):
     template_name = 'publications/publication_form.html'
 
     def form_valid(self, form):
-        publication = process_publication_form(self.request, form)
+        process_publication_form(self.request, form)
         return redirect(reverse_lazy('publications'))
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
 
+        publication_form = PublicationForm(request.POST, request.FILES, instance=self.object)
+
+        if publication_form.is_valid():
+            process_publication_form(self.request, publication_form)
+            messages.success(request, "Paper updated successfully.")
+            return redirect("publications")
+
+        return self.render_to_response(self.get_context_data(form=publication_form))
