@@ -1,5 +1,4 @@
 import json
-
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML, Row, Column
 from django import forms
