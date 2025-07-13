@@ -9,8 +9,63 @@
         <div id="map-wrap">
             {% include 'partials/world.svg' %}
         </div>
+        <div class="modal fade" id="countryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Users in <span id="country-name"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="user-list" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const countries = document.querySelectorAll("path.land");
+
+        countries.forEach(country => {
+            country.addEventListener("click", async () => {
+                // Remove .selected from all, add to clicked
+                countries.forEach(c => c.classList.remove("selected"));
+                country.classList.add("selected");
+
+                const countryCode = country.id;
+                const countryName = country.getAttribute("title") || countryCode;
+                document.getElementById("country-name").textContent = countryName;
+
+                try {
+                    const response = await fetch(`/api/country-users/${countryCode}`);
+                    const data = await response.json();
+
+                    const userList = document.getElementById("user-list");
+                    userList.innerHTML = ""; // clear previous
+
+                    if (data.length === 0) {
+                        userList.innerHTML = "<li class='list-group-item'>No users found.</li>";
+                    } else {
+                        data.forEach(user => {
+                            const li = document.createElement("li");
+                            li.classList.add("list-group-item");
+                            li.textContent = `${user.first_name} ${user.last_name} (${user.email})`;
+                            userList.appendChild(li);
+                        });
+                    }
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById("countryModal"));
+                    modal.show();
+                } catch (err) {
+                    console.error("Failed to load users:", err);
+                }
+            });
+        });
+    });
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {

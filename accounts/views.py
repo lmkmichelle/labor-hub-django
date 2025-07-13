@@ -24,11 +24,13 @@ class SignUpView(CreateView):
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
+
 class CustomLoginView(LoginView):
     model = CustomUser
     form_class = CustomLoginForm
     success_url = reverse_lazy("/")
     template_name = "registration/login.html"
+
 
 class ProfileView(View):
     template_name = "accounts/profile.html"
@@ -84,7 +86,6 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             raw_interests = self.request.POST.get('research_interests_input', '[]')
             profile.research_interests = self._handle_research_interests(raw_interests)
 
-
             profile.save()
             messages.success(request, "Profile updated successfully")
             return redirect("profile")
@@ -138,6 +139,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
                 charset=None
             )
 
+
 @require_GET
 def search_accounts(request):
     query = request.GET.get('q', '')
@@ -147,22 +149,21 @@ def search_accounts(request):
         for u in users
     ], safe=False)
 
+
 @require_GET
-def country_users(request):
+def country_users(request, code):
+    code = code.upper()
     users = CustomUser.objects.select_related("profile").filter(
-        profile__country_code__isnull=False
-    ).exclude(profile__country_code='')
+        profile__country_code__iexact=code
+    )
 
-    country_dict = {}
-    for user in users:
-        code = user.profile.country_code.upper()
-        if code not in country_dict:
-            country_dict[code] = []
-
-        country_dict[code].append({
+    user_list = [
+        {
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name
-        })
+        }
+        for user in users
+    ]
 
-    return JsonResponse(country_dict)
+    return JsonResponse(user_list, safe=False)

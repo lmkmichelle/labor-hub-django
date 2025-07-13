@@ -11,5 +11,5 @@ urlpatterns = [
     path('accounts/login/', CustomLoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('api/accounts/search/', views.search_accounts, name='search_accounts'),
-    path('api/country-users/', views.country_users, name='country_users'),
+    path('api/country-users/<str:code>', views.country_users, name='country_users'),
 ]
