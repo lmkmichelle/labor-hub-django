@@ -280,12 +280,39 @@ div.box-list {
     border-radius: 0.5rem;
 }
 
-svg path:hover {
-    stroke: black;
-    stroke-width: 1.5;
+.filled {
+    fill: #4CAF50 !important;
+}
+
+#map-wrap {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 65%;
+    overflow: hidden;
+}
+
+#map-wrap .land {
+    fill: #E4E4E4;
+    stroke: #CCC;
+    transition: 250ms;
+    stroke-width: 1px;
+}
+
+#map-wrap .land:hover {
+    fill: var(--primary);
+    transition: 250ms;
     cursor: pointer;
 }
 
-.filled {
-    fill: #4CAF50 !important;
+#map-wrap .land.selected {
+    fill: var(--primary-hover);
+}
+
+.bound-layout {
+    position: relative;
+    margin: 0 auto;
+    width: 94%;
+    max-width: 1000px;
+    height: 100%;
 }

@@ -2,47 +2,25 @@
 {% load static %}
 
 {% block content %}
-<h2 class="text-center">Users by Country</h2>
-<div id="map-container" class="text-center">
-    {% include 'partials/world.svg' %}
-</div>
-<div class="modal fade" id="countryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Users in <span id="country-name"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <ul id="user-list" class="list-group"></ul>
-            </div>
+
+<div class="container">
+    <h2 class="title">Users by Country</h2>
+    <div class="grid bound-layout layout-one-column">
+        <div id="map-wrap">
+            {% include 'partials/world.svg' %}
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-        const response = await fetch("{% url 'country_users' %}");
-        const data = await response.json();
-
-        for (const [code, users] of Object.entries(data)) {
-            const el = document.getElementById(code);
-            if (el) {
-                el.classList.add("filled");
-                el.addEventListener("click", () => {
-                    document.getElementById("country-name").textContent = code;
-                    const list = document.getElementById("user-list");
-                    list.innerHTML = "";
-                    users.forEach(user => {
-                        const li = document.createElement("li");
-                        li.className = "list-group-item";
-                        li.textContent = `${user.first_name} ${user.last_name} (${user.username})`;
-                        list.appendChild(li);
-                    });
-                    new bootstrap.Modal(document.getElementById("countryModal")).show();
-                });
-            }
-        }
+    document.addEventListener("DOMContentLoaded", () => {
+        const svgPaths = document.querySelectorAll("#map-wrap .land");
+        svgPaths.forEach(path => {
+            path.addEventListener("click", () => {
+                svgPaths.forEach(p => p.classList.remove("selected"));
+                path.classList.add("selected");
+            });
+        });
     });
 </script>
 {% endblock %}

@@ -149,10 +149,13 @@ def search_accounts(request):
 
 @require_GET
 def country_users(request):
-    users = CustomUser.objects.exclude(country__isnull=True).exclude(country='')
+    users = CustomUser.objects.select_related("profile").filter(
+        profile__country_code__isnull=False
+    ).exclude(profile__country_code='')
+
     country_dict = {}
     for user in users:
-        code = user.country_code.upper()
+        code = user.profile.country_code.upper()
         if code not in country_dict:
             country_dict[code] = []
 
