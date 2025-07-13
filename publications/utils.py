@@ -1,4 +1,6 @@
 import json
+
+from accounts.models import CustomUser
 from .models import Author
 
 def handle_authors(raw_input):
@@ -7,9 +9,38 @@ def handle_authors(raw_input):
         name = entry['value']
         user_id = entry.get('id')
         if user_id:
-            author, _ = Author.objects.get_or_create(user_id=user_id, name="")
+            try:
+                user = CustomUser.objects.get(id=user_id)
+                author, _ = Author.objects.get_or_create(
+                    user=user,
+                    defaults={ 'name': name or user.get_full_name() }
+                )
+            except CustomUser.DoesNotExist:
+                author, _ = Author.objects.get_or_create(user=None, name=name)
         else:
-            author, _ = Author.objects.get_or_create(user=None, name=name)
+            matching_user = None
+            name_parts = name.split()
+
+            if len(name_parts) >= 2:
+                first_name = name_parts[0]
+                last_name = ' '.join(name_parts[1:])
+
+                matching_user = CustomUser.objects.filter(
+                    first_name__iexact=first_name,
+                    last_name__iexact=last_name
+                ).first()
+
+            if matching_user:
+                author, _ = Author.objects.get_or_create(
+                    user=matching_user,
+                    defaults={'name': name}
+                )
+            else:
+                author, _ = Author.objects.get_or_create(
+                    user=None,
+                    name=name
+                )
+
         authors.append(author)
     return authors
 

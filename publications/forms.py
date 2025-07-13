@@ -57,9 +57,7 @@ class PublicationForm(forms.ModelForm):
                 self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
 
             if self.instance.keywords:
-                initial_authors = [
-                    {"value": kw} for kw in self.instance.keywords
-                ]
+                initial_authors = [{"value": kw} for kw in self.instance.keywords]
                 self.fields["keywords_input"].widget.attrs['value'] = json.dumps(initial_authors)
 
         else:
