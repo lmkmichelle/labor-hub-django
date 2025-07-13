@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -23,19 +23,27 @@ class SignUpView(CreateView):
     template_name = "registration/signup.html"
 
 
-class ProfileView(LoginRequiredMixin, View):
+class ProfileView(View):
     template_name = "accounts/profile.html"
 
-    def get(self, request):
-        user_form = UpdateUserForm(instance=request.user)
-        profile_form = UpdateProfileForm(instance=request.user.profile)
+    def get(self, request, pk=None):
+        if pk:
+            try:
+                profile_user = CustomUser.objects.get(pk=pk)
+            except CustomUser.DoesNotExist:
+                raise Http404("User not found")
+        else:
+            if not request.user.is_authenticated:
+                return redirect("/login/")
+            profile_user = request.user
+
         authored_publications = Publication.objects.filter(
-            authors__user=request.user
+            authors__user=profile_user
         ).distinct().prefetch_related("authors__user")
 
         return render(request, self.template_name, {
-            'user_form': user_form,
-            'profile_form': profile_form,
+            'profile_user': profile_user,
+            'user_profile': profile_user.profile,
             'publications': authored_publications
         })
 

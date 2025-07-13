@@ -8,7 +8,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .utils import process_publication_form
-
 from publications.forms import PublicationForm
 from publications.models import Publication, Author
 
