@@ -1,26 +1,42 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Paper{% endblock %}
+{% block title %}
+{% if object %}
+Edit Paper
+{% else %}
+Upload Paper
+{% endif %}
+{% endblock %}
 
 {% block content %}
 {% load crispy_forms_tags %}
 {% load static %}
+
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
 
-<h2 class="title">Upload paper</h2>
-<form method="POST" enctype="multipart/form-data">
+<h2 class="title">
+    {% if object %}
+    Edit paper
+    {% else %}
+    Upload paper
+    {% endif %}
+</h2>
+
+<form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
     {% csrf_token %}
     {% crispy form %}
     {% if form.errors %}
-      <div class="alert alert-danger">
+    <div class="alert alert-danger">
         {{ form.errors }}
-      </div>
+    </div>
     {% endif %}
 </form>
+
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
 <script src="{% static 'js/authors.js' %}"></script>
 <script src="{% static 'js/keywords.js' %}"></script>
+
 {% endblock %}

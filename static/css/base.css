@@ -1,5 +1,6 @@
 :root {
     --primary: #B31B1B;
+    --primary-hover: #860b0b;
     --black: #222222;
     --white: #ffffff;
 }
@@ -208,10 +209,10 @@ div.box-list {
     padding-top: 0.1rem
 }
 
-.btn-primary:hover,
-.btn-primary:active,
-.btn-primary:visited,
-.btn-primary:focus {
+.navbar.btn-primary:hover,
+.navbar.btn-primary:active,
+.navbar.btn-primary:visited,
+.navbar.btn-primary:focus {
     color: var(--black) !important;
     cursor: pointer;
 }
@@ -234,7 +235,8 @@ div.box-list {
 
 .btn-primary {
     background-color: var(--primary);
-    border: none;
+    border: 1.5px solid;
+    border-color: var(--primary);
     padding: 0.70rem 0.80rem .6rem .8rem;
     border-radius: 0.5rem;
     font-size: 16px;
@@ -243,16 +245,30 @@ div.box-list {
     cursor: pointer;
 }
 
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border: 1.5px solid;
+    border-color: var(--primary-hover);
+}
+
 .btn-secondary {
     background-color: white;
-    color: var(--black);
-    border: none;
+    color: var(--primary);
+    border: 1.5px solid;
+    border-color: var(--primary);
     padding: 0.70rem 0.80rem .6rem .8rem;
     border-radius: 0.5rem;
     font-size: 16px;
     font-weight: 400;
     text-transform: uppercase;
     cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background-color: var(--primary);
+    border: 1.5px solid;
+    border-color: var(--primary);
+    color: var(--white);
 }
 
 .preview-img {
