@@ -2,7 +2,6 @@ import json
 from io import BytesIO
 from PIL import Image
 from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -12,18 +11,37 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, UpdateView
-
 from publications.models import Publication
-from .forms import UpdateProfileForm, UpdateUserForm, CreateCustomUserForm, CustomLoginForm
-from .models import CustomUser, Profile
+from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, UserApplicationForm
+from .models import CustomUser, Profile, UserApplication
 
 
-class SignUpView(CreateView):
-    model = CustomUser
-    form_class = CreateCustomUserForm
-    success_url = reverse_lazy("login")
-    template_name = "registration/signup.html"
+class ApplyView(CreateView):
+    model =  UserApplication
+    form_class = UserApplicationForm
+    success_url = reverse_lazy('application_submitted')
+    template_name = 'accounts/apply.html'
 
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            "Your application has been submitted successfully! "
+            "You will receive an email notification once it has been reviewed."
+        )
+
+        return super().form_valid(form)
+
+class ApplicationSubmittedView(View):
+    template_name = "accounts/application_submitted.html"
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+# class SignUpView(CreateView):
+#     model = CustomUser
+#     form_class = CreateCustomUserForm
+#     success_url = reverse_lazy("login")
+#     template_name = "registration/apply.html"
 
 class CustomLoginView(LoginView):
     model = CustomUser

@@ -2,34 +2,83 @@ import json
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .constants import COUNTRY_CHOICES
-from .models import Profile, CustomUser
+from django.contrib.auth.forms import  AuthenticationForm
+from django.contrib.auth.hashers import make_password
 
-class CreateCustomUserForm(UserCreationForm):
-    country_code = forms.ChoiceField(choices=COUNTRY_CHOICES, required=True, label="Country")
+from .constants import COUNTRY_CHOICES
+from .models import Profile, CustomUser, UserApplication
+
+class UserApplicationForm(forms.ModelForm):
+    password1 = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput,
+        help_text="Enter a secure password."
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput,
+        help_text='Enter the same password as before, for verification.'
+    )
 
     class Meta:
-        model = CustomUser
-        fields = ("email", "first_name", "last_name", "country_code", "password1", "password2")
+        model = UserApplication
+        fields = (
+            "email",
+            "first_name",
+            "last_name",
+            "position",
+            "education",
+            "country_code",
+            "motivation")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper(self)
-        self.helper.form_method = 'post'
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
         self.helper.layout = Layout(
-            'email',
-            'first_name',
-            'last_name',
-            'country_code',
-            'password1',
-            'password2',
+            "first_name",
+            "last_name",
+            "position",
+            "education",
+            "country_code",
+            "motivation",
+            "email",
+            "password1",
+            "password2",
             ButtonHolder(
-                Submit('submit', "Sign Up", css_class='btn btn-primary me-3'),
+                Submit('submit', "Apply", css_class='btn btn-primary me-3'),
                 HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
             )
         )
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+
+        if password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+
+        return password2
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+
+        if UserApplication.objects.filter(email=email, status='pending').exists():
+            raise forms.ValidationError("An application with this email is already pending review.")
+
+        return email
+
+    def save(self, commit=True):
+        application = super().save(commit=False)
+        application.password = make_password(self.cleaned_data["password1"])
+
+        if commit:
+            application.save()
+
+        return application
 
 class CustomLoginForm(AuthenticationForm):
     class Meta:
@@ -48,6 +97,7 @@ class CustomLoginForm(AuthenticationForm):
                 HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
             )
         )
+
 
 class UpdateUserForm(forms.ModelForm):
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
