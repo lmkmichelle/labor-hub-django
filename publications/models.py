@@ -1,10 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.conf import settings
-from django.utils import timezone, dates
-from datetime import date
-
 from accounts.models import CustomUser
 
 User = get_user_model()
