@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="title text-center mb-4" style="font-size:2rem">Users Directory</h2>
+            <form method="GET" class="mb-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="input-group mb-3">
+                            <input type="text"
+                                   class="form-control"
+                                   name="q"
+                                   value="{{ query }}"
+                                   placeholder="Search users...">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="filter"
+                                       id="filter-all"
+                                       value="all"
+                                       {% if filter_type == 'all' %}checked{% endif %}>
+                                <label class="form-check-label" for="filter-all">All Fields</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="filter"
+                                       id="filter-name"
+                                       value="name"
+                                       {% if filter_type == 'name' %}checked{% endif %}>
+                                <label class="form-check-label" for="filter-name">Name</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="filter"
+                                       id="filter-country"
+                                       value="country"
+                                       {% if filter_type == "country" %}checked{% endif %}>
+                                <label class="form-check-label" for="filter-country">Country</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="filter"
+                                       id="filter-position"
+                                       value="position"
+                                       {% if filter_type == 'position' %}checked{% endif %}>
+                                <label class="form-check-label" for="filter-position">Position</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="filter"
+                                       id="filter-research"
+                                       value="research_interests"
+                                       {% if filter_type == 'research_interests' %}checked{% endif %}>
+                                <label class="form-check-label" for="filter-research">Research Interests</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Grid -->
+    <div class="row">
+        {% for user in users %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card h-100 user-card">
+                <a href="{% url 'profile' user.pk %}" class="text-decoration-none">
+                    <div class="card-body text-center">
+                        <!-- Profile Picture -->
+                        <div class="mb-3">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}"
+                                 class="rounded-circle user-avatar"
+                                 alt="{{ user.first_name }} {{ user.last_name }}">
+                            {% else %}
+                            <div class="user-avatar-placeholder rounded-circle mx-auto d-flex align-items-center justify-content-center">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     width="40"
+                                     height="40"
+                                     fill="currentColor"
+                                     class="bi bi-person"
+                                     viewBox="0 0 16 16">
+                                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- User Info -->
+                        <h3 class="title text-center my-3" style="padding-bottom: 0" >{{ user.first_name }} {{ user.last_name }}</h3>
+                        <p class="text-muted small" style="margin-bottom:0">{{ user.profile.position|default:"Position not specified" }}</p>
+                        <p class="text-muted small" style="margin-bottom:0">{{ user.email }}</p>
+                        <p class="text-muted small" style="margin-bottom:0">{{ user.profile.get_country_code_display }}</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <h3 class="text-muted">No users found</h3>
+                {% if query %}
+                <p>Try adjusting your search terms or filters.</p>
+                <a href="{% url 'users_list' %}" class="btn btn-primary">View All Users</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <nav aria-label="Users pagination">
+        <ul class="pagination justify-content-center">
+            {% if users.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ query }}&filter={{ filter_type }}&page={{ users.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in users.paginator.page_range %}
+            {% if users.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&filter={{ filter_type }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if users.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&filter={{ filter_type }}&page={{ users.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

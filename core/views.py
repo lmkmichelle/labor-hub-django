@@ -61,18 +61,5 @@ def countries_with_papers(request):
             'title': paper.title,
             'author': ', '.join(author_names) if author_names else 'Unknown Author'
         })
-    # for paper in papers:
-    #     # Get author names from the paper
-    #     author_names = []
-    #     for author in paper.authors.all():
-    #         if author.user:
-    #             author_names.append(f"{author.user.first_name} {author.user.last_name}")
-    #         else:
-    #             author_names.append(author.name)
-    #
-    #     country_papers[paper.country_code].append({
-    #         'title': paper.title,
-    #         'author': ', '.join(author_names) if author_names else 'Unknown Author'
-    #     })
 
     return JsonResponse(dict(country_papers))

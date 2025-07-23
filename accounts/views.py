@@ -5,19 +5,23 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, UpdateView
+
+from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, UserApplicationForm
 from .models import CustomUser, Profile, UserApplication
 
 
 class ApplyView(CreateView):
-    model =  UserApplication
+    model = UserApplication
     form_class = UserApplicationForm
     success_url = reverse_lazy('application_submitted')
     template_name = 'accounts/apply.html'
@@ -31,11 +35,13 @@ class ApplyView(CreateView):
 
         return super().form_valid(form)
 
+
 class ApplicationSubmittedView(View):
     template_name = "accounts/application_submitted.html"
 
     def get(self, request):
         return render(request, self.template_name)
+
 
 # class SignUpView(CreateView):
 #     model = CustomUser
@@ -158,11 +164,44 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             )
 
 
-@require_GET
-def search_accounts(request):
+def users_list(request):
+    users = CustomUser.objects.filter(is_active=True).select_related('profile')
+
     query = request.GET.get('q', '')
-    users = CustomUser.objects.filter(first_name__icontains=query)[:10]
-    return JsonResponse([
-        {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
-        for u in users
-    ], safe=False)
+    filter_type = request.GET.get('filter', 'all')
+
+    if query:
+        if filter_type == 'name':
+            users = users.filter(
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query))
+        elif filter_type == 'email':
+            users = users.filter(email__icontains=query)
+        elif filter_type == 'country':
+            users = users.filter(profile__country_code__icontains=query)
+        elif filter_type == 'position':
+            users = users.filter(profile__position__icontains=query)
+        elif filter_type == 'research_interests':
+            users = users.filter(profile__research_interests__icontains=query)
+        else:
+            users = users.filter(
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(profile__position__icontains=query) |
+                Q(profile__country_code__icontains=query) |
+                Q(profile__research_interests__icontains=query))
+
+    paginator = Paginator(users, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    countries = dict(COUNTRY_CHOICES)
+
+    return render(request, 'accounts/users_list.html', {
+        'users': page_obj,
+        'COUNTRY_CHOICES': COUNTRY_CHOICES,
+        'query': query,
+        'filter_type': filter_type,
+        'countries': countries
+    })

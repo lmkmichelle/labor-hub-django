@@ -349,3 +349,33 @@ hr.divider {
     max-width: 1000px;
     height: 100%;
 }
+
+.user-card {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid #dee2e6;
+}
+
+.user-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 4px rgba(0,0,0,0.12);
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.user-avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
