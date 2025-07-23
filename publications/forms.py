@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML, Row, Column
 from django import forms
 from django.urls import reverse_lazy
+from core.constants import COUNTRY_CHOICES
 
 from .models import Publication
 
@@ -10,7 +11,7 @@ from .models import Publication
 class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'month', 'year', 'abstract', 'country', 'study_url', 'is_job_market', 'pdf']
+        fields = ['title', 'month', 'year', 'abstract', 'country_code', 'study_url', 'is_job_market', 'pdf']
 
     authors_input = forms.CharField(
         required=True,
@@ -24,7 +25,8 @@ class PublicationForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'id': 'keywords-input'}),
     )
 
-    country = forms.CharField(
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CHOICES,
         required=True,
         label='Country of Study',
     )
@@ -60,7 +62,7 @@ class PublicationForm(forms.ModelForm):
                 self.fields["keywords_input"].widget.attrs['value'] = json.dumps(initial_authors)
 
         else:
-            button_text = 'Upload Paper'
+            button_text = 'Submit Paper'
             cancel_url = reverse_lazy('publications')
 
         self.helper = FormHelper(self)
@@ -71,7 +73,7 @@ class PublicationForm(forms.ModelForm):
             'month',
             'year',
             'abstract',
-            'country',
+            'country_code',
             'keywords_input',
             'study_url',
             'is_job_market',

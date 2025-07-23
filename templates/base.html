@@ -19,8 +19,8 @@
 
 {% block navbar %}
 <div id="navbar">
-    <nav class="navbar navbar-default navbar-expand-lg navbar-light bg-white">
-        <div class="container">
+    <nav class="navbar navbar-default navbar-expand-lg navbar-light custom-shadow">
+        <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="{% static 'images/logo.png' %}" alt="logo" width=200px>
             </a>
@@ -40,10 +40,11 @@
                         <a class="nav-link {% if url_name == 'home' %}active{% endif %}" href="/">Home</a>
                     </li>
                     <li class="nav-item px-2">
-                        <a class="nav-link {% if url_name == 'publications' %}active{% endif %}" href="/publications/">Discussion Papers</a>
+                        <a class="nav-link {% if url_name == 'publications' %}active{% endif %}" href="/publications/">Discussion
+                            Papers</a>
                     </li>
                     <li class="nav-item px-2">
-                        <a class="nav-link {% if url_name == 'map' %}active{% endif %}" href="/map/">Our Impact</a>
+                        <a class="nav-link {% if url_name == 'map' %}active{% endif %}" href="/map/">World Map</a>
                     </li>
                     <li class="nav-item px-2">
                         <a class="nav-link disabled" href="#">Disabled</a>
@@ -67,8 +68,8 @@
                             </svg>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/profile/">Profile</a></li>
-                            <li><a class="dropdown-item" href="/publications/upload/">Upload</a></li>
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'submit_paper' %}">Submit a Paper</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
@@ -95,7 +96,7 @@
     </nav>
 </div>
 {% endblock %}
-<div class="container" id="content">
+<div class="container mt-5" id="content">
     {% block content %}{% endblock %}
 </div>
 </body>

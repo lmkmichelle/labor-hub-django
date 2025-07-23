@@ -25,7 +25,7 @@ class PublicationListView(ListView):
             queryset = queryset.filter(
                 Q(title__icontains=query) |
                 Q(abstract__icontains=query) |
-                Q(country__icontains=query) |
+                Q(country_code__icontains=query) |
                 Q(keywords__icontains=query) |
                 Q(authors__name__icontains=query)
             ).distinct()

@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
-from .constants import COUNTRY_CHOICES
+from core.constants import COUNTRY_CHOICES
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from accounts.models import CustomUser
+from core.constants import COUNTRY_CHOICES
 
 User = get_user_model()
 
@@ -36,7 +37,12 @@ class Publication(models.Model):
     month = models.CharField(max_length=20, choices=MONTH_CHOICES)
     year = models.PositiveIntegerField()
     abstract = models.TextField()
-    country = models.CharField(max_length=200)
+    country_code = models.CharField(
+        max_length=2,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        null=True
+    )
     keywords = ArrayField(models.CharField(max_length=200))
     study_url = models.URLField()
     is_job_market = models.BooleanField()

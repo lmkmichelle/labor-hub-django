@@ -5,7 +5,6 @@ from django import forms
 from django.contrib.auth.forms import  AuthenticationForm
 from django.contrib.auth.hashers import make_password
 
-from .constants import COUNTRY_CHOICES
 from .models import Profile, CustomUser, UserApplication
 
 class UserApplicationForm(forms.ModelForm):
@@ -114,12 +113,23 @@ class UpdateProfileForm(forms.ModelForm):
 
     avatar = forms.ImageField(
         label='Upload a profile picture',
+        help_text='Please ensure that the image contains a clear subject.',
         widget=forms.FileInput
     )
 
     biography = forms.CharField(
         label='Biography',
         widget=forms.Textarea()
+    )
+
+    education = forms.CharField(
+        label='Current Institution',
+        widget=forms.TextInput()
+    )
+
+    website = forms.URLField(
+        label='Personal Website',
+        widget=forms.URLInput()
     )
 
     research_interests_input = forms.CharField(

@@ -166,22 +166,3 @@ def search_accounts(request):
         {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
         for u in users
     ], safe=False)
-
-
-@require_GET
-def country_users(request, code):
-    code = code.upper()
-    users = CustomUser.objects.select_related("profile").filter(
-        profile__country_code__iexact=code
-    )
-
-    user_list = [
-        {
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name
-        }
-        for user in users
-    ]
-
-    return JsonResponse(user_list, safe=False)
