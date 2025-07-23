@@ -11,5 +11,4 @@ urlpatterns = [
     path('accounts/application-submitted', ApplicationSubmittedView.as_view(), name='application_submitted'),
     path('accounts/login/', CustomLoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
-    path('users/', views.users_list, name='users_list')
 ]

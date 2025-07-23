@@ -12,7 +12,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, ListView
 
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
@@ -41,13 +41,6 @@ class ApplicationSubmittedView(View):
 
     def get(self, request):
         return render(request, self.template_name)
-
-
-# class SignUpView(CreateView):
-#     model = CustomUser
-#     form_class = CreateCustomUserForm
-#     success_url = reverse_lazy("login")
-#     template_name = "registration/apply.html"
 
 class CustomLoginView(LoginView):
     model = CustomUser
@@ -162,46 +155,3 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
                 size=buffer.tell(),
                 charset=None
             )
-
-
-def users_list(request):
-    users = CustomUser.objects.filter(is_active=True).select_related('profile')
-
-    query = request.GET.get('q', '')
-    filter_type = request.GET.get('filter', 'all')
-
-    if query:
-        if filter_type == 'name':
-            users = users.filter(
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query))
-        elif filter_type == 'email':
-            users = users.filter(email__icontains=query)
-        elif filter_type == 'country':
-            users = users.filter(profile__country_code__icontains=query)
-        elif filter_type == 'position':
-            users = users.filter(profile__position__icontains=query)
-        elif filter_type == 'research_interests':
-            users = users.filter(profile__research_interests__icontains=query)
-        else:
-            users = users.filter(
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query) |
-                Q(email__icontains=query) |
-                Q(profile__position__icontains=query) |
-                Q(profile__country_code__icontains=query) |
-                Q(profile__research_interests__icontains=query))
-
-    paginator = Paginator(users, 12)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    countries = dict(COUNTRY_CHOICES)
-
-    return render(request, 'accounts/users_list.html', {
-        'users': page_obj,
-        'COUNTRY_CHOICES': COUNTRY_CHOICES,
-        'query': query,
-        'filter_type': filter_type,
-        'countries': countries
-    })

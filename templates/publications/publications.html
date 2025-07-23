@@ -1,19 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}blenp{% endblock %}
+{% block title %}Discussion Papers{% endblock %}
 
 {% block content %}
-<p>
-    Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-</p>
-<form method="get" action="" class="mb-4">
-    <input
-        type="text"
-        name="q"
-        class="form-control"
-        placeholder="Search publications..."
-        value="{{ query|default:'' }}">
-</form>
+<h2 class="title text-center mb-4" style="font-size:2rem">Discussion Papers</h2>
+<p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.
+    In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla
+    lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel
+    class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+
+{% include 'partials/_search_form.html' with search_placeholder="Search discussion papers..." search_filters=publication_filters %}
+
 {% include 'partials/_publications_list.html' %}
 {% endblock %}

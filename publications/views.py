@@ -1,42 +1,12 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.shortcuts import render, redirect
-from django.db.models import Q
-from .utils import process_publication_form
+from django.views.generic import DetailView, CreateView, UpdateView
 from publications.forms import PublicationForm
-from publications.models import Publication, Author
-
-
-class PublicationListView(ListView):
-    model = Publication
-    template_name = 'publications/publications.html'
-    context_object_name = 'publications'
-
-    def get_queryset(self):
-        query = self.request.GET.get('q')
-        queryset = Publication.objects.prefetch_related('authors__user').filter(approved=True)
-
-        if query:
-            queryset = queryset.filter(
-                Q(title__icontains=query) |
-                Q(abstract__icontains=query) |
-                Q(country_code__icontains=query) |
-                Q(keywords__icontains=query) |
-                Q(authors__name__icontains=query)
-            ).distinct()
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['query'] = self.request.GET.get('q', '')
-        return context
-
+from publications.models import Publication
+from .utils import process_publication_form
 
 class PublicationDetailView(DetailView):
     model = Publication
