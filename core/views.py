@@ -1,10 +1,7 @@
 from collections import defaultdict
-
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
-from django.template import loader
-
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
@@ -12,8 +9,8 @@ from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
 
+country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
 
-# Create your views here.
 def home(request):
     return render(request, 'core/home.html')
 
@@ -91,7 +88,14 @@ def users_list(request):
         elif filter_type == 'email':
             users = users.filter(email__icontains=query)
         elif filter_type == 'country':
-            users = users.filter(profile__country_code__icontains=query)
+            matching_codes = [
+                code for code, name in COUNTRY_CHOICES
+                if query.strip().lower() in name.lower()
+            ]
+            if matching_codes:
+                users = users.filter(profile__country_code__in=matching_codes)
+            else:
+                users = users.filter(profile__country_code__iexact=query)
         elif filter_type == 'position':
             users = users.filter(profile__position__icontains=query)
         elif filter_type == 'research_interests':
@@ -145,7 +149,14 @@ def publications_list(request):
                 Q(authors__user__first_name__icontains=query) |
                 Q(authors__user__last_name__icontains=query))
         elif filter_type == 'country':
-            publications = publications.filter(country_code__icontains=query)
+            matching_codes = [
+                code for code, name in COUNTRY_CHOICES
+                if query.strip().lower() in name.lower()
+            ]
+            if matching_codes:
+                publications = publications.filter(country_code__in=matching_codes)
+            else:
+                publications = publications.filter(country_code__iexact=query)
         elif filter_type == 'keywords':
             publications = publications.filter(keywords__icontains=query)
         else:
