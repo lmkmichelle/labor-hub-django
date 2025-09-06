@@ -126,6 +126,15 @@ def users_list(request):
 
 
 @require_GET
+def search_accounts(request):
+    query = request.GET.get('q', '')
+    users = CustomUser.objects.filter(first_name__icontains=query)[:10]
+    return JsonResponse([
+        {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
+        for u in users
+    ], safe=False)
+
+@require_GET
 def publications_list(request):
     publications = Publication.objects.filter(approved=True).prefetch_related('authors__user')
 
