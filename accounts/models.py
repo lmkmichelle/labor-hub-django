@@ -58,7 +58,7 @@ class CustomUser(AbstractUser):
 
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
+    avatar = models.ImageField(upload_to='avatars', default='avatars/default.png', blank=True)
     position = models.CharField(max_length=100)
     education = models.CharField(max_length=100)
     country_code = models.CharField(

@@ -4,9 +4,7 @@ from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML, Row, Column
 from django import forms
 from django.urls import reverse_lazy
 from core.constants import COUNTRY_CHOICES
-
 from .models import Publication
-
 
 class PublicationForm(forms.ModelForm):
     class Meta:
@@ -21,7 +19,7 @@ class PublicationForm(forms.ModelForm):
 
     keywords_input = forms.CharField(
         required=True,
-        label='Keywords',
+        label='Additional Keywords',
         widget=forms.TextInput(attrs={'id': 'keywords-input'}),
     )
 
@@ -56,10 +54,6 @@ class PublicationForm(forms.ModelForm):
                     {"value": str(author)} for author in self.instance.authors.all()
                 ]
                 self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
-
-            if self.instance.keywords:
-                initial_authors = [{"value": kw} for kw in self.instance.keywords]
-                self.fields["keywords_input"].widget.attrs['value'] = json.dumps(initial_authors)
 
         else:
             button_text = 'Submit Paper'
