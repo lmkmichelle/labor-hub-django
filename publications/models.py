@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import JSONField
+
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
 
@@ -43,7 +45,7 @@ class Publication(models.Model):
         blank=True,
         null=True
     )
-    keywords = ArrayField(models.CharField(max_length=200))
+    keywords = JSONField(default=list)
     study_url = models.URLField()
     is_job_market = models.BooleanField()
     pdf = models.FileField(upload_to='publications/pdf', null=True, blank=True)

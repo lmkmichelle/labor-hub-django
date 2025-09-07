@@ -28,15 +28,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   const input = document.querySelector("#keywords-input");
 
   const tagify = new Tagify(input, {
-    whitelist: JEL_PRIMARY_CHOICES,                 // full hardcoded list
-    enforceWhitelist: true,         // must pick from list
+    whitelist: JEL_PRIMARY_CHOICES,
+    enforceWhitelist: true,
     skipInvalid: true,
-    delimiters: null,               // don't split on commas inside labels
+    delimiters: null,
     dropdown: {
-      enabled: 1,                   // show on focus / when typing
+      enabled: 1,
       maxItems: 100,
     },
-    originalInputValueFormat: items => JSON.stringify(items.map(i => i.value)),
+
+    originalInputValueFormat: values =>
+      JSON.stringify(values.map(v => ({ value: v.value }))),
   });
 
   tagify.on("input", (e) => {

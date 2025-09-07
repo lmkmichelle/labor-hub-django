@@ -48,8 +48,7 @@ def handle_authors(raw_input):
 def handle_keywords(raw_input):
     keywords = []
     for entry in json.loads(raw_input):
-        keyword = entry['value']
-        keywords.append(keyword)
+        keywords.append(entry)
     return keywords
 
 def process_publication_form(request, form):
