@@ -2,6 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import JSONField
 from django.utils import timezone
 from core.constants import COUNTRY_CHOICES
 
@@ -69,7 +70,7 @@ class Profile(models.Model):
     )
     website = models.URLField(blank=True)
     biography = models.TextField(blank=True)
-    research_interests = ArrayField(models.CharField(max_length=100))
+    research_interests = JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.user.email

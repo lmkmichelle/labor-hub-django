@@ -141,10 +141,8 @@ class UpdateProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.research_interests:
-            initial_keywords = [
-                {"value": kw} for kw in self.instance.research_interests
-            ]
-            self.fields["research_interests_input"].widget.attrs['value'] = json.dumps(initial_keywords)
+            initial_interests = self.instance.research_interests
+            self.fields["research_interests_input"].widget.attrs['value'] = json.dumps(initial_interests)
 
         self.helper = FormHelper(self)
         self.helper.form_method = 'post'

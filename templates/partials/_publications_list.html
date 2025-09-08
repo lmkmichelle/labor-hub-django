@@ -10,6 +10,7 @@
                 <h3 class="box-list-headline">Pending approval</h3>
             {% endif %}
         </div>
+        <p class="box-list">Discussion Series #{{ publication.id }}</p>
         <p class="list-description">
             {% for author in publication.authors.all %}
                 {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %}, {% endif %}

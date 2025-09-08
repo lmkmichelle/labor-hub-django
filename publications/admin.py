@@ -17,7 +17,7 @@ class AuthorAdmin(admin.ModelAdmin):
 
 class PublicationAdmin(admin.ModelAdmin):
     inlines = [AuthorInline]
-    list_display = ['title', 'month', 'year', 'country_code', 'is_job_market']
+    list_display = ['title', 'date', 'country_code', 'is_job_market']
     search_fields = ['title', 'abstract']
 
 admin.site.register(Publication, PublicationAdmin)

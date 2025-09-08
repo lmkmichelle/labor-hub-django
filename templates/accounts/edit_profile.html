@@ -5,9 +5,11 @@
 {% block content %}
 {% load crispy_forms_tags %}
 {% load static %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
-<link rel="stylesheet" href="{% static 'css/base.css' %}">
+
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+
 <h2 class="title">Edit Your Profile</h2>
 <form method="POST" enctype="multipart/form-data" class="mb-3">
     {% csrf_token %}
@@ -44,7 +46,9 @@
         </div>
     </div>
 </form>
-<script src="{% static 'js/research_interests.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
+<script src="{% static 'js/keywords.js' %}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const input = document.querySelector('input[name="avatar"]');

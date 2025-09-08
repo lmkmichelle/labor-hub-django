@@ -1,6 +1,4 @@
-document.addEventListener("DOMContentLoaded", async function () {
-  const input = document.querySelector("#keywords-input, #research-interests-input");
-  const JEL_PRIMARY_CHOICES =
+export const JEL_PRIMARY_CHOICES =
     ["General Economics and Teaching",
       "History of Economic Thought, Methodology, and Heterodox Approaches",
       "Mathematical and Quantitative Methods",
@@ -22,23 +20,3 @@ document.addEventListener("DOMContentLoaded", async function () {
       "Miscellaneous Categories",
       "Other Special Topics"
     ]
-
-  const tagify = new Tagify(input, {
-    whitelist: JEL_PRIMARY_CHOICES,
-    enforceWhitelist: true,
-    skipInvalid: true,
-    delimiters: null,
-    dropdown: {
-      enabled: 1,
-      maxItems: 5,
-    },
-
-    originalInputValueFormat: values =>
-      JSON.stringify(values.map(v => ({value: v.value}))),
-  });
-
-  tagify.on("input", (e) => {
-    tagify.settings.whitelist = JEL_PRIMARY_CHOICES;
-    tagify.dropdown.show.call(tagify, e.target.value);
-  });
-});

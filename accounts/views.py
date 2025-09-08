@@ -16,6 +16,7 @@ from django.views.generic import CreateView, UpdateView, ListView
 
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
+from publications.utils import handle_keywords
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, UserApplicationForm
 from .models import CustomUser, Profile, UserApplication
 
@@ -101,7 +102,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             if 'avatar' in request.FILES:
                 profile.avatar = self._crop(request.FILES['avatar'])
             raw_interests = self.request.POST.get('research_interests_input', '[]')
-            profile.research_interests = self._handle_research_interests(raw_interests)
+            profile.research_interests = handle_keywords(raw_interests)
 
             profile.save()
             messages.success(request, "Profile updated successfully")
@@ -111,15 +112,6 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             user_form=user_form,
             form=profile_form
         ))
-
-    @staticmethod
-    def _handle_research_interests(raw_input):
-        keywords = []
-        for entry in json.loads(raw_input):
-            keyword = entry['value']
-            keywords.append(keyword)
-
-        return keywords
 
     def _crop(self, image_file, output_size=(218, 300)):
         with Image.open(image_file) as img:

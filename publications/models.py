@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import ArrayField
+from django.utils import timezone
 from django.db import models
 from django.db.models import JSONField
 
@@ -18,26 +18,10 @@ class Author(models.Model):
     class Meta:
         unique_together = [('user', 'name')]
 
-MONTH_CHOICES = [
-        ('January', 'January'),
-        ('February', 'February'),
-        ('March', 'March'),
-        ('April', 'April'),
-        ('May', 'May'),
-        ('June', 'June'),
-        ('July', 'July'),
-        ('August', 'August'),
-        ('September', 'September'),
-        ('October', 'October'),
-        ('November', 'November'),
-        ('December', 'December'),
-    ]
-
 class Publication(models.Model):
     title = models.CharField(max_length=200)
     authors = models.ManyToManyField(Author, related_name='publications')
-    month = models.CharField(max_length=20, choices=MONTH_CHOICES)
-    year = models.PositiveIntegerField()
+    date = models.DateField(default=timezone.now)
     abstract = models.TextField()
     country_code = models.CharField(
         max_length=2,
@@ -45,6 +29,7 @@ class Publication(models.Model):
         blank=True,
         null=True
     )
+    topic = models.CharField(max_length=300, blank=True)
     keywords = JSONField(default=list)
     study_url = models.URLField()
     is_job_market = models.BooleanField()
@@ -55,4 +40,4 @@ class Publication(models.Model):
         return self.title
 
     def formatted_date(self):
-        return f"{self.month} {self.year}"
+        return f"{self.date}"

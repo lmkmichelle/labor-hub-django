@@ -55,7 +55,7 @@
                     <ul>
                         {% for interest in user_profile.research_interests %}
                         <li>
-                            <a href="#">{{ interest }}</a>
+                            <a href="#">{{ interest.value }}</a>
                         </li>
                         {% endfor %}
                     </ul>

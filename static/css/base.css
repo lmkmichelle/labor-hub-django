@@ -98,14 +98,25 @@ ul {
     line-height: 2;
 }
 
-div.box-list {
-    margin: 0;
-    padding: 0;
-}
 
 .box-list ul li {
     display: inline-block;
     margin-right: 5px;
+}
+
+p.box-list {
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    text-align: center;
+    padding: 2px 10px;
+    background-color: var(--primary);
+    line-height: 1.75;
+    border-radius: 3px;
+    font-size: .95rem;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 400;
 }
 
 .box-list ul li a,

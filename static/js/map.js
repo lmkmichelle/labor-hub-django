@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     displayDiv.innerHTML = `
-    <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Users' : 'Discussion Papers'} in ${countryName}</h2>
+    <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h2>
     ${listHtml}
     ${moreLink}
   `;
