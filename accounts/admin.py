@@ -5,12 +5,21 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import Profile, CustomUser, UserApplication
+from .models import Profile, CustomUser, UserApplication, ResearchPaper
 
 
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
+
+
+class ResearchPaperInline(admin.TabularInline):
+    model = ResearchPaper
+    extra = 1
+    max_num = 3
+    can_delete = True
+    fields = ['paper', 'uploaded_at']
+    readonly_fields = ['uploaded_at']
 
 
 class UserAdmin(BaseUserAdmin):
@@ -35,11 +44,13 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(UserApplication)
 class UserApplicationAdmin(admin.ModelAdmin):
+    inlines = [ResearchPaperInline]
     list_display = [
         "email",
         "first_name",
         "last_name",
         'status',
+        'resume',
         'account_actions',
         'applied_at',
         'reviewed_by'
@@ -47,7 +58,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
 
     list_filter = ['status', 'applied_at']
     search_fields = ['email', 'first_name', 'last_name']
-    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions']
+    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume']
     ordering = ['-applied_at']
 
     fieldsets = (
@@ -55,7 +66,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
             'fields': ('email', 'first_name', 'last_name', 'position', 'education', 'country_code', 'motivation')
         }),
         ('Review', {
-            'fields': ('admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
+            'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
         }),
     )
 

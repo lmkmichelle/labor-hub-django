@@ -33,6 +33,8 @@ def countries_with_users(request):
         country_users[country_code].append({
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'position': user.profile.position,
+            'education': user.profile.education,
             'email': user.email
         })
 

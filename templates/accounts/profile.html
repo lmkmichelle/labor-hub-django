@@ -20,6 +20,7 @@
                             </h3>
                             <h4>{{ user_profile.education }}</h4>
                             <h4>{{ user_profile.position }}</h4>
+                            <h4>{{ user.profile.get_country_code_display }}</h4>
                         </div>
                         <div class="contact-details">
                             <a href="mailto: {{ user_profile.email }}" class="d-flex align-items-center me-2 text-decoration-none">

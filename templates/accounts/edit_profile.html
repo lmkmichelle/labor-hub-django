@@ -32,9 +32,10 @@
                 {{ user_form.email|as_crispy_field }}
                 {{ form.position|as_crispy_field }}
                 {{ form.education|as_crispy_field }}
-                {{ form.avatar|as_crispy_field }}
+                {{ form.country_code|as_crispy_field }}
             </div>
         </div>
+        {{ form.avatar|as_crispy_field }}
         {{ form.website|as_crispy_field }}
         {{ form.biography|as_crispy_field }}
         {{ form.research_interests_input|as_crispy_field }}

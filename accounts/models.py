@@ -1,10 +1,12 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import JSONField
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+
 from core.constants import COUNTRY_CHOICES
+
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -98,6 +100,9 @@ class UserApplication(models.Model):
         help_text="Why do you want to join this platform?",
         blank=True
     )
+    resume = models.FileField(
+        help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
+    )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -112,6 +117,13 @@ class UserApplication(models.Model):
 
     class Meta:
         ordering = ['-applied_at']
+
+    # def clean(self):
+    #     super().clean()
+    #     if self.research_papers.count() > 3:
+    #         raise ValidationError({
+    #             'research_papers': 'Maximum 3 research papers are allowed.'
+    #         })
 
     def approve(self, admin_user=None):
         if self.status != 'pending':
@@ -153,3 +165,26 @@ class UserApplication(models.Model):
         self.reviewed_at = timezone.now()
         self.reviewed_by = admin_user
         self.save()
+
+class ResearchPaper(models.Model):
+    application = models.ForeignKey(
+        UserApplication,
+        on_delete=models.CASCADE,
+        related_name='research_papers'
+    )
+    paper = models.FileField(
+        upload_to='research_papers/',
+        help_text="Upload your research paper in PDF format"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(paper__endswith='.pdf'),
+                name='paper_is_pdf'
+            )
+        ]
+
+    def __str__(self):
+        return f"Research paper for {self.application.email}"

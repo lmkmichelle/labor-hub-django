@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (items.length === 0) {
       displayDiv.innerHTML = `
-      <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Users' : 'Discussion Papers'} in ${countryName}</h2>
+      <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h2>
       <div class="text-center">
         There are no ${currentTab === 'users' ? 'users' : 'discussion papers'} based in ${countryName}.
       </div>
@@ -333,12 +333,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let listHtml = '<div class="list-group">';
     const top5 = items.slice(0, 5);
     top5.forEach(item => {
+
       if (currentTab === 'users') {
         listHtml += `
         <div class="list-group-item list-group-item-action" style="margin-bottom: 0">
           <div class="d-flex w-100 justify-content-between">
             <h3 class="list-title">${item.first_name} ${item.last_name}</h3>
           </div>
+          <p class="list-description">${item.education}</p>
           <p class="list-description">${item.position}</p>
         </div>
       `;
