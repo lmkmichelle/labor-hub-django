@@ -1,12 +1,12 @@
 <div class="list-group">
     {% for publication in publications %}
     <a href="{% url 'publication_detail' publication.id %}"
-       class="list-group-item list-group-item-action {% if not publication.approved %}unapproved{% endif %}"
+       class="list-group-item list-group-item-action {% if not publication.status == 'approved' %}unapproved{% endif %}"
        style="margin-bottom: 0"
        aria-current="true">
         <div class="d-flex w-100 justify-content-between">
             <h3 class="list-title">{{ publication.title }}</h3>
-            {% if not publication.approved %}
+            {% if not publication.status == 'approved' %}
                 <h3 class="box-list-headline">Pending approval</h3>
             {% endif %}
         </div>

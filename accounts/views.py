@@ -17,13 +17,13 @@ from django.views.generic import CreateView, UpdateView, ListView
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
 from publications.utils import handle_keywords
-from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, UserApplicationForm
+from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm
 from .models import CustomUser, Profile, UserApplication
 
 
 class ApplyView(CreateView):
     model = UserApplication
-    form_class = UserApplicationForm
+    form_class = BaseApplicationForm
     success_url = reverse_lazy('application_submitted')
     template_name = 'accounts/apply.html'
 

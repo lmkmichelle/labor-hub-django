@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import JSONField
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 
 from core.constants import COUNTRY_CHOICES
 
@@ -42,21 +41,53 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 class CustomUser(AbstractUser):
+
+    class Role(models.TextChoices):
+        STUDENT = 'student', 'Student'
+        ADMIN = 'admin', 'Admin'
+        RESEARCHER = 'researcher', 'Researcher'
+
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     date_joined = models.DateTimeField(default=timezone.now)
-
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        default=Role.RESEARCHER
+    )
+    advisor = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='advisees',
+        limit_choices_to={'role': Role.RESEARCHER},
+        help_text="Required for students"
+    )
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     objects = CustomUserManager()
 
     def save(self, *args, **kwargs):
+        if self.role != self.Role.STUDENT:
+            self.advisor = None
+
         if not self.username:
             self.username = str(self.email)
 
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.email} ({self.get_role_display()})"
+
+    def is_student(self):
+        return self.role == self.Role.STUDENT
+
+    def is_researcher(self):
+        return self.role == self.Role.RESEARCHER
 
 
 class Profile(models.Model):
@@ -70,6 +101,7 @@ class Profile(models.Model):
         blank=True,
         null=True
     )
+
     website = models.URLField(blank=True)
     biography = models.TextField(blank=True)
     research_interests = JSONField(default=list, blank=True)
@@ -78,11 +110,10 @@ class Profile(models.Model):
         return self.user.email
 
 class UserApplication(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-    ]
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
 
     email = models.EmailField()
     first_name = models.CharField(max_length=255)
@@ -103,7 +134,16 @@ class UserApplication(models.Model):
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    advisor = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={"role": CustomUser.Role.RESEARCHER},
+        related_name="student_applications",
+        help_text="Only required for student applications",
+    )
+    status = models.CharField(max_length=10, choices=Status.choices, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
@@ -118,14 +158,7 @@ class UserApplication(models.Model):
     class Meta:
         ordering = ['-applied_at']
 
-    # def clean(self):
-    #     super().clean()
-    #     if self.research_papers.count() > 3:
-    #         raise ValidationError({
-    #             'research_papers': 'Maximum 3 research papers are allowed.'
-    #         })
-
-    def approve(self, admin_user=None):
+    def approve(self, admin_user=None, role=CustomUser.Role.RESEARCHER, advisor=None):
         if self.status != 'pending':
             raise ValueError("Only pending applications can be approved")
 
@@ -134,34 +167,37 @@ class UserApplication(models.Model):
 
         user = CustomUser.objects.create(
             email=self.email,
+            password=self.password,
             first_name=self.first_name,
             last_name=self.last_name,
-            is_active=True
+            is_active=True,
+            role = role,
+            advisor = advisor if role == CustomUser.Role.STUDENT else None,
         )
 
-        user.password = self.password
         user.save()
 
-        user.profile.country_code = self.country_code
-        user.profile.position = self.position
-        user.profile.education = self.education
-        user.profile.save()
+        Profile.objects.create(
+            user=user,
+            country_code=self.country_code,
+            position=self.position,
+            education=self.education,
+        )
 
-        self.status = 'approved'
+        self.status = self.Status.APPROVED
         self.reviewed_at = timezone.now()
 
         if admin_user:
             self.reviewed_by = admin_user
-
         self.save()
 
         return user
 
     def reject(self, admin_user):
-        if self.status != 'pending':
+        if self.status != self.Status.PENDING:
             raise ValueError("Only pending applications can be rejected")
 
-        self.status = 'rejected'
+        self.status = self.Status.REJECTED
         self.reviewed_at = timezone.now()
         self.reviewed_by = admin_user
         self.save()

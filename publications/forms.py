@@ -70,6 +70,7 @@ class PublicationForm(forms.ModelForm):
     )
 
     pdf = forms.FileField(
+        required=False,
         label='Upload Paper'
     )
 

@@ -82,8 +82,14 @@
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item px-2 justify-content-end">
-                        <a class="nav-link" href="{% url 'apply' %}">Apply</a>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Apply
+                      </a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'apply' %}">For Researchers</a></li>
+                        <li><a class="dropdown-item" href="{% url 'apply' %}">For Students</a></li>
+                      </ul>
                     </li>
                     <li class="nav-item px-2 justify-content-end">
                         <a class="nav-link" href="{% url 'login' %}">Log in</a>

@@ -16,7 +16,7 @@ class PublicationDetailView(DetailView):
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
 
-        if obj.approved:
+        if obj.status == 'approved':
             return obj
 
         authors_users = [author.user for author in obj.authors.all() if author.user]

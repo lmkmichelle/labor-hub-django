@@ -1,11 +1,10 @@
 import json
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML
 from django import forms
-from django.contrib.auth.forms import  AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password
-from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 
 from core.constants import COUNTRY_CHOICES
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
@@ -27,7 +26,7 @@ class MultipleFileField(forms.FileField):
             result = [single_file_clean(data, initial)]
         return result
 
-class UserApplicationForm(forms.ModelForm):
+class BaseApplicationForm(forms.ModelForm):
     research_papers = MultipleFileField(
         label="Upload up to 3 research papers (PDF only)",
         required=False )
@@ -69,7 +68,8 @@ class UserApplicationForm(forms.ModelForm):
             "position",
             "country_code",
             "motivation",
-        "research_papers",)
+            "research_papers"
+        )
 
     def save(self, commit=True):
         application = super().save(commit=False)
@@ -133,6 +133,25 @@ class UserApplicationForm(forms.ModelForm):
             raise forms.ValidationError("An application with this email is already pending review.")
 
         return email
+
+class ResearcherApplicationForm(BaseApplicationForm):
+    pass
+
+class StudentApplicationForm(BaseApplicationForm):
+    advisor = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(role=CustomUser.Role.RESEARCHER, is_active=True),
+        label="Select an Advisor",
+        help_text="Choose a researcher to act as your advisor",
+    )
+
+    class Meta(BaseApplicationForm.Meta):
+        fields = BaseApplicationForm.Meta.fields + ("advisor",)
+
+    def clean_advisor(self):
+        advisor = self.cleaned_data.get("advisor")
+        if not advisor or advisor.role != CustomUser.Role.RESEARCHER:
+            raise forms.ValidationError("Advisor must be a valid researcher.")
+        return advisor
 
 class CustomLoginForm(AuthenticationForm):
     class Meta:

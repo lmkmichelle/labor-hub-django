@@ -47,7 +47,7 @@ def countries_with_papers(request):
 
     papers = Publication.objects.filter(
         country_code__isnull=False,
-        approved=True
+        status='approved'
     ).prefetch_related('authors__user').order_by('title')
 
     for paper in papers:
@@ -138,7 +138,7 @@ def search_accounts(request):
 
 @require_GET
 def publications_list(request):
-    publications = Publication.objects.filter(approved=True).prefetch_related('authors__user')
+    publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')
 
     query = request.GET.get('q', '')
     filter_type = request.GET.get('filter', 'all')
