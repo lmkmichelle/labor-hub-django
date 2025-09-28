@@ -4,7 +4,11 @@
 {% block title %}Apply{% endblock %}
 
 {% block content %}
-<h2 class="title">Apply</h2>
+<h2 class="title">{{ application_type }} Application</h2>
+
+    {% if application_type == "Student" %}
+        <p>Please select an advisor from the list of available researchers.</p>
+    {% endif %}
 <form method="POST">
     {% csrf_token %}
     {% crispy form %}

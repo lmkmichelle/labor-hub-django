@@ -17,13 +17,13 @@ from django.views.generic import CreateView, UpdateView, ListView
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
 from publications.utils import handle_keywords
-from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm
+from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
+    StudentApplicationForm
 from .models import CustomUser, Profile, UserApplication
 
 
-class ApplyView(CreateView):
+class BaseApplicationView(CreateView):
     model = UserApplication
-    form_class = BaseApplicationForm
     success_url = reverse_lazy('application_submitted')
     template_name = 'accounts/apply.html'
 
@@ -33,9 +33,23 @@ class ApplyView(CreateView):
             "Your application has been submitted successfully! "
             "You will receive an email notification once it has been reviewed."
         )
-
         return super().form_valid(form)
 
+class ResearcherApplicationView(BaseApplicationView):
+    form_class = ResearcherApplicationForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['application_type'] = 'Researcher'
+        return context
+
+class StudentApplicationView(BaseApplicationView):
+    form_class = StudentApplicationForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['application_type'] = 'Student'
+        return context
 
 class ApplicationSubmittedView(View):
     template_name = "accounts/application_submitted.html"

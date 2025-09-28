@@ -147,6 +147,17 @@ class StudentApplicationForm(BaseApplicationForm):
     class Meta(BaseApplicationForm.Meta):
         fields = BaseApplicationForm.Meta.fields + ("advisor",)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        layout_fields = list(self.helper.layout.fields)
+        button_holder = layout_fields.pop()
+
+        layout_fields.append("advisor")
+        layout_fields.append(button_holder)
+
+        self.helper.layout.fields = layout_fields
+
     def clean_advisor(self):
         advisor = self.cleaned_data.get("advisor")
         if not advisor or advisor.role != CustomUser.Role.RESEARCHER:
