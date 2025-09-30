@@ -111,7 +111,7 @@ def users_list(request):
                 Q(profile__country_code__icontains=query) |
                 Q(profile__research_interests__icontains=query))
 
-    paginator = Paginator(users, 1)
+    paginator = Paginator(users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
