@@ -1,44 +1,48 @@
 document.addEventListener("DOMContentLoaded", async function () {
   const input = document.querySelector("#keywords-input, #research-interests-input");
-  const JEL_PRIMARY_CHOICES =
-    ["General Economics and Teaching",
-      "History of Economic Thought, Methodology, and Heterodox Approaches",
-      "Mathematical and Quantitative Methods",
-      "Microeconomics",
-      "Macroeconomics and Monetary Economics",
-      "International Economics",
-      "Financial Economics",
-      "Public Economics",
-      "Health, Education, and Welfare",
-      "Labor and Demographic Economics",
-      "Law and Economics",
-      "Industrial Organization",
-      "Business Administration and Business Economics • Marketing • Accounting • Personnel Economics",
-      "Economic History",
-      "Economic Development, Innovation, Technological Change, and Growth",
-      "Political Economy and Comparative Economic Systems",
-      "Agricultural and Natural Resource Economics • Environmental and Ecological Economics",
-      "Urban, Rural, Regional, Real Estate, and Transportation Economics",
-      "Miscellaneous Categories",
-      "Other Special Topics"
-    ]
+  const additional_keywords = [
+    "Education and Human Capital",
+    "Labor Supply",
+    "Labor Demand",
+    "Family and gender",
+    "Unions and collective bargaining",
+    "Active Labor Market Policies",
+    "Migration",
+    "AI and Technological change",
+    "Macro-Labor",
+    "Minimum wages",
+    "Unemployment insurance",
+    "Job search",
+    "Labor markets and demographics",
+    "Personnel economics",
+    "Workers' health and well-being",
+    "Contracts and Organizations",
+    "Job amenities",
+    "Market structure",
+    "Welfare policy",
+    "Applied and policy issues in labor economics",
+    "Structural models of health, retirement, and savings",
+    "Non-standard work",
+    "Crime and Labor",
+    "Geography of labor markets",
+    "Intergenerational mobility",
+    "Labor markets in less developed countries",
+    "Econometric and data methods for labor economists",
+    "Gig economy",
+    "Inequality",
+    "Other"
+  ];
 
-  const tagify = new Tagify(input, {
-    whitelist: JEL_PRIMARY_CHOICES,
-    enforceWhitelist: true,
-    skipInvalid: true,
-    delimiters: null,
+
+  new Tagify(input, {
+    whitelist: additional_keywords,
     dropdown: {
-      enabled: 1,
+      enabled: 0,
+      closeOnSelect: false,
       maxItems: 5,
     },
 
     originalInputValueFormat: values =>
       JSON.stringify(values.map(v => ({value: v.value}))),
-  });
-
-  tagify.on("input", (e) => {
-    tagify.settings.whitelist = JEL_PRIMARY_CHOICES;
-    tagify.dropdown.show.call(tagify, e.target.value);
   });
 });

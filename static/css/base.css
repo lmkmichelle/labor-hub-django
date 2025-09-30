@@ -391,17 +391,20 @@ hr.divider {
     border-color: var(--primary);
 }
 
-.tagify__tag {
-  /* kill the inset-shadow trick */
-  --tag-inset-shadow-size: 0;
-  box-shadow: none;
-  background: #e9ecef;      /* uses Tagify's var or set your own color */
-  overflow: hidden;                  /* avoids tiny artifacts on wrap */
-  border-radius: 0.5rem;             /* optional: adjust pill radius */
-}
+/*.tagify__dropdown {*/
+/*    overflow-y: scroll;*/
+/*}*/
+/*.tagify__tag {*/
+/*  !* kill the inset-shadow trick *!*/
+/*  --tag-inset-shadow-size: 0;*/
+/*  box-shadow: none;*/
+/*  background: #e9ecef;      !* uses Tagify's var or set your own color *!*/
+/*  overflow: hidden;                  !* avoids tiny artifacts on wrap *!*/
+/*  border-radius: 0.5rem;             !* optional: adjust pill radius *!*/
+/*}*/
 
-.tagify__tag > div,
-.tagify__tag .tagify__tag-text {
-  white-space: normal;               /* allow wrapping inside the tag */
-  line-height: 1.4;                 /* tighten lines a bit */
-}
+/*.tagify__tag > div,*/
+/*.tagify__tag .tagify__tag-text {*/
+/*  white-space: normal;               !* allow wrapping inside the tag *!*/
+/*  line-height: 1.4;                 !* tighten lines a bit *!*/
+/*}*/

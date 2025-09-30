@@ -48,6 +48,12 @@ class PublicationForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'id': 'authors-input'}),
     )
 
+    topic_input = forms.CharField(
+        required=True,
+        label='Research Topic',
+        widget=forms.TextInput(attrs={'id': 'topic-input'}),
+    )
+
     keywords_input = forms.CharField(
         required=True,
         label='Additional Keywords',
@@ -104,6 +110,7 @@ class PublicationForm(forms.ModelForm):
             'date',
             'abstract',
             'country_code',
+            'topic_input',
             'keywords_input',
             'study_url',
             'is_job_market',
