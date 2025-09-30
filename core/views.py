@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
+from django.views.generic import ListView
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
@@ -66,66 +67,78 @@ def countries_with_papers(request):
 
     return JsonResponse(dict(country_papers))
 
+class UserListView(ListView):
+    model = CustomUser
+    template_name = 'accounts/users_list.html'
+    context_object_name = 'users'
+    paginate_by = 10
 
-@require_GET
-def users_list(request):
-    users = CustomUser.objects.filter(is_active=True).select_related('profile')
+    role = None
 
-    query = request.GET.get('q', '')
-    filter_type = request.GET.get('filter', 'all')
+    def get_queryset(self):
+        qs = CustomUser.objects.filter(is_active=True, role=self.role).select_related('profile')
 
-    user_filters = [
-        {'value': 'all', 'label': 'All Fields'},
-        {'value': 'name', 'label': 'Name'},
-        {'value': 'country', 'label': 'Country'},
-        {'value': 'position', 'label': 'Position'},
-        {'value': 'research_interests', 'label': 'Research Interests'},
-    ]
+        query = self.request.GET.get('q', '')
+        filter_type = self.request.GET.get('filter', 'all')
 
-    if query:
-        if filter_type == 'name':
-            users = users.filter(
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query))
-        elif filter_type == 'email':
-            users = users.filter(email__icontains=query)
-        elif filter_type == 'country':
-            matching_codes = [
-                code for code, name in COUNTRY_CHOICES
-                if query.strip().lower() in name.lower()
-            ]
-            if matching_codes:
-                users = users.filter(profile__country_code__in=matching_codes)
+        if query:
+            if filter_type == 'name':
+                qs = qs.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+            elif filter_type == 'email':
+                qs = qs.filter(email__icontains=query)
+            elif filter_type == 'country':
+                matching_codes = [
+                    code for code, name in COUNTRY_CHOICES
+                    if query.strip().lower() in name.lower()
+                ]
+                if matching_codes:
+                    qs = qs.filter(profile__country_code__in=matching_codes)
+                else:
+                    qs = qs.filter(profile__country_code__iexact=query)
+            elif filter_type == 'position':
+                qs = qs.filter(profile__position__icontains=query)
+            elif filter_type == 'research_interests':
+                qs = qs.filter(profile__research_interests__icontains=query)
             else:
-                users = users.filter(profile__country_code__iexact=query)
-        elif filter_type == 'position':
-            users = users.filter(profile__position__icontains=query)
-        elif filter_type == 'research_interests':
-            users = users.filter(profile__research_interests__icontains=query)
-        else:
-            users = users.filter(
-                Q(first_name__icontains=query) |
-                Q(last_name__icontains=query) |
-                Q(email__icontains=query) |
-                Q(profile__position__icontains=query) |
-                Q(profile__country_code__icontains=query) |
-                Q(profile__research_interests__icontains=query))
+                qs = qs.filter(
+                    Q(first_name__icontains=query) |
+                    Q(last_name__icontains=query) |
+                    Q(email__icontains=query) |
+                    Q(profile__position__icontains=query) |
+                    Q(profile__country_code__icontains=query) |
+                    Q(profile__research_interests__icontains=query))
+        return qs
 
-    paginator = Paginator(users, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['COUNTRY_CHOICES'] = COUNTRY_CHOICES
+        context['query'] = self.request.GET.get('q', '')
+        context['filter_type'] = self.request.GET.get('filter', 'all')
+        context['countries'] = dict(COUNTRY_CHOICES)
+        context['user_filters'] = [
+            {'value': 'all', 'label': 'All Fields'},
+            {'value': 'name', 'label': 'Name'},
+            {'value': 'country', 'label': 'Country'},
+            {'value': 'position', 'label': 'Position'},
+            {'value': 'research_interests', 'label': 'Research Interests'},
+        ]
+        return context
 
-    countries = dict(COUNTRY_CHOICES)
+class ResearchersListView(UserListView):
+    role = CustomUser.Role.RESEARCHER
 
-    return render(request, 'accounts/users_list.html', {
-        'users': page_obj,
-        'COUNTRY_CHOICES': COUNTRY_CHOICES,
-        'query': query,
-        'filter_type': filter_type,
-        'countries': countries,
-        'user_filters': user_filters,
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_type'] = 'researcher'
+        return context
 
+class StudentsListView(UserListView):
+    role = CustomUser.Role.STUDENT
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_type'] = 'student'
+        return context
 
 @require_GET
 def search_accounts(request):

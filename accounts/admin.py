@@ -27,7 +27,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+        ('Permissions', {'fields': ('is_active', 'role', 'is_staff', 'is_superuser',
                                     'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
@@ -63,7 +63,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Application Info', {
-            'fields': ('email', 'first_name', 'last_name', 'position', 'education', 'country_code', 'motivation')
+            'fields': ('email', 'first_name', 'last_name', 'role', 'position', 'education', 'country_code', 'motivation')
         }),
         ('Review', {
             'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')

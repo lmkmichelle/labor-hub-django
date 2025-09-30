@@ -4,7 +4,11 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h2 class="title text-center mb-4" style="font-size:2rem">Directory of Scholars</h2>
+        {% if user_type == 'student' %}
+        <h2 class="title text-center mb-4" style="font-size:2rem">Directory of Students</h2>
+        {% else %}
+        <h2 class="title text-center mb-4" style="font-size:2rem">Directory of Researchers</h2>
+        {% endif %}
         {% include 'partials/_search_form.html' with search_placeholder="Search scholars..." search_filters=user_filters %}
     </div>
 </div>

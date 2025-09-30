@@ -38,7 +38,7 @@ class Publication(models.Model):
     topic = models.CharField(max_length=300, blank=True)
     keywords = JSONField(default=list)
     study_url = models.URLField()
-    is_job_market = models.BooleanField()
+    is_job_market = models.BooleanField(default=False)
     pdf = models.FileField(upload_to='publications/pdf', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)

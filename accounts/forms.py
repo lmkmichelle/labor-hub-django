@@ -27,10 +27,6 @@ class MultipleFileField(forms.FileField):
         return result
 
 class BaseApplicationForm(forms.ModelForm):
-    research_papers = MultipleFileField(
-        label="Upload up to 3 research papers (PDF only)",
-        required=False )
-
     resume = forms.FileField(
         label="Upload your resume/CV (PDF only)",
         required=False
@@ -52,11 +48,6 @@ class BaseApplicationForm(forms.ModelForm):
         widget=forms.TextInput()
     )
 
-    position = forms.CharField(
-        label='Current Affiliation',
-        widget=forms.TextInput()
-    )
-
     class Meta:
         model = UserApplication
         fields = (
@@ -65,10 +56,8 @@ class BaseApplicationForm(forms.ModelForm):
             "last_name",
             "resume",
             "education",
-            "position",
             "country_code",
-            "motivation",
-            "research_papers"
+            "motivation"
         )
 
     def save(self, commit=True):
@@ -105,7 +94,6 @@ class BaseApplicationForm(forms.ModelForm):
             "country_code",
             "motivation",
             "resume",
-            "research_papers",
             "email",
             "password1",
             "password2",
@@ -135,7 +123,23 @@ class BaseApplicationForm(forms.ModelForm):
         return email
 
 class ResearcherApplicationForm(BaseApplicationForm):
-    pass
+    research_papers = MultipleFileField(
+        label="Upload up to 3 research papers (PDF only)",
+        required=False)
+
+    class Meta(BaseApplicationForm.Meta):
+        fields = BaseApplicationForm.Meta.fields + ("research_papers",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        layout_fields = list(self.helper.layout.fields)
+        button_holder = layout_fields.pop()
+
+        layout_fields.append("research_papers")
+        layout_fields.append(button_holder)
+
+        self.helper.layout.fields = layout_fields
 
 class StudentApplicationForm(BaseApplicationForm):
     advisor = forms.ModelChoiceField(
@@ -157,6 +161,14 @@ class StudentApplicationForm(BaseApplicationForm):
         layout_fields.append(button_holder)
 
         self.helper.layout.fields = layout_fields
+
+    def save(self, commit=True):
+        application = super().save(commit=False)
+        application.role = CustomUser.Role.STUDENT  # Set role to student
+        if commit:
+            application.save()
+
+        return application
 
     def clean_advisor(self):
         advisor = self.cleaned_data.get("advisor")

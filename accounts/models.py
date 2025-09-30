@@ -118,6 +118,7 @@ class UserApplication(models.Model):
     email = models.EmailField()
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, choices=CustomUser.Role.choices, default=CustomUser.Role.RESEARCHER)
     position = models.CharField(max_length=100)
     education = models.CharField(max_length=100)
     password = models.CharField(max_length=128)
@@ -158,7 +159,7 @@ class UserApplication(models.Model):
     class Meta:
         ordering = ['-applied_at']
 
-    def approve(self, admin_user=None, role=CustomUser.Role.RESEARCHER, advisor=None):
+    def approve(self, admin_user=None, advisor=None):
         if self.status != 'pending':
             raise ValueError("Only pending applications can be approved")
 
@@ -171,8 +172,8 @@ class UserApplication(models.Model):
             first_name=self.first_name,
             last_name=self.last_name,
             is_active=True,
-            role = role,
-            advisor = advisor if role == CustomUser.Role.STUDENT else None,
+            role = self.role,
+            advisor = advisor if self.role == CustomUser.Role.STUDENT else None,
         )
 
         user.save()
