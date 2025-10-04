@@ -10,3 +10,7 @@ docker compose up --build
 docker exec -it nole-app python manage.py makemigrations    
 docker exec -it nole-app python manage.py migrate
 ```
+### Make new app
+```
+docker exec -it nole-app python manage.py startapp <app_name>
+```
