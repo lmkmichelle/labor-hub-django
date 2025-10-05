@@ -2,13 +2,179 @@
 {% load static %}
 
 {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="title text-center mb-4" style="font-size:2rem">Upcoming Events</h2>
+    </div>
+</div>
 
-<h1>Events</h1>
-<ul>
-{% for event in events %}
-    <li>{{ event.title }}</li>
-{% empty %}
-    <li>No events yet.</li>
-{% endfor %}
-</ul>
+<!-- Search Bar and Create Button -->
+<div class="row mb-4">
+    <div class="col-lg-10">
+        <form method="GET" id="searchForm">
+            <div class="input-group">
+                <input type="text"
+                       class="form-control"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Search events by title, description, or location...">
+                <button class="btn btn-primary" type="submit">
+                    <i class="mdi mdi-magnify"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-2">
+        {% if user.is_authenticated %}
+        <a href="{% url 'event-create' %}" class="btn btn-success w-100">
+            <i class="mdi mdi-plus"></i> Post Event
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Sidebar - Filters -->
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Filter Events</h5>
+                <form method="GET" id="filterForm">
+                    <!-- Preserve search query -->
+                    <input type="hidden" name="q" value="{{ query }}">
+
+                    <!-- Category Filter -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Category</h6>
+                        {% for value, label in category_choices %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="category"
+                                   value="{{ value }}"
+                                   id="category-{{ value }}"
+                                   {% if value in selected_categories %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                            <label class="form-check-label" for="category-{{ value }}">
+                                {{ label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Date Range Filter -->
+                    <div class="mb-3">
+                        <h6 class="mb-3">Date Range</h6>
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">From</label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="start_date"
+                                   name="start_date"
+                                   value="{{ start_date }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">To</label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="end_date"
+                                   name="end_date"
+                                   value="{{ end_date }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Apply Date Filter</button>
+                    </div>
+
+                    <hr>
+
+                    <a href="{% url 'events-list' %}" class="btn btn-secondary btn-sm w-100">Clear All Filters</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Events List -->
+    <div class="col-lg-9">
+        {% if events %}
+            {% for event in events %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <div class="event-date">
+                                <div class="fs-1 fw-bold text-primary">{{ event.date|date:"d" }}</div>
+                                <div class="text-muted">{{ event.date|date:"M Y" }}</div>
+                                <div class="text-muted small">{{ event.date|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h4 class="mb-1">{{ event.title }}</h4>
+                                    <span class="badge bg-primary mb-2">{{ event.get_category_display }}</span>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-2">
+                                <i class="mdi mdi-map-marker"></i> {{ event.location }}
+                            </p>
+                            <p class="mb-2">{{ event.description|truncatewords:30 }}</p>
+                            {% if event.host %}
+                            <p class="text-muted small mb-0">
+                                <i class="mdi mdi-account"></i> Hosted by {{ event.host.get_full_name }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="mt-4">
+                <nav aria-label="Events pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="mdi mdi-calendar-blank" style="font-size: 4rem; color: #ccc;"></i>
+                    <h5 class="mt-3">No Events Found</h5>
+                    <p class="text-muted">There are no upcoming events matching your criteria.</p>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'event-create' %}" class="btn btn-primary mt-2">Post an Event</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
