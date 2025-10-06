@@ -105,7 +105,8 @@ ul {
     margin-right: 5px;
 }
 
-p.box-list {
+p.box-list,
+span.box-list {
     margin-top: 0.2rem;
     margin-bottom: 0.5rem;
     display: inline-block;
