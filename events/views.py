@@ -1,0 +1,88 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import ListView, CreateView, DetailView
+from django.db.models import Q
+
+from .models import Event
+from .forms import EventForm
+
+
+class EventsListView(ListView):
+    model = Event
+    template_name = 'events/event_list.html'
+    context_object_name = 'events'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = Event.objects.filter(
+            status='approved',
+            date__gte=timezone.now()
+        )
+
+        # Search query
+        query = self.request.GET.get('q', '')
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(location__icontains=query)
+            )
+
+        # Category filter
+        categories = self.request.GET.getlist('category')
+        if categories:
+            queryset = queryset.filter(category__in=categories)
+
+        # Date range filter
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+
+        return queryset.order_by('date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')
+        context['selected_categories'] = self.request.GET.getlist('category')
+        context['start_date'] = self.request.GET.get('start_date', '')
+        context['end_date'] = self.request.GET.get('end_date', '')
+        context['category_choices'] = Event.CATEGORY_CHOICES
+        return context
+
+class EventsDetailView(DetailView):
+    model = Event
+    template_name = 'events/event_detail.html'
+    context_object_name = 'event'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+
+        if obj.status == 'approved':
+            return obj
+
+        if self.request.user.is_authenticated and self.request.user == obj.host:
+            return obj
+
+        raise Http404("This event is not available.")
+
+class EventCreateView(LoginRequiredMixin, CreateView):
+    model = Event
+    form_class = EventForm
+    template_name = 'events/event_form.html'
+    success_url = reverse_lazy('events-list')
+
+    def form_valid(self, form):
+        event = form.save(commit=False)
+        event.host = self.request.user
+        event.status = 'pending'
+        event.save()
+        messages.success(self.request, 'Event submitted successfully! It will be visible once approved by an administrator.')
+        return redirect(self.success_url)
