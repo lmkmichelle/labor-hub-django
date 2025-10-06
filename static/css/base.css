@@ -461,3 +461,22 @@ a {
 .mt-1 {
     margin-top: 0.25rem!important;
 }
+
+/* Date input styling */
+input[type="date"] {
+    padding: 0.375rem 0.75rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: auto;
+}

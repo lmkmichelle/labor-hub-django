@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="row publications-header">
+    <div class="col md-6">
+        <h2 class="title" style="padding-bottom: 0.5rem">{{ event.title }}</h2>
+        <div class="box-list">
+            <ul>
+                <li>
+                    <a href="#">
+                        <span>{{ event.get_category_display }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!--    <div class="col md-6 d-flex flex-column align-items-end">-->
+    <!--        <div class="d-flex align-items-center">-->
+    <!--            {% if user.is_authenticated and user == event.host %}-->
+    <!--            <a href="#" class="nav-link"-->
+    <!--               style="color: var(&#45;&#45;primary); text-decoration-line: underline; margin-right: 1rem;">Edit Event</a>-->
+    <!--            {% endif %}-->
+    <!--        </div>-->
+    <!--    </div>-->
+</div>
+<div class="row">
+    <h3>Description</h3>
+    <div class="copy-expandable">
+        {{ event.description }}
+    </div>
+
+    <h3>Location</h3>
+    <div class="copy-expandable">
+        <i class="mdi mdi-map-marker"></i> {{ event.location }}
+    </div>
+
+    <h3>Date & Time</h3>
+    <div class="copy-expandable">
+        {% if event.end_date %}
+        <p class="text-muted mb-2">{{ event.date|date:"l, M. j g:i A" }} - {{ event.end_date|date:"M. j g:i A" }}</p>
+        {% else %}
+        <p class="text-muted mb-2">{{ event.date|date:"l, M. j g:i A" }}</p>
+        {% endif %}
+    </div>
+    <div class="authors">
+        {% if event.host %}
+        <a class="profile-link"
+           href="{% url 'profile' pk=event.host.id %}">Hosted by {{ event.host.get_full_name }}</a>
+        {% else %}
+        Host information not available
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

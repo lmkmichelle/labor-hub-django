@@ -1,82 +1,37 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="card-title mb-4">Post a New Event</h2>
-                <p class="text-muted mb-4">Submit your event for review. Once approved by an administrator, it will be visible to all users.</p>
-
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ form.non_field_errors }}
-                    </div>
-                    {% endif %}
-
-                    <div class="mb-3">
-                        <label for="{{ form.title.id_for_label }}" class="form-label">Event Title <span class="text-danger">*</span></label>
-                        {{ form.title }}
-                        {% if form.title.errors %}
-                        <div class="text-danger small">{{ form.title.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.category.id_for_label }}" class="form-label">Category <span class="text-danger">*</span></label>
-                        {{ form.category }}
-                        {% if form.category.errors %}
-                        <div class="text-danger small">{{ form.category.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">Description <span class="text-danger">*</span></label>
-                        {{ form.description }}
-                        {% if form.description.errors %}
-                        <div class="text-danger small">{{ form.description.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }} <span class="text-danger">*</span></label>
-                            {{ form.date }}
-                            {% if form.date.errors %}
-                            <div class="text-danger small">{{ form.date.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.end_date.id_for_label }}" class="form-label">{{ form.end_date.label }}</label>
-                            {{ form.end_date }}
-                            {% if form.end_date.errors %}
-                            <div class="text-danger small">{{ form.end_date.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.location.id_for_label }}" class="form-label">Location <span class="text-danger">*</span></label>
-                        {{ form.location }}
-                        {% if form.location.errors %}
-                        <div class="text-danger small">{{ form.location.errors }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Enter the physical address or virtual meeting link</small>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Submit Event</button>
-                        <a href="{% url 'events-list' %}" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{% block title %}
+{% if object %}
+Edit Paper
+{% else %}
+Submit Paper
+{% endif %}
 {% endblock %}
 
+{% block content %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+
+<h2 class="title">
+    Create an event
+</h2>
+
+<form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% crispy form %}
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        {{ form.errors }}
+    </div>
+    {% endif %}
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
+<script src="{% static 'js/tagify.js' %}"></script>
+
+{% endblock %}
