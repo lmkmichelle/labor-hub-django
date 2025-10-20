@@ -37,8 +37,15 @@
                     <li class="nav-item px-2">
                         <a class="nav-link {% if url_name == 'map' %}active{% endif %}" href="{% url 'map'%}">World Map</a>
                     </li>
-                    <li class="nav-item px-2">
-                        <a class="nav-link {% if url_name == 'map' %}active{% endif %}" href="{% url 'events-list'%}">Events</a>
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            Events
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'events-list' %}">Events</a></li>
+                            <li><a class="dropdown-item" href="{% url 'seminars-list' %}">Seminars</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item dropdown px-2">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"

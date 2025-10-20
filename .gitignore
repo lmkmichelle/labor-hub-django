@@ -1,1 +1,7 @@
 .env
+
+.idea/
+
+nole/__pycache__/
+staticfiles/
+*.pyc

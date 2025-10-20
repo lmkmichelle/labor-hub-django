@@ -6,10 +6,10 @@ from accounts.models import CustomUser
 class Event(models.Model):
     CATEGORY_CHOICES = [
         ('conference', 'Conference'),
-        ('seminar', 'Seminar'),
+        ('podcast', 'Live Podcast'),
         ('workshop', 'Workshop'),
-        ('webinar', 'Webinar'),
-        ('networking', 'Networking Event'),
+        ('schools', 'Seasonal Schools'),
+        ('courses', 'Courses/Retreats'),
         ('other', 'Other'),
     ]
 
