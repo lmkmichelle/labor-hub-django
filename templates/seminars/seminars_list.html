@@ -1,8 +1,75 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Seminars{% endblock %}
 
 {% block content %}
-<h2 class="title">Seminars</h2>
+<h2 class="title text-center mb-4" style="font-size:2rem">Seminars</h2>
+<p>Discover and attend academic seminars hosted by our research community. Join discussions, learn from experts, and expand your knowledge in various fields of study.</p>
+
+{% include 'partials/_search_form.html' with search_placeholder="Search seminars..." search_filters=seminar_filters %}
+
+<div class="list-group">
+    {% for seminar in seminars %}
+    <div class="list-group-item list-group-item-action"
+         style="margin-bottom: 0"
+         aria-current="true">
+        <div class="d-flex w-100 justify-content-between">
+            <h3 class="list-title">{{ seminar.title }}</h3>
+            <small class="text-muted">{{ seminar.date|date:"M d, Y" }}</small>
+        </div>
+        <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+            <p class="box-list mb-0">
+                {% if seminar.host %}
+                    Hosted by {{ seminar.host.get_full_name }}
+                {% else %}
+                    Host TBA
+                {% endif %}
+            </p>
+            <small class="text-muted">{{ seminar.date|date:"H:i" }}</small>
+        </div>
+        <p class="mb-1">
+            <i class="mdi mdi-map-marker text-muted"></i> {{ seminar.location }}
+        </p>
+        <p class="list-description mb-1">{{ seminar.description|truncatewords:30 }}</p>
+    </div>
+    {% empty %}
+    <div class="list-group-item">
+        <p class="text-muted text-center mb-0">No seminars scheduled at the moment. Check back soon!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-4 pt-2 col-lg-12">
+    <nav aria-label="Seminars pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
 {% endblock %}

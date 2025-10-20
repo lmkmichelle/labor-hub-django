@@ -5,15 +5,108 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.views.generic import ListView
+from django.utils import timezone
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
+from events.models import Event
+from seminars.models import Seminar
 
 country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
 
 def home(request):
-    return render(request, 'core/home.html')
+    # Get upcoming events (next 3)
+    upcoming_events_qs = Event.objects.filter(
+        status='approved',
+        date__gte=timezone.now()
+    ).order_by('date')[:3]
+
+    # Format events for _list_display template
+    upcoming_events = []
+    for event in upcoming_events_qs:
+        upcoming_events.append({
+            'url': f'/events/{event.id}/',
+            'title': event.title,
+            'date': event.date.strftime('%b %d'),
+            'subtitle': f'Discussion Series #{event.id}' if hasattr(event, 'id') else '',
+            'description': f'📍 {event.location}',
+            'badge': {
+                'class': 'bg-primary',
+                'text': event.get_category_display()
+            },
+            'meta': {
+                'right': event.date.strftime('%H:%M')
+            }
+        })
+
+    # Get upcoming seminars (next 3)
+    upcoming_seminars_qs = Seminar.objects.filter(
+        date__gte=timezone.now()
+    ).order_by('date')[:3]
+
+    # Format seminars for _list_display template
+    upcoming_seminars = []
+    for seminar in upcoming_seminars_qs:
+        upcoming_seminars.append({
+            'url': f'/seminars/{seminar.id}/' if hasattr(seminar, 'get_absolute_url') else '#',
+            'title': seminar.title,
+            'date': seminar.date.strftime('%b %d'),
+            'subtitle': f'Hosted by {seminar.host.get_full_name()}' if seminar.host else 'Host TBA',
+            'description': f'📍 {seminar.location}',
+            'meta': {
+                'right': seminar.date.strftime('%H:%M')
+            }
+        })
+
+    # Get new scholars (recently joined, last 3)
+    new_scholars_qs = CustomUser.objects.filter(
+        is_active=True,
+        profile__isnull=False
+    ).order_by('-date_joined')[:3]
+
+    # Format scholars for _list_display template
+    new_scholars = []
+    for scholar in new_scholars_qs:
+        new_scholars.append({
+            'url': f'/profile/{scholar.pk}/',
+            'title': scholar.get_full_name(),
+            'date': scholar.date_joined.strftime('%b %d'),
+            'subtitle': scholar.profile.position or 'Position not specified',
+            'description': scholar.profile.get_country_code_display() if scholar.profile.country_code else ''
+        })
+
+    # Get recent approved papers (last 3)
+    recent_papers_qs = Publication.objects.filter(
+        status='approved'
+    ).prefetch_related('authors__user').order_by('-applied_at')[:3]
+
+    # Format papers for _list_display template
+    recent_papers = []
+    for paper in recent_papers_qs:
+        authors = []
+        for author in paper.authors.all():
+            if author.user:
+                authors.append(author.user.get_full_name())
+            else:
+                authors.append(author.name)
+
+        recent_papers.append({
+            'url': f'/publications/{paper.id}/',
+            'title': paper.title,
+            'date': paper.applied_at.strftime('%b %d'),
+            'subtitle': f'Discussion Series #{paper.id}',
+            'description': ', '.join(authors) if authors else 'Unknown Author'
+        })
+
+    context = {
+        'upcoming_events': upcoming_events,
+        'upcoming_seminars': upcoming_seminars,
+        'new_scholars': new_scholars,
+        'recent_papers': recent_papers,
+    }
+
+    return render(request, 'core/home.html', context)
 
 
 def map_view(request):

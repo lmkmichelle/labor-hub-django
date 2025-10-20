@@ -1,12 +1,66 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ publication.title }}{% endblock %}
+{% block title %}Labor Hub - Home{% endblock %}
 
 {% block content %}
-<h2 class="title text-center mb-4" style="font-size:2rem">Labor Hub</h2>
-<p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.
-    In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla
-    lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel
-    class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+<div class="text-center">
+    <h2 class="title text-center mb-4" style="font-size:2rem">Labor Hub</h2>
+    <p class="mb-5">Your central hub for labor economics research, connecting scholars worldwide and facilitating the exchange of cutting-edge research and ideas. Discover new publications, connect with researchers, and stay updated on the latest events in our field.</p>
+</div>
 
+<!-- Two Column Layout -->
+<div class="row">
+    <!-- Left Column: New Scholars & Recent Papers -->
+    <div class="col-lg-6">
+        <!-- New Scholars Section -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-4 mb-0">New Scholars</h3>
+                <a href="{% url 'researchers' %}" class="btn btn-primary btn-sm" style="font-size:0.875rem; padding: .5rem .5rem">See all scholars</a>
+            </div>
+
+            {% include 'partials/_list_display.html' with items=new_scholars empty_message="No new scholars to display." %}
+        </div>
+
+        <!-- Divider between sections -->
+        <hr class="my-5" style="border-color: var(--primary); border-width: 2px;">
+
+        <!-- Recent Papers Section -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-4 mb-0">Recent Papers</h3>
+                <a href="{% url 'publications' %}" class="btn btn-primary btn-sm" style="font-size:0.875rem; padding: .5rem .5rem">See all papers</a>
+            </div>
+
+            {% include 'partials/_list_display.html' with items=recent_papers empty_message="No recent papers to display." %}
+        </div>
+    </div>
+
+    <!-- Right Column: Upcoming Events & Seminars -->
+    <div class="col-lg-6">
+        <!-- Upcoming Events Section -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-4 mb-0">Upcoming Events</h3>
+                <a href="{% url 'events-list' %}" class="btn btn-primary btn-sm" style="font-size:0.875rem; padding: .5rem .5rem">See all events</a>
+            </div>
+
+            {% include 'partials/_list_display.html' with items=upcoming_events empty_message="No upcoming events to display." %}
+        </div>
+
+        <!-- Divider between sections -->
+        <hr class="my-5" style="border-color: var(--primary); border-width: 2px;">
+
+        <!-- Upcoming Seminars Section -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-4 mb-0">Upcoming Seminars</h3>
+                <a href="{% url 'seminars-list' %}" class="btn btn-primary btn-sm" style="font-size:0.875rem; padding: .5rem .5rem">See all seminars</a>
+            </div>
+
+            {% include 'partials/_list_display.html' with items=upcoming_seminars empty_message="No upcoming seminars to display." %}
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,58 @@
+{% load static %}
+
+<div class="list-group">
+    {% for item in items %}
+    <a href="{{ item.url }}"
+       class="list-group-item list-group-item-action {% if item.status %}{{ item.status }}{% endif %}"
+       style="margin-bottom: 0; padding: 1rem 1rem;"
+       aria-current="true">
+
+        <!-- Header row with title and optional status/date -->
+        <div class="d-flex w-100 justify-content-between align-items-start">
+            <h6 class="list-title mb-2">{{ item.title }}</h6>
+            {% if item.badge %}
+                <span class="badge {{ item.badge.class }}">{{ item.badge.text }}</span>
+            {% elif item.date %}
+                <small class="text-muted font-sm" style="font-weight:100;">{{ item.date }}</small>
+            {% elif item.status_text %}
+                <span class="box-list-headline">{{ item.status_text }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Optional subtitle/meta info -->
+        {% if item.subtitle %}
+            <p class="box-list mb-1">{{ item.subtitle }}</p>
+        {% endif %}
+
+        <!-- Main content/description -->
+        {% if item.description %}
+            <p class="list-description mb-1">{{ item.description }}</p>
+        {% endif %}
+
+        <!-- Optional metadata row -->
+        {% if item.meta %}
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                {% if item.meta.left %}
+                    <small class="text-muted">{{ item.meta.left }}</small>
+                {% endif %}
+                {% if item.meta.right %}
+                    <small class="text-muted">{{ item.meta.right }}</small>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Optional tags/categories -->
+        {% if item.tags %}
+            <div class="mt-2">
+                {% for tag in item.tags %}
+                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </a>
+    {% empty %}
+    <div class="list-group-item">
+        <p class="text-muted text-center mb-0">{{ empty_message|default:"No items to display." }}</p>
+    </div>
+    {% endfor %}
+</div>
