@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'compressor',  # new
+    'nole',  # new
     "crispy_forms",
     "crispy_bootstrap5",
     "core",
@@ -45,6 +47,12 @@ INSTALLED_APPS = [
     "seminars",
     "accounts.apps.AccountsConfig",
 ]
+
+COMPRESS_ROOT = BASE_DIR / 'static'
+
+COMPRESS_ENABLED = True
+
+STATICFILES_FINDERS = ('compressor.finders.CompressorFinder',)
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 

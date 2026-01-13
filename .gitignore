@@ -1,5 +1,5 @@
 .env
-
+CACHE
 .idea/
 
 nole/__pycache__/

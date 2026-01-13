@@ -20,6 +20,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from django.conf.urls.static import static
 from django.conf import settings
+from .views import index
 
 urlpatterns = [
     path('', include('core.urls')),
