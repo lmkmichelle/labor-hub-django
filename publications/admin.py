@@ -94,6 +94,12 @@ class PublicationAdmin(admin.ModelAdmin):
 
 
     def account_actions(self, obj):
+        # Avoid reversing URLs with a missing PK on add view
+        if not obj or not obj.pk:
+            return format_html(
+                '<span style="color: #666; font-style: italic;">Save to see actions</span>'
+            )
+
         if obj.status == 'pending':
             return format_html(
                 '<a class="button" href="{}">Approve</a>&nbsp;'

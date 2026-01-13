@@ -13,13 +13,11 @@
     <link rel="stylesheet" href="{% static 'src/output.css' %}" />
     {% endcompress %}
   </head>
-  <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 
   <body>
     {% block navbar %}
-    <div id="navbar">
       <nav
-        class="bg-neutral-primary fixed w-full z-20 top-0 start-0 border-b border-default"
+        class="bg-neutral-primary w-full z-20 top-0 start-0 border-b border-default"
       >
         <div
           class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4"
@@ -246,10 +244,10 @@
           </div>
         </div>
       </nav>
-    </div>
     {% endblock %}
-    <div class="container mt-5" id="content">
+    <div class="container mx-auto mt-4"">
       {% block content %}{% endblock %}
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
   </body>
 </html>
