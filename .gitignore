@@ -5,3 +5,4 @@ CACHE
 nole/__pycache__/
 staticfiles/
 *.pyc
+*.pdf

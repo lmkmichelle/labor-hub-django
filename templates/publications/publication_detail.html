@@ -1,81 +1,72 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block title %}{{ publication.title }}{% endblock %}
-
 {% block content %}
-<div class="row publications-header">
-    <div class="col md-6">
-        <p style="margin-bottom: 0.5rem">{{ publication.formatted_date }}</p>
-        <h3 class="title">{{ publication.title }}</h3>
-        <div class="authors">
-            {% for author in publication.authors.all %}
-            {% if author.user %}
-            <a class="profile-link"
-               href="{% url 'profile' pk=author.user.id %}"
-               style="text-decoration: underline;">{{ author.user.get_full_name }}</a>{% else %}
-            {{ author.name }}
-            {% endif %}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-    <div class="col md-6 d-flex flex-column align-items-end">
-        <div class="d-flex align-items-center">
-            {% if user.is_authenticated %}
-            {% for author in publication.authors.all %}
-            {% if author.user == user %}
-            <a href="{% url 'edit_publication' pk=publication.pk %}" class="nav-link"
-               style="color: var(--primary); text-decoration-line: underline; margin-right: 1rem;">Edit Paper</a>
-            {% endif %}
-            {% endfor %}
-            {% endif %}
-            {% if publication.pdf %}
-            <a href="{{ publication.pdf.url }}"
-               class="d-inline-flex align-items-center"
-               download="{{ publication.title }}.pdf"
-               target="_blank"
-               style="margin-left: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     width="20"
-                     height="20"
-                     fill="var(--primary)"
-                     class="bi bi-download"
-                     viewBox="0 0 16 16">
-                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
-                </svg>
-            </a>
-            {% endif %}
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h3>Abstract</h3>
-    <div class="copy-expandable">
-        {{ publication.abstract }}
-    </div>
-    <h3>Country of study</h3>
-    <div class="copy-expandable">
-        {{ publication.country_code }}
-    </div>
-    <h3 class="small-headline">Link to study</h3>
-    <a href="{{ publication.study_url }}">{{ publication.study_url }}</a>
-    <div>
-        <h3 class="box-list-headline">Keywords</h3>
-        <div class="box-list">
-            <ul>
-                {% if publication.is_job_market%}
-                <li>
-                    <a href="#">Job Market Paper</a>
-                </li>
+    <article class="max-w-none format lg:format-lg">
+        <div class="col md-6">
+            <div class="flex flex-row w-full justify-between items-center">
+                <p>{{ publication.formatted_date }}</p>
+                <div class="not-format">
+                    {% if user.is_authenticated %}
+                        {% for author in publication.authors.all %}
+                            {% if author.user == user %}
+                                <a href="{% url 'edit_publication' pk=publication.pk %}"
+                                   class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Paper</a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex flex-row gap-2 items-center w-full overflow-auto">
+                <h3>{{ publication.title }}</h3>
+                {% if publication.pdf %}
+                    <a href="{{ publication.pdf.url }}"
+                       download="{{ publication.title }}.pdf"
+                       target="_blank"
+                       style="margin-left: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="20"
+                             height="20"
+                             class="inline"
+                             fill="var(--primary)"
+                             viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                        </svg>
+                    </a>
                 {% endif %}
-                {% for keyword in publication.keywords %}
-                <li>
-                    <a href="#">{{ keyword.value }}</a>
-                </li>
+            </div>
+            <div class="not-format mb-4">
+                {% for author in publication.authors.all %}
+                    {% if author.user %}
+                        <a class="text-red-700"
+                           style="text-decoration: underline"
+                           href="{% url 'profile' pk=author.user.id %}">{{ author.user.get_full_name }}</a>
+                    {% else %}
+                        {{ author.name }}
+                    {% endif %}
+                    {% if not forloop.last %},{% endif %}
                 {% endfor %}
-            </ul>
+            </div>
         </div>
-    </div>
-</div>
-{% endblock %}
+        <h4>Abstract</h4>
+        <p>{{ publication.abstract }}</p>
+        <h4>Country of study</h4>
+        <p>{{ publication.country_code }}</p>
+        <h4>Topic of study</h4>
+        <p>{{ publication.topic }}</p>
+        
+        <h4>Keywords</h4>
+        <div class="flex flex-row overflow-auto w-full not-format gap-2" style="margin-bottom:24px;">
+            {% if publication.is_job_market %}
+                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Job Market</span>
+            {% endif %}
+            {% for keyword in publication.keywords %}
+                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ keyword.value }}</span>
+            {% endfor %}
+        </div>
+
+        <h4>Link to study</h4>
+        <a href="{{ publication.study_url }}" class="pb-3">{{ publication.study_url }}</a>
+    </article>
+{% endblock content %}
