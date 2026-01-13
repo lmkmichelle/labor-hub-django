@@ -1,245 +1,187 @@
 <!DOCTYPE html>
-{% load compress %} {% load static %}
+{% load compress %}
+{% load static %}
 <html lang="en">
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>NOLE</title>
     {% compress css %}
-    <link rel="stylesheet" href="{% static 'src/output.css' %}" />
+      <link rel="stylesheet" href="{% static 'src/output.css' %}" />
     {% endcompress %}
   </head>
-
   <body>
     {% block navbar %}
-      <nav
-        class="bg-neutral-primary w-full z-20 top-0 start-0 border-b border-default"
-      >
-        <div
-          class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4"
-        >
+      <nav class="bg-neutral-primary w-full z-20 top-0 start-0 border-b border-default">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
           <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-            <img
-              src="{% static 'images/logo.png' %}"
-              alt="logo"
-              width="200px"
-            />
+            <img src="{% static 'images/logo.png' %}" alt="logo" width="200px" />
           </a>
-          <div
-            class="inline-flex gap-2 md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse"
-          >
+          <div class="inline-flex gap-2 md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
             {% if user.is_authenticated %}
-            <li>
-              <a
-                href="/publications/"
-                class="block py-2 px-3 {% if url_name == 'publications' %}text-red-700{% endif %} rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                >Authenticated</a
-              >
-            </li>
+              <button type="button"
+                      data-dropdown-toggle="user-dropdown"
+                      class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
+                {{ user.get_full_name }}
+              </button>
+              <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
+                   id="user-dropdown">
+                <div class="px-4 py-2 text-sm border-b border-default">
+                  <span class="block text-heading font-medium">{{ user.get_full_name }}</span>
+                  <span class="block text-body truncate">{{ user.email }}</span>
+                </div>
+                <ul class="p-2 text-sm text-body font-medium"
+                    aria-labelledby="user-menu-button">
+                  <li>
+                    <a href="{% url 'profile' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Profile</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'submit_paper' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
+                  </li>
+                  <li>
+                    <form class="dropdown-item" action="{% url 'logout' %}" method="post">
+                      {% csrf_token %}
+                      <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:cursor-pointer hover:text-heading rounded"
+                              type="submit">Sign out</button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
             {% else %}
-            <a
-              href="{% url 'login' %}"
-              class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block"
-              >Log in</a
-            >
-            <button
-              type="button"
-              data-dropdown-toggle="apply-dropdown-menu"
-              class="flex items-center text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none"
-            >
-              Apply
-            </button>
-            <!-- Dropdown -->
-            <div
-              class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
-              id="apply-dropdown-menu"
-            >
-              <ul class="p-2 text-sm text-body font-medium" role="none">
-                <li>
-                  <a
-                    href="{% url 'apply_researcher' %}"
-                    class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                    role="menuitem"
-                  >
-                    <div class="inline-flex items-center">For Researchers</div>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="{% url 'apply_student' %}"
-                    class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                    role="menuitem"
-                  >
-                    <div class="inline-flex items-center">For Students</div>
-                  </a>
-                </li>
-              </ul>
-            </div>
-
+              <a href="{% url 'login' %}"
+                 class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Log in</a>
+              <button type="button"
+                      data-dropdown-toggle="apply-dropdown-menu"
+                      class="flex items-center text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                Apply
+              </button>
+              <!-- Dropdown -->
+              <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
+                   id="apply-dropdown-menu">
+                <ul class="p-2 text-sm text-body font-medium" role="none">
+                  <li>
+                    <a href="{% url 'apply_researcher' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
+                       role="menuitem">
+                      <div class="inline-flex items-center">For Researchers</div>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="{% url 'apply_student' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
+                       role="menuitem">
+                      <div class="inline-flex items-center">For Students</div>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             {% endif %}
-
-            <button
-              data-collapse-toggle="navbar-cta"
-              type="button"
-              class="inline-flex items-center p-2 w-9 h-9 justify-center text-sm text-body rounded-base md:hidden hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-              aria-controls="navbar-cta"
-              aria-expanded="false"
-            >
+            <button data-collapse-toggle="navbar-cta"
+                    type="button"
+                    class="inline-flex items-center p-2 w-9 h-9 justify-center text-sm text-body rounded-base md:hidden hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+                    aria-controls="navbar-cta"
+                    aria-expanded="false">
               <span class="sr-only">Open main menu</span>
-              <svg
-                class="w-6 h-6"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-width="2"
-                  d="M5 7h14M5 12h14M5 17h14"
-                />
+              <svg class="w-6 h-6"
+                   aria-hidden="true"
+                   xmlns="http://www.w3.org/2000/svg"
+                   width="24"
+                   height="24"
+                   fill="none"
+                   viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14" />
               </svg>
             </button>
           </div>
-          <div
-            class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
-            id="navbar-cta"
-          >
+          <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
+               id="navbar-cta">
             {% with request.resolver_match.url_name as url_name %}
-            <ul
-              class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-default rounded-base bg-neutral-secondary-soft md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-neutral-primary"
-            >
-              <li>
-                <a
-                  href="/"
-                  class="block py-2 px-3 {% if url_name == 'home' %}text-red-700{% endif %} rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                  >Home</a
-                >
-              </li>
-              <li>
-                <a
-                  href="/publications/"
-                  class="block py-2 px-3 {% if url_name == 'publications' %}text-red-700{% endif %} rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                  >Discussion Papers</a
-                >
-              </li>
-              <li>
-                <a
-                  href="{% url 'map'%}"
-                  class="block py-2 px-3 {% if url_name == 'map' %}text-red-700{% endif %} rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                  >World Map</a
-                >
-              </li>
-              <li>
-                <button
-                  id="dropdownNavbarButton"
-                  data-dropdown-toggle="eventsDropdown"
-                  class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                >
-                  Events
-                  <svg
-                    class="w-4 h-4 ms-1.5"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="m19 9-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                <!-- Events -->
-                <div
-                  id="eventsDropdown"
-                  class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
-                >
-                  <ul
-                    class="p-2 text-sm text-body font-medium"
-                    aria-labelledby="dropdownNvbarButton"
-                  >
-                    <li>
-                      <a
-                        href="{% url 'events-list'%}"
-                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                        >Events</a
-                      >
-                    </li>
-                    <li>
-                      <a
-                        href="{% url 'seminars-list'%}"
-                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                        >Seminars</a
-                      >
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li>
-                <!-- Scholars -->
-                <button
-                  id="dropdownNvbarButton"
-                  data-dropdown-toggle="scholarsDropdown"
-                  class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700"
-                >
-                  Scholars
-                  <svg
-                    class="w-4 h-4 ms-1.5"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="m19 9-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                <div
-                  id="scholarsDropdown"
-                  class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
-                >
-                  <ul
-                    class="p-2 text-sm text-body font-medium"
-                    aria-labelledby="dropdownNvbarButton"
-                  >
-                    <li>
-                      <a
-                        href="{% url 'researchers' %}"
-                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                        >Researchers</a
-                      >
-                    </li>
-                    <li>
-                      <a
-                        href="{% url 'students' %}"
-                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                        >Students</a
-                      >
-                    </li>
-                  </ul>
-                </div>
-              </li>
-            </ul>
+              <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-default rounded-base bg-neutral-secondary-soft md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-neutral-primary">
+                <li>
+                  <a href="/"
+                     class="block py-2 px-3
+                            {% if url_name == 'home' %}text-red-700{% endif %}
+                            rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Home</a>
+                </li>
+                <li>
+                  <a href="/publications/"
+                     class="block py-2 px-3
+                            {% if url_name == 'publications' %}text-red-700{% endif %}
+                            rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Discussion Papers</a>
+                </li>
+                <li>
+                  <a href="{% url 'map' %}"
+                     class="block py-2 px-3
+                            {% if url_name == 'map' %}text-red-700{% endif %}
+                            rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">World Map</a>
+                </li>
+                <li>
+                  <button id="dropdownNavbarButton"
+                          data-dropdown-toggle="eventsDropdown"
+                          class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
+                    Events
+                    <svg class="w-4 h-4 ms-1.5"
+                         aria-hidden="true"
+                         xmlns="http://www.w3.org/2000/svg"
+                         width="24"
+                         height="24"
+                         fill="none"
+                         viewBox="0 0 24 24">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <!-- Events -->
+                  <div id="eventsDropdown"
+                       class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44">
+                    <ul class="p-2 text-sm text-body font-medium"
+                        aria-labelledby="dropdownNvbarButton">
+                      <li>
+                        <a href="{% url 'events-list' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Events</a>
+                      </li>
+                      <li>
+                        <a href="{% url 'seminars-list' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Seminars</a>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+                <li>
+                  <!-- Scholars -->
+                  <button id="dropdownNvbarButton"
+                          data-dropdown-toggle="scholarsDropdown"
+                          class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
+                    Scholars
+                    <svg class="w-4 h-4 ms-1.5"
+                         aria-hidden="true"
+                         xmlns="http://www.w3.org/2000/svg"
+                         width="24"
+                         height="24"
+                         fill="none"
+                         viewBox="0 0 24 24">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div id="scholarsDropdown"
+                       class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44">
+                    <ul class="p-2 text-sm text-body font-medium"
+                        aria-labelledby="dropdownNvbarButton">
+                      <li>
+                        <a href="{% url 'researchers' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Researchers</a>
+                      </li>
+                      <li>
+                        <a href="{% url 'students' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Students</a>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
             {% endwith %}
           </div>
         </div>
