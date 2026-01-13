@@ -60,6 +60,9 @@ class EventAdmin(admin.ModelAdmin):
         return HttpResponseRedirect(reverse('admin:events_event_changelist'))
 
     def account_actions(self, obj):
+        if not obj.pk:
+            return '-'
+        
         if obj.status == 'pending':
             approve_url = reverse('admin:approve_event', args=[obj.pk])
             reject_url = reverse('admin:reject_event', args=[obj.pk])

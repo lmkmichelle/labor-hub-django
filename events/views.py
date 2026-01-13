@@ -20,7 +20,6 @@ class EventsListView(ListView):
     def get_queryset(self):
         queryset = Event.objects.filter(
             status='approved',
-            date__gte=timezone.now()
         )
 
         # Search query
