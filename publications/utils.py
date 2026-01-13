@@ -56,6 +56,9 @@ def process_publication_form(request, form):
 
     raw_keywords = request.POST.get('keywords_input', '[]')
     publication.keywords = handle_keywords(raw_keywords)
+    
+    topic_input = request.POST.get('topic_input', '')
+    publication.topic = topic_input
 
     publication.save()
 

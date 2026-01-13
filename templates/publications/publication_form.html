@@ -9,31 +9,126 @@ Submit Paper
 {% endblock %}
 
 {% block content %}
-{% load crispy_forms_tags %}
 {% load static %}
 
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
-
-<h2 class="title">
+<article class="format lg:format-lg max-w-none">
+<h3 class="title">
     {% if object %}
     Edit paper
     {% else %}
     Submit a paper
     {% endif %}
-</h2>
+</h3>
 
-<form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
+<form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
-    {% crispy form %}
-    {% if form.errors %}
-    <div class="alert alert-danger">
-        {{ form.errors }}
+    
+    {% if form.non_field_errors %}
+    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+        {{ form.non_field_errors }}
     </div>
     {% endif %}
+    
+    <div class="mb-5">
+        <label for="{{ form.title.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.title.label }}</label>
+        <input type="text" name="{{ form.title.name }}" id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Paper title" required />
+        {% if form.title.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.authors_input.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.authors_input.label }}</label>
+        <input type="text" name="{{ form.authors_input.name }}" id="{{ form.authors_input.id_for_label }}" value="{{ form.authors_input.field.widget.attrs.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Authors" required />
+        {% if form.authors_input.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.authors_input.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.date.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.date.label }}</label>
+        <input type="date" name="{{ form.date.name }}" id="{{ form.date.id_for_label }}" value="{{ form.date.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs" required />
+        {% if form.date.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.abstract.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.abstract.label }}</label>
+        <textarea name="{{ form.abstract.name }}" id="{{ form.abstract.id_for_label }}" rows="4" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Abstract">{{ form.abstract.value|default:'' }}</textarea>
+        {% if form.abstract.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.abstract.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.country_code.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.country_code.label }}</label>
+        <select name="{{ form.country_code.name }}" id="{{ form.country_code.id_for_label }}" class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs" required>
+            <option value="">Choose a country</option>
+            {% for value, label in form.country_code.field.choices %}
+                {% if value %}
+                    <option value="{{ value }}" {% if form.country_code.value == value %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        {% if form.country_code.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.country_code.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.topic_input.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.topic_input.label }}</label>
+        <input type="text" name="{{ form.topic_input.name }}" id="{{ form.topic_input.id_for_label }}" value="{{ form.topic_input.field.widget.attrs.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Research Topic" required />
+        {% if form.topic_input.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.topic_input.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.keywords_input.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.keywords_input.label }}</label>
+        <input type="text" name="{{ form.keywords_input.name }}" id="{{ form.keywords_input.id_for_label }}" value="{{ form.keywords_input.field.widget.attrs.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Keywords" required />
+        {% if form.keywords_input.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.keywords_input.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.study_url.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.study_url.label }}</label>
+        <input type="url" name="{{ form.study_url.name }}" id="{{ form.study_url.id_for_label }}" value="{{ form.study_url.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="https://example.com" required />
+        {% if form.study_url.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.study_url.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <div class="flex items-center">
+            <input type="checkbox" name="{{ form.is_job_market.name }}" id="{{ form.is_job_market.id_for_label }}" {% if form.is_job_market.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
+            <label for="{{ form.is_job_market.id_for_label }}" class="ml-2 text-sm font-medium text-heading">{{ form.is_job_market.label }}</label>
+        </div>
+        {% if form.is_job_market.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.is_job_market.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="mb-5">
+        <label for="{{ form.pdf.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">{{ form.pdf.label }}</label>
+        <input type="file" name="{{ form.pdf.name }}" id="{{ form.pdf.id_for_label }}" accept="application/pdf" class="block w-full text-sm text-gray-900 border border-default-medium rounded-base cursor-pointer bg-neutral-secondary-medium focus:outline-none">
+        {% if form.pdf.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.pdf.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="flex gap-3 mb-5">
+        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+            {% if object %}Update Paper{% else %}Submit Paper{% endif %}
+        </button>
+        <a href="{% if object %}{% url 'publication_detail' pk=object.pk %}{% else %}{% url 'publications' %}{% endif %}" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+    </div>
 </form>
-
+</article>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
 <script src="{% static 'js/tagify.js' %}"></script>

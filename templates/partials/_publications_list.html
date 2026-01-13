@@ -1,4 +1,4 @@
-<div class="list-group">
+<div class="flex flex-col gap-3">
     {% for publication in publications %}
         <a href="{% url 'publication_detail' publication.id %}"
            class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
