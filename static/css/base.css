@@ -1,0 +1,31 @@
+
+#map-wrap { position: relative; }
+
+#map-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+
+#map-wrap .land {
+    fill: #E4E4E4;
+    stroke: #CCC;
+    transition: 250ms;
+    stroke-width: 1px;
+}
+
+#map-wrap .land:hover {
+    fill: oklch(50.5% 0.213 27.518);
+    transition: 250ms;
+    cursor: pointer;
+}
+
+#map-wrap .land.has-data {
+    fill: oklch(50.5% 0.213 27.518);
+    cursor: pointer;
+}
+
+#map-wrap .land.selected {
+    fill: oklch(50.5% 0.213 27.518);
+}

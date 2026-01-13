@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (items.length === 0) {
       displayDiv.innerHTML = `
-      <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h2>
+      <h5>${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h5>
       <div class="text-center">
         There are no ${currentTab === 'users' ? 'users' : 'discussion papers'} based in ${countryName}.
       </div>
@@ -336,26 +336,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (currentTab === 'users') {
         listHtml += `
-        <div class="list-group-item list-group-item-action" style="margin-bottom: 0">
-          <div class="d-flex w-100 justify-content-between">
-            <h3 class="list-title">${item.first_name} ${item.last_name}</h3>
-          </div>
-          <p class="list-description">${item.education}</p>
-          <p class="list-description">${item.position}</p>
-        </div>
+         <a href="{% url 'publication_detail' publication.id %}"
+           class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
+            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Discussion Series #{{ publication.id }}</span>
+            <div class="ml-1 mt-1">
+                <h5 class="text-xl font-semibold text-heading">${item.first_name} ${item.last_name}</h5>
+                <p class="text-body">${item.education}</p>
+                <p>${item.position}</</p>
+            </div>
+        </a>
       `;
       } else {
         listHtml += `
-        <div class="list-group-item list-group-item-action" style="margin-bottom: 0">
-          <div class="d-flex w-100 justify-content-between">
-            <h3 class="list-title">${item.title}</h3>
-          </div>
-          <p class="list-description">${item.author || 'Unknown Author'}</p>
-        </div>
+        <a href="{% url 'publication_detail' publication.id %}"
+           class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
+            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Discussion Series #{{ publication.id }}</span>
+            <div class="ml-1 mt-1">
+                <h5 class="text-xl font-semibold text-heading">${item.title}</h5>
+                <p class="text-body">${item.education}</p>
+                <p>>${item.author || 'Unknown Author'}</p>
+            </div>
+        </a>
       `;
       }
     });
-    listHtml += '</div>';
 
     let moreLink = '';
     if (items.length > 5) {
