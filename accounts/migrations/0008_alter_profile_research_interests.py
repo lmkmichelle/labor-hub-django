@@ -10,9 +10,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='profile',
-            name='research_interests',
-            field=models.JSONField(blank=True, default=list),
+        migrations.RunSQL(
+            """
+            ALTER TABLE accounts_profile
+            ALTER
+            COLUMN research_interests
+                TYPE jsonb
+                USING to_jsonb(research_interests);
+            """,
+            reverse_sql="""
+                        ALTER TABLE accounts_profile
+                        ALTER
+                        COLUMN research_interests
+                TYPE varchar[]
+                USING array(SELECT jsonb_array_elements_text(research_interests));
+                        """
         ),
+
     ]
