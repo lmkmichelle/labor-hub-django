@@ -1,16 +1,166 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
-
-{% block title %}Apply{% endblock %}
 
 {% block content %}
-<h2 class="title">{{ application_type }} Application</h2>
+<article class="format lg:format-lg max-w-none">   
+<h3 class="title">{{ application_type }} Application</h2>
 
-    {% if application_type == "Student" %}
-        <p>Please select an advisor from the list of available researchers.</p>
-    {% endif %}
-<form method="POST">
+{% if application_type == "Student" %}
+    <p class="pb-4">Please select an advisor from the list of available researchers.</p>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" class="max-w-full mx-auto">
     {% csrf_token %}
-    {% crispy form %}
+    
+    {% if form.non_field_errors %}
+    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    {% if form.advisor %}
+    <div class="mb-5">
+        <label for="{{ form.advisor.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">
+            Select an Advisor
+        </label>
+        <select id="{{ form.advisor.id_for_label }}" name="{{ form.advisor.name }}"
+                class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs" required
+                required>
+            <option value="">Select an existing researcher as an advisor</option>
+            {% for advisor in form.advisor.field.queryset %}
+                <option value="{{ advisor.id }}" {% if form.advisor.value == advisor.id %}selected{% endif %}>
+                    {{ advisor.get_full_name }} - {{ advisor.profile.position|default:"Researcher" }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.advisor.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.advisor.errors.0 }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mb-5">
+        <label for="{{ form.first_name.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">First Name</label>
+        <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" value="{{ form.first_name.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="First name" required />
+        {% if form.first_name.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <label for="{{ form.last_name.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Last Name</label>
+        <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" value="{{ form.last_name.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Last name" required />
+        {% if form.last_name.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <label for="{{ form.education.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Current Institution</label>
+        <input type="text" name="{{ form.education.name }}" id="{{ form.education.id_for_label }}" value="{{ form.education.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Current Institution" required />
+        {% if form.education.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.education.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    {% if form.position %}
+    <div class="mb-5">
+        <label for="{{ form.position.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Position</label>
+        <input type="text" name="{{ form.position.name }}" id="{{ form.position.id_for_label }}" value="{{ form.position.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Position" required />
+        {% if form.position.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.position.errors.0 }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mb-5">
+        <label for="{{ form.country_code.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Position</label>
+        <input type="text" name="{{ form.position.name }}" id="{{ form.position.id_for_label }}" value="{{ form.position.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Position" required />
+        {% if form.position.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.position.errors.0 }}</p>
+        {% endif %}
+    </div>
+    <div class="mb-5">
+        <label for="{{ form.country_code.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Country</label>
+        <select name="{{ form.country_code.name }}" id="{{ form.country_code.id_for_label }}" class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs" required>
+            <option value="">Choose a country</option>
+            {% for value, label in form.country_code.field.choices %}
+                {% if value %}
+                    <option value="{{ value }}" {% if form.country_code.value == value %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        {% if form.country_code.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.country_code.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <label for="{{ form.motivation.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">
+            Motivation
+        </label>
+        <textarea id="{{ form.motivation.id_for_label }}" name="{{ form.motivation.name }}" rows="4"
+                  class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
+                  required>{{ form.motivation.value|default:'' }}</textarea>
+        {% if form.motivation.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.motivation.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <label class="block mb-2.5 text-sm font-medium text-heading" for="{{ form.resume.id_for_label }}">Upload Resume/CV (PDF only)</label>
+        <input 
+        class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body" 
+        id="{{ form.resume.id_for_label }}" name="{{ form.resume.name }}" type="file" accept=".pdf">
+        {% if form.resume.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.resume.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    {% if form.research_papers %}
+    <div class="mb-5">
+        <label class="block mb-2.5 text-sm font-medium text-heading" for="{{ form.research_papers.id_for_label }}">Upload Research Papers (PDF only)</label>
+        <input class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body" 
+        id="{{ form.research_papers.id_for_label }}" type="file" accept=".pdf" multiple>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="research_papers_input_help">Upload up to 3 research papers in PDF format</p>
+        {% if form.research_papers.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.research_papers.errors.0 }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    
+
+    <div class="mb-5">
+        <label for="email" class="block mb-2.5 text-sm font-medium text-heading">Email</label>
+        <input type="email" id="{{ form.email.id_for_label }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="net-id@school.edu" required />
+        {% if form.email.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <label for="{{ form.password1.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Password</label>
+        <input type="password" id="{{ form.password1.id_for_label }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="•••••••••" required />
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">Enter a secure password</p>
+        {% if form.password1.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+        {% endif %}
+    </div>
+    <div class="mb-5">
+        <label for="{{ form.password2.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Password</label>
+        <input type="password" id="{{ form.password2.id_for_label }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" required />
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">Enter the same password as before, for verification</p>
+        {% if form.password2.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    <div class="flex gap-3 mb-5">
+        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+            Submit Application
+        </button>
+        <a href="/" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+    </div>
 </form>
+ </article>
 {% endblock %}
