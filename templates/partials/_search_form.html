@@ -40,7 +40,7 @@
                id="search-dropdown"
                name="q"
                class="px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm focus:ring-red-600 focus:border-red-600 block w-full placeholder:text-body"
-               placeholder="Search discussion papers..."
+               placeholder="{{ search_placeholder|default:'Search...' }}"
                value="{{ query }}">
         <button type="submit"
                 class="inline-flex items-center text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-e-base text-sm px-4 py-2.5 focus:outline-none">

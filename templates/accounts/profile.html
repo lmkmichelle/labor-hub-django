@@ -5,72 +5,62 @@
 {% block content %}
 <article class="max-w-none format lg:format-lg">
     <div class="flex flex-row">
+        <div class="w-1/4">
+            <div class="not-format"> 
+                <img
+                    src="{{ user_profile.avatar.url }}"
+                    alt="Profile picture"> </img>
+            </div>
+            {% comment %} <div class="not-format flex flex-wrap gap-2"> 
+            {% for interest in user_profile.research_interests %}
+            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ interest.value }}{{ publication.id }}</span>
+            {% endfor %}
+            </div> {% endcomment %}
+        </div>
+        
         <div class="flex flex-col">
-            <div class="not-format gap-2">
-                <div class="flex flex-row">
-                    <div class="col-md-4 col-sm-6 text-center">
-                        {% comment %} <div class="max-w-64">
-                            <img
-                            class="max-w-xs"
-                            src="{{ user_profile.avatar.url }}"
-                            alt="Profile picture">
-                        </div> {% endcomment %}
-                    </div>
-                    <div class="col-md-8 col-sm-6">
-                        <div class="contact-info pb-2">
-                            <h3 class="person-title">
-                                {{ profile_user.first_name }} {{ profile_user.last_name }}
-                            </h3>
-                            <h4>{{ user_profile.education }}</h4>
-                            <h4>{{ user_profile.position }}</h4>
-                            <h4>{{ user.profile.get_country_code_display }}</h4>
-                        </div>
-                        <div class="contact-details">
-                            <a href="mailto: {{ user_profile.email }}"
-                               class="d-flex align-items-center me-2 text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
-                                     class="bi bi-envelope me-2"
-                                     style="color: var(--primary);"
-                                     viewBox="0 0 16 16">
-                                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
-                                </svg>
-                                <h4 class="profile-link">{{ profile_user.email }}</h4>
-                            </a>
-                            {% if user_profile.website %}
-                            <a href="{{ user.profile.website }}"
-                               class="d-flex align-items-center me-2 text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18"
-                                     class="bi bi-link-45deg me-2"
-                                     style="color: var(--primary);"
-                                     viewBox="0 0 16 16">
-                                    <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/>
-                                    <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
-                                </svg>
-                                <h4 class="profile-link">External homepage</h4>
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                <h3>{{ profile_user.first_name }} {{ profile_user.last_name }}</h3>
+                <h4>{{ user_profile.education }}</h4>
+                <h4>{{ user_profile.position }}</h4>
+                <h4>{{ user_profile.get_country_code_display }}</h4>
+            <div class="contact-details space-y-2">
+                <a href="mailto: {{ user_profile.email }}"
+                    class="flex items-center gap-2 no-underline hover:underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                            class="flex-shrink-0"
+                            style="color: var(--primary);"
+                            viewBox="0 0 16 16">
+                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
+                    </svg>
+                    <h4 class="profile-link">{{ profile_user.email }}</h4>
+                </a>
+                {% if user_profile.website %}
+                <a href="{{ user.profile.website }}"
+                    class="flex items-center gap-2 no-underline hover:underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="18" height="18"
+                            class="flex-shrink-0"
+                            style="color: var(--primary);"
+                            viewBox="0 0 16 16">
+                        <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1 1 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4 4 0 0 1-.128-1.287z"/>
+                        <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
+                    </svg>
+                    <h4 class="profile-link">External homepage</h4>
+                </a>
+                {% endif %}
             </div>
         </div>
-        <div class="{% if request.user == user %}col-md-4{% else %}col-md-6{% endif %} col-sm-6">
+        
+        <div class="{% if request.user == user %}w-full lg:w-1/3{% else %}w-full lg:w-1/2{% endif %} flex-shrink-0">
             <div class="element-business-card-details">
                 <h3 class="box-list-headline">Research Interests</h3>
                 <div class="box-list">
-                    <ul>
-                        {% for interest in user_profile.research_interests %}
-                        <li>
-                            <a href="#">{{ interest.value }}</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-
+                    
                 </div>
             </div>
         </div>
+        
         {% if request.user == user_profile.user %}
-        <div class="col-md-2 col-sm-4">
+        <div class="w-full lg:w-auto flex-shrink-0">
             <div class="element-business-card-details">
                 <a href="{% url 'edit_profile' %}" class="nav-link"
                    style="color: var(--primary); text-decoration-line: underline">Edit Profile</a>
@@ -78,8 +68,9 @@
         </div>
         {% endif %}
     </div>
-    <div class="row mt-4">
-        <div class="col">
+    
+    <div class="mt-8">
+        <div class="w-full">
             <h3>Biography</h3>
             <p>{{ user.profile.biography }}</p>
             <h2 class="title">Labor Hub Discussion Papers</h2>

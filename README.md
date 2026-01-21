@@ -1,6 +1,8 @@
 ### Getting Started
 
 ```
+npm install
+npx @tailwindcss/cli -i ./static/src/input.css -o ./static/src/output.css --watch
 docker compose up --build
 ```
 
