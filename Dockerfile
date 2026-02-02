@@ -1,3 +1,16 @@
+FROM node:20-slim AS node-builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY tailwind.config.js postcss.config.js ./
+COPY ./static ./static
+COPY ./templates ./templates
+
+RUN npm run build
+
 FROM python:3.12.11-slim-bullseye
 
 RUN mkdir /app
