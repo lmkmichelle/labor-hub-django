@@ -178,13 +178,6 @@ class UserApplication(models.Model):
 
         user.save()
 
-        Profile.objects.create(
-            user=user,
-            country_code=self.country_code,
-            position=self.position,
-            education=self.education,
-        )
-
         self.status = self.Status.APPROVED
         self.reviewed_at = timezone.now()
 
