@@ -177,6 +177,16 @@ class StudentApplicationForm(BaseApplicationForm):
         return advisor
 
 class CustomLoginForm(AuthenticationForm):
+    
+    username = forms.CharField(
+        label="Email",
+        widget=forms.EmailInput,
+    )
+    
+    password = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput
+    )
     class Meta:
         model = CustomUser
         fields = ("username", "password")
