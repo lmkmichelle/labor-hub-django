@@ -1,37 +1,44 @@
 {% extends "base.html" %}
+{% load form_tags %}
 
-{% block title %}
 {% if object %}
 Edit Paper
 {% else %}
 Submit Paper
 {% endif %}
-{% endblock %}
 
 {% block content %}
-{% load crispy_forms_tags %}
+<article class="format lg:format-lg max-w-none">   
+<h3 class="title">Create an Event</h3>
 {% load static %}
-
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
-
-<h2 class="title">
-    Create an event
-</h2>
 
 <form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
     {% csrf_token %}
-    {% crispy form %}
-    {% if form.errors %}
-    <div class="alert alert-danger">
-        {{ form.errors }}
+    {% if form.non_field_errors %}
+    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+        {{ form.non_field_errors }}
     </div>
     {% endif %}
+
+    {% render_field form.title %}
+
+    {% render_field form.description %}
+
+    {% render_field form.date %}
+
+    {% render_field form.end_date %}
+
+    {% render_field form.location %}
+
+    {% render_field form.category %}
+
+    <div class="flex gap-3 mb-5">
+        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+            Submit
+        </button>
+        <a href="/events/" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+    </div>
+
 </form>
-
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
-<script src="{% static 'js/tagify.js' %}"></script>
-
+ </article>
 {% endblock %}

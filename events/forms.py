@@ -5,12 +5,41 @@ from django.urls import reverse_lazy
 
 from .models import Event
 
-
 class EventForm(forms.ModelForm):
+    title = forms.CharField(
+        label="Event Title",
+        widget=forms.TextInput,
+        required=True,
+    )
+
+    description = forms.CharField(
+        label="Event Description",
+        widget=forms.Textarea,
+        required=False
+    )
+    
+    date = forms.DateField(
+        label="Event Date",
+        widget=forms.DateInput,
+        required=True
+    )
+    
+    end_date = forms.DateField(
+        label="(Optional) End Date",
+            widget=forms.DateInput,
+        required=False
+    )
+    
+    location = forms.CharField(
+        label="Location of Event",
+        widget=forms.TextInput,
+        max_length=255,
+        required=True
+    )
+    
     class Meta:
         model = Event
         fields = ['title', 'description', 'date', 'end_date', 'location', 'category']
-
 
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Title'}),
@@ -23,6 +52,7 @@ class EventForm(forms.ModelForm):
         labels = {
             'date': 'Start Date & Time',
             'end_date': 'End Date & Time (Optional)',
+            'category': 'Event Category',
         }
 
     def __init__(self, *args, **kwargs):
@@ -44,4 +74,3 @@ class EventForm(forms.ModelForm):
                 HTML(f'<a href="{cancel_url}" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
             )
         )
-

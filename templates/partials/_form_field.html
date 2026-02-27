@@ -1,0 +1,49 @@
+<div class="mb-5">
+    <label for="{{ field.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">
+        {{ label }}
+    </label>
+    
+    {% if widget_name == 'Select' or widget_name == 'SelectMultiple' %}
+        <select id="{{ field.id_for_label }}" name="{{ field.name }}"
+                class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs"
+                {% if required %}required{% endif %}>
+            {% for value, display in field.field.choices %}
+                <option value="{{ value }}" {% if field.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ display }}</option>
+            {% endfor %}
+        </select>
+    {% elif widget_name == 'DateInput' or widget_name == 'DateTimeInput' %}
+        <input datepicker
+               type="text"
+               name="{{ field.name }}"
+               id="{{ field.id_for_label }}"
+               value="{{ date_value }}"
+               class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
+               {% if required %}required{% endif %} />
+    {% elif widget_name == 'Textarea' %}
+        <textarea id="{{ field.id_for_label }}" name="{{ field.name }}" rows="4"
+                  class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
+                  {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+                  {% if required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
+    {% elif widget_name == 'FileInput' or widget_name == 'ClearableFileInput' %}
+        <input class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body"
+               id="{{ field.id_for_label }}" name="{{ field.name }}" type="file"
+               {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}
+               {% if field.field.widget.attrs.multiple %}multiple{% endif %}>
+    {% else %}
+        <input type="{{ field.field.widget.input_type|default:'text' }}" 
+               name="{{ field.name }}" 
+               id="{{ field.id_for_label }}" 
+               value="{{ field.value|default:'' }}"
+               class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
+               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+               {% if required %}required{% endif %} />
+    {% endif %}
+    
+    {% if help_text %}
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">{{ help_text }}</p>
+    {% endif %}
+    
+    {% if field.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+    {% endif %}
+</div>
