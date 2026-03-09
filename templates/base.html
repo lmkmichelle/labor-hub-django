@@ -121,35 +121,16 @@
                             rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">World Map</a>
                 </li>
                 <li>
-                  <button id="dropdownNavbarButton"
-                          data-dropdown-toggle="eventsDropdown"
-                          class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
-                    Events
-                    <svg class="w-4 h-4 ms-1.5"
-                         aria-hidden="true"
-                         xmlns="http://www.w3.org/2000/svg"
-                         width="24"
-                         height="24"
-                         fill="none"
-                         viewBox="0 0 24 24">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <!-- Events -->
-                  <div id="eventsDropdown"
-                       class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44">
-                    <ul class="p-2 text-sm text-body font-medium"
-                        aria-labelledby="dropdownNvbarButton">
-                      <li>
-                        <a href="{% url 'events-list' %}"
-                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Events</a>
-                      </li>
-                      <li>
-                        <a href="{% url 'seminars-list' %}"
-                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Seminars</a>
-                      </li>
-                    </ul>
-                  </div>
+                  <a href="{% url 'events-list' %}"
+                     class="block py-2 px-3
+                            {% if url_name == 'events-list' %}text-red-700{% endif %}
+                            rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Events</a>
+                </li>
+                <li>
+                  <a href="{% url 'seminars-list' %}"
+                     class="block py-2 px-3
+                            {% if url_name == 'seminars-list' %}text-red-700{% endif %}
+                            rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Seminars</a>
                 </li>
                 <li>
                   <!-- Scholars -->
