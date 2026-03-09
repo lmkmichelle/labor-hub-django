@@ -1,61 +1,74 @@
 {% extends "base.html" %}
-
-{% block title %}Edit Profile{% endblock %}
-
-{% block content %}
-{% load crispy_forms_tags %}
 {% load static %}
+{% load form_tags %}
 
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+{% block title %}Edit Profile{% endblock title %}
+{% block content %}
+<article class="format lg:format-lg max-w-none">
+    <h2 class="title">Edit Your Profile</h2>
+    <form method="POST" enctype="multipart/form-data" class="mb-3">
+        {% csrf_token %}
 
-<h2 class="title">Edit Your Profile</h2>
-<form method="POST" enctype="multipart/form-data" class="mb-3">
-    {% csrf_token %}
-    <div class="row">
-        <div class="row">
-            <div class="col-md-3 d-flex flex-column justify-content-start">
+        {% if form.non_field_errors %}
+            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="flex flex-row gap-6 mb-5">
+            {% comment %} <div class="shrink-0">
                 {% if request.user.profile.avatar %}
-                <img id="avatar-preview"
-                     src="{{ request.user.profile.avatar.url }}"
-                     alt="Profile Picture"
-                     class="rounded preview-img"
-                     width="218" height="300">
+                    <img id="avatar-preview"
+                         src="{{ request.user.profile.avatar.url }}"
+                         alt="Profile Picture"
+                         class="rounded"
+                         width="160" height="160"
+                         style="object-fit: cover;">
                 {% else %}
-                <img id="default-avatar-preview" src="{% static 'images/default-avatar.jpg' %}"
-                     alt="No Profile Picture" class="rounded" width="138" height="183">
+                    <img id="avatar-preview"
+                         src="{% static 'images/default-avatar.jpg' %}"
+                         alt="No Profile Picture"
+                         class="rounded"
+                         width="160" height="160"
+                         style="object-fit: cover;">
                 {% endif %}
+            </div> {% endcomment %}
+            <!-- Right side fields -->
+            <div class="flex flex-col flex-1 min-w-0">
+                {% render_field user_form.email %}
+                {% render_field form.position %}
+                {% render_field form.education %}
+                {% render_field form.country_code %}
             </div>
+        </div>
 
-            <div class="col-md-8">
-                {{ user_form.email|as_crispy_field }}
-                {{ form.position|as_crispy_field }}
-                {{ form.education|as_crispy_field }}
-                {{ form.country_code|as_crispy_field }}
-            </div>
+        {% render_field form.avatar %}
+        {% render_field form.website %}
+        {% render_field form.biography %}
+        {% render_field form.research_interests_input %}
+
+        <div class="flex gap-3">
+            <button type="submit"
+                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+                Save
+            </button>
+            <a href="{% url 'profile' %}"
+               class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none no-underline">
+                Cancel
+            </a>
         </div>
-        {{ form.avatar|as_crispy_field }}
-        {{ form.website|as_crispy_field }}
-        {{ form.biography|as_crispy_field }}
-        {{ form.research_interests_input|as_crispy_field }}
-        <div>
-            <button type="submit" class="btn btn-primary me-3">Save</button>
-            <a class="btn btn-secondary"
-               style="margin-bottom: 0"
-               href="{% url 'profile' %}">Cancel</a>
-        </div>
-    </div>
-</form>
+    </form>
+</article>
+
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
 <script src="{% static 'js/tagify.js' %}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const input = document.querySelector('input[name="avatar"]');
+    const avatarInput = document.querySelector('input[name="avatar"]');
     const preview = document.getElementById("avatar-preview");
 
-    input?.addEventListener("change", function (e) {
+    avatarInput?.addEventListener("change", function (e) {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
             const reader = new FileReader();
@@ -67,4 +80,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
-{% endblock %}
+{% endblock content %}
+

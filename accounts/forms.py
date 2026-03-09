@@ -213,7 +213,6 @@ class UpdateUserForm(forms.ModelForm):
         model = CustomUser
         fields = ['email']
 
-
 class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
@@ -261,7 +260,9 @@ class UpdateProfileForm(forms.ModelForm):
 
         if self.instance and self.instance.research_interests:
             initial_interests = self.instance.research_interests
-            self.fields["research_interests_input"].widget.attrs['value'] = json.dumps(initial_interests)
+            tagify_value = json.dumps([{"value": v} if isinstance(v, str) else v for v in initial_interests])
+            self.fields["research_interests_input"].initial = tagify_value
+            self.fields["research_interests_input"].widget.attrs['value'] = tagify_value
 
         self.helper = FormHelper(self)
         self.helper.form_method = 'post'
