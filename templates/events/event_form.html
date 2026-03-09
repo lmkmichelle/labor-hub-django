@@ -28,6 +28,18 @@ Submit Paper
 
     {% render_field form.end_date %}
 
+    <div>
+        <p class="block mb-2.5 text-sm font-medium text-heading">Application Deadline <span class="text-body font-normal">(Optional)</span></p>
+        <div class="flex flex-row gap-3">
+            <div class="flex-1">
+                {% render_field form.deadline_date label="Deadline Date" %}
+            </div>
+            <div class="flex-1">
+                {% render_field form.deadline_time label="Deadline Time" %}
+            </div>
+        </div>
+    </div>
+
     {% render_field form.location %}
 
     {% render_field form.category %}

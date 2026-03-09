@@ -1,57 +1,48 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block title %}{{ event.title }}{% endblock %}
-
 {% block content %}
-<div class="row publications-header">
+<article class="max-w-none format lg:format-lg">
     <div class="col md-6">
-        <h2 class="title" style="padding-bottom: 0.5rem">{{ event.title }}</h2>
-        <div class="box-list">
-            <ul>
-                <li>
-                    <a href="#">
-                        <span>{{ event.get_category_display }}</span>
-                    </a>
-                </li>
-            </ul>
+        <div class="flex flex-row w-full justify-between items-center">
+            <p>{{ event.date|date:"N j, Y" }}</p>
+            <div class="not-format">
+                {% comment %} {% if user.is_authenticated and user == event.host %}
+                    <a href="{% url 'edit_event' pk=event.pk %}"
+                       class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Event</a>
+                {% endif %} {% endcomment %}
+            </div>
         </div>
-    </div>
-    <!--    <div class="col md-6 d-flex flex-column align-items-end">-->
-    <!--        <div class="d-flex align-items-center">-->
-    <!--            {% if user.is_authenticated and user == event.host %}-->
-    <!--            <a href="#" class="nav-link"-->
-    <!--               style="color: var(&#45;&#45;primary); text-decoration-line: underline; margin-right: 1rem;">Edit Event</a>-->
-    <!--            {% endif %}-->
-    <!--        </div>-->
-    <!--    </div>-->
-</div>
-<div class="row">
-    <h3>Description</h3>
-    <div class="copy-expandable">
-        {{ event.description }}
-    </div>
-
-    <h3>Location</h3>
-    <div class="copy-expandable">
-        <i class="mdi mdi-map-marker"></i> {{ event.location }}
-    </div>
-
-    <h3>Date & Time</h3>
-    <div class="copy-expandable">
-        {% if event.end_date %}
-        <p class="text-muted mb-2">{{ event.date|date:"l, M. j g:i A" }} - {{ event.end_date|date:"M. j g:i A" }}</p>
-        {% else %}
-        <p class="text-muted mb-2">{{ event.date|date:"l, M. j g:i A" }}</p>
-        {% endif %}
-    </div>
-    <div class="authors">
+        <div class="flex flex-row gap-2 items-center w-full overflow-auto">
+            <h3>{{ event.title }}</h3>
+        </div>
+        <div class="not-format mb-4">
+            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ event.get_category_display }}</span>
+        </div>
         {% if event.host %}
-        <a class="profile-link"
-           href="{% url 'profile' pk=event.host.id %}">Hosted by {{ event.host.get_full_name }}</a>
-        {% else %}
-        Host information not available
+            <div class="not-format mb-4">
+                Hosted by <a class="text-red-700" style="text-decoration: underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
+            </div>
         {% endif %}
     </div>
-</div>
-{% endblock %}
+
+    <h4>Description</h4>
+    <p>{{ event.description }}</p>
+
+    <h4>Location</h4>
+    <p>{{ event.location }}</p>
+
+    <h4>Date &amp; Time</h4>
+    {% if event.end_date %}
+        <p>{{ event.date|date:"l, N j, Y, g:i A" }} &ndash; {{ event.end_date|date:"N j, Y, g:i A" }}</p>
+    {% else %}
+        <p>{{ event.date|date:"l, N j, Y, g:i A" }}</p>
+    {% endif %}
+
+    {% if event.deadline %}
+        <h4>Application Deadline</h4>
+        <p>{{ event.deadline|date:"N j, Y, g:i A" }}</p>
+    {% endif %}
+</article>
+{% endblock content %}
+

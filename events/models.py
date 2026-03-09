@@ -23,6 +23,7 @@ class Event(models.Model):
     description = models.TextField()
     date = models.DateTimeField()
     end_date = models.DateTimeField(null=True, blank=True)
+    deadline = models.DateTimeField(null=True, blank=True, help_text='Application deadline for this event')
     location = models.CharField(max_length=255)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     host = models.ForeignKey(

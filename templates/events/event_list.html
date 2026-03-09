@@ -4,13 +4,11 @@
     <article class="format lg:format-lg max-w-none">
         <h2>Upcoming Events</h2>
         <div class="flex flex-row w-full gap-6">
-            <!-- Left Sidebar - Filters -->
             <div class="flex flex-col w-64 shrink-0">
                 <h3>Filter Events</h3>
                 <form method="GET" id="filterForm">
-                    <!-- Preserve search query -->
                     <input type="hidden" name="q" value="{{ query }}">
-                    <!-- Category Filter -->
+                    <input type="hidden" name="sort" value="{{ sort }}">
                     <div class="mb-4">
                         <h4>Category</h4>
                         {% for value, label in category_choices %}
@@ -59,10 +57,16 @@
                     </div>
                 </form>
             </div>
-            <!-- Right Side - Events List -->
             <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
                 <div class="flex w-full min-w-0 items-center gap-3 not-format">
-                    <form method="GET" id="searchForm" class="flex flex-1 min-w-0 w-full items-center gap-2">
+                    <form method="GET"
+                          id="searchForm"
+                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                        {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
+                        {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
+                        {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
+                        {% if deadline %}<input type="hidden" name="deadline" value="{{ deadline }}">{% endif %}
+                        <input type="hidden" name="sort" value="{{ sort }}">
                         <label for="simple-search" class="sr-only">Search events</label>
                         <div class="relative flex-1 min-w-0 w-full">
                             <input type="text"
@@ -74,31 +78,60 @@
                         </div>
                         <button type="submit"
                                 class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
-                           <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                            <svg class="w-5 h-5"
+                                 aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="24"
+                                 height="24"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
                             </svg>
-                            <span class="sr-only">Search</span>
-                        </button>
-                    </form>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'event-create' %}"
-   class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-  Post Event
-</a>
-                    {% endif %}
-                </div>
-                {% if events %}
+                        </svg>
+                        <span class="sr-only">Search</span>
+                    </button>
+                </form>
+                <!-- Sort control -->
+                <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                    {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
+                    {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
+                    {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
+                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                    <label for="sortSelect" class="sr-only">Sort by</label>
+                    <select id="sortSelect"
+                            name="sort"
+                            onchange="this.form.submit()"
+                            class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+                        <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
+                        <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
+                    </select>
+                </form>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'event-create' %}"
+                       class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                        Post Event
+                    </a>
+                {% endif %}
+            </div>
+            {% if events %}
+                <div class="flex flex-col gap-3 w-full">
                     {% for event in events %}
                         <div class="not-format">
-                            <a href="#"
+                            <a href="{% url 'event-detail' event.id %}"
                                class="bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
                                 <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ event.get_category_display }}</span>
-                                <h5 class="text-xl font-semibold text-heading">{{ event.title }}</h5>
-                                <p class="text-body">{{ event.date|date:"M Y H:i" }}</p>
+                                <div class="flex flex-row items-center justify-between gap-4">
+                                    <h5 class="text-xl font-semibold text-heading">{{ event.title }}</h5>
+                                    <p class="text-body shrink-0">{{ event.date|date:"N j, Y" }}</p>
+                                </div>
                                 <p class="text-body">Hosted by {{ event.host.get_full_name }}</p>
+                                {% if event.deadline %}
+                                    <p class="text-sm text-red-700 font-medium mt-1">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
+                                {% endif %}
                             </a>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
                 <!-- Pagination -->
                 {% if is_paginated %}
                     <div class="mt-4">
@@ -107,7 +140,7 @@
                                 {% if page_obj.has_previous %}
                                     <li class="page-item">
                                         <a class="page-link"
-                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
                                     </li>
                                 {% endif %}
                                 {% for num in page_obj.paginator.page_range %}
@@ -118,7 +151,7 @@
                                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                         <li class="page-item">
                                             <a class="page-link"
-                                               href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ num }}">{{
+                                               href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ num }}">{{
                                             num }}</a>
                                         </li>
                                     {% endif %}
@@ -126,7 +159,7 @@
                                 {% if page_obj.has_next %}
                                     <li class="page-item">
                                         <a class="page-link"
-                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&page={{ page_obj.next_page_number }}">Next</a>
+                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -135,12 +168,8 @@
                 {% endif %}
             {% else %}
                 <div class="text-center">
-                    <i class="mdi mdi-calendar-blank" style="font-size: 4rem; color: #ccc;"></i>
                     <h5 class="mt-3">No Events Found</h5>
                     <p class="text-muted">There are no upcoming events matching your criteria.</p>
-                    <!--            {% if user.is_authenticated %}-->
-                    <!--            <a href="{% url 'event-create' %}" class="btn btn-primary mt-2">Post an Event</a>-->
-                    <!--            {% endif %}-->
                 </div>
             {% endif %}
         </div>

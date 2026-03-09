@@ -4,19 +4,17 @@ from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils import timezone
-
 from .models import Event
 
-
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['title', 'date', 'location', 'category', 'host', 'status', 'account_actions']
+    list_display = ['title', 'date', 'deadline', 'location', 'category', 'host', 'status', 'account_actions']
     list_filter = ['status', 'category', 'created_at']
     search_fields = ['title', 'description', 'location', 'host__first_name', 'host__last_name']
     readonly_fields = ['account_actions', 'created_at', 'reviewed_at', 'reviewed_by']
 
     fieldsets = (
         ('Event Information', {
-            'fields': ('title', 'description', 'date', 'end_date', 'location', 'category', 'host')
+            'fields': ('title', 'description', 'date', 'end_date','deadline', 'location', 'category', 'host')
         }),
         ('Review Status', {
             'fields': ('status', 'account_actions', 'created_at', 'reviewed_at', 'reviewed_by')

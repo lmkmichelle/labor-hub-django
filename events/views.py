@@ -45,7 +45,13 @@ class EventsListView(ListView):
         if end_date:
             queryset = queryset.filter(date__lte=end_date)
 
-        return queryset.order_by('date')
+        sort = self.request.GET.get('sort', '')
+        if sort == 'deadline':
+            queryset = queryset.filter(deadline__isnull=False).order_by('deadline')
+        else:
+            queryset = queryset.order_by('date')
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -54,6 +60,7 @@ class EventsListView(ListView):
         context['start_date'] = self.request.GET.get('start_date', '')
         context['end_date'] = self.request.GET.get('end_date', '')
         context['category_choices'] = Event.CATEGORY_CHOICES
+        context['sort'] = self.request.GET.get('sort', '')
         return context
 
 class EventsDetailView(DetailView):
