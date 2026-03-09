@@ -177,6 +177,10 @@ class UserApplication(models.Model):
         )
 
         user.save()
+        user.profile.position = self.position
+        user.profile.education = self.education
+        user.profile.country_code = self.country_code
+        user.profile.save()
 
         self.status = self.Status.APPROVED
         self.reviewed_at = timezone.now()

@@ -1,3 +1,4 @@
+from email.mime import application
 import json
 
 from crispy_forms.helper import FormHelper
@@ -65,8 +66,8 @@ class BaseApplicationForm(forms.ModelForm):
         application.password = make_password(self.cleaned_data["password1"])
 
         # Save the resume file if provided
-        if self.cleaned_data.get('resume'):
-            application.resume.save(self.cleaned_data["resume"])
+        resume_file = self.cleaned_data["resume"]
+        application.resume.save(resume_file.name, resume_file)
 
         if commit:
             application.save()
