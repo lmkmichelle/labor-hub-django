@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-
-{% block title %}Profile{% endblock %}
-
+{% load static %}
+{% block title %}Profile{% endblock title %}
 {% block content %}
 <article class="max-w-none format lg:format-lg">
-    <div class="flex flex-row">
-        <div class="w-1/4">
+    <div class="flex flex-row gap-6">
+        <div class="w-64">
             <div class="not-format"> 
                 <img
+                    class="rounded-lg"
                     src="{{ user_profile.avatar.url }}"
                     alt="Profile picture"> </img>
             </div>
