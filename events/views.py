@@ -6,9 +6,22 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, DetailView
 from django.db.models import Q
+from datetime import datetime
 
 from .models import Event
 from .forms import EventForm
+
+
+def _parse_date(value):
+    """Parse a date string in either MM/DD/YYYY or YYYY-MM-DD format."""
+    if not value:
+        return None
+    for fmt in ('%m/%d/%Y', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(value.strip(), fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 class EventsListView(ListView):
@@ -37,13 +50,13 @@ class EventsListView(ListView):
             queryset = queryset.filter(category__in=categories)
 
         # Date range filter
-        start_date = self.request.GET.get('start_date')
-        end_date = self.request.GET.get('end_date')
+        start_date = _parse_date(self.request.GET.get('start_date'))
+        end_date = _parse_date(self.request.GET.get('end_date'))
 
         if start_date:
-            queryset = queryset.filter(date__gte=start_date)
+            queryset = queryset.filter(date__date__gte=start_date)
         if end_date:
-            queryset = queryset.filter(date__lte=end_date)
+            queryset = queryset.filter(date__date__lte=end_date)
 
         sort = self.request.GET.get('sort', '')
         if sort == 'deadline':

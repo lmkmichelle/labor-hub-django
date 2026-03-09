@@ -4,56 +4,78 @@
     <article class="format lg:format-lg max-w-none">
         <h2>Upcoming Events</h2>
         <div class="flex flex-row w-full gap-6">
-            <div class="flex flex-col w-64 shrink-0">
-                <h3>Filter Events</h3>
+            <div class="flex flex-col w-60">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
                     <div class="mb-4">
                         <h4>Category</h4>
                         {% for value, label in category_choices %}
-                            <div class="form-check mb-2">
-                                <input class="form-check-input"
+                            <div class="mb-1">
+                                <input id="category-{{ value }}"
+                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
                                        type="checkbox"
                                        name="category"
                                        value="{{ value }}"
-                                       id="category-{{ value }}"
                                        {% if value in selected_categories %}checked{% endif %}
                                        onchange="this.form.submit()">
-                                <label class="form-check-label" for="category-{{ value }}">{{ label }}</label>
+                                <label class="select-none ms-1 text-sm font-medium text-heading"
+                                       for="category-{{ value }}">{{ label }}</label>
                             </div>
                         {% endfor %}
                     </div>
-                    <!-- Date Range Filter -->
                     <div class="mb-4">
-                        <h4>Date Range</h4>
                         <div class="mb-3">
                             <label for="start_date"
                                    class="block mb-2.5 text-sm font-medium text-heading">From</label>
                             <div class="relative">
-                                <input type="date"
+                                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                    <svg class="w-4 h-4 text-body"
+                                         aria-hidden="true"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         width="24"
+                                         height="24"
+                                         fill="none"
+                                         viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z" />
+                                    </svg>
+                                </div>
+                                <input datepicker
+                                       type="text"
                                        id="start_date"
                                        name="start_date"
-                                       value="{{ start_date }}"
-                                       class="block w-full ps-9 pe-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body">
+                                       class="block w-full ps-9 pe-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Select start date">
                             </div>
                         </div>
                         <div class="mb-3">
                             <label for="end_date" class="block mb-2.5 text-sm font-medium text-heading">To</label>
                             <div class="relative">
-                                <input type="date"
+                                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                    <svg class="w-4 h-4 text-body"
+                                         aria-hidden="true"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         width="24"
+                                         height="24"
+                                         fill="none"
+                                         viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z" />
+                                    </svg>
+                                </div>
+                                <input datepicker
+                                       type="text"
                                        id="end_date"
                                        name="end_date"
-                                       value="{{ end_date }}"
-                                       class="block w-full ps-9 pe-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body">
+                                       class="block w-full ps-9 pe-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Select end date">
                             </div>
                         </div>
-                        <button type="submit"
-                                class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
-                            Apply Filters
-                        </button>
-                        <a href="{% url 'events-list' %}"
-                           class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Clear All Filters</a>
+                        <div class="flex flex-row justify-between">
+                            <button type="submit"
+                                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+                                Apply Filters
+                            </button>
+                            <a href="{% url 'events-list' %}"
+                               class="text-body bg-neutral-secondary-medium box-border no-underline border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Clear Filters</a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -87,91 +109,91 @@
                                  viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
                             </svg>
-                        </svg>
-                        <span class="sr-only">Search</span>
-                    </button>
-                </form>
-                <!-- Sort control -->
-                <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
-                    {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
-                    {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
-                    {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
-                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
-                    <label for="sortSelect" class="sr-only">Sort by</label>
-                    <select id="sortSelect"
-                            name="sort"
-                            onchange="this.form.submit()"
-                            class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
-                        <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
-                        <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
-                    </select>
-                </form>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'event-create' %}"
-                       class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                        Post Event
-                    </a>
-                {% endif %}
-            </div>
-            {% if events %}
-                <div class="flex flex-col gap-3 w-full">
-                    {% for event in events %}
-                        <div class="not-format">
-                            <a href="{% url 'event-detail' event.id %}"
-                               class="bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
-                                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ event.get_category_display }}</span>
-                                <div class="flex flex-row items-center justify-between gap-4">
-                                    <h5 class="text-xl font-semibold text-heading">{{ event.title }}</h5>
-                                    <p class="text-body shrink-0">{{ event.date|date:"N j, Y" }}</p>
-                                </div>
-                                <p class="text-body">Hosted by {{ event.host.get_full_name }}</p>
-                                {% if event.deadline %}
-                                    <p class="text-sm text-red-700 font-medium mt-1">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
-                                {% endif %}
-                            </a>
-                        </div>
-                    {% endfor %}
+                            <span class="sr-only">Search</span>
+                        </button>
+                    </form>
+                    <!-- Sort control -->
+                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                        {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
+                        {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
+                        {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
+                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                        <label for="sortSelect" class="sr-only">Sort by</label>
+                        <select id="sortSelect"
+                                name="sort"
+                                onchange="this.form.submit()"
+                                class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+                            <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
+                            <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
+                        </select>
+                    </form>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'event-create' %}"
+                           class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                            Post Event
+                        </a>
+                    {% endif %}
                 </div>
-                <!-- Pagination -->
-                {% if is_paginated %}
-                    <div class="mt-4">
-                        <nav aria-label="Events pagination">
-                            <ul class="pagination justify-content-center">
-                                {% if page_obj.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link"
-                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
-                                    </li>
-                                {% endif %}
-                                {% for num in page_obj.paginator.page_range %}
-                                    {% if page_obj.number == num %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ num }}</span>
-                                        </li>
-                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                {% if events %}
+                    <div class="flex flex-col gap-3 w-full">
+                        {% for event in events %}
+                            <div class="not-format">
+                                <a href="{% url 'event-detail' event.id %}"
+                                   class="bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
+                                    <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ event.get_category_display }}</span>
+                                    <div class="flex flex-row items-center justify-between gap-4">
+                                        <h5 class="text-xl font-semibold text-heading">{{ event.title }}</h5>
+                                        <p class="text-body shrink-0">{{ event.date|date:"N j, Y" }}</p>
+                                    </div>
+                                    <p class="text-body">Hosted by {{ event.host.get_full_name }}</p>
+                                    {% if event.deadline %}
+                                        <p class="text-sm text-red-700 font-medium mt-1">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                        <div class="mt-4">
+                            <nav aria-label="Events pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
                                         <li class="page-item">
                                             <a class="page-link"
-                                               href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ num }}">{{
-                                            num }}</a>
+                                               href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
                                         </li>
                                     {% endif %}
-                                {% endfor %}
-                                {% if page_obj.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link"
-                                           href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if page_obj.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link"
+                                                   href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ num }}">{{
+                                                num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link"
+                                               href="?q={{ query }}&{% for cat in selected_categories %}category={{ cat }}&{% endfor %}start_date={{ start_date }}&end_date={{ end_date }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center">
+                        <h5 class="mt-3">No Events Found</h5>
+                        <p class="text-muted">There are no upcoming events matching your criteria.</p>
                     </div>
                 {% endif %}
-            {% else %}
-                <div class="text-center">
-                    <h5 class="mt-3">No Events Found</h5>
-                    <p class="text-muted">There are no upcoming events matching your criteria.</p>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </article>
 {% endblock %}
