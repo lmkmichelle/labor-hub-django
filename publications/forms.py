@@ -38,7 +38,6 @@ class PublicationForm(forms.ModelForm):
             publication.save()
             self.save_m2m()
 
-
         return publication
     authors_input = forms.CharField(
         required=True,
@@ -49,7 +48,7 @@ class PublicationForm(forms.ModelForm):
     topic_input = forms.CharField(
         required=True,
         label='Research Topic',
-        widget=forms.TextInput(attrs={'id': 'topic-input'}),
+        widget=forms.TextInput(),
     )
 
     keywords_input = forms.CharField(
