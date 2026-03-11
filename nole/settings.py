@@ -132,6 +132,23 @@ LOGIN_REDIRECT_URL = "/"
 
 LOGOUT_REDIRECT_URL = "/"
 
+# Email settings
+# For development, emails will be printed to console
+# For production, configure SMTP settings via environment variables
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", 
+    "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com")
+
+# Password reset settings
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

@@ -19,12 +19,16 @@
         {% endif %}
     </div>
 
-    <div class="mb-5">
+    <div class="mb-2">
         <label for="{{ form.password.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Password</label>
         <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="•••••••••" required />
         {% if form.password.errors %}
             <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
         {% endif %}
+    </div>
+
+    <div class="mb-5">
+        <a href="{% url 'password_reset' %}" class="text-sm text-red-700 hover:underline">Forgot your password?</a>
     </div>
 
     <div class="flex gap-3 mb-5">
