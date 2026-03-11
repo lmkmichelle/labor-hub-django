@@ -66,8 +66,8 @@ class BaseApplicationForm(forms.ModelForm):
         application.password = make_password(self.cleaned_data["password1"])
 
         # Save the resume file if provided
-        resume_file = self.cleaned_data["resume"]
-        application.resume.save(resume_file.name, resume_file)
+        # resume_file = self.cleaned_data["resume"]
+        # application.resume.save(resume_file.name, resume_file)
 
         if commit:
             application.save()

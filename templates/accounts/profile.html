@@ -9,7 +9,7 @@
             <div class="w-64">
                 <div class="not-format">
                     <img class="rounded-lg"
-                         src="{{ user_profile.avatar.url }}"
+                         src="{% if user_profile.avatar %}{{ user_profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
                          alt="Profile picture">
                 </img>
             </div>

@@ -9,12 +9,12 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -27,7 +27,6 @@ DEBUG = bool(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -37,8 +36,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'compressor',  # new
-    'nole',  # new
+    "compressor",  # new
+    "nole",  # new
     "crispy_forms",
     "crispy_bootstrap5",
     "core",
@@ -48,9 +47,9 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
 ]
 
-COMPRESS_ROOT = BASE_DIR / 'static'
+COMPRESS_ROOT = BASE_DIR / "static"
 
-COMPRESS_ENABLED = True
+COMPRESS_ENABLED = False
 
 # Ensure Django can find app/static and project static files
 STATICFILES_FINDERS = [
@@ -97,15 +96,16 @@ WSGI_APPLICATION = "nole.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.{}".format(os.environ.get("DATABASE_ENGINE", "sqlite3")),
+        "ENGINE": "django.db.backends.{}".format(
+            os.environ.get("DATABASE_ENGINE", "sqlite3")
+        ),
         "NAME": os.getenv("DATABASE_NAME", "nole"),
         "USER": os.getenv("DATABASE_USERNAME", "myprojectuser"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
         "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DATABASE_PORT", 5432)
+        "PORT": os.getenv("DATABASE_PORT", 5432),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -127,7 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_URL = '/login/'
+LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 
 LOGOUT_REDIRECT_URL = "/"
@@ -143,14 +143,58 @@ USE_I18N = True
 
 USE_TZ = True
 
-MEDIA_ROOT = BASE_DIR / "media"
+USE_S3 = os.environ.get("USE_S3", "False") == "True"
 
-MEDIA_URL = "/media/"
+if USE_S3:
+    INSTALLED_APPS += ["storages"]
+
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-2")
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    AWS_DEFAULT_ACL = None
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    
+    # S3 folder locations
+    AWS_STATIC_LOCATION = "static"
+    AWS_MEDIA_LOCATION = "media"
+
+    # Static files
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "location": AWS_MEDIA_LOCATION,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "OPTIONS": {
+                "location": AWS_STATIC_LOCATION,
+            },
+        },
+    }
+
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STATIC_LOCATION}/"
+
+    # Compressor settings for S3
+    COMPRESS_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
+    COMPRESS_URL = STATIC_URL
+    COMPRESS_OFFLINE = False
+
+    # Media files
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_MEDIA_LOCATION}/"
+else:
+    STATIC_URL = "/static/"
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
+    
+    # Compressor settings for local
+    COMPRESS_OFFLINE = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",

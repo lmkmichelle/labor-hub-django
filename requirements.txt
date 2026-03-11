@@ -2,6 +2,8 @@ asgiref==3.8.1
 django-htmx~=1.23.2
 pyyaml~=6.0.3
 django-crispy-forms~=2.4
+boto3~=1.42.63
+django-storages~=1.14.6
 djlint~=1.36.4
 django-compressor~=4.6.0
 crispy-bootstrap5~=2025.6
