@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2>Job Board</h2>
+    <div class="flex flex-col lg:flex-row w-full gap-6 mt-4">
+      <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
+        <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+          <form method="GET" id="searchForm" class="flex flex-1 min-w-0 w-full items-center gap-2">
+            {% if deadline_from %}<input type="hidden" name="deadline_from" value="{{ deadline_from }}">{% endif %}
+            {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+
+            <label for="job-search" class="sr-only">Search jobs</label>
+            <div class="relative flex-1 min-w-0 w-full">
+              <input type="text"
+                     id="job-search"
+                     name="q"
+                     value="{{ query }}"
+                     class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                     placeholder="Search by title or description...">
+            </div>
+            <button type="submit"
+                    class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+              Search
+            </button>
+          </form>
+
+          <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0 not-format">
+            {% if deadline_from %}<input type="hidden" name="deadline_from" value="{{ deadline_from }}">{% endif %}
+            {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
+            {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+            <label for="sortSelect" class="sr-only">Sort jobs</label>
+            <select id="sortSelect"
+                    name="sort"
+                    onchange="this.form.submit()"
+                    class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+              <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
+              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest Posted</option>
+            </select>
+          </form>
+        </div>
+
+        {% if jobs %}
+          <div class="flex flex-col gap-3 w-full">
+            {% for job in jobs %}
+              <div class="not-format bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <h5 class="text-xl font-semibold text-heading">{{ job.title }}</h5>
+                  <p class="text-body shrink-0">Deadline: {{ job.deadline|date:"N j, Y" }}</p>
+                </div>
+                {% if job.uploader %}
+                  <p class="text-body">Posted by {{ job.uploader.get_full_name|default:job.uploader.email }}</p>
+                {% endif %}
+                <p class="text-body mt-2">{{ job.description|truncatechars:300 }}</p>
+                <div class="mt-4">
+                  <a href="{{ job.url }}"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     class="inline-flex items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                    Apply Externally
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if is_paginated %}
+            <div class="mt-4 not-format">
+              <nav aria-label="Jobs pagination">
+                <ul class="pagination justify-content-center">
+                  {% if page_obj.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link"
+                         href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                  {% endif %}
+
+                  {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                      <li class="page-item">
+                        <a class="page-link"
+                           href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if page_obj.has_next %}
+                    <li class="page-item">
+                      <a class="page-link"
+                         href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="text-center">
+            <p class="text-body">There are currently no opportunities matching your criteria.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+{% endblock %}

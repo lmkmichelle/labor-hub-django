@@ -130,6 +130,12 @@
                               rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Events</a>
                   </li>
                   <li>
+                    <a href="{% url 'jobs-list' %}"
+                       class="block py-2 px-3
+                              {% if url_name == 'jobs-list' %}text-red-700{% endif %}
+                              rounded md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">Jobs</a>
+                  </li>
+                  <li>
                     <a href="{% url 'seminars-list' %}"
                        class="block py-2 px-3
                               {% if url_name == 'seminars-list' %}text-red-700{% endif %}

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "publications",
     "events",
     "seminars",
+    "jobs",
     "accounts.apps.AccountsConfig",
 ]
 
