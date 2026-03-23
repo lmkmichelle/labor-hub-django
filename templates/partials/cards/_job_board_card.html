@@ -1,0 +1,22 @@
+
+<div class="not-format bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium cursor-pointer"
+     role="link"
+     tabindex="0"
+     onclick="window.location.href='{{ item.get_absolute_url }}'"
+     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{{ item.get_absolute_url }}';}">
+    <div class="flex flex-row items-center justify-between gap-4">
+        <h5 class="text-xl font-semibold text-heading m-0">{{ item.title }}</h5>
+        <a href="{{ item.url }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           onclick="event.stopPropagation();"
+           class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block text-decoration-none shrink-0">
+            Apply Externally
+        </a>
+    </div>
+    <p class="list-description">{{ item.description|truncatechars:300 }}</p>
+    {% if item.uploader %}
+        <p class="box-list mb-1">Posted by {{ item.uploader.get_full_name|default:item.uploader.email }}</p>
+    {% endif %}
+    <p class="text-sm text-red-700 font-medium mt-1">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
+</div>

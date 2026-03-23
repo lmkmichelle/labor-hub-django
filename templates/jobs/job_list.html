@@ -40,65 +40,38 @@
           </form>
         </div>
 
-        {% if jobs %}
-          <div class="flex flex-col gap-3 w-full">
-            {% for job in jobs %}
-              <div class="not-format bg-neutral-primary-soft block w-full p-6 border border-default rounded-base shadow-xs">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <h5 class="text-xl font-semibold text-heading">{{ job.title }}</h5>
-                  <p class="text-body shrink-0">Deadline: {{ job.deadline|date:"N j, Y" }}</p>
-                </div>
-                {% if job.uploader %}
-                  <p class="text-body">Posted by {{ job.uploader.get_full_name|default:job.uploader.email }}</p>
+        {% include 'partials/_list_display.html' with items=jobs list_container_class='list-group' card_template='partials/cards/_job_board_card.html' empty_template='partials/cards/_job_board_empty_state.html' empty_message='There are currently no opportunities matching your criteria.' %}
+
+        {% if is_paginated %}
+          <div class="mt-4 not-format">
+            <nav aria-label="Jobs pagination">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link"
+                       href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                  </li>
                 {% endif %}
-                <p class="text-body mt-2">{{ job.description|truncatechars:300 }}</p>
-                <div class="mt-4">
-                  <a href="{{ job.url }}"
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     class="inline-flex items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                    Apply Externally
-                  </a>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
 
-          {% if is_paginated %}
-            <div class="mt-4 not-format">
-              <nav aria-label="Jobs pagination">
-                <ul class="pagination justify-content-center">
-                  {% if page_obj.has_previous %}
+                {% for num in page_obj.paginator.page_range %}
+                  {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                     <li class="page-item">
                       <a class="page-link"
-                         href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                         href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
                     </li>
                   {% endif %}
+                {% endfor %}
 
-                  {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                      <li class="page-item">
-                        <a class="page-link"
-                           href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
-                      </li>
-                    {% endif %}
-                  {% endfor %}
-
-                  {% if page_obj.has_next %}
-                    <li class="page-item">
-                      <a class="page-link"
-                         href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
-                    </li>
-                  {% endif %}
-                </ul>
-              </nav>
-            </div>
-          {% endif %}
-        {% else %}
-          <div class="text-center">
-            <p class="text-body">There are currently no opportunities matching your criteria.</p>
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link"
+                       href="?q={{ query }}&deadline_from={{ deadline_from }}&deadline_to={{ deadline_to }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
           </div>
         {% endif %}
       </div>

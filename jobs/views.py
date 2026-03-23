@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.db.models import Q
-from django.views.generic import ListView
+from django.views.generic import DetailView, ListView
 
 from .models import Job
 
@@ -57,3 +57,9 @@ class JobsListView(ListView):
 		context['deadline_to'] = self.request.GET.get('deadline_to', '')
 		context['sort'] = self.request.GET.get('sort', 'deadline')
 		return context
+
+
+class JobDetailView(DetailView):
+	model = Job
+	template_name = 'jobs/job_detail.html'
+	context_object_name = 'job'

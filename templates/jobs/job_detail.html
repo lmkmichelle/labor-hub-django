@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block content %}
+<article class="max-w-none format lg:format-lg">
+    <div class="col md-6">
+        <div class="flex flex-row w-full justify-between items-center">
+            <p>{{ job.deadline|date:"N j, Y" }}</p>
+            <div class="not-format"></div>
+        </div>
+        <div class="flex flex-row gap-2 items-center w-full overflow-auto">
+            <h3>{{ job.title }}</h3>
+        </div>
+        {% if job.uploader %}
+            <div class="not-format mb-4">
+                Posted by {{ job.uploader.get_full_name|default:job.uploader.email }}
+            </div>
+        {% endif %}
+    </div>
+
+    <h4>Description</h4>
+    <p>{{ job.description }}</p>
+
+    <h4>Application Deadline</h4>
+    <p>{{ job.deadline|date:"N j, Y" }}</p>
+
+    <h4>Application Link</h4>
+    <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer">{{ job.url }}</a>
+
+    <div class="not-format mt-4">
+        <a href="{{ job.url }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block text-decoration-none">
+            Apply Externally
+        </a>
+    </div>
+</article>
+{% endblock content %}
