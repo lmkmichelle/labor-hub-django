@@ -11,7 +11,7 @@
             class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
         </p>
         <div class="not-format">
-            {% include 'partials/_search_form.html' with search_filters=publication_filters filter_type=filter_type query=query %}
+            {% include 'partials/_search_form.html' with search_filters=publication_filters filter_type=filter_type query=query search_placeholder='Add one or more search terms' use_tag_pills=True %}
             {% include 'partials/_publications_list.html' with publications=publications %}
         </div>
     </article>

@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+
     <article class="format lg:format-lg max-w-none">
         <h2>Seminars</h2>
         <div class="flex flex-row w-full gap-6">
@@ -7,6 +11,7 @@
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
+                    <input type="hidden" name="countries" id="countries-hidden" value="{{ selected_countries_serialized }}">
                     <div class="mb-4">
                         <h4>Display</h4>
                         <div class="mb-1">
@@ -23,19 +28,10 @@
                     </div>
                     <div class="mb-4">
                         <h4>Countries</h4>
-                        {% for value, label in country_choices %}
-                            <div class="mb-1">
-                                <input id="country-{{ value }}"
-                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
-                                       type="checkbox"
-                                       name="country"
-                                       value="{{ value }}"
-                                       {% if value in selected_countries %}checked{% endif %}
-                                       onchange="this.form.submit()">
-                                <label class="select-none ms-1 text-sm font-medium text-heading"
-                                       for="country-{{ value }}">{{ label }}</label>
-                            </div>
-                        {% endfor %}
+                        <input type="text"
+                               id="countries-pill-input"
+                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               placeholder="Add countries...">
                     </div>
                     <div class="mb-4">
                         <div class="flex flex-row justify-between">
@@ -55,7 +51,7 @@
                     <form method="GET"
                           id="searchForm"
                           class="flex flex-1 min-w-0 w-full items-center gap-2">
-                                                {% for c in selected_countries %}<input type="hidden" name="country" value="{{ c }}">{% endfor %}
+                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         {% if show_archived %}<input type="hidden" name="show_archived" value="1">{% endif %}
                         <input type="hidden" name="sort" value="{{ sort }}">
                         <label for="seminar-search" class="sr-only">Search seminars</label>
@@ -83,7 +79,7 @@
                     </form>
 
                     <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
-                        {% for c in selected_countries %}<input type="hidden" name="country" value="{{ c }}">{% endfor %}
+                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         {% if show_archived %}<input type="hidden" name="show_archived" value="1">{% endif %}
                         {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
                         <label for="sortSelect" class="sr-only">Sort by</label>
@@ -155,7 +151,7 @@
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">
                                             <a class="page-link"
-                                                              href="?q={{ query }}&{% for c in selected_countries %}country={{ c }}&{% endfor %}show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                                               href="?q={{ query }}&countries={{ selected_countries_serialized|urlencode }}&show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">Previous</a>
                                         </li>
                                     {% endif %}
                                     {% for num in page_obj.paginator.page_range %}
@@ -166,14 +162,14 @@
                                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                             <li class="page-item">
                                                 <a class="page-link"
-                                                   href="?q={{ query }}&{% for c in selected_countries %}country={{ c }}&{% endfor %}show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
+                                                   href="?q={{ query }}&countries={{ selected_countries_serialized|urlencode }}&show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
                                             </li>
                                         {% endif %}
                                     {% endfor %}
                                     {% if page_obj.has_next %}
                                         <li class="page-item">
                                             <a class="page-link"
-                                               href="?q={{ query }}&{% for c in selected_countries %}country={{ c }}&{% endfor %}show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
+                                               href="?q={{ query }}&countries={{ selected_countries_serialized|urlencode }}&show_archived={% if show_archived %}1{% endif %}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Next</a>
                                         </li>
                                     {% endif %}
                                 </ul>
@@ -257,5 +253,54 @@
                 closeSeminarInterestModal();
             }
         });
+
+        (function () {
+            var countriesInput = document.getElementById('countries-pill-input');
+            var countriesHidden = document.getElementById('countries-hidden');
+            if (!countriesInput || !countriesHidden) {
+                return;
+            }
+
+            var countryWhitelist = [
+                {% for value, label in country_choices %}
+                    { value: '{{ value }}', label: '{{ label|escapejs }}' },
+                {% endfor %}
+            ];
+
+            var tagify = new Tagify(countriesInput, {
+                enforceWhitelist: false,
+                whitelist: countryWhitelist,
+                dropdown: {
+                    enabled: 0,
+                    closeOnSelect: false,
+                    maxItems: 10,
+                    searchKeys: ['value', 'label'],
+                },
+                templates: {
+                    dropdownItem: function(tagData) {
+                        return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
+                            '<strong>' + tagData.label + '</strong> <span>(' + tagData.value + ')</span>' +
+                            '</div>';
+                    }
+                }
+            });
+
+            {% if selected_countries %}
+            tagify.addTags([
+                {% for code in selected_countries %}
+                    { value: '{{ code }}', label: '{% for value, label in country_choices %}{% if value == code %}{{ label|escapejs }}{% endif %}{% endfor %}' },
+                {% endfor %}
+            ]);
+            {% endif %}
+
+            function syncCountriesHidden() {
+                countriesHidden.value = tagify.value.map(function (item) {
+                    return item.value;
+                }).join(',');
+            }
+
+            tagify.on('change', syncCountriesHidden);
+            syncCountriesHidden();
+        })();
     </script>
 {% endblock %}
