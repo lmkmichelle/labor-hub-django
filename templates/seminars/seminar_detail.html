@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{{ seminar.title }}{% endblock %}
+{% block content %}
+<article class="max-w-none format lg:format-lg">
+    <div class="col md-6">
+        <div class="flex flex-row w-full justify-between items-center">
+            <p>{{ seminar.date|date:"N j, Y" }}</p>
+            <div class="not-format"></div>
+        </div>
+        <div class="flex flex-row gap-2 items-center w-full overflow-auto">
+            <h3>{{ seminar.title }}</h3>
+        </div>
+        <div class="not-format mb-4">
+            {% if seminar.host %}
+                Hosted by <a class="text-red-700" style="text-decoration: underline" href="{% url 'profile' pk=seminar.host.id %}">{{ seminar.host.get_full_name }}</a>
+            {% else %}
+                Host TBA
+            {% endif %}
+        </div>
+    </div>
+
+    <h4>Description</h4>
+    <p>{{ seminar.description }}</p>
+
+    <h4>Countries</h4>
+    <div class="flex flex-row overflow-auto w-full not-format gap-2" style="margin-bottom:24px;">
+        {% for country in seminar.country_labels %}
+            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ country }}</span>
+        {% empty %}
+            <p>No countries specified.</p>
+        {% endfor %}
+    </div>
+
+    <h4>Date &amp; Time</h4>
+    <p>{{ seminar.date|date:"l, N j, Y, g:i A" }}</p>
+
+    <h4>Interested</h4>
+    <p>{{ seminar.interested_count }}</p>
+
+    <div class="not-format mt-4">
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'seminar-interest' seminar.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <button type="submit"
+                        class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                    I'm Interested
+                </button>
+            </form>
+        {% else %}
+            <button type="button"
+                    onclick="openSeminarInterestModal('{% url 'seminar-interest' seminar.id %}', '{{ seminar.title|escapejs }}', '{{ next_url|escapejs }}')"
+                    class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                I'm Interested
+            </button>
+        {% endif %}
+    </div>
+</article>
+
+<div id="seminar-interest-modal"
+     class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 p-4"
+     aria-hidden="true">
+    <div class="w-full max-w-md rounded-base bg-neutral-primary p-6 border border-default">
+        <div class="flex items-start justify-between mb-4">
+            <h4 class="m-0">Mark Interest</h4>
+            <button type="button" onclick="closeSeminarInterestModal()" class="text-body hover:text-heading">Close</button>
+        </div>
+        <p class="text-body mb-3">Let us know you're interested in <span id="seminar-modal-title" class="font-medium text-heading"></span>.</p>
+        <p class="text-body text-sm mb-4">
+            Have an account? Consider applying for one to manage your interests more easily.
+            <a href="{% url 'apply_student' %}" class="text-red-700" style="text-decoration: underline;">Apply for an account</a>
+        </p>
+
+        <form id="seminar-interest-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="next" id="seminar-interest-next" value="{{ next_url }}">
+            <div class="mb-3">
+                <label for="guest_name" class="block mb-2.5 text-sm font-medium text-heading">Name</label>
+                <input type="text" id="guest_name" name="guest_name" required class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+            </div>
+            <div class="mb-4">
+                <label for="guest_email" class="block mb-2.5 text-sm font-medium text-heading">Email</label>
+                <input type="email" id="guest_email" name="guest_email" required class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+            </div>
+            <button type="submit"
+                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+                Submit Interest
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openSeminarInterestModal(actionUrl, seminarTitle, nextUrl) {
+        var modal = document.getElementById('seminar-interest-modal');
+        var form = document.getElementById('seminar-interest-form');
+        var title = document.getElementById('seminar-modal-title');
+        var nextInput = document.getElementById('seminar-interest-next');
+
+        form.action = actionUrl;
+        title.textContent = seminarTitle;
+        nextInput.value = nextUrl || window.location.pathname;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSeminarInterestModal() {
+        var modal = document.getElementById('seminar-interest-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeSeminarInterestModal();
+        }
+    });
+
+    document.getElementById('seminar-interest-modal').addEventListener('click', function (event) {
+        if (event.target.id === 'seminar-interest-modal') {
+            closeSeminarInterestModal();
+        }
+    });
+</script>
+{% endblock content %}
