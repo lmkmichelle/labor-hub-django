@@ -66,7 +66,7 @@
                                    name="q"
                                    value="{{ query }}"
                                    class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
-                                   placeholder="Search seminars by title, description, or host..." />
+                                   placeholder="Search by title, visitor, university, or description..." />
                         </div>
                         <button type="submit"
                                 class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
@@ -97,6 +97,12 @@
                             <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest Added</option>
                         </select>
                     </form>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'seminar-create' %}"
+                           class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                            Post Seminar
+                        </a>
+                    {% endif %}
                 </div>
                 {% if seminars %}
                     <div class="flex flex-col gap-3 w-full">
@@ -109,15 +115,21 @@
                                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'seminar-detail' seminar.id %}';}">
                                     <div class="flex flex-row items-center justify-between gap-4">
                                         <h5 class="text-xl font-semibold text-heading">{{ seminar.title }}</h5>
-                                        <p class="text-body shrink-0">{{ seminar.date|date:"N j, Y" }}</p>
+                                        <p class="text-body shrink-0">
+                                            {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
+                                                {{ seminar.visit_start|date:"N j" }} - {{ seminar.visit_end|date:"N j, Y" }}
+                                            {% else %}
+                                                {{ seminar.visit_start|date:"N j, Y" }}
+                                            {% endif %}
+                                        </p>
                                     </div>
                                     <p class="text-body">
-                                        {% if seminar.host %}
-                                            Hosted by {{ seminar.host.get_full_name }}
-                                        {% else %}
-                                            Host TBA
-                                        {% endif %}
+                                        Visitor: {{ seminar.visitor_name }}
                                     </p>
+                                    <p class="text-body">University: {{ seminar.get_university_display }}</p>
+                                    {% if seminar.visitor_affiliation %}
+                                        <p class="text-body">Affiliation: {{ seminar.visitor_affiliation }}</p>
+                                    {% endif %}
                                     {% if seminar.country_labels %}
                                         <div class="flex flex-row overflow-auto w-full not-format gap-2 mt-1">
                                             {% for country in seminar.country_labels|slice:":5" %}
@@ -125,30 +137,9 @@
                                             {% endfor %}
                                         </div>
                                     {% endif %}
-                                    <p class="text-body mt-1">Interested: {{ seminar.interested_count }}</p>
-                                    <div class="mt-3">
-                                        {% if user.is_authenticated %}
-                                            <form method="post"
-                                                  action="{% url 'seminar-interest' seminar.id %}"
-                                                  class="inline-block"
-                                                  onclick="event.stopPropagation();">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                                <button type="submit"
-                                                        class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                                                    I'm Interested
-                                                </button>
-                                            </form>
-                                        {% else %}
-                                            <button type="button"
-                                                    onclick="event.stopPropagation();openSeminarInterestModal('{% url 'seminar-interest' seminar.id %}', '{{ seminar.title|escapejs }}', '{{ request.get_full_path|escapejs }}')"
-                                                    class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                                                I'm Interested
-                                            </button>
-                                        {% endif %}
+
                                     </div>
                                 </div>
-                            </div>
                         {% endfor %}
                     </div>
                     {% if is_paginated %}
@@ -191,91 +182,8 @@
                 {% endif %}
             </div>
         </div>
-        <div id="seminar-interest-modal"
-             class="not-format hidden fixed inset-0 z-50 items-center justify-center bg-black/40 p-4"
-             aria-hidden="true">
-            <div class="max-w-md rounded-base bg-neutral-primary p-6 border border-default">
-                <div class="flex items-start justify-between">
-                    <h5 class="text-xl font-semibold text-heading">Mark Interest</h5>
-                    <button type="button"
-                            onclick="closeSeminarInterestModal()"
-                            class="text-body hover:text-heading">Close</button>
-                </div>
-                <p class="text-body">
-                    Let us know you're interested in <span id="seminar-modal-title" class="font-medium text-heading"></span>.
-                </p>
-                <form id="seminar-interest-form" method="post" action="">
-                    {% csrf_token %}
-                    <input type="hidden"
-                           name="next"
-                           id="seminar-interest-next"
-                           value="{{ request.get_full_path }}">
-                    <div class="mb-3">
-                        <label for="guest_name"
-                               class="block mb-2.5 text-sm font-medium text-heading">Name</label>
-                        <input type="text"
-                               id="guest_name"
-                               name="guest_name"
-                               required
-                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
-                    </div>
-                    <div class="mb-4">
-                        <label for="guest_email"
-                               class="block mb-2.5 text-sm font-medium text-heading">Email</label>
-                        <input type="email"
-                               id="guest_email"
-                               name="guest_email"
-                               required
-                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
-                    </div>
-                    <p class="text-body text-sm mb-3">
-                        Have an account? Consider applying for one to manage your interests more easily.
-                        <a href="{% url 'apply_student' %}"
-                           class="text-red-700"
-                           style="text-decoration: underline">Apply for an account</a>
-                    </p>
-                    <button type="submit"
-                            class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
-                        Submit Interest
-                    </button>
-                </form>
-            </div>
-        </div>
     </article>
     <script>
-        function openSeminarInterestModal(actionUrl, seminarTitle, nextUrl) {
-            var modal = document.getElementById('seminar-interest-modal');
-            var form = document.getElementById('seminar-interest-form');
-            var title = document.getElementById('seminar-modal-title');
-            var nextInput = document.getElementById('seminar-interest-next');
-
-            form.action = actionUrl;
-            title.textContent = seminarTitle;
-            nextInput.value = nextUrl || window.location.pathname;
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modal.setAttribute('aria-hidden', 'false');
-        }
-
-        function closeSeminarInterestModal() {
-            var modal = document.getElementById('seminar-interest-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            modal.setAttribute('aria-hidden', 'true');
-        }
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeSeminarInterestModal();
-            }
-        });
-
-        document.getElementById('seminar-interest-modal').addEventListener('click', function (event) {
-            if (event.target.id === 'seminar-interest-modal') {
-                closeSeminarInterestModal();
-            }
-        });
 
         (function () {
             var countriesInput = document.getElementById('countries-pill-input');

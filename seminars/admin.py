@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from core.constants import COUNTRY_CHOICES
 
-from seminars.models import Seminar, SeminarInterest
+from seminars.models import Seminar, University
 
 
 class SeminarAdminForm(forms.ModelForm):
@@ -29,21 +29,37 @@ class SeminarAdminForm(forms.ModelForm):
 
 class SeminarAdmin(admin.ModelAdmin):
     form = SeminarAdminForm
-    list_display = ['title', 'host', 'date', 'description']
-    search_fields = ['title', 'host__first_name', 'host__last_name', 'description']
+    list_display = ['title', 'visitor_name', 'get_university_name', 'visit_start', 'visit_end', 'posted_by']
+    search_fields = ['title', 'visitor_name', 'visitor_email', 'university__name', 'university_name', 'description']
+    list_filter = ['visit_start', 'countries']
 
     fieldsets = (
         ('Seminar Information', {
-            'fields': ('title', 'host', 'date', 'countries', 'description')
+            'fields': (
+                'title',
+                'posted_by',
+                'visitor_name',
+                'visitor_email',
+                'visitor_affiliation',
+                'university',
+                'university_name',
+                'visit_start',
+                'visit_end',
+                'countries',
+                'description',
+            )
         }),
     )
 
+    def get_university_name(self, obj):
+        return obj.get_university_display()
+    get_university_name.short_description = 'University'
+
+
+@admin.register(University)
+class UniversityAdmin(admin.ModelAdmin):
+    list_display = ['name', 'country_code', 'website', 'source']
+    search_fields = ['name', 'country_code', 'source', 'external_id']
+
 admin.site.register(Seminar, SeminarAdmin)
 
-
-class SeminarInterestAdmin(admin.ModelAdmin):
-    list_display = ['seminar', 'user', 'guest_name', 'guest_email', 'created_at']
-    search_fields = ['seminar__title', 'user__email', 'guest_name', 'guest_email']
-
-
-admin.site.register(SeminarInterest, SeminarInterestAdmin)

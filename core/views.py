@@ -42,23 +42,27 @@ def home(request):
         })
 
     # Get upcoming seminars (next 3)
+    today = timezone.localdate()
     upcoming_seminars_qs = Seminar.objects.filter(
-        date__gte=timezone.now()
-    ).order_by('date')[:3]
+        Q(visit_end__gte=today) |
+        Q(visit_end__isnull=True, visit_start__gte=today)
+    ).order_by('visit_start')[:3]
 
     # Format seminars for _list_display template
     upcoming_seminars = []
     for seminar in upcoming_seminars_qs:
         country_labels = seminar.country_labels() if hasattr(seminar, 'country_labels') else []
+        if seminar.visit_end and seminar.visit_end != seminar.visit_start:
+            seminar_date = f"{seminar.visit_start.strftime('%b %d')} - {seminar.visit_end.strftime('%b %d')}"
+        else:
+            seminar_date = seminar.visit_start.strftime('%b %d')
         upcoming_seminars.append({
             'url': f'/seminars/{seminar.id}/' if hasattr(seminar, 'get_absolute_url') else '#',
             'title': seminar.title,
-            'date': seminar.date.strftime('%b %d'),
-            'subtitle': f'Hosted by {seminar.host.get_full_name()}' if seminar.host else 'Host TBA',
-            'description': ', '.join(country_labels[:2]) if country_labels else 'Countries not specified',
-            'meta': {
-                'right': seminar.date.strftime('%H:%M')
-            }
+            'date': seminar_date,
+            'subtitle': f'Visitor: {seminar.visitor_name}',
+            'description': seminar.get_university_display(),
+            'meta': {'right': ', '.join(country_labels[:2]) if country_labels else ''}
         })
 
     # Get new scholars (recently joined, last 3)
