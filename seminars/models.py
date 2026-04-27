@@ -30,7 +30,6 @@ class University(models.Model):
 
 
 class Seminar(models.Model):
-    title = models.CharField(max_length=255)
     posted_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

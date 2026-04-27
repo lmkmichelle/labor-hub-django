@@ -66,7 +66,7 @@
                                    name="q"
                                    value="{{ query }}"
                                    class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
-                                   placeholder="Search by title, visitor, university, or description..." />
+                                   placeholder="Search by visitor, university, or description..." />
                         </div>
                         <button type="submit"
                                 class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
@@ -100,7 +100,7 @@
                     {% if user.is_authenticated %}
                         <a href="{% url 'seminar-create' %}"
                            class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                            Post Seminar
+                            Coordinate Visit
                         </a>
                     {% endif %}
                 </div>
@@ -114,7 +114,6 @@
                                      onclick="window.location.href='{% url 'seminar-detail' seminar.id %}'"
                                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'seminar-detail' seminar.id %}';}">
                                     <div class="flex flex-row items-center justify-between gap-4">
-                                        <h5 class="text-xl font-semibold text-heading">{{ seminar.title }}</h5>
                                         <p class="text-body shrink-0">
                                             {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
                                                 {{ seminar.visit_start|date:"N j" }} - {{ seminar.visit_end|date:"N j, Y" }}

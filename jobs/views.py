@@ -1,10 +1,15 @@
 from datetime import datetime
 
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.views.generic import DetailView, ListView
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView
 
 from core.constants import COUNTRY_CHOICES
 
+from .forms import JobForm
 from .models import Job
 
 
@@ -151,3 +156,19 @@ class JobDetailView(DetailView):
 	model = Job
 	template_name = 'jobs/job_detail.html'
 	context_object_name = 'job'
+
+
+class JobCreateView(LoginRequiredMixin, CreateView):
+	model = Job
+	form_class = JobForm
+	template_name = 'jobs/job_form.html'
+	success_url = reverse_lazy('jobs-list')
+
+	def form_valid(self, form):
+		job = form.save(commit=False)
+		job.uploader = self.request.user
+		job.save()
+		form.save_m2m()
+		messages.success(self.request, 'Job posted successfully.')
+		return redirect(self.success_url)
+

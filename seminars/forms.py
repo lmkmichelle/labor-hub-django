@@ -14,7 +14,6 @@ class SeminarForm(forms.ModelForm):
     class Meta:
         model = Seminar
         fields = [
-            'title',
             'country_code',
             'visitor_name',
             'visitor_email',
@@ -31,7 +30,6 @@ class SeminarForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 5}),
         }
         labels = {
-            'title': 'Seminar Title',
             'visitor_name': 'Your Name',
             'visitor_email': 'Your Email',
             'visitor_affiliation': 'Affiliation (Optional)',
@@ -45,7 +43,6 @@ class SeminarForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['title'].required = True
         self.fields['visitor_name'].required = True
         self.fields['visitor_email'].required = True
         self.fields['visit_start'].required = True

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load form_tags %}
+
+{% block content %}
+<article class="format lg:format-lg max-w-none">
+    <h3 class="title">Post a Job</h3>
+
+    <form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% render_field form.title %}
+        {% render_select form.country_code label="Country" %}
+        {% render_field form.description %}
+        {% render_field form.url %}
+        {% render_field form.deadline %}
+
+        <div class="mb-5">
+            <div class="flex items-center">
+                <input type="checkbox"
+                       name="{{ form.is_for_graduate_students.name }}"
+                       id="{{ form.is_for_graduate_students.id_for_label }}"
+                       {% if form.is_for_graduate_students.value %}checked{% endif %}
+                       class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
+                <label for="{{ form.is_for_graduate_students.id_for_label }}" class="ml-2 text-sm font-medium text-heading">
+                    {{ form.is_for_graduate_students.label }}
+                </label>
+            </div>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">Uncheck for researcher/professor roles.</p>
+            {% if form.is_for_graduate_students.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.is_for_graduate_students.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex gap-3 mb-5">
+            <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+                Submit
+            </button>
+            <a href="{% url 'jobs-list' %}" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+        </div>
+    </form>
+</article>
+{% endblock %}
+
+

@@ -29,14 +29,13 @@ class SeminarAdminForm(forms.ModelForm):
 
 class SeminarAdmin(admin.ModelAdmin):
     form = SeminarAdminForm
-    list_display = ['title', 'visitor_name', 'get_university_name', 'visit_start', 'visit_end', 'posted_by']
-    search_fields = ['title', 'visitor_name', 'visitor_email', 'university__name', 'university_name', 'description']
+    list_display = ['visitor_name', 'get_university_name', 'visit_start', 'visit_end', 'posted_by']
+    search_fields = [ 'visitor_name', 'visitor_email', 'university__name', 'university_name', 'description']
     list_filter = ['visit_start', 'countries']
 
     fieldsets = (
         ('Seminar Information', {
             'fields': (
-                'title',
                 'posted_by',
                 'visitor_name',
                 'visitor_email',

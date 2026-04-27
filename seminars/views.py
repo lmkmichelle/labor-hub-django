@@ -106,7 +106,6 @@ class SeminarsListView(ListView):
         query = self.request.GET.get('q', '').strip()
         if query:
             queryset = queryset.filter(
-                Q(title__icontains=query) |
                 Q(description__icontains=query) |
                 Q(visitor_name__icontains=query) |
                 Q(visitor_email__icontains=query) |
