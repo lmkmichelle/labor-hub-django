@@ -94,18 +94,32 @@ WSGI_APPLICATION = "nole.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE", "sqlite3")
+
+# Engine-aware default port so switching engines doesn't require setting DATABASE_PORT.
+_DEFAULT_DB_PORTS = {"mysql": "3306", "postgresql": "5432"}
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.{}".format(
-            os.environ.get("DATABASE_ENGINE", "sqlite3")
-        ),
+        "ENGINE": "django.db.backends.{}".format(DATABASE_ENGINE),
         "NAME": os.getenv("DATABASE_NAME", "nole"),
         "USER": os.getenv("DATABASE_USERNAME", "myprojectuser"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
         "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DATABASE_PORT", 5432),
+        "PORT": os.getenv("DATABASE_PORT", _DEFAULT_DB_PORTS.get(DATABASE_ENGINE, "")),
     }
 }
+
+# MySQL (e.g. Cornell Media3) needs utf8mb4 for full Unicode support.
+if DATABASE_ENGINE == "mysql":
+    DATABASES["default"]["OPTIONS"] = {
+        "charset": "utf8mb4",
+        "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+    }
+    DATABASES["default"]["TEST"] = {
+        "CHARSET": "utf8mb4",
+        "COLLATION": "utf8mb4_unicode_ci",
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

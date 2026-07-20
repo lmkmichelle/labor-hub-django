@@ -9,22 +9,8 @@ class Migration(migrations.Migration):
         ('accounts', '0007_alter_profile_avatar'),
     ]
 
-    operations = [
-        migrations.RunSQL(
-            """
-            ALTER TABLE accounts_profile
-            ALTER
-            COLUMN research_interests
-                TYPE jsonb
-                USING to_jsonb(research_interests);
-            """,
-            reverse_sql="""
-                        ALTER TABLE accounts_profile
-                        ALTER
-                        COLUMN research_interests
-                TYPE varchar[]
-                USING array(SELECT jsonb_array_elements_text(research_interests));
-                        """
-        ),
-
-    ]
+    # No-op on purpose: the initial migration now creates research_interests as a
+    # backend-agnostic JSONField directly, so the former PostgreSQL-only jsonb
+    # conversion is unnecessary. Kept (empty) to preserve migration history and any
+    # existing PostgreSQL databases where it was already applied.
+    operations = []

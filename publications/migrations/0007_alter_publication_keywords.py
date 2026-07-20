@@ -10,22 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            """
-            ALTER TABLE publications_publication
-            ALTER
-            COLUMN keywords
-                TYPE jsonb
-                USING to_jsonb(keywords);
-            """,
-            reverse_sql="""
-                        ALTER TABLE publications_publication
-                        ALTER
-                        COLUMN keywords
-                TYPE varchar[]
-                USING array(SELECT jsonb_array_elements_text(keywords));
-                        """
-        ),
         migrations.AlterField(
             model_name='publication',
             name='keywords',
