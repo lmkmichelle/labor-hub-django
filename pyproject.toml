@@ -6,3 +6,24 @@
 # H021 (inline styles) is intentionally left ENABLED as the site-wide guard; the only
 # legitimate inline styles live in the email template, which is wrapped in djlint:off.
 ignore = "H006,H029,H030,H031"
+
+[tool.coverage.run]
+# Measure the first-party apps and the project package; everything else is noise.
+source = ["accounts", "core", "events", "publications", "seminars", "nole"]
+branch = true
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "manage.py",
+    "nole/settings*.py",
+    "nole/wsgi.py",
+    "nole/asgi.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

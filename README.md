@@ -75,6 +75,46 @@ docker exec -it nole-app python manage.py migrate
 docker exec -it nole-app python manage.py startapp <app_name>
 ```
 
+## Testing
+
+Tests use Django's built-in test runner (`unittest`-style `TestCase`) with a dedicated
+settings module, `nole.settings_test`, so runs are deterministic and do **not** depend on
+a committed `.env`. It uses an in-memory SQLite database, disables `django-compressor`
+offline compression and HTTPS redirects, and provides a fixed secret key.
+
+```
+# Run the whole suite (fast, in-memory SQLite)
+py manage.py test --settings=nole.settings_test
+
+# Run a single app or test module
+py manage.py test accounts --settings=nole.settings_test
+py manage.py test accounts.tests.test_models --settings=nole.settings_test
+```
+
+### Coverage
+
+`coverage` is declared in `requirements-dev.txt`; its configuration lives in
+`pyproject.toml` (`[tool.coverage.*]`).
+
+```
+pip install -r requirements-dev.txt
+coverage run manage.py test --settings=nole.settings_test
+coverage report          # or: coverage html  -> htmlcov/index.html
+```
+
+Each app owns a `tests/` package (`test_models.py`, `test_forms.py`, `test_views.py`,
+etc.) covering models, forms, views, utilities, signals, and template tags.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request with three jobs:
+
+- **Lint** — `djlint templates --lint`.
+- **Tests (SQLite)** — a Python 3.12 / 3.13 matrix that runs `makemigrations --check`,
+  `manage.py check`, and the suite under `coverage` using `nole.settings_test`.
+- **Tests (MySQL 8)** — a production-parity job against a MySQL 8 service
+  (`DATABASE_ENGINE=mysql`) to catch backend-specific issues before Media3.
+
 ## Production (Cornell Media3)
 
 Media3 is a managed Linux VM (Apache + managed MySQL + system Python), **not** a

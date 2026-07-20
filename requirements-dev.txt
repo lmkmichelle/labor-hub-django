@@ -1,0 +1,5 @@
+# Development and CI-only dependencies (not required at runtime).
+# Install with:  pip install -r requirements.txt -r requirements-dev.txt
+#
+# djlint is declared in requirements.txt (it is used by the template lint step).
+coverage~=7.6.0
