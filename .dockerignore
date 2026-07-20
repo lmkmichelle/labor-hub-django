@@ -1,0 +1,30 @@
+# Version control / editor
+.git
+.gitignore
+.idea
+.vscode
+
+# Python
+.venv
+venv
+__pycache__
+*.pyc
+
+# Secrets & local env (never bake into the image)
+.env
+.env.*
+
+# Node (rebuilt inside the node-builder stage)
+node_modules
+
+# Django collected static & local databases
+staticfiles
+*.sqlite3
+
+# Runtime/user data (served from a volume or S3, not the image)
+media
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml

@@ -16,6 +16,22 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from a local .env file when present. This is a no-op
+# under Docker (which injects env vars directly and whose values take precedence),
+# and makes non-Docker local runs work without exporting variables by hand.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
+
+
+def _env_bool(name, default="0"):
+    """Parse a truthy environment variable (1/true/yes/on)."""
+    return os.environ.get(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -23,7 +39,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG", default=0))
+DEBUG = _env_bool("DEBUG", "0")
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
@@ -49,7 +65,12 @@ INSTALLED_APPS = [
 
 COMPRESS_ROOT = BASE_DIR / "static"
 
-COMPRESS_ENABLED = False
+# In production (DEBUG off) run django-compressor in offline mode: the
+# {% compress css %} bundle is prebuilt at deploy time (`manage.py compress`) and
+# then gathered by collectstatic for Apache to serve. Disabled in local dev.
+COMPRESS_ENABLED = not DEBUG
+
+COMPRESS_OFFLINE = not DEBUG
 
 # Ensure Django can find app/static and project static files
 STATICFILES_FINDERS = [
@@ -96,19 +117,28 @@ WSGI_APPLICATION = "nole.wsgi.application"
 
 DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE", "sqlite3")
 
-# Engine-aware default port so switching engines doesn't require setting DATABASE_PORT.
-_DEFAULT_DB_PORTS = {"mysql": "3306", "postgresql": "5432"}
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.{}".format(DATABASE_ENGINE),
-        "NAME": os.getenv("DATABASE_NAME", "nole"),
-        "USER": os.getenv("DATABASE_USERNAME", "myprojectuser"),
-        "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
-        "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DATABASE_PORT", _DEFAULT_DB_PORTS.get(DATABASE_ENGINE, "")),
+if DATABASE_ENGINE == "sqlite3":
+    # Zero-setup local development: a single SQLite file, no DB server needed.
+    # The DATABASE_* connection vars (used by MySQL/Docker/production) are ignored.
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    # Engine-aware default port so switching engines doesn't require DATABASE_PORT.
+    _DEFAULT_DB_PORTS = {"mysql": "3306", "postgresql": "5432"}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.{}".format(DATABASE_ENGINE),
+            "NAME": os.getenv("DATABASE_NAME", "nole"),
+            "USER": os.getenv("DATABASE_USERNAME", "myprojectuser"),
+            "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
+            "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
+            "PORT": os.getenv("DATABASE_PORT", _DEFAULT_DB_PORTS.get(DATABASE_ENGINE, "")),
+        }
+    }
 
 # MySQL (e.g. Cornell Media3) needs utf8mb4 for full Unicode support.
 if DATABASE_ENGINE == "mysql":
@@ -212,7 +242,6 @@ if USE_S3:
     # Compressor settings for S3
     COMPRESS_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
     COMPRESS_URL = STATIC_URL
-    COMPRESS_OFFLINE = False
 
     # Media files
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_MEDIA_LOCATION}/"
@@ -221,8 +250,7 @@ else:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
     
-    # Compressor settings for local
-    COMPRESS_OFFLINE = False
+    # (compressor offline mode is configured globally above)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -236,3 +264,54 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# CSRF trusted origins (scheme+host), comma-separated, e.g.
+# "https://laborhub.cornell.edu". Required for POST/login across the HTTPS proxy.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
+]
+
+# Production security hardening. Applied when DEBUG is off so local HTTP dev is
+# unaffected. TLS is terminated at the Media3 Apache reverse proxy, which sets
+# X-Forwarded-Proto; SECURE_PROXY_SSL_HEADER lets Django detect HTTPS.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", "1")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Start at 0; raise (e.g. 3600, then 31536000) once HTTPS is verified end-to-end.
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", "1")
+    SECURE_HSTS_PRELOAD = _env_bool("SECURE_HSTS_PRELOAD", "1")
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+
+# Logging: send app logs to stdout so the gunicorn systemd unit / journald captures
+# them (Apache keeps its own access/error logs).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": (os.environ.get("DJANGO_LOGLEVEL") or "INFO").upper(),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": (os.environ.get("DJANGO_LOGLEVEL") or "INFO").upper(),
+            "propagate": False,
+        },
+    },
+}

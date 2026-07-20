@@ -2,10 +2,11 @@ FROM node:20-slim AS node-builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 
-COPY tailwind.config.js postcss.config.js ./
+# Tailwind v4 is CSS-first (config lives in static/src/input.css); there are no
+# tailwind.config.js / postcss.config.js files to copy.
 COPY ./static ./static
 COPY ./templates ./templates
 
@@ -20,9 +21,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y netcat build-essential libjpeg-dev zlib1g-dev python3-tk
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential libjpeg-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# install psycopg2 dependencies
+# upgrade pip
 RUN pip install --upgrade pip
 
 COPY ./requirements.txt .
@@ -36,6 +38,10 @@ RUN sed -i 's/\r$//g' /entrypoint.sh && chmod +x /entrypoint.sh
 # Expose the Django port
 EXPOSE 8000
 COPY . .
-# Run Django’s development server
+
+# Use the CSS compiled in the node stage, overriding any stale committed copy.
+COPY --from=node-builder /app/static/src/output.css ./static/src/output.css
+
+# Dev server via entrypoint (migrate + runserver). For production, use gunicorn:
 # CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "nole.wsgi:application"]
 ENTRYPOINT ["/bin/sh", "/entrypoint.sh"]

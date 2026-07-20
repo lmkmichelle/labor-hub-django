@@ -13,3 +13,10 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 yarn.lock
+
+# Python virtual environments
+.venv/
+venv/
+
+# Local SQLite databases
+*.sqlite3

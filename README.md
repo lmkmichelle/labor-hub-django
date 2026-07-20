@@ -22,13 +22,14 @@ py -m venv .venv
 # 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Configure environment (edit values after copying)
+# 3. Configure environment
 copy .env.example .env
-#    For a no-database-setup run, set DATABASE_ENGINE=sqlite3 in .env
+#    Defaults to SQLite (no database setup needed). For local MySQL instead, set
+#    DATABASE_ENGINE=mysql and DATABASE_HOST=127.0.0.1 in .env.
 
 # 4. (Optional) rebuild Tailwind CSS after editing templates/styles
 npm install
-npx @tailwindcss/cli -i ./static/src/input.css -o ./static/src/output.css --watch
+npm run watch          # or `npm run build` for a one-off minified build
 
 # 5. Apply migrations and start the server
 py manage.py migrate
@@ -42,12 +43,14 @@ then create the database in MySQL before running migrations.
 ## Run with Docker
 
 ```
-npm install
-npx @tailwindcss/cli -i ./static/src/input.css -o ./static/src/output.css --watch
 docker compose up --build
 ```
 
 Docker Compose runs MySQL 8 as the `db` service (see `docker-compose.yml` and `.env.example`).
+The app container always connects to this bundled MySQL — Compose sets `DATABASE_ENGINE=mysql`
+and `DATABASE_HOST=db` itself, regardless of the `DATABASE_ENGINE` in your `.env` (so the same
+`.env` can default to SQLite for native local runs). The `Dockerfile` compiles the Tailwind CSS
+bundle in its Node build stage, so no host-side `npm` step is required.
 
 ### Applying migrations (Docker)
 
@@ -61,3 +64,20 @@ docker exec -it nole-app python manage.py migrate
 ```
 docker exec -it nole-app python manage.py startapp <app_name>
 ```
+
+## Production (Cornell Media3)
+
+Media3 is a managed Linux VM (Apache + managed MySQL + system Python), **not** a
+container host, so production runs natively — not under Docker. The app is served by
+**gunicorn** behind **Apache** (reverse proxy + TLS), and Apache serves `/static/`
+and `/media/` directly from disk.
+
+Deployment artifacts and a step-by-step runbook live in [`deploy/`](deploy/README.md):
+
+- `deploy/gunicorn.conf.py` / `deploy/gunicorn.service` — gunicorn config + systemd unit
+- `deploy/apache/laborhub.conf` — Apache reverse-proxy vhost (static/media aliases + SSL)
+- `deploy/README.md` — full Media3 deployment checklist
+
+Production behaviour is driven entirely by environment variables (`DEBUG=0`, a real
+`DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and the MySQL
+`DATABASE_*` values); see `.env.example`.
