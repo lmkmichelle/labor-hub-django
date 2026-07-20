@@ -21,7 +21,7 @@
         </div>
         {% if event.host %}
             <div class="not-format mb-4">
-                Hosted by <a class="text-red-700" style="text-decoration: underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
+                Hosted by <a class="text-red-700 underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
             </div>
         {% endif %}
     </div>
@@ -34,7 +34,7 @@
 
     <h4>Date &amp; Time</h4>
     {% if event.end_date %}
-        <p>{{ event.date|date:"l, N j, Y, g:i A" }} &ndash; {{ event.end_date|date:"N j, Y, g:i A" }}</p>
+        <p>{{ event.date|date:"l, N j, Y, g:i A" }} – {{ event.end_date|date:"N j, Y, g:i A" }}</p>
     {% else %}
         <p>{{ event.date|date:"l, N j, Y, g:i A" }}</p>
     {% endif %}

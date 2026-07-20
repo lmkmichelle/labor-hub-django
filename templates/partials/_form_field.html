@@ -5,7 +5,7 @@
     
     {% if widget_name == 'Select' or widget_name == 'SelectMultiple' %}
         <select id="{{ field.id_for_label }}" name="{{ field.name }}"
-                class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs"
+                class="form-select"
                 {% if required %}required{% endif %}>
             {% for value, display in field.field.choices %}
                 <option value="{{ value }}" {% if field.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ display }}</option>
@@ -17,15 +17,15 @@
                name="{{ field.name }}"
                id="{{ field.id_for_label }}"
                value="{{ date_value }}"
-               class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
+               class="form-input"
                {% if required %}required{% endif %} />
     {% elif widget_name == 'Textarea' %}
         <textarea id="{{ field.id_for_label }}" name="{{ field.name }}" rows="4"
-                  class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
+                  class="form-input"
                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                   {% if required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
     {% elif widget_name == 'FileInput' or widget_name == 'ClearableFileInput' %}
-        <input class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body"
+        <input class="form-input cursor-pointer"
                id="{{ field.id_for_label }}" name="{{ field.name }}" type="file"
                {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}
                {% if field.field.widget.attrs.multiple %}multiple{% endif %}>
@@ -33,8 +33,8 @@
         <input type="{{ field.field.widget.input_type|default:'text' }}" 
                name="{{ field.name }}" 
                id="{{ field.id_for_label }}" 
-               value="{{ field.value|default:'' }}"
-               class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
+               value="{{ field.field.widget.attrs.value|default:field.value|default:'' }}"
+               class="form-input"
                {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                {% if required %}required{% endif %} />
     {% endif %}

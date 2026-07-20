@@ -1,8 +1,5 @@
-from email.mime import application
 import json
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password
@@ -65,10 +62,6 @@ class BaseApplicationForm(forms.ModelForm):
         application = super().save(commit=False)
         application.password = make_password(self.cleaned_data["password1"])
 
-        # Save the resume file if provided
-        # resume_file = self.cleaned_data["resume"]
-        # application.resume.save(resume_file.name, resume_file)
-
         if commit:
             application.save()
 
@@ -81,28 +74,6 @@ class BaseApplicationForm(forms.ModelForm):
                     )
 
         return application
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.helper = FormHelper()
-        self.helper.form_method = 'POST'
-        self.helper.layout = Layout(
-            "first_name",
-            "last_name",
-            "education",
-            "position",
-            "country_code",
-            "motivation",
-            "resume",
-            "email",
-            "password1",
-            "password2",
-            ButtonHolder(
-                Submit('submit', "Apply", css_class='btn btn-primary me-3'),
-                HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
-            )
-        )
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
@@ -131,19 +102,17 @@ class ResearcherApplicationForm(BaseApplicationForm):
     class Meta(BaseApplicationForm.Meta):
         fields = BaseApplicationForm.Meta.fields + ("research_papers",)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class AdvisorChoiceField(forms.ModelChoiceField):
+    """Renders advisor options as "Full Name - Position" (presentation only)."""
 
-        layout_fields = list(self.helper.layout.fields)
-        button_holder = layout_fields.pop()
+    def label_from_instance(self, obj):
+        profile = getattr(obj, "profile", None)
+        position = getattr(profile, "position", None) or "Researcher"
+        return f"{obj.get_full_name()} - {position}"
 
-        layout_fields.append("research_papers")
-        layout_fields.append(button_holder)
-
-        self.helper.layout.fields = layout_fields
 
 class StudentApplicationForm(BaseApplicationForm):
-    advisor = forms.ModelChoiceField(
+    advisor = AdvisorChoiceField(
         queryset=CustomUser.objects.filter(role=CustomUser.Role.RESEARCHER, is_active=True),
         label="Select an Advisor",
         help_text="Choose a researcher to act as your advisor",
@@ -151,17 +120,6 @@ class StudentApplicationForm(BaseApplicationForm):
 
     class Meta(BaseApplicationForm.Meta):
         fields = BaseApplicationForm.Meta.fields + ("advisor",)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        layout_fields = list(self.helper.layout.fields)
-        button_holder = layout_fields.pop()
-
-        layout_fields.append("advisor")
-        layout_fields.append(button_holder)
-
-        self.helper.layout.fields = layout_fields
 
     def save(self, commit=True):
         application = super().save(commit=False)
@@ -191,19 +149,6 @@ class CustomLoginForm(AuthenticationForm):
     class Meta:
         model = CustomUser
         fields = ("username", "password")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            'username',
-            'password',
-            ButtonHolder(
-                Submit('submit', "Log in", css_class='btn btn-primary me-3'),
-                HTML(f'<a href="/" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
-            )
-        )
 
 
 class UpdateUserForm(forms.ModelForm):
@@ -263,15 +208,3 @@ class UpdateProfileForm(forms.ModelForm):
             tagify_value = json.dumps([{"value": v} if isinstance(v, str) else v for v in initial_interests])
             self.fields["research_interests_input"].initial = tagify_value
             self.fields["research_interests_input"].widget.attrs['value'] = tagify_value
-
-        self.helper = FormHelper(self)
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            'avatar',
-            'position',
-            'education',
-            'country_code',
-            'website',
-            'biography',
-            'research_interests_input'
-        )

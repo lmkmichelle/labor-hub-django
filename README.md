@@ -1,10 +1,20 @@
 # Labor Hub
 
-Django 5.2 web app: server-rendered templates + Tailwind CSS v4 + HTMX/Flowbite.
+Django 5.2 web app: server-rendered templates + Tailwind CSS v4 + Flowbite.
 The database is **MySQL** (matching Cornell Media3 hosting); **SQLite** works out of
 the box for zero-setup local development. Node.js is only used to (re)build the
 Tailwind CSS bundle at build time — the compiled `static/src/output.css` is committed,
-so it is not required to run the app.
+so it is not required to run the app. Flowbite's JavaScript is likewise vendored as a
+committed static asset (`static/js/flowbite.min.js`, loaded via `{% static %}`), so the
+app pulls **no runtime assets from a CDN**.
+
+> **Styling convention.** Forms render through the shared field partials/tags
+> (`{% render_field %}` / `{% render_select %}`); shared list/pagination/empty-state
+> structure lives in `templates/partials/`; and repeated controls (buttons, inputs,
+> selects, nav links) are defined once as `@apply` component classes in
+> `static/src/input.css` — not as duplicated utility strings or inline styles. The app no
+> longer uses `django-crispy-forms`, Bootstrap, or HTMX. See
+> [`.specify/memory/constitution.md`](.specify/memory/constitution.md) (Principle III).
 
 ## Prerequisites
 

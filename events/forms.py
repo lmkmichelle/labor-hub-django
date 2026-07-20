@@ -1,9 +1,6 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, ButtonHolder, HTML
 from datetime import time as dtime, datetime
 from django import forms
 from django.utils import timezone
-from django.urls import reverse_lazy
 
 from .models import Event
 
@@ -73,7 +70,6 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cancel_url = reverse_lazy('events-list')
 
         self.fields['end_date'].required = False
         self.fields['deadline'].required = False
@@ -82,23 +78,6 @@ class EventForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.deadline:
             self.fields['deadline_date'].initial = self.instance.deadline.date()
             self.fields['deadline_time'].initial = self.instance.deadline.strftime('%H:%M')
-
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            'title',
-            'description',
-            'date',
-            'end_date',
-            'deadline_date',
-            'deadline_time',
-            'location',
-            'category',
-            ButtonHolder(
-                Submit('submit', 'Submit', css_class='btn btn-primary me-3'),
-                HTML(f'<a href="{cancel_url}" style="margin-bottom: 0" class="btn btn-secondary">Cancel</a>')
-            )
-        )
 
     def clean(self):
         cleaned_data = super().clean()

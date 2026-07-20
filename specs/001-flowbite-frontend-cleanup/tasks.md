@@ -33,9 +33,9 @@ Single Django project (multi-app), server-rendered templates. Work lands in `tem
 
 **Purpose**: Establish the single home for shared style classes and confirm the build/lint gates run.
 
-- [ ] T001 Add an empty `@layer components { }` block to `static/src/input.css` (the single home for `@apply` component classes), then run `npm run build` and confirm `static/src/output.css` regenerates with no errors.
-- [ ] T002 [P] Capture the template-lint baseline: run `djlint templates --lint` and record current issues so the Phase 6 "zero errors" gate is measurable.
-- [ ] T003 [P] (OPTIONAL) Confirm the Django test runner executes (`python manage.py test`) and add an empty smoke-test module skeleton in `core/tests.py` for the per-story smoke tests below.
+- [X] T001 Add an empty `@layer components { }` block to `static/src/input.css` (the single home for `@apply` component classes), then run `npm run build` and confirm `static/src/output.css` regenerates with no errors.
+- [X] T002 [P] Capture the template-lint baseline: run `djlint templates --lint` and record current issues so the Phase 6 "zero errors" gate is measurable.
+- [X] T003 [P] (OPTIONAL) Confirm the Django test runner executes (`python manage.py test`) and add an empty smoke-test module skeleton in `core/tests.py` for the per-story smoke tests below.
 
 ---
 
@@ -46,11 +46,11 @@ user story consumes. Per [contracts/ui-components.md](./contracts/ui-components.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Define the `@apply` component classes in the `@layer components` block of `static/src/input.css` — `.form-input`, `.form-select`, `.btn-primary`, `.btn-secondary`, `.card-surface`, `.nav-link` (bodies = the current utility strings from spec Findings F, using semantic tokens per FR-007); then `npm run build`. (FR-006)
-- [ ] T005 [P] Create the unified list/card item partial `templates/partials/_list_item.html` per the contract (inputs: `title`, `url?`, `subtitle?`, `description?`, `meta?`, `badge?`, `image?`; Flowbite `.card-surface` markup only; optional params render nothing). (FR-002)
-- [ ] T006 [P] Create the shared pagination partial `templates/partials/_pagination.html` (inputs: `page_obj`, `is_paginated`, `querystring?`; Flowbite styling; renders nothing when not paginated; preserves querystring). (FR-003)
-- [ ] T007 [P] Create the shared empty-state partial `templates/partials/_empty_state.html` (input: `text`; consistent styled "nothing to display" message). (FR-002 / Edge Cases)
-- [ ] T008 Dedupe the field partials `templates/partials/_form_field.html` and `templates/partials/_select_field.html` so their control markup references `.form-input` / `.form-select` instead of per-widget duplicated class strings. (FR-005) — depends on T004.
+- [X] T004 Define the `@apply` component classes in the `@layer components` block of `static/src/input.css` — `.form-input`, `.form-select`, `.btn-primary`, `.btn-secondary`, `.card-surface`, `.nav-link` (bodies = the current utility strings from spec Findings F, using semantic tokens per FR-007); then `npm run build`. (FR-006)
+- [X] T005 [P] Create the unified list/card item partial `templates/partials/_list_item.html` per the contract (inputs: `title`, `url?`, `subtitle?`, `description?`, `meta?`, `badge?`, `image?`; Flowbite `.card-surface` markup only; optional params render nothing). (FR-002)
+- [X] T006 [P] Create the shared pagination partial `templates/partials/_pagination.html` (inputs: `page_obj`, `is_paginated`, `querystring?`; Flowbite styling; renders nothing when not paginated; preserves querystring). (FR-003)
+- [X] T007 [P] Create the shared empty-state partial `templates/partials/_empty_state.html` (input: `text`; consistent styled "nothing to display" message). (FR-002 / Edge Cases)
+- [X] T008 Dedupe the field partials `templates/partials/_form_field.html` and `templates/partials/_select_field.html` so their control markup references `.form-input` / `.form-select` instead of per-widget duplicated class strings. (FR-005) — depends on T004.
 
 **Checkpoint**: Canonical components exist and build cleanly — user stories can begin.
 
@@ -67,15 +67,15 @@ no plain/unstyled elements; the nav dropdown is well-formed and keyboard-operabl
 
 ### Tests for User Story 1 (OPTIONAL)
 
-- [ ] T009 [P] [US1] (OPTIONAL) Smoke tests in `core/tests.py` asserting HTTP 200 + expected template for the home page (`templates/core/home.html`) and seminars list (`templates/seminars/seminars_list.html`), including a paginated request.
+- [X] T009 [P] [US1] (OPTIONAL) Smoke tests in `core/tests.py` asserting HTTP 200 + expected template for the home page (`templates/core/home.html`) and seminars list (`templates/seminars/seminars_list.html`), including a paginated request.
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Convert the four home-page lists: replace the Bootstrap `list-group` markup in `templates/partials/_list_display.html` with `{% include "partials/_list_item.html" %}` (+ `_empty_state.html`), mapping the view-built `item.*` dicts to the partial inputs **without changing the view context**; remove orphaned custom classes (`list-title`, `box-list`, `box-list-headline`, `list-description`, `title`, `section`). (FR-001, FR-002) — depends on T005, T007.
-- [ ] T011 [US1] Convert `templates/seminars/seminars_list.html` inline Bootstrap `list-group` to `_list_item.html` + `_empty_state.html`. (FR-001, FR-002) — depends on T005, T007.
-- [ ] T012 [US1] Replace every hand-rolled Bootstrap pagination block (`pagination`/`page-item`/`page-link`) with `{% include "partials/_pagination.html" %}`, preserving active search/filter querystring — in `templates/seminars/seminars_list.html` and `templates/accounts/users_list.html` (and any other paginated list). (FR-001, FR-003) — depends on T006; sequence after T011 for `seminars_list.html`.
-- [ ] T013 [US1] Fix the malformed authenticated-user dropdown `<li>`/`<div>` nesting in `templates/base.html`. (FR-012)
-- [ ] T014 [US1] Verify all four home lists and the seminars list render the shared styled empty state when data is absent; adopt `_empty_state.html` anywhere still missing it. (Edge Cases / SC-002)
+- [X] T010 [US1] Convert the four home-page lists: replace the Bootstrap `list-group` markup in `templates/partials/_list_display.html` with `{% include "partials/_list_item.html" %}` (+ `_empty_state.html`), mapping the view-built `item.*` dicts to the partial inputs **without changing the view context**; remove orphaned custom classes (`list-title`, `box-list`, `box-list-headline`, `list-description`, `title`, `section`). (FR-001, FR-002) — depends on T005, T007.
+- [X] T011 [US1] Convert `templates/seminars/seminars_list.html` inline Bootstrap `list-group` to `_list_item.html` + `_empty_state.html`. (FR-001, FR-002) — depends on T005, T007.
+- [X] T012 [US1] Replace every hand-rolled Bootstrap pagination block (`pagination`/`page-item`/`page-link`) with `{% include "partials/_pagination.html" %}`, preserving active search/filter querystring — in `templates/seminars/seminars_list.html` and `templates/accounts/users_list.html` (and any other paginated list). (FR-001, FR-003) — depends on T006; sequence after T011 for `seminars_list.html`.
+- [X] T013 [US1] Fix the malformed authenticated-user dropdown `<li>`/`<div>` nesting in `templates/base.html`. (FR-012)
+- [X] T014 [US1] Verify all four home lists and the seminars list render the shared styled empty state when data is absent; adopt `_empty_state.html` anywhere still missing it. (Edge Cases / SC-002)
 
 **Checkpoint**: MVP — the site renders correctly and consistently on every previously-broken page.
 
@@ -96,15 +96,15 @@ duplicated input/button strings, no Bootstrap-only classes, and each third-party
 
 ### Implementation for User Story 2
 
-- [ ] T016 [P] [US2] Migrate `templates/partials/_publications_list.html` (publications list + profile) to render items via `_list_item.html` / `.card-surface`, preserving the current look. (FR-002, SC-003) — depends on T005.
-- [ ] T017 [US2] Migrate the scholar cards in `templates/accounts/users_list.html` to `_list_item.html` / `.card-surface`, preserving the grid look. (FR-002) — depends on T005; sequence after T012 (same file).
-- [ ] T018 [P] [US2] Migrate the bespoke layout in `templates/events/event_list.html` to `_list_item.html`, preserving intent. (FR-002) — depends on T005.
-- [ ] T019 [US2] Migrate all hand-rolled form fields to the single field path (`{% render_field %}` / `{% render_select %}`): `templates/registration/login.html`, `templates/publications/publication_form.html`, and the advisor `<select>` in `templates/accounts/apply.html`. (FR-004, SC-004) — depends on T008.
-- [ ] T020 [US2] Replace duplicated button/input utility strings with `.btn-primary` / `.btn-secondary` / `.form-input` across `templates/registration/login.html`, `templates/accounts/apply.html`, `templates/events/event_form.html`, `templates/accounts/edit_profile.html`, `templates/publications/publication_form.html`. (FR-006, SC-005) — depends on T004; sequence after T019 (same files).
-- [ ] T021 [US2] Dedupe the six repeated nav-link strings in `templates/base.html` to `.nav-link`. (FR-006) — depends on T004; sequence after T013 (same file).
-- [ ] T022 [US2] Lift scattered inline `style="…"` rules and standardize raw palette values to semantic tokens (FR-007) in `templates/accounts/users_list.html`, `templates/events/event_form.html`, `templates/publications/publication_detail.html`, `templates/events/event_detail.html`, `templates/accounts/profile.html`, and the converted `templates/partials/_list_display.html`. (FR-006, FR-007, SC-005) — sequence after T017 (users_list.html).
-- [ ] T023 [US2] Consolidate third-party assets: copy the version-locked Flowbite 4.0.1 JS to `static/js/flowbite.min.js` and reference it once via `{% static %}` in `templates/base.html` (remove the `cdn.jsdelivr.net/npm/flowbite` `<script>`); load Tagify exactly once in `templates/publications/publication_form.html` (remove the duplicate include, reconcile `static/js/tagify.js`). (FR-011, SC-009) — sequence after T021 (base.html).
-- [ ] T024 [US2] Run `npm run build`; verify the "change once" property by temporarily tweaking `.btn-primary` and confirming every button updates, then revert the tweak. (SC-003)
+- [X] T016 [P] [US2] Migrate `templates/partials/_publications_list.html` (publications list + profile) to render items via `_list_item.html` / `.card-surface`, preserving the current look. (FR-002, SC-003) — depends on T005.
+- [X] T017 [US2] Migrate the scholar cards in `templates/accounts/users_list.html` to `_list_item.html` / `.card-surface`, preserving the grid look. (FR-002) — depends on T005; sequence after T012 (same file).
+- [X] T018 [P] [US2] Migrate the bespoke layout in `templates/events/event_list.html` to `_list_item.html`, preserving intent. (FR-002) — depends on T005.
+- [X] T019 [US2] Migrate all hand-rolled form fields to the single field path (`{% render_field %}` / `{% render_select %}`): `templates/registration/login.html`, `templates/publications/publication_form.html`, and the advisor `<select>` in `templates/accounts/apply.html`. (FR-004, SC-004) — depends on T008.
+- [X] T020 [US2] Replace duplicated button/input utility strings with `.btn-primary` / `.btn-secondary` / `.form-input` across `templates/registration/login.html`, `templates/accounts/apply.html`, `templates/events/event_form.html`, `templates/accounts/edit_profile.html`, `templates/publications/publication_form.html`. (FR-006, SC-005) — depends on T004; sequence after T019 (same files).
+- [X] T021 [US2] Dedupe the six repeated nav-link strings in `templates/base.html` to `.nav-link`. (FR-006) — depends on T004; sequence after T013 (same file).
+- [X] T022 [US2] Lift scattered inline `style="…"` rules and standardize raw palette values to semantic tokens (FR-007) in `templates/accounts/users_list.html`, `templates/events/event_form.html`, `templates/publications/publication_detail.html`, `templates/events/event_detail.html`, `templates/accounts/profile.html`, and the converted `templates/partials/_list_display.html`. (FR-006, FR-007, SC-005) — sequence after T017 (users_list.html).
+- [X] T023 [US2] Consolidate third-party assets: copy the version-locked Flowbite 4.0.1 JS to `static/js/flowbite.min.js` and reference it once via `{% static %}` in `templates/base.html` (remove the `cdn.jsdelivr.net/npm/flowbite` `<script>`); load Tagify exactly once in `templates/publications/publication_form.html` (remove the duplicate include, reconcile `static/js/tagify.js`). (FR-011, SC-009) — sequence after T021 (base.html).
+- [X] T024 [US2] Run `npm run build`; verify the "change once" property by temporarily tweaking `.btn-primary` and confirming every button updates, then revert the tweak. (SC-003)
 
 **Checkpoint**: Every shared element has one canonical source; no duplicated strings or stray assets.
 
@@ -124,11 +124,11 @@ every page, all forms submit/validate identically, and the constitution reflects
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Remove the dead crispy scaffolding (`FormHelper` / `Layout` / `Submit` / `ButtonHolder` / `HTML`) from `accounts/forms.py` and `events/forms.py` **without changing any field or validation**; also remove the unused `from email.mime import application` import and the commented resume-save block in `accounts/forms.py`. (FR-008, FR-010, FR-014)
-- [ ] T027 [P] [US3] Remove the stray `{% load crispy_forms_tags %}` from `templates/accounts/application_submitted.html` and the commented `{% comment %}` avatar block from `templates/accounts/edit_profile.html`. (FR-008, FR-010)
-- [ ] T028 [US3] Remove `crispy_forms` and `crispy_bootstrap5` from `INSTALLED_APPS` and delete `CRISPY_ALLOWED_TEMPLATE_PACKS` / `CRISPY_TEMPLATE_PACK` in `nole/settings.py`. (FR-008)
-- [ ] T029 [P] [US3] Remove `django-crispy-forms`, `crispy-bootstrap5`, and `django-htmx` from `requirements.txt` and refresh the environment (`pip install -r requirements.txt`). (FR-008, FR-009)
-- [ ] T030 [US3] Amend `.specify/memory/constitution.md` Principle III (User Experience Consistency) to codify the Tailwind/Flowbite component standard (shared partials/tags for structure; `@apply` atoms for controls; Flowbite/Tagify as progressive enhancement); bump the version MAJOR → **2.0.0**, update the Sync Impact Report and the Last Amended date. (FR-015)
+- [X] T026 [US3] Remove the dead crispy scaffolding (`FormHelper` / `Layout` / `Submit` / `ButtonHolder` / `HTML`) from `accounts/forms.py` and `events/forms.py` **without changing any field or validation**; also remove the unused `from email.mime import application` import and the commented resume-save block in `accounts/forms.py`. (FR-008, FR-010, FR-014)
+- [X] T027 [P] [US3] Remove the stray `{% load crispy_forms_tags %}` from `templates/accounts/application_submitted.html` and the commented `{% comment %}` avatar block from `templates/accounts/edit_profile.html`. (FR-008, FR-010)
+- [X] T028 [US3] Remove `crispy_forms` and `crispy_bootstrap5` from `INSTALLED_APPS` and delete `CRISPY_ALLOWED_TEMPLATE_PACKS` / `CRISPY_TEMPLATE_PACK` in `nole/settings.py`. (FR-008)
+- [X] T029 [P] [US3] Remove `django-crispy-forms`, `crispy-bootstrap5`, and `django-htmx` from `requirements.txt` and refresh the environment (`pip install -r requirements.txt`). (FR-008, FR-009)
+- [X] T030 [US3] Amend `.specify/memory/constitution.md` Principle III (User Experience Consistency) to codify the Tailwind/Flowbite component standard (shared partials/tags for structure; `@apply` atoms for controls; Flowbite/Tagify as progressive enhancement); bump the version MAJOR → **2.0.0**, update the Sync Impact Report and the Last Amended date. (FR-015)
 
 **Checkpoint**: Dead stack removed; app healthy; governance consistent with the codebase.
 
@@ -138,10 +138,10 @@ every page, all forms submit/validate identically, and the constitution reflects
 
 **Purpose**: Enforce the quality gates and validate the whole feature end-to-end.
 
-- [ ] T031 [P] Run `djlint templates --lint` and resolve all template lint errors to **zero**. (FR-013, SC-008)
-- [ ] T032 Run `python manage.py test` (including any optional smoke tests) and confirm the suite passes. (SC-008)
-- [ ] T033 Execute the [quickstart.md](./quickstart.md) page-by-page visual + non-regression checklist and the grep checks (no Bootstrap-only classes → SC-001; no Flowbite CDN → SC-009; no `crispy`/`django-htmx` in `requirements.txt` → SC-006); confirm SC-001–SC-009. 
-- [ ] T034 [P] Update `README.md` setup/build guidance to match the amended stack (Flowbite JS static asset; no crispy/HTMX), keeping runtime guidance consistent with the amended constitution.
+- [X] T031 [P] Run `djlint templates --lint` and resolve all template lint errors to **zero**. (FR-013, SC-008)
+- [X] T032 Run `python manage.py test` (including any optional smoke tests) and confirm the suite passes. (SC-008)
+- [X] T033 Execute the [quickstart.md](./quickstart.md) page-by-page visual + non-regression checklist and the grep checks (no Bootstrap-only classes → SC-001; no Flowbite CDN → SC-009; no `crispy`/`django-htmx` in `requirements.txt` → SC-006); confirm SC-001–SC-009. 
+- [X] T034 [P] Update `README.md` setup/build guidance to match the amended stack (Flowbite JS static asset; no crispy/HTMX), keeping runtime guidance consistent with the amended constitution.
 
 ---
 

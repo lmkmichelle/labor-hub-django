@@ -1,22 +1,21 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (unversioned template) → 1.0.0
-Ratification: Initial adoption of the Labor Hub constitution.
+Version change: 1.0.0 → 2.0.0
+Ratification: Initial adoption remains 2026-07-20; amended for the Flowbite standard.
 
-Modified principles (all newly defined):
-- [PRINCIPLE_1] → I. Code Quality
-- [PRINCIPLE_2] → II. Testing Standards
-- [PRINCIPLE_3] → III. User Experience Consistency
-- [PRINCIPLE_4] → IV. Performance Requirements
+Modified principles:
+- III. User Experience Consistency — REDEFINED: the styling standard moved from
+  django-crispy-forms + Bootstrap 5 to TailwindCSS + Flowbite, with shared template
+  partials for structure and `@apply` component classes for repeated controls; HTMX
+  replaced by Flowbite/Tagify as the progressive-enhancement layer. (MAJOR: a mandated
+  technology inside a principle was removed/replaced.)
 
-Added sections:
-- Technology & Security Standards (formerly SECTION_2 placeholder)
-- Development Workflow & Quality Gates (formerly SECTION_3 placeholder)
+Unchanged principles:
+- I. Code Quality, II. Testing Standards, IV. Performance Requirements
 
-Removed sections:
-- PRINCIPLE_5 placeholder (template shipped 5 principle slots; project uses 4
-  per the requested focus areas: code quality, testing, UX consistency, performance)
+Added sections: none
+Removed sections: none
 
 Templates requiring updates:
 - .specify/templates/plan-template.md ✅ aligned (Constitution Check gate is
@@ -76,15 +75,20 @@ The interface MUST feel like one coherent product across every app and page.
 
 - All pages MUST extend the shared base templates and reuse partials in
   `templates/partials/` rather than re-implementing layout, navigation, or chrome.
-- Styling MUST use the project's TailwindCSS pipeline; forms MUST render through
-  `django-crispy-forms` with the configured Bootstrap 5 pack for consistent field,
-  label, and error presentation.
+- Styling MUST use the project's TailwindCSS pipeline with Flowbite components. Shared
+  structure (list items, pagination, empty states) MUST come from reusable partials in
+  `templates/partials/`, and repeated controls (buttons, inputs, selects, nav links) MUST
+  be defined once as `@apply` component classes in `static/src/input.css` — never as
+  duplicated utility strings or inline styles.
+- Forms MUST render through the shared field partials and template tags
+  (`{% render_field %}` / `{% render_select %}`) for consistent field, label, and error
+  presentation; `django-crispy-forms` and the Bootstrap 5 pack MUST NOT be used.
 - User feedback MUST be consistent: success, error, and validation messages use the
   standard messaging patterns; error and empty states MUST be handled explicitly, never
   left as raw tracebacks or blank pages.
 - Interactions MUST be responsive across common viewport sizes and MUST remain usable
-  without JavaScript where feasible; HTMX MUST be used as progressive enhancement, not
-  as a hard requirement for core flows.
+  without JavaScript where feasible; Flowbite and Tagify MUST be used as progressive
+  enhancement, not as a hard requirement for core flows.
 - Interactive elements MUST be accessible: meaningful labels, keyboard operability, and
   sufficient color contrast.
 
@@ -160,4 +164,4 @@ Labor Hub project. When guidance conflicts, the constitution wins.
 - **Runtime guidance**: Contributors SHOULD consult `README.md` for setup, migration, and
   build commands; that guidance MUST stay consistent with this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-20
+**Version**: 2.0.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-20

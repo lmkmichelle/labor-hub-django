@@ -19,24 +19,7 @@
     {% endif %}
 
     {% if form.advisor %}
-    <div class="mb-5">
-        <label for="{{ form.advisor.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">
-            Select an Advisor
-        </label>
-        <select id="{{ form.advisor.id_for_label }}" name="{{ form.advisor.name }}"
-                class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs" required
-                required>
-            <option value="">Select an existing researcher as an advisor</option>
-            {% for advisor in form.advisor.field.queryset %}
-                <option value="{{ advisor.id }}" {% if form.advisor.value == advisor.id %}selected{% endif %}>
-                    {{ advisor.get_full_name }} - {{ advisor.profile.position|default:"Researcher" }}
-                </option>
-            {% endfor %}
-        </select>
-        {% if form.advisor.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.advisor.errors.0 }}</p>
-        {% endif %}
-    </div>
+        {% render_select form.advisor label="Select an Advisor" empty_label="Select an existing researcher as an advisor" %}
     {% endif %}
 
     {% render_field form.first_name label="First Name" placeholder="First name" %}
@@ -67,10 +50,10 @@
     {% render_field form.password2 label="Confirm Password" placeholder="•••••••••" help_text="Enter the same password as before, for verification" %}
 
     <div class="flex gap-3 mb-5">
-        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+        <button type="submit" class="btn-primary">
             Submit Application
         </button>
-        <a href="/" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+        <a href="/" class="btn-secondary">Cancel</a>
     </div>
 </form>
  </article>

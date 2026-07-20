@@ -16,23 +16,6 @@
         {% endif %}
 
         <div class="flex flex-row gap-6 mb-5">
-            {% comment %} <div class="shrink-0">
-                {% if request.user.profile.avatar %}
-                    <img id="avatar-preview"
-                         src="{{ request.user.profile.avatar.url }}"
-                         alt="Profile Picture"
-                         class="rounded"
-                         width="160" height="160"
-                         style="object-fit: cover;">
-                {% else %}
-                    <img id="avatar-preview"
-                         src="{% static 'images/default-avatar.jpg' %}"
-                         alt="No Profile Picture"
-                         class="rounded"
-                         width="160" height="160"
-                         style="object-fit: cover;">
-                {% endif %}
-            </div> {% endcomment %}
             <!-- Right side fields -->
             <div class="flex flex-col flex-1 min-w-0">
                 {% render_field user_form.email %}
@@ -48,12 +31,10 @@
         {% render_field form.research_interests_input %}
 
         <div class="flex gap-3">
-            <button type="submit"
-                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+            <button type="submit" class="btn-primary">
                 Save
             </button>
-            <a href="{% url 'profile' %}"
-               class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none no-underline">
+            <a href="{% url 'profile' %}" class="btn-secondary no-underline">
                 Cancel
             </a>
         </div>

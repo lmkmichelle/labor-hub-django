@@ -1,0 +1,7 @@
+{% comment %}
+Shared empty-state message for any listing with zero items. Input:
+  text   the message to display (falls back to a generic message)
+{% endcomment %}
+<div class="rounded-base border border-default bg-neutral-primary-soft p-6 text-center text-sm text-body">
+  {{ text|default:"No items to display." }}
+</div>

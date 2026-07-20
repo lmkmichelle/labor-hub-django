@@ -3,7 +3,7 @@
         {{ label }}
     </label>
     <select id="{{ field.id_for_label }}" name="{{ field.name }}"
-            class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs"
+            class="form-select"
             {% if required %}required{% endif %}>
         {% if empty_label %}
             <option value="">{{ empty_label }}</option>

@@ -1,0 +1,45 @@
+{% comment %}
+Unified list / card item -- the single source for every listing (home lists,
+publications, scholars, seminars, events, profile papers). Inputs:
+  title       (required) primary label
+  url         optional; when present the whole card links here
+  subtitle    optional secondary line (authors, host, position, ...)
+  description optional body text / summary
+  meta        optional small right-aligned footer text (e.g. time)
+  badge       optional chip shown top-right
+  date        optional muted text shown top-right when no badge is given
+  location    optional venue line (rendered with a 📍 marker)
+  image       optional avatar / thumbnail URL
+Renders Flowbite card markup only (no Bootstrap classes) and omits any optional
+slot that is not provided. Callers map their fields to these inputs in-template;
+no view-context changes are required.
+{% endcomment %}
+{% if url %}
+  <a href="{{ url }}" class="card-surface">
+{% else %}
+  <div class="card-surface">
+{% endif %}
+  <div class="flex w-full items-start justify-between gap-3">
+    <div class="flex items-start gap-3">
+      {% if image %}<img src="{{ image }}" alt="" width="40" height="40" class="h-10 w-10 shrink-0 rounded-full object-cover" />{% endif %}
+      <h6 class="text-base font-semibold text-heading">{{ title }}</h6>
+    </div>
+    {% if badge %}
+      <span class="shrink-0 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{{ badge }}</span>
+    {% elif date %}
+      <small class="shrink-0 text-sm text-body">{{ date }}</small>
+    {% endif %}
+  </div>
+  {% if subtitle %}<p class="mt-1 text-sm text-body">{{ subtitle }}</p>{% endif %}
+  {% if location %}<p class="mt-1 text-sm text-body">📍 {{ location }}</p>{% endif %}
+  {% if description %}<p class="mt-1 text-sm text-body">{{ description }}</p>{% endif %}
+  {% if meta %}
+    <div class="mt-2 flex justify-end">
+      <small class="text-sm text-body">{{ meta }}</small>
+    </div>
+  {% endif %}
+{% if url %}
+  </a>
+{% else %}
+  </div>
+{% endif %}

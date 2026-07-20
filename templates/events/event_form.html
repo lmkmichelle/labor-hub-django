@@ -12,7 +12,7 @@ Submit Paper
 <h3 class="title">Create an Event</h3>
 {% load static %}
 
-<form method="POST" style="margin-bottom: 2rem;" enctype="multipart/form-data">
+<form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
     {% if form.non_field_errors %}
     <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
@@ -45,10 +45,10 @@ Submit Paper
     {% render_field form.category %}
 
     <div class="flex gap-3 mb-5">
-        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+        <button type="submit" class="btn-primary">
             Submit
         </button>
-        <a href="/events/" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+        <a href="/events/" class="btn-secondary">Cancel</a>
     </div>
 
 </form>

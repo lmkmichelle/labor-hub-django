@@ -2,12 +2,12 @@
 {% load static %}
 {% block content %}
     <article class="max-w-none format lg:format-lg">
-        <div class="row mb-4">
-            <div class="col-12">
+        <div class="mb-4">
+            <div>
                 {% if user_type == 'student' %}
-                    <h2 class="title text-center mb-4" style="font-size:2rem">Directory of Students</h2>
+                    <h2 class="title text-center mb-4 text-[2rem]">Directory of Students</h2>
                 {% else %}
-                    <h2 class="title text-center mb-4" style="font-size:2rem">Directory of Researchers</h2>
+                    <h2 class="title text-center mb-4 text-[2rem]">Directory of Researchers</h2>
                 {% endif %}
                 {% include 'partials/_search_form.html' with search_placeholder="Search scholars..." search_filters=user_filters %}
             </div>
@@ -16,7 +16,7 @@
             <div class="container">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for user in users %}
-                    <a class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium no-underline" href="{% url 'profile' pk=user.id %}"> 
+                    <a class="card-surface max-w-full no-underline" href="{% url 'profile' pk=user.id %}"> 
                         
                             <div class="flex flex-col gap-1 items-center">
                                     <img class="w-24 h-24 rounded-full object-cover"
@@ -38,37 +38,7 @@
                     </a>
                     {% endfor %}
                 </div>
-                <!-- Pagination -->
-                <div class="mt-4 pt-2 col-lg-12">
-                    <nav aria-label="Users pagination">
-                        <ul class="pagination justify-content-center">
-                            {% if users.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link"
-                                       href="?q={{ query }}&filter={{ filter_type }}&page={{ users.previous_page_number }}">Previous</a>
-                                </li>
-                            {% endif %}
-                            {% for num in users.paginator.page_range %}
-                                {% if users.number == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
-                                {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
-                                    <li class="page-item">
-                                        <a class="page-link"
-                                           href="?q={{ query }}&filter={{ filter_type }}&page={{ num }}">{{ num }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                            {% if users.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link"
-                                       href="?q={{ query }}&filter={{ filter_type }}&page={{ users.next_page_number }}">Next</a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                </div>
+                {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring="q="|add:query|add:"&filter="|add:filter_type %}
             </div>
         </section>
     </article>

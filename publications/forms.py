@@ -66,6 +66,7 @@ class PublicationForm(forms.ModelForm):
     study_url = forms.CharField(
         required=True,
         label='Link to Study',
+        widget=forms.URLInput(),
     )
 
     is_job_market = forms.BooleanField(
@@ -74,7 +75,8 @@ class PublicationForm(forms.ModelForm):
 
     pdf = forms.FileField(
         required=False,
-        label='Upload Paper'
+        label='Upload Paper',
+        widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
     )
 
     def __init__(self, *args, **kwargs):

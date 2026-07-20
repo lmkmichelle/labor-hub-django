@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load form_tags %}
 {% block content %}
 <article class="format lg:format-lg max-w-none">   
 <h3 class="title">Log in</h3>
@@ -11,17 +12,11 @@
     </div>
     {% endif %}
 
-    <div class="mb-5">
-        <label for="{{ form.username.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Email</label>
-        <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" value="{{ form.username.value|default:'' }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" required />
-        {% if form.username.errors %}
-        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
-        {% endif %}
-    </div>
+    {% render_field form.username label="Email" %}
 
     <div class="mb-2">
         <label for="{{ form.password.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">Password</label>
-        <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="•••••••••" required />
+        <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" class="form-input" placeholder="•••••••••" required />
         {% if form.password.errors %}
             <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
         {% endif %}
@@ -32,10 +27,10 @@
     </div>
 
     <div class="flex gap-3 mb-5">
-        <button type="submit" class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+        <button type="submit" class="btn-primary">
             Log in
         </button>
-        <a href="/" class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancel</a>
+        <a href="/" class="btn-secondary">Cancel</a>
     </div>
 </form>
  </article>

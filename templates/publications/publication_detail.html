@@ -23,7 +23,7 @@
                     <a href="{{ publication.pdf.url }}"
                        download="{{ publication.title }}.pdf"
                        target="_blank"
-                       style="margin-left: 0;">
+                       class="ml-0">
                         <svg xmlns="http://www.w3.org/2000/svg"
                              width="20"
                              height="20"
@@ -39,8 +39,7 @@
             <div class="not-format mb-4">
                 {% for author in publication.authors.all %}
                     {% if author.user %}
-                        <a class="text-red-700"
-                           style="text-decoration: underline"
+                        <a class="text-red-700 underline"
                            href="{% url 'profile' pk=author.user.id %}">{{ author.user.get_full_name }}</a>
                     {% else %}
                         {{ author.name }}
@@ -57,7 +56,7 @@
         <p>{{ publication.topic }}</p>
         
         <h4>Keywords</h4>
-        <div class="flex flex-row overflow-auto w-full not-format gap-2" style="margin-bottom:24px;">
+        <div class="flex flex-row overflow-auto w-full not-format gap-2 mb-6">
             {% if publication.is_job_market %}
                 <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Job Market</span>
             {% endif %}

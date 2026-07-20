@@ -1,0 +1,41 @@
+{% comment %}
+Shared Flowbite pagination for any Django-paginated list. Inputs:
+  page_obj      (required) the current paginator Page
+  is_paginated  (required) hides the control entirely when false
+  querystring   optional already-encoded filters/search (no leading "?" or
+                trailing "&"), preserved on every page link
+Renders nothing when is_paginated is false. Uses only Flowbite/Tailwind classes.
+{% endcomment %}
+{% if is_paginated %}
+  <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+    <ul class="inline-flex -space-x-px text-sm">
+      <li>
+        {% if page_obj.has_previous %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             class="flex items-center justify-center h-9 px-3 ms-0 leading-tight text-body bg-neutral-primary-soft border border-default rounded-s-base hover:bg-neutral-secondary-medium hover:text-heading">Previous</a>
+        {% else %}
+          <span class="flex items-center justify-center h-9 px-3 ms-0 leading-tight text-body bg-neutral-secondary-soft border border-default rounded-s-base opacity-60 cursor-not-allowed">Previous</span>
+        {% endif %}
+      </li>
+      {% for num in page_obj.paginator.page_range %}
+        <li>
+          {% if num == page_obj.number %}
+            <span aria-current="page"
+                  class="flex items-center justify-center h-9 px-3 leading-tight font-medium text-red-700 bg-red-50 border border-default">{{ num }}</span>
+          {% else %}
+            <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ num }}"
+               class="flex items-center justify-center h-9 px-3 leading-tight text-body bg-neutral-primary-soft border border-default hover:bg-neutral-secondary-medium hover:text-heading">{{ num }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+      <li>
+        {% if page_obj.has_next %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+             class="flex items-center justify-center h-9 px-3 leading-tight text-body bg-neutral-primary-soft border border-default rounded-e-base hover:bg-neutral-secondary-medium hover:text-heading">Next</a>
+        {% else %}
+          <span class="flex items-center justify-center h-9 px-3 leading-tight text-body bg-neutral-secondary-soft border border-default rounded-e-base opacity-60 cursor-not-allowed">Next</span>
+        {% endif %}
+      </li>
+    </ul>
+  </nav>
+{% endif %}
