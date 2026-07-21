@@ -6,7 +6,8 @@
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        <h2>Seminars</h2>
+        <h2>Visits</h2>
+        <p class="mb-6 max-w-3xl">Planning a sabbatical, research stay, or seminar visit? Share where and when you'll be, and see the upcoming visits of other scholars. Enter your dates and location; visit details are optional.</p>
         <div class="flex flex-row w-full gap-6">
             <div class="flex flex-col w-60">
                 <form method="GET" id="filterForm">
@@ -27,7 +28,7 @@
                                    {% if show_archived %}checked{% endif %}
                                    onchange="this.form.submit()">
                             <label class="select-none ms-1 text-sm font-medium text-heading"
-                                   for="show-archived">Show Archived/Past Seminars</label>
+                                   for="show-archived">Show Past Visits</label>
                         </div>
                     </div>
                     <div class="mb-4">
@@ -55,7 +56,7 @@
                                value="{{ selected_countries_serialized }}">
                         {% if show_archived %}<input type="hidden" name="show_archived" value="1">{% endif %}
                         <input type="hidden" name="sort" value="{{ sort }}">
-                        <label for="seminar-search" class="sr-only">Search seminars</label>
+                        <label for="seminar-search" class="sr-only">Search visits</label>
                         <div class="relative flex-1 min-w-0 w-full">
                             <input type="text"
                                    id="seminar-search"
@@ -127,7 +128,7 @@
                     </div>
                     {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
                 {% else %}
-                    {% include "partials/_empty_state.html" with text="There are no seminars matching your criteria." %}
+                    {% include "partials/_empty_state.html" with text="There are no visits matching your criteria." %}
                 {% endif %}
             </div>
         </div>

@@ -20,6 +20,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from django.conf.urls.static import static
 from django.conf import settings
+from django.views.generic import RedirectView
 from .views import index
 
 urlpatterns = [
@@ -27,7 +28,10 @@ urlpatterns = [
     path('publications/', include('publications.urls')),
     path('', include('accounts.urls')),
     path('events/', include('events.urls')),
-    path('seminars/', include('seminars.urls')),
+    path('visits/', include('seminars.urls')),
+    # Preserve old /seminars/ links by redirecting them to the new /visits/ path.
+    path('seminars/<path:subpath>', RedirectView.as_view(url='/visits/%(subpath)s', query_string=True)),
+    path('seminars/', RedirectView.as_view(url='/visits/', query_string=True)),
     path('jobs/', include('jobs.urls')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

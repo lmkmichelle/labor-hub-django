@@ -17,6 +17,13 @@
                 {% endfor %}
             </div>
         {% endif %}
+        {% if job.category_labels %}
+            <div class="not-format flex flex-row overflow-auto w-full gap-2 mb-2">
+                {% for label in job.category_labels %}
+                    <span class="bg-neutral-secondary-medium text-heading text-sm font-medium px-2 py-1 rounded">{{ label }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% if job.uploader %}
             <div class="not-format mb-4">
                 Posted by {{ job.uploader.get_full_name|default:job.uploader.email }}

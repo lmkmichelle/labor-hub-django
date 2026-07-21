@@ -11,7 +11,7 @@ class JobFormTests(TestCase):
             "description": "Details.",
             "url": "https://example.com",
             "deadline": "2030-01-01",
-            "is_for_graduate_students": "",
+            "categories": ["postdoc"],
         }
         data.update(overrides)
         return data
@@ -21,6 +21,17 @@ class JobFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         job = form.save()
         self.assertEqual(job.countries, ["US"])
+
+    def test_saves_categories(self):
+        form = JobForm(data=self._data(categories=["predoc", "postdoc"]))
+        self.assertTrue(form.is_valid(), form.errors)
+        job = form.save()
+        self.assertEqual(sorted(job.categories), ["postdoc", "predoc"])
+
+    def test_categories_required(self):
+        form = JobForm(data=self._data(categories=[]))
+        self.assertFalse(form.is_valid())
+        self.assertIn("categories", form.errors)
 
     def test_missing_required_fields_invalid(self):
         form = JobForm(data=self._data(title="", url=""))

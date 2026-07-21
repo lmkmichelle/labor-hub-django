@@ -3,7 +3,7 @@ from datetime import date
 from django.test import TestCase
 from django.urls import reverse
 
-from jobs.models import COUNTRY_MAP, Job
+from jobs.models import COUNTRY_MAP, RANK_MAP, Job
 
 
 class JobModelTests(TestCase):
@@ -30,3 +30,10 @@ class JobModelTests(TestCase):
     def test_country_labels_maps_codes(self):
         job = self._job(countries=["US"])
         self.assertEqual(job.country_labels(), [COUNTRY_MAP.get("US", "US")])
+
+    def test_category_labels_maps_codes(self):
+        job = self._job(categories=["assistant_professor", "predoc"])
+        self.assertEqual(
+            job.category_labels(),
+            [RANK_MAP["assistant_professor"], RANK_MAP["predoc"]],
+        )

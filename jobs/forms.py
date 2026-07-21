@@ -2,7 +2,7 @@ from django import forms
 
 from core.constants import COUNTRY_CHOICES
 
-from .models import Job
+from .models import Job, RANK_CHOICES
 
 
 class JobForm(forms.ModelForm):
@@ -11,16 +11,26 @@ class JobForm(forms.ModelForm):
         required=True,
         label='Country',
     )
+    categories = forms.MultipleChoiceField(
+        choices=RANK_CHOICES,
+        required=True,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'w-4 h-4 text-brand bg-gray-100 border-gray-300 '
+                     'rounded focus:ring-brand focus:ring-2',
+        }),
+        label='Applicable Titles',
+        help_text='Select every academic rank this opening is aimed at.',
+    )
 
     class Meta:
         model = Job
         fields = [
             'title',
             'country_code',
+            'categories',
             'description',
             'url',
             'deadline',
-            'is_for_graduate_students',
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
@@ -31,7 +41,6 @@ class JobForm(forms.ModelForm):
             'description': 'Job Description',
             'url': 'Application URL',
             'deadline': 'Application Deadline',
-            'is_for_graduate_students': 'For Graduate Students',
         }
 
     def __init__(self, *args, **kwargs):
@@ -54,6 +63,7 @@ class JobForm(forms.ModelForm):
         instance = super().save(commit=False)
         country_code = (self.cleaned_data.get('country_code') or '').strip().upper()
         instance.countries = [country_code] if country_code else []
+        instance.categories = list(self.cleaned_data.get('categories') or [])
         if commit:
             instance.save()
             self.save_m2m()

@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DetailView, ListView
 from core.constants import COUNTRY_CHOICES
 
 from .forms import JobForm
-from .models import Job
+from .models import JUNIOR_RANKS, RANK_CHOICES, Job
 
 
 def _parse_country_terms(raw_value):
@@ -96,10 +96,6 @@ class JobsListView(ListView):
     def get_queryset(self):
         queryset = Job.objects.select_related('uploader').all()
 
-        audience = self.request.GET.get('audience', '').strip().lower()
-        if audience == 'students':
-            queryset = queryset.filter(is_for_graduate_students=True)
-
         query = self.request.GET.get('q', '').strip()
         if query:
             queryset = queryset.filter(
@@ -127,9 +123,28 @@ class JobsListView(ListView):
                     matching_ids.append(job.id)
             queryset = queryset.filter(id__in=matching_ids)
 
+        # Rank/title filter. The sidebar sends explicit `category` values; the
+        # nav's junior/student link sends `audience=students`, which maps to the
+        # junior ranks (predoc + postdoc). Categories live in a JSONField, so we
+        # match in Python for cross-database consistency.
+        valid_ranks = {code for code, _ in RANK_CHOICES}
+        required_categories = {c for c in self.request.GET.getlist('category') if c in valid_ranks}
+        if self.request.GET.get('audience', '').strip().lower() == 'students':
+            required_categories.update(JUNIOR_RANKS)
+        if required_categories:
+            matching_ids = [
+                job.id for job in queryset
+                if required_categories & set(job.categories or [])
+            ]
+            queryset = queryset.filter(id__in=matching_ids)
+
         sort = self.request.GET.get('sort', 'deadline')
         if sort == 'newest':
             queryset = queryset.order_by('-id')
+        elif sort == 'location':
+            jobs = list(queryset)
+            jobs.sort(key=lambda job: (job.country_labels()[0].lower() if job.country_labels() else '\uffff'))
+            return jobs
         else:
             queryset = queryset.order_by('deadline', '-id')
 
@@ -151,6 +166,11 @@ class JobsListView(ListView):
         context['selected_countries_serialized'] = ','.join(selected_countries)
         context['country_choices'] = COUNTRY_CHOICES
 
+        valid_ranks = {code for code, _ in RANK_CHOICES}
+        selected_categories = [c for c in self.request.GET.getlist('category') if c in valid_ranks]
+        context['selected_categories'] = selected_categories
+        context['rank_choices'] = RANK_CHOICES
+
         filter_params = {}
         if context['query']:
             filter_params['q'] = context['query']
@@ -162,9 +182,11 @@ class JobsListView(ListView):
             filter_params['deadline_to'] = context['deadline_to']
         if context['audience']:
             filter_params['audience'] = context['audience']
+        if selected_categories:
+            filter_params['category'] = selected_categories
         if context['sort']:
             filter_params['sort'] = context['sort']
-        context['filter_querystring'] = urlencode(filter_params)
+        context['filter_querystring'] = urlencode(filter_params, doseq=True)
         return context
 
 

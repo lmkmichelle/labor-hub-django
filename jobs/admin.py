@@ -29,7 +29,10 @@ class JobAdminForm(forms.ModelForm):
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
     form = JobAdminForm
-    list_display = ('title', 'is_for_graduate_students', 'uploader', 'deadline')
-    list_filter = ('is_for_graduate_students',)
+    list_display = ('title', 'display_categories', 'uploader', 'deadline')
     search_fields = ('title', 'description', 'uploader__first_name', 'uploader__last_name', 'uploader__email')
     ordering = ('deadline',)
+
+    @admin.display(description='Titles')
+    def display_categories(self, obj):
+        return ', '.join(obj.category_labels()) or '—'

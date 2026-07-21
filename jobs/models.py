@@ -6,7 +6,20 @@ from core.constants import COUNTRY_CHOICES
 
 COUNTRY_MAP = dict(COUNTRY_CHOICES)
 
-# Create your models here.
+RANK_CHOICES = [
+    ('predoc', 'Predoc'),
+    ('postdoc', 'Postdoc'),
+    ('assistant_professor', 'Assistant Professor'),
+    ('associate_professor', 'Associate Professor'),
+    ('full_professor', 'Full Professor'),
+    ('other', 'Other'),
+]
+
+RANK_MAP = dict(RANK_CHOICES)
+
+# Ranks treated as "junior" for the nav's student/junior jobs filter.
+JUNIOR_RANKS = ['predoc', 'postdoc']
+
 
 class Job(models.Model):
     title = models.CharField(max_length=255)
@@ -18,7 +31,7 @@ class Job(models.Model):
     )
     description = models.TextField()
     countries = models.JSONField(default=list, blank=True)
-    is_for_graduate_students = models.BooleanField(default=False)
+    categories = models.JSONField(default=list, blank=True)
     url = models.URLField()
     deadline = models.DateField()
 
@@ -29,6 +42,12 @@ class Job(models.Model):
         labels = []
         for code in self.countries or []:
             labels.append(COUNTRY_MAP.get(code, code))
+        return labels
+
+    def category_labels(self):
+        labels = []
+        for code in self.categories or []:
+            labels.append(RANK_MAP.get(code, code))
         return labels
 
     def __str__(self):

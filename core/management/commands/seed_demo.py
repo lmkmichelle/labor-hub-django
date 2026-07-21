@@ -205,33 +205,32 @@ SEMINARS = [
     ),
 ]
 
-# (title, description, uploader_key, countries, is_for_graduate_students,
-#  url, deadline_offset)
+# (title, description, uploader_key, countries, categories, url, deadline_offset)
 JOBS = [
     (
         "Assistant Professor of Labor Economics",
         "Tenure-track position in applied labor economics. PhD required.",
-        "admin", ["US"], False, "https://example.com/jobs/assistant-professor", 45,
+        "admin", ["US"], ["assistant_professor"], "https://example.com/jobs/assistant-professor", 45,
     ),
     (
         "Predoctoral Research Fellow",
         "Two-year predoctoral fellowship supporting labor and public economics research.",
-        "rosa.researcher", ["US", "GB"], True, "https://example.com/jobs/predoc", 30,
+        "rosa.researcher", ["US", "GB"], ["predoc"], "https://example.com/jobs/predoc", 30,
     ),
     (
         "Postdoctoral Associate in Migration Studies",
         "Postdoctoral appointment on a funded migration and development project.",
-        "sam.scholar", ["CA"], True, "https://example.com/jobs/postdoc", 60,
+        "sam.scholar", ["CA"], ["postdoc"], "https://example.com/jobs/postdoc", 60,
     ),
     (
-        "Lecturer in Economics",
-        "Teaching-focused role covering undergraduate labor and public economics.",
-        "sam.scholar", ["GB"], False, "https://example.com/jobs/lecturer", 20,
+        "Open-Rank Professorship in Economics",
+        "Senior faculty search open to associate and full professors in labor and public economics.",
+        "sam.scholar", ["GB"], ["associate_professor", "full_professor"], "https://example.com/jobs/open-rank", 20,
     ),
     (
         "Research Data Analyst",
         "Support empirical labor research: data cleaning, analysis, and reproducibility.",
-        "admin", ["US", "IN"], True, "https://example.com/jobs/data-analyst", 90,
+        "admin", ["US", "IN"], ["predoc", "postdoc", "other"], "https://example.com/jobs/data-analyst", 90,
     ),
 ]
 
@@ -423,14 +422,14 @@ class Command(BaseCommand):
         today = timezone.localdate()
         created = 0
         for (title, description, uploader_key, countries,
-             is_for_grad, url, deadline_offset) in JOBS:
+             categories, url, deadline_offset) in JOBS:
             _job, was_created = Job.objects.update_or_create(
                 title=title,
                 defaults={
                     "description": description,
                     "uploader": users.get(uploader_key),
                     "countries": countries,
-                    "is_for_graduate_students": is_for_grad,
+                    "categories": categories,
                     "url": url,
                     "deadline": today + timedelta(days=deadline_offset),
                 },

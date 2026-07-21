@@ -37,7 +37,7 @@ class SeminarForm(forms.ModelForm):
             'university_name': 'University Name (if not listed)',
             'visit_start': 'Visit Start Date',
             'visit_end': 'Visit End Date (Optional)',
-            'description': 'Seminar Details',
+            'description': 'Details (Optional)',
         }
 
     def __init__(self, *args, **kwargs):
@@ -46,9 +46,9 @@ class SeminarForm(forms.ModelForm):
         self.fields['visitor_name'].required = True
         self.fields['visitor_email'].required = True
         self.fields['visit_start'].required = True
-        self.fields['description'].required = True
         self.fields['country_code'].required = True
 
+        self.fields['description'].required = False
         self.fields['university'].queryset = University.objects.order_by('name')
         self.fields['university'].required = False
         self.fields['university_name'].required = False

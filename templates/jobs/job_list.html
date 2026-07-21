@@ -7,6 +7,7 @@
         type="text/css" />
   <article class="format lg:format-lg max-w-none">
     <h2>Job Board</h2>
+    <p class="mb-6 max-w-3xl">This is a job board where job openings for junior and senior researchers are gathered.</p>
     <div class="flex flex-row w-full gap-6 mt-4">
       <div class="flex flex-col w-60">
         <form method="GET" id="filterForm">
@@ -24,6 +25,22 @@
                    id="countries-pill-input"
                    class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
                    placeholder="Add countries...">
+          </div>
+
+          <div class="mb-4">
+            <h4>Titles</h4>
+            {% for value, label in rank_choices %}
+              <div class="mb-1">
+                <input id="category-{{ value }}"
+                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                       type="checkbox"
+                       name="category"
+                       value="{{ value }}"
+                       {% if value in selected_categories %}checked{% endif %}>
+                <label class="select-none ms-1 text-sm font-medium text-heading"
+                       for="category-{{ value }}">{{ label }}</label>
+              </div>
+            {% endfor %}
           </div>
 
           <div class="mb-4">
@@ -64,6 +81,7 @@
             {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
             {% if audience %}<input type="hidden" name="audience" value="{{ audience }}">{% endif %}
             <input type="hidden" name="sort" value="{{ sort }}">
+            {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
 
             <label for="job-search" class="sr-only">Search jobs</label>
             <div class="relative flex-1 min-w-0 w-full">
@@ -86,6 +104,7 @@
             {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
             {% if audience %}<input type="hidden" name="audience" value="{{ audience }}">{% endif %}
             {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+            {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
             <label for="sortSelect" class="sr-only">Sort jobs</label>
             <select id="sortSelect"
                     name="sort"
@@ -93,6 +112,7 @@
                     class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
               <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
               <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest Posted</option>
+              <option value="location" {% if sort == 'location' %}selected{% endif %}>Sort: Location</option>
             </select>
           </form>
         </div>

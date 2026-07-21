@@ -181,7 +181,7 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
         seminar.posted_by = self.request.user
         seminar.save()
         form.save_m2m()
-        messages.success(self.request, 'Seminar announcement submitted successfully.')
+        messages.success(self.request, 'Visit submitted successfully.')
         return redirect(self.success_url)
 
 

@@ -28,8 +28,10 @@
         <h4>Contact</h4>
         <p><a href="mailto:{{ seminar.visitor_email }}">{{ seminar.visitor_email }}</a></p>
 
-        <h4>Description</h4>
-        <p>{{ seminar.description }}</p>
+        {% if seminar.description %}
+            <h4>Details</h4>
+            <p>{{ seminar.description }}</p>
+        {% endif %}
         <h4>Countries</h4>
         <div class="mb-6 flex flex-row overflow-auto w-full not-format gap-2">
             {% for country in seminar.country_labels %}

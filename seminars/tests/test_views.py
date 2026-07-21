@@ -101,6 +101,35 @@ class SeminarCreateViewTests(TestCase):
         self.assertEqual(seminar.countries, ["US"])
         self.assertRedirects(response, reverse("seminars-list"))
 
+    def test_create_allows_blank_description(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("seminar-create"), {
+            "country_code": "US",
+            "visitor_name": "No Details Visitor",
+            "visitor_email": "nodetails@example.com",
+            "visitor_affiliation": "",
+            "university": "",
+            "university_name": "Cornell University",
+            "visit_start": timezone.localdate().isoformat(),
+            "visit_end": "",
+            "description": "",
+        })
+        self.assertEqual(Seminar.objects.count(), 1)
+        seminar = Seminar.objects.get()
+        self.assertEqual(seminar.description, "")
+        self.assertRedirects(response, reverse("seminars-list"))
+
+
+class VisitsUrlRedirectTests(TestCase):
+    def test_seminars_root_redirects_to_visits(self):
+        response = self.client.get("/seminars/")
+        self.assertRedirects(response, "/visits/", status_code=302)
+
+    def test_seminars_redirect_preserves_query_string(self):
+        response = self.client.get("/seminars/?q=labor")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/visits/?q=labor")
+
 
 class UniversitiesByCountryTests(TestCase):
     def test_invalid_country_returns_empty(self):

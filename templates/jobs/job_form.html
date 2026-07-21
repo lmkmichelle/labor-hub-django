@@ -20,19 +20,22 @@
         {% render_field form.deadline %}
 
         <div class="mb-5">
-            <div class="flex items-center">
-                <input type="checkbox"
-                       name="{{ form.is_for_graduate_students.name }}"
-                       id="{{ form.is_for_graduate_students.id_for_label }}"
-                       {% if form.is_for_graduate_students.value %}checked{% endif %}
-                       class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
-                <label for="{{ form.is_for_graduate_students.id_for_label }}" class="ml-2 text-sm font-medium text-heading">
-                    {{ form.is_for_graduate_students.label }}
-                </label>
+            <span class="block mb-2 text-sm font-medium text-heading">{{ form.categories.label }}</span>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {% for choice in form.categories %}
+                    <div class="flex items-center">
+                        {{ choice.tag }}
+                        <label for="{{ choice.id_for_label }}" class="ml-2 text-sm font-medium text-heading">
+                            {{ choice.choice_label }}
+                        </label>
+                    </div>
+                {% endfor %}
             </div>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">Uncheck for researcher/professor roles.</p>
-            {% if form.is_for_graduate_students.errors %}
-                <p class="mt-2 text-sm text-red-600">{{ form.is_for_graduate_students.errors.0 }}</p>
+            {% if form.categories.help_text %}
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">{{ form.categories.help_text }}</p>
+            {% endif %}
+            {% if form.categories.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ form.categories.errors.0 }}</p>
             {% endif %}
         </div>
 

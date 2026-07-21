@@ -10,7 +10,7 @@
     <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Labor Hub</h1>
     <p class="mt-4 text-lg leading-relaxed text-red-50">
       A global community for labor economists — share your research, discover new work, and
-      connect around the seminars and events shaping the field.
+      connect around the visits and events shaping the field.
     </p>
     <div class="mt-8 flex flex-wrap gap-3">
       <a href="{% url 'publications' %}"
@@ -55,7 +55,7 @@
       <li role="presentation">
         <button class="home-tab" id="tab-seminars" type="button" role="tab"
                 data-tabs-target="#panel-seminars" aria-controls="panel-seminars" aria-selected="false">
-          Upcoming Seminars <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
+          Upcoming Visits <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
         </button>
       </li>
     </ul>
@@ -92,10 +92,10 @@
     <!-- Upcoming Seminars -->
     <div class="hidden pt-6" id="panel-seminars" role="tabpanel" aria-labelledby="tab-seminars">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">Upcoming Seminars</h2>
-        <a href="{% url 'seminars-list' %}" class="btn-primary">See all seminars</a>
+        <h2 class="text-lg font-semibold text-heading">Upcoming Visits</h2>
+        <a href="{% url 'seminars-list' %}" class="btn-primary">See all visits</a>
       </div>
-      {% include 'partials/_list_display.html' with items=upcoming_seminars container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming seminars to display." %}
+      {% include 'partials/_list_display.html' with items=upcoming_seminars container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming visits to display." %}
     </div>
   </div>
 </section>

@@ -4,6 +4,13 @@
         <h5 class="text-xl font-semibold text-heading m-0">{{ item.title }}</h5>
         <p class="m-0 shrink-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
     </div>
+    {% if item.category_labels %}
+        <div class="mt-2 flex flex-row w-full gap-2 overflow-auto">
+            {% for label in item.category_labels %}
+                <span class="bg-neutral-secondary-medium text-heading text-sm font-medium px-2 py-1 rounded">{{ label }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
     <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
     {% if item.country_labels %}
         <div class="mt-2 flex flex-row w-full gap-2 overflow-auto">

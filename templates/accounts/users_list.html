@@ -6,8 +6,10 @@
             <div>
                 {% if user_type == 'student' %}
                     <h2 class="title text-center mb-4 text-[2rem]">Directory of Students</h2>
+                    <p class="mx-auto mb-6 max-w-2xl text-center">Discover the graduate and predoctoral students in the network — their institutions, positions, and research interests. Search by name, country, or topic to find peers and collaborators.</p>
                 {% else %}
                     <h2 class="title text-center mb-4 text-[2rem]">Directory of Researchers</h2>
+                    <p class="mx-auto mb-6 max-w-2xl text-center">Meet the researchers in our community. Explore their affiliations, positions, and countries, and search for potential collaborators by name or research interest.</p>
                 {% endif %}
                 {% include 'partials/_search_form.html' with search_placeholder="Search scholars..." search_filters=user_filters %}
             </div>

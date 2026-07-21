@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, DetailView
 from django.db.models import Q
+from django.db.models.functions import Lower
 from datetime import datetime
 
 from .models import Event
@@ -61,6 +62,8 @@ class EventsListView(ListView):
         sort = self.request.GET.get('sort', '')
         if sort == 'deadline':
             queryset = queryset.filter(deadline__isnull=False).order_by('deadline')
+        elif sort == 'location':
+            queryset = queryset.order_by(Lower('location'), 'date')
         else:
             queryset = queryset.order_by('date')
 

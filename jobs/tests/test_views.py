@@ -9,14 +9,14 @@ from jobs.models import Job
 
 
 def make_job(title="Job", deadline_offset=10, url="https://example.com",
-             description="Details", countries=None, students=False):
+             description="Details", countries=None, categories=None):
     return Job.objects.create(
         title=title,
         description=description,
         url=url,
         deadline=timezone.localdate() + timedelta(days=deadline_offset),
         countries=countries or [],
-        is_for_graduate_students=students,
+        categories=categories or [],
     )
 
 
@@ -26,12 +26,27 @@ class JobsListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "jobs/job_list.html")
 
-    def test_audience_students_filters_grad_jobs(self):
-        grad = make_job(title="Predoc", students=True)
-        faculty = make_job(title="Full Professor", students=False)
+    def test_audience_students_filters_junior_jobs(self):
+        junior = make_job(title="Predoc", categories=["predoc"])
+        senior = make_job(title="Full Professor", categories=["full_professor"])
         response = self.client.get(reverse("jobs-list"), {"audience": "students"})
-        self.assertIn(grad, response.context["jobs"])
-        self.assertNotIn(faculty, response.context["jobs"])
+        self.assertIn(junior, response.context["jobs"])
+        self.assertNotIn(senior, response.context["jobs"])
+
+    def test_category_filter(self):
+        match = make_job(title="Assistant Prof", categories=["assistant_professor"])
+        other = make_job(title="Predoc Role", categories=["predoc"])
+        response = self.client.get(
+            reverse("jobs-list"), {"category": "assistant_professor"})
+        self.assertIn(match, response.context["jobs"])
+        self.assertNotIn(other, response.context["jobs"])
+
+    def test_sort_by_location(self):
+        us = make_job(title="US Role", countries=["US"])
+        ca = make_job(title="CA Role", countries=["CA"])
+        response = self.client.get(reverse("jobs-list"), {"sort": "location"})
+        jobs = list(response.context["jobs"])
+        self.assertLess(jobs.index(ca), jobs.index(us))
 
     def test_search_filters_by_title(self):
         match = make_job(title="Labor Economist")
@@ -89,10 +104,11 @@ class JobCreateViewTests(TestCase):
             "description": "A job posting.",
             "url": "https://jobs.example.com",
             "deadline": (timezone.localdate() + timedelta(days=30)).isoformat(),
-            "is_for_graduate_students": "on",
+            "categories": ["postdoc"],
         })
         self.assertEqual(Job.objects.count(), 1)
         job = Job.objects.get()
         self.assertEqual(job.uploader, self.user)
         self.assertEqual(job.countries, ["US"])
+        self.assertEqual(job.categories, ["postdoc"])
         self.assertRedirects(response, reverse("jobs-list"))
