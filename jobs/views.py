@@ -123,10 +123,10 @@ class JobsListView(ListView):
                     matching_ids.append(job.id)
             queryset = queryset.filter(id__in=matching_ids)
 
-        # Rank/title filter. The sidebar sends explicit `category` values; the
-        # nav's junior/student link sends `audience=students`, which maps to the
-        # junior ranks (predoc + postdoc). Categories live in a JSONField, so we
-        # match in Python for cross-database consistency.
+        # Rank/title filter. The sidebar sends explicit `category` values. An
+        # optional `audience=students` query param maps to the junior ranks
+        # (predoc + postdoc). Categories live in a JSONField, so we match in
+        # Python for cross-database consistency.
         valid_ranks = {code for code, _ in RANK_CHOICES}
         required_categories = {c for c in self.request.GET.getlist('category') if c in valid_ranks}
         if self.request.GET.get('audience', '').strip().lower() == 'students':

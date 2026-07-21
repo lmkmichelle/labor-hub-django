@@ -115,6 +115,9 @@
               <option value="location" {% if sort == 'location' %}selected{% endif %}>Sort: Location</option>
             </select>
           </form>
+          {% if user.is_authenticated %}
+            <a href="{% url 'job-create' %}" class="btn-primary shrink-0 whitespace-nowrap no-underline">Post a Job</a>
+          {% endif %}
         </div>
 
         <div class="not-format">
