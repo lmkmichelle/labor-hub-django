@@ -29,3 +29,25 @@
 #map-wrap .land.selected {
     fill: oklch(50.5% 0.213 27.518);
 }
+
+/* -------------------------------------------------------------------------
+   Home hero band. Self-contained gradient + subtle geometric texture (no
+   image dependency yet). To swap in a real photograph later, add
+   `background-image: url(...)` as the first layer here or set it inline.
+   ------------------------------------------------------------------------- */
+.home-hero {
+    position: relative;
+    background-color: oklch(45% 0.19 27.5);
+    background-image:
+        radial-gradient(120% 140% at 85% 10%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 45%),
+        linear-gradient(115deg, oklch(34% 0.12 25) 0%, oklch(50.5% 0.213 27.518) 55%, oklch(42% 0.17 18) 100%);
+}
+
+.home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 24px);
+}

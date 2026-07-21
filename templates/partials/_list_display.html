@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="flex flex-col gap-3">
+<div class="{{ container_class|default:'flex flex-col gap-3' }}">
     {% for item in items %}
         {% include "partials/_list_item.html" with title=item.title url=item.url subtitle=item.subtitle description=item.description date=item.date badge=item.badge.text meta=item.meta.right %}
     {% empty %}

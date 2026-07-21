@@ -16,11 +16,11 @@ from seminars.models import Seminar
 country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
 
 def home(request):
-    # Get upcoming events (next 3)
+    # Get upcoming events (next 6)
     upcoming_events_qs = Event.objects.filter(
         status='approved',
         date__gte=timezone.now()
-    ).order_by('date')[:3]
+    ).order_by('date')[:6]
 
     # Format events for _list_display template
     upcoming_events = []
@@ -40,10 +40,10 @@ def home(request):
             }
         })
 
-    # Get upcoming seminars (next 3)
+    # Get upcoming seminars (next 6)
     upcoming_seminars_qs = Seminar.objects.filter(
         date__gte=timezone.now()
-    ).order_by('date')[:3]
+    ).order_by('date')[:6]
 
     # Format seminars for _list_display template
     upcoming_seminars = []
@@ -59,11 +59,11 @@ def home(request):
             }
         })
 
-    # Get new scholars (recently joined, last 3)
+    # Get new scholars (recently joined, last 6)
     new_scholars_qs = CustomUser.objects.filter(
         is_active=True,
         profile__isnull=False
-    ).order_by('-date_joined')[:3]
+    ).order_by('-date_joined')[:6]
 
     # Format scholars for _list_display template
     new_scholars = []
@@ -76,10 +76,10 @@ def home(request):
             'description': scholar.profile.get_country_code_display() if scholar.profile.country_code else ''
         })
 
-    # Get recent approved papers (last 3)
+    # Get recent approved papers (last 6)
     recent_papers_qs = Publication.objects.filter(
         status='approved'
-    ).prefetch_related('authors__user').order_by('-applied_at')[:3]
+    ).prefetch_related('authors__user').order_by('-applied_at')[:6]
 
     # Format papers for _list_display template
     recent_papers = []
