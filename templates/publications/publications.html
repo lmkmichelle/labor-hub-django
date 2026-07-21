@@ -4,7 +4,7 @@
 {% block content %}
     <article class="max-w-none format lg:format-lg">
         <h2>Discussion Papers</h2>
-        <p class="mb-6 max-w-3xl">Browse working and discussion papers shared by scholars across the network. Search by title, author, or keyword to find work relevant to your research.</p>
+        <p class="mb-6">Browse working and discussion papers shared by scholars across the network. Search by title, author, or keyword to find work relevant to your research.</p>
         <div class="not-format">
             {% include 'partials/_search_form.html' with search_filters=publication_filters filter_type=filter_type query=query search_placeholder='Add one or more search terms' use_tag_pills=True %}
             {% include 'partials/_publications_list.html' with publications=publications %}
