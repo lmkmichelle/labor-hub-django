@@ -183,8 +183,8 @@ def map_country_detail(request, code):
         {
             "title": user.get_full_name() or user.email,
             "url": f"/profile/{user.pk}/",
-            "badge": user.profile.position or "",
-            "subtitle": user.profile.education or "",
+            "subtitle": user.profile.position or "Position not specified",
+            "description": user.profile.education or "",
         }
         for user in scholars_qs[:MAP_PANEL_LIMIT]
     ]
@@ -204,7 +204,6 @@ def map_country_detail(request, code):
         papers.append({
             "title": paper.title,
             "url": f"/publications/{paper.id}/",
-            "badge": f"Discussion Series #{paper.id}",
             "subtitle": ", ".join(name for name in author_names if name) or "Unknown Author",
         })
 
