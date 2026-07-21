@@ -1,51 +1,50 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% comment %} World Map is the one full-width exception so a side panel fits beside the map. {% endcomment %}
+{% block content_max_width %}max-w-screen-2xl{% endblock %}
+
 {% block content %}
     <article class="format lg:format-lg max-w-none">
         <h2>Explore Our Impact</h2>
-        <div>
-            <p class="mb-6">Explore where our scholars and their discussion papers are based around the world. Select a country to see the researchers and papers connected to it.</p>
-        </div>
-        <div class="flex flex-col bound-layout justify-center">
-            <div class="not-format">
-                <div class="mb-4">
-                    <ul class="flex flex-wrap justify-center -mb-px text-sm font-medium text-center"
-                        id="default-tab"
-                        data-tabs-toggle="#default-tab-content"
-                        role="tablist">
-                        <li class="me-2" role="presentation">
-                            <button class="inline-block p-4 border-b-2 rounded-t-base"
-                                    id="toggle-users"
-                                    data-tabs-target="#profile"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="profile"
-                                    aria-selected="false">Scholars</button>
-                        </li>
-                        <li class="me-2" role="presentation">
-                            <button class="inline-block p-4 border-b-2 rounded-t-base hover:text-fg-brand hover:border-brand"
-                                    id="toggle-papers"
-                                    data-tabs-target="#dashboard"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="dashboard"
-                                    aria-selected="false">Discussion Papers</button>
-                        </li>
-                        
-                    </ul>
-                </div>
-            </div>
-            {% comment %} <div class="text-center mb-5">
-                <button id="toggle-users" class="toggle-btn selected me-4" type="button">Scholars</button>
-                <button id="toggle-papers" class="toggle-btn" type="button">Discussion Papers</button>
-            </div> {% endcomment %}
-            <div class=" flex justify-center items-center" id="map-wrap">{% include 'partials/world.svg' %}</div>
-            <hr class="divider">
-            <div class="not-format">
-                <p class="text-center text-body">Select a country on the map to see the researchers and discussion papers connected to it.</p>
-            </div>
-        </div>
-        <div class="mb-4" id="display-items"></div>
+        <p class="mb-6">Explore where our scholars and their discussion papers are based around the world. Select a country to see the researchers and papers connected to it.</p>
     </article>
+
+    <div id="map-app"
+         class="not-format"
+         data-summary-url="{% url 'map_summary' %}"
+         data-detail-url="{% url 'map_country_detail' '__CODE__' %}">
+
+        <div class="mb-5 flex flex-wrap items-center gap-3">
+            <span class="text-sm text-body">Highlight on map:</span>
+            <div class="inline-flex overflow-hidden rounded-base border border-default"
+                 role="group"
+                 aria-label="Choose what to highlight on the map">
+                <button id="toggle-users"
+                        type="button"
+                        data-metric="scholars"
+                        aria-pressed="true"
+                        class="map-toggle px-4 py-2 text-sm font-medium">Scholars</button>
+                <button id="toggle-papers"
+                        type="button"
+                        data-metric="papers"
+                        aria-pressed="false"
+                        class="map-toggle px-4 py-2 text-sm font-medium">Discussion Papers</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+            <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
+
+            <aside id="map-panel"
+                   class="w-full lg:sticky lg:top-4 lg:w-96 lg:shrink-0"
+                   aria-live="polite">
+                <div class="rounded-base border border-dashed border-default bg-neutral-primary-soft p-6 text-center text-sm text-body">
+                    Select a country on the map to see the scholars and discussion papers connected to it.
+                </div>
+            </aside>
+        </div>
+    </div>
+
     <script src="{% static 'js/map.js' %}"></script>
 {% endblock %}

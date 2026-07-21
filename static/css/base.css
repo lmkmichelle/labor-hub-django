@@ -3,7 +3,7 @@
 
 #map-wrap svg {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
 }
 
@@ -28,6 +28,27 @@
 
 #map-wrap .land.selected {
     fill: oklch(50.5% 0.213 27.518);
+}
+
+/* Segmented "highlight on map" toggle (world map page). */
+.map-toggle {
+    background-color: #fff;
+    color: oklch(50.5% 0.213 27.518);
+    cursor: pointer;
+    transition: 150ms;
+}
+
+.map-toggle + .map-toggle {
+    border-left: 1px solid #E4E4E4;
+}
+
+.map-toggle:hover {
+    background-color: #FCECEC;
+}
+
+.map-toggle.is-active {
+    background-color: oklch(50.5% 0.213 27.518);
+    color: #fff;
 }
 
 /* -------------------------------------------------------------------------

@@ -1,12 +1,13 @@
-from collections import defaultdict
 import json
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.views.generic import ListView
-from django.utils import timezone
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
@@ -123,52 +124,104 @@ def map_view(request):
     return render(request, 'core/map.html')
 
 
-@require_GET
-def countries_with_users(request):
-    country_users = defaultdict(list)
-
-    users = CustomUser.objects.select_related("profile").filter(
-        profile__country_code__isnull=False,
-        is_active=True
-    ).order_by('first_name', 'last_name')
-
-    for user in users:
-        country_code = user.profile.country_code.upper()
-        country_users[country_code].append({
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'position': user.profile.position,
-            'education': user.profile.education,
-            'email': user.email
-        })
-
-    return JsonResponse(dict(country_users))
+MAP_PANEL_LIMIT = 5
 
 
 @require_GET
-def countries_with_papers(request):
-    country_papers = defaultdict(list)
+def map_summary(request):
+    """Per-country counts used only to color the world map.
 
-    papers = Publication.objects.filter(
-        country_code__isnull=False,
-        status='approved'
-    ).prefetch_related('authors__user').order_by('title')
+    Returns a compact ``{CODE: {"scholars": n, "papers": n}}`` mapping built with
+    database aggregation instead of shipping every scholar/paper row, so the
+    payload stays small as the dataset grows. Country codes are upper-cased so
+    they line up with the SVG path ids.
+    """
+    summary = {}
 
-    for paper in papers:
-        author_names = []
-        for author in paper.authors.all():
-            if author.user:
-                author_names.append(f"{author.user.first_name} {author.user.last_name}")
-            else:
-                author_names.append(author.name)
+    scholar_counts = (
+        CustomUser.objects.filter(is_active=True, profile__country_code__isnull=False)
+        .exclude(profile__country_code="")
+        .values("profile__country_code")
+        .annotate(total=Count("id"))
+    )
+    for row in scholar_counts:
+        code = row["profile__country_code"].upper()
+        summary.setdefault(code, {"scholars": 0, "papers": 0})["scholars"] += row["total"]
 
-        country_code = paper.country_code.upper()
-        country_papers[country_code].append({
-            'title': paper.title,
-            'author': ', '.join(author_names) if author_names else 'Unknown Author'
+    paper_counts = (
+        Publication.objects.filter(status="approved", country_code__isnull=False)
+        .exclude(country_code="")
+        .values("country_code")
+        .annotate(total=Count("id"))
+    )
+    for row in paper_counts:
+        code = row["country_code"].upper()
+        summary.setdefault(code, {"scholars": 0, "papers": 0})["papers"] += row["total"]
+
+    return JsonResponse(summary)
+
+
+@require_GET
+def map_country_detail(request, code):
+    """Server-rendered side-panel fragment for a single country.
+
+    Returns the top ``MAP_PANEL_LIMIT`` scholars (alphabetical) and papers (most
+    recent) for ``code`` plus totals and "see all" links. Rendering the cards
+    server-side keeps their markup identical to the rest of the site (reuses the
+    shared ``_list_item`` partial) and avoids duplicating card HTML in JavaScript.
+    """
+    code = code.upper()
+    country_name = dict(COUNTRY_CHOICES).get(code, code)
+
+    scholars_qs = (
+        CustomUser.objects.select_related("profile")
+        .filter(is_active=True, profile__country_code__iexact=code)
+        .order_by("first_name", "last_name")
+    )
+    scholars_total = scholars_qs.count()
+    scholars = [
+        {
+            "title": user.get_full_name() or user.email,
+            "url": f"/profile/{user.pk}/",
+            "subtitle": user.profile.position or "Position not specified",
+            "description": user.profile.education or "",
+        }
+        for user in scholars_qs[:MAP_PANEL_LIMIT]
+    ]
+
+    papers_qs = (
+        Publication.objects.filter(status="approved", country_code__iexact=code)
+        .prefetch_related("authors__user")
+        .order_by("-applied_at")
+    )
+    papers_total = papers_qs.count()
+    papers = []
+    for paper in papers_qs[:MAP_PANEL_LIMIT]:
+        author_names = [
+            author.user.get_full_name() if author.user else author.name
+            for author in paper.authors.all()
+        ]
+        papers.append({
+            "title": paper.title,
+            "url": f"/publications/{paper.id}/",
+            "subtitle": ", ".join(name for name in author_names if name) or "Unknown Author",
         })
 
-    return JsonResponse(dict(country_papers))
+    country_query = urlencode({"q": country_name, "filter": "country"})
+
+    context = {
+        "country_code": code,
+        "country_name": country_name,
+        "scholars": scholars,
+        "scholars_total": scholars_total,
+        "scholars_more": scholars_total > MAP_PANEL_LIMIT,
+        "scholars_see_all_url": f"{reverse('researchers')}?{country_query}",
+        "papers": papers,
+        "papers_total": papers_total,
+        "papers_more": papers_total > MAP_PANEL_LIMIT,
+        "papers_see_all_url": f"{reverse('publications')}?{country_query}",
+    }
+    return render(request, "partials/_map_panel.html", context)
 
 class UserListView(ListView):
     model = CustomUser

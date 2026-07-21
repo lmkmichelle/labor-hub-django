@@ -167,7 +167,7 @@
           </div>
         </nav>
       {% endblock %}
-      <div class="w-full px-4 mx-auto mt-4 max-w-screen-xl">
+      <div class="w-full px-4 mx-auto mt-4 {% block content_max_width %}max-w-screen-xl{% endblock %}">
         {% block content %}{% endblock %}
       </div>
       <script src="{% static 'js/flowbite.min.js' %}"></script>

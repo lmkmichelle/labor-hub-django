@@ -88,25 +88,64 @@ class MapViewTests(TestCase):
         self.assertTemplateUsed(response, "core/map.html")
 
 
-class CountriesApiTests(TestCase):
-    def test_countries_with_users(self):
+class MapSummaryApiTests(TestCase):
+    def test_summary_counts_scholars_and_papers(self):
         make_user(email="us@example.com", country_code="US")
-        response = self.client.get(reverse("countries_with_users"))
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("US", data)
-        self.assertEqual(data["US"][0]["email"], "us@example.com")
-
-    def test_countries_with_papers(self):
         publication = Publication.objects.create(
             title="Paper", abstract="a", study_url="https://example.com",
             status="approved", country_code="US",
         )
         publication.authors.add(Author.objects.create(user=None, name="Anon"))
-        response = self.client.get(reverse("countries_with_papers"))
+
+        response = self.client.get(reverse("map_summary"))
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn("US", data)
-        self.assertEqual(data["US"][0]["title"], "Paper")
+        self.assertEqual(data["US"], {"scholars": 1, "papers": 1})
+
+    def test_summary_excludes_pending_papers(self):
+        Publication.objects.create(
+            title="Pending", abstract="a", study_url="https://example.com",
+            status="pending", country_code="FR",
+        )
+        response = self.client.get(reverse("map_summary"))
+        self.assertNotIn("FR", response.json())
+
+
+class MapCountryDetailTests(TestCase):
+    def test_detail_renders_scholars_and_papers(self):
+        make_user(email="us@example.com", first_name="Ada", last_name="Lovelace",
+                  country_code="US")
+        publication = Publication.objects.create(
+            title="Recent Paper", abstract="a", study_url="https://example.com",
+            status="approved", country_code="US",
+        )
+        publication.authors.add(Author.objects.create(user=None, name="Anon"))
+
+        response = self.client.get(reverse("map_country_detail", args=["US"]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "partials/_map_panel.html")
+        content = response.content.decode()
+        self.assertIn("United States", content)
+        self.assertIn("Ada Lovelace", content)
+        self.assertIn("Recent Paper", content)
+
+    def test_detail_caps_at_five_with_see_all_link(self):
+        for index in range(7):
+            make_user(email=f"s{index}@example.com", first_name=f"Name{index}",
+                      last_name="Z", country_code="US")
+
+        response = self.client.get(reverse("map_country_detail", args=["US"]))
+        content = response.content.decode()
+        self.assertIn("See all 7 scholars", content)
+        self.assertIn("filter=country", content)
+        self.assertEqual(content.count('href="/profile/'), 5)
+
+    def test_detail_empty_country_shows_placeholders(self):
+        response = self.client.get(reverse("map_country_detail", args=["JP"]))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("No scholars are based here yet.", content)
+        self.assertIn("No discussion papers are based here yet.", content)
 
 
 class SearchAccountsTests(TestCase):
