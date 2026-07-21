@@ -109,6 +109,23 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.email
 
+    def research_interest_list(self):
+        """Return research interests as a flat list of strings.
+
+        Handles both plain strings and the legacy Tagify ``{"value": ...}``
+        shape so templates can render them consistently.
+        """
+        normalized = []
+        for interest in self.research_interests or []:
+            if isinstance(interest, dict):
+                value = interest.get('value', '')
+            else:
+                value = interest
+            value = str(value).strip() if value is not None else ''
+            if value:
+                normalized.append(value)
+        return normalized
+
 class UserApplication(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'

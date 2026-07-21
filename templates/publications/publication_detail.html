@@ -60,8 +60,8 @@
             {% if publication.is_job_market %}
                 <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Job Market</span>
             {% endif %}
-            {% for keyword in publication.keywords %}
-                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ keyword.value }}</span>
+            {% for keyword in publication.keyword_list %}
+                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ keyword }}</span>
             {% endfor %}
         </div>
 

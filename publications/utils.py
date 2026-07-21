@@ -48,7 +48,13 @@ def handle_authors(raw_input):
 def handle_keywords(raw_input):
     keywords = []
     for entry in json.loads(raw_input):
-        keywords.append(entry)
+        if isinstance(entry, dict):
+            value = entry.get('value', '')
+        else:
+            value = entry
+        value = str(value).strip() if value is not None else ''
+        if value:
+            keywords.append(value)
     return keywords
 
 def process_publication_form(request, form):

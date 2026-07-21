@@ -53,6 +53,11 @@ class PublicationModelTests(TestCase):
         publication = make_publication(title="Labor Markets")
         self.assertEqual(str(publication), "Labor Markets")
 
+    def test_keyword_list_normalizes_dicts_and_strings(self):
+        publication = make_publication(
+            keywords=[{"value": "economics"}, "labor", {"value": "  "}, ""])
+        self.assertEqual(publication.keyword_list(), ["economics", "labor"])
+
     def test_approve_transitions_from_pending(self):
         admin = make_admin()
         publication = make_publication()

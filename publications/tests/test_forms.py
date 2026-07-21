@@ -33,3 +33,11 @@ class PublicationFormTests(TestCase):
         form = PublicationForm(data=data)
         self.assertFalse(form.is_valid())
         self.assertIn("authors_input", form.errors)
+
+    def test_is_job_market_is_optional(self):
+        data = valid_form_data()
+        del data["is_job_market"]
+        form = PublicationForm(data=data)
+        self.assertTrue(form.is_valid(), form.errors)
+        publication = form.save()
+        self.assertFalse(publication.is_job_market)

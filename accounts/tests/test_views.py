@@ -137,5 +137,5 @@ class EditProfileViewTests(TestCase):
         self.assertRedirects(response, reverse("profile"))
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.position, "Professor")
-        self.assertEqual(user.profile.research_interests, [{"value": "Economics"}])
+        self.assertEqual(user.profile.research_interests, ["Economics"])
         self.assertTrue(user.profile.avatar)

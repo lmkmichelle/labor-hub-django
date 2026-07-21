@@ -74,3 +74,22 @@ class Publication(models.Model):
 
     def formatted_date(self):
         return f"{self.date}"
+
+    def keyword_list(self):
+        """Return keywords as a flat list of strings.
+
+        Historically keywords were stored in Tagify's ``[{"value": ...}]``
+        shape, but they may also be plain strings. Normalize both so
+        templates can render them consistently.
+        """
+        normalized = []
+        for keyword in self.keywords or []:
+            if isinstance(keyword, dict):
+                value = keyword.get('value', '')
+            else:
+                value = keyword
+            value = str(value).strip() if value is not None else ''
+            if value:
+                normalized.append(value)
+        return normalized
+

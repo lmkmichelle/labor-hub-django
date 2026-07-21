@@ -70,7 +70,8 @@ class PublicationForm(forms.ModelForm):
     )
 
     is_job_market = forms.BooleanField(
-        label='Is this a job market study?'
+        required=False,
+        label='Is this a job market study?',
     )
 
     pdf = forms.FileField(
@@ -84,7 +85,9 @@ class PublicationForm(forms.ModelForm):
 
         if self.instance and self.instance.pk:
             if self.instance.keywords:
-                initial_interests = self.instance.keywords
+                initial_interests = [
+                    {"value": keyword} for keyword in self.instance.keyword_list()
+                ]
                 self.fields["keywords_input"].widget.attrs['value'] = json.dumps(initial_interests)
                 
             if self.instance.authors.exists():

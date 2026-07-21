@@ -8,12 +8,17 @@ from publications.utils import handle_authors, handle_keywords
 
 
 class HandleKeywordsTests(TestCase):
-    def test_returns_entries_as_list(self):
+    def test_returns_plain_string_list(self):
         raw = json.dumps([{"value": "economics"}, {"value": "labor"}])
-        self.assertEqual(
-            handle_keywords(raw),
-            [{"value": "economics"}, {"value": "labor"}],
-        )
+        self.assertEqual(handle_keywords(raw), ["economics", "labor"])
+
+    def test_accepts_plain_strings(self):
+        raw = json.dumps(["economics", "labor"])
+        self.assertEqual(handle_keywords(raw), ["economics", "labor"])
+
+    def test_skips_blank_entries(self):
+        raw = json.dumps([{"value": "economics"}, {"value": "  "}, ""])
+        self.assertEqual(handle_keywords(raw), ["economics"])
 
     def test_empty_list(self):
         self.assertEqual(handle_keywords("[]"), [])

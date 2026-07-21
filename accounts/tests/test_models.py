@@ -109,6 +109,16 @@ class ProfileModelTests(TestCase):
         user = make_user()
         self.assertEqual(str(user.profile), user.email)
 
+    def test_research_interest_list_normalizes_dicts_and_strings(self):
+        user = make_user()
+        user.profile.research_interests = [
+            {"value": "Economics"}, "Policy", {"value": " "}, "", None,
+        ]
+        user.profile.save()
+        self.assertEqual(
+            user.profile.research_interest_list(), ["Economics", "Policy"]
+        )
+
 
 def make_application(email="applicant@example.com", role=CustomUser.Role.RESEARCHER,
                      status=UserApplication.Status.PENDING):

@@ -27,6 +27,8 @@ Submit Paper
 <form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
     
+    <p class="mb-5 text-sm text-body"><span class="text-red-600" aria-hidden="true">*</span> indicates a required field.</p>
+    
     {% if form.non_field_errors %}
     <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
         {{ form.non_field_errors }}

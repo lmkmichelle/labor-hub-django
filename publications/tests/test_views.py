@@ -75,7 +75,7 @@ class PublicationCreateViewTests(TestCase):
         publication = Publication.objects.get(title="New Paper")
         self.assertEqual(publication.status, "pending")
         self.assertEqual(publication.topic, "Labor")
-        self.assertEqual(publication.keywords, [{"value": "economics"}])
+        self.assertEqual(publication.keywords, ["economics"])
         self.assertEqual(publication.authors.count(), 1)
 
 

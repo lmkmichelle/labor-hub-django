@@ -1,6 +1,6 @@
 <div class="mb-5">
     <label for="{{ field.id_for_label }}" class="block mb-2.5 text-sm font-medium text-heading">
-        {{ label }}
+        {{ label }}{% if required %}<span class="text-red-600 ms-0.5" aria-hidden="true">*</span>{% endif %}
     </label>
     
     {% if widget_name == 'Select' or widget_name == 'SelectMultiple' %}
