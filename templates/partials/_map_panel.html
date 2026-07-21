@@ -1,50 +1,41 @@
 {% comment %}
 World Map right-side panel fragment. Rendered by core.views.map_country_detail
-and injected into #map-panel by map.js when a country is clicked. Cards reuse
-the shared _list_item.html partial so styling matches the rest of the site.
-Inputs: country_name, scholars/papers (lists of {title,url,subtitle,description}),
+and injected into #map-panel by map.js when a country is clicked. Cards match
+the Discussion Papers / Events card list look via partials/_map_card.html.
+Both sections are rendered; map.js shows only the one matching the active tab.
+Inputs: country_name, scholars/papers (lists of {title,url,badge,subtitle}),
 *_total, *_more (bool), *_see_all_url.
 {% endcomment %}
-<div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-    <h3 class="text-xl font-semibold text-heading">{{ country_name }}</h3>
+<h3 class="text-2xl font-semibold text-heading">{{ country_name }}</h3>
 
-    <section class="map-panel-section mt-4" data-metric="scholars">
-        <div class="flex items-baseline justify-between border-b border-default pb-2">
-            <h4 class="text-xs font-semibold uppercase tracking-wide text-body">Scholars</h4>
-            <span class="text-xs text-body">{{ scholars_total }}</span>
+<section class="map-panel-section mt-4" data-metric="scholars">
+    {% if scholars %}
+        <div class="flex flex-col gap-3">
+            {% for item in scholars %}
+                {% include 'partials/_map_card.html' with url=item.url badge=item.badge title=item.title subtitle=item.subtitle %}
+            {% endfor %}
         </div>
-        {% if scholars %}
-            <div class="mt-3 flex flex-col gap-3">
-                {% for item in scholars %}
-                    {% include 'partials/_list_item.html' with title=item.title url=item.url subtitle=item.subtitle description=item.description %}
-                {% endfor %}
-            </div>
-            {% if scholars_more %}
-                <a href="{{ scholars_see_all_url }}"
-                   class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ scholars_total }} scholars →</a>
-            {% endif %}
-        {% else %}
-            <p class="mt-3 text-sm text-body">No scholars are based here yet.</p>
+        {% if scholars_more %}
+            <a href="{{ scholars_see_all_url }}"
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ scholars_total }} scholars →</a>
         {% endif %}
-    </section>
+    {% else %}
+        {% include 'partials/_empty_state.html' with text="No scholars are based here yet." %}
+    {% endif %}
+</section>
 
-    <section class="map-panel-section mt-4" data-metric="papers">
-        <div class="flex items-baseline justify-between border-b border-default pb-2">
-            <h4 class="text-xs font-semibold uppercase tracking-wide text-body">Discussion Papers</h4>
-            <span class="text-xs text-body">{{ papers_total }}</span>
+<section class="map-panel-section mt-4" data-metric="papers">
+    {% if papers %}
+        <div class="flex flex-col gap-3">
+            {% for item in papers %}
+                {% include 'partials/_map_card.html' with url=item.url badge=item.badge title=item.title subtitle=item.subtitle %}
+            {% endfor %}
         </div>
-        {% if papers %}
-            <div class="mt-3 flex flex-col gap-3">
-                {% for item in papers %}
-                    {% include 'partials/_list_item.html' with title=item.title url=item.url subtitle=item.subtitle %}
-                {% endfor %}
-            </div>
-            {% if papers_more %}
-                <a href="{{ papers_see_all_url }}"
-                   class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ papers_total }} papers →</a>
-            {% endif %}
-        {% else %}
-            <p class="mt-3 text-sm text-body">No discussion papers are based here yet.</p>
+        {% if papers_more %}
+            <a href="{{ papers_see_all_url }}"
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ papers_total }} papers →</a>
         {% endif %}
-    </section>
-</div>
+    {% else %}
+        {% include 'partials/_empty_state.html' with text="No discussion papers are based here yet." %}
+    {% endif %}
+</section>

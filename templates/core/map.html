@@ -15,7 +15,7 @@
          data-summary-url="{% url 'map_summary' %}"
          data-detail-url="{% url 'map_country_detail' '__CODE__' %}">
 
-        <div class="mb-5 border-b border-default text-sm font-medium">
+        <div class="mb-5 text-sm font-medium">
             <button id="toggle-users"
                     type="button"
                     data-metric="scholars"
@@ -28,15 +28,13 @@
                     class="map-toggle">Discussion Papers</button>
         </div>
 
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
             <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
 
             <aside id="map-panel"
                    class="w-full lg:sticky lg:top-4 lg:w-96 lg:shrink-0"
                    aria-live="polite">
-                <div class="rounded-base border border-dashed border-default bg-neutral-primary-soft p-6 text-center text-sm text-body">
-                    Select a country on the map to see the scholars and discussion papers connected to it.
-                </div>
+                {% include 'partials/_empty_state.html' with text="Select a country on the map to see the scholars and discussion papers connected to it." %}
             </aside>
         </div>
     </div>

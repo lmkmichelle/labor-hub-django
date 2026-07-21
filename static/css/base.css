@@ -35,7 +35,6 @@
 .map-toggle {
     display: inline-block;
     padding: 0.75rem 1rem;
-    margin-bottom: -1px;
     border-bottom: 2px solid transparent;
     color: #4B5563;
     cursor: pointer;
