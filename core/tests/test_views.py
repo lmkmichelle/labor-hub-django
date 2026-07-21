@@ -139,7 +139,7 @@ class MapCountryDetailTests(TestCase):
         response = self.client.get(reverse("map_country_detail", args=["US"]))
         content = response.content.decode()
         self.assertIn("See all 7 scholars", content)
-        self.assertIn("filter=country", content)
+        self.assertIn("countries=US", content)
         self.assertEqual(content.count('href="/profile/'), 5)
 
     def test_detail_empty_country_shows_placeholders(self):
@@ -174,6 +174,45 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(approved, response.context["publications"])
         self.assertNotIn(pending, response.context["publications"])
 
+    def test_country_pill_filter(self):
+        us_paper = Publication.objects.create(
+            title="US Paper", abstract="a", study_url="https://example.com",
+            status="approved", country_code="US",
+        )
+        fr_paper = Publication.objects.create(
+            title="FR Paper", abstract="a", study_url="https://example.com",
+            status="approved", country_code="FR",
+        )
+        response = self.client.get(reverse("publications"), {"countries": "US"})
+        self.assertIn(us_paper, response.context["publications"])
+        self.assertNotIn(fr_paper, response.context["publications"])
+
+    def test_keyword_pill_filter(self):
+        match = Publication.objects.create(
+            title="Wages", abstract="a", study_url="https://example.com",
+            status="approved", keywords=["Minimum wages"],
+        )
+        other = Publication.objects.create(
+            title="Trade", abstract="a", study_url="https://example.com",
+            status="approved", keywords=["Trade"],
+        )
+        response = self.client.get(reverse("publications"), {"keywords": "Minimum wages"})
+        self.assertIn(match, response.context["publications"])
+        self.assertNotIn(other, response.context["publications"])
+
+    def test_job_market_checkbox_filter(self):
+        jm_paper = Publication.objects.create(
+            title="Job Market", abstract="a", study_url="https://example.com",
+            status="approved", is_job_market=True,
+        )
+        regular = Publication.objects.create(
+            title="Regular", abstract="a", study_url="https://example.com",
+            status="approved", is_job_market=False,
+        )
+        response = self.client.get(reverse("publications"), {"job_market": "1"})
+        self.assertIn(jm_paper, response.context["publications"])
+        self.assertNotIn(regular, response.context["publications"])
+
 
 class UserListViewTests(TestCase):
     def test_researchers_list_shows_only_researchers(self):
@@ -196,5 +235,24 @@ class UserListViewTests(TestCase):
         other = make_user(email="other@example.com", first_name="Bob", last_name="Jones")
         response = self.client.get(
             reverse("researchers"), {"q": "Alice", "filter": "name"})
+        self.assertIn(match, response.context["users"])
+        self.assertNotIn(other, response.context["users"])
+
+    def test_country_pill_filter(self):
+        us_user = make_user(email="us@example.com", country_code="US")
+        fr_user = make_user(email="fr@example.com", country_code="FR")
+        response = self.client.get(reverse("researchers"), {"countries": "US"})
+        self.assertIn(us_user, response.context["users"])
+        self.assertNotIn(fr_user, response.context["users"])
+
+    def test_interests_pill_filter(self):
+        match = make_user(email="econ@example.com")
+        match.profile.research_interests = ["Labor economics"]
+        match.profile.save()
+        other = make_user(email="bio@example.com")
+        other.profile.research_interests = ["Biology"]
+        other.profile.save()
+        response = self.client.get(
+            reverse("researchers"), {"interests": "Labor economics"})
         self.assertIn(match, response.context["users"])
         self.assertNotIn(other, response.context["users"])

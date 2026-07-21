@@ -1,6 +1,6 @@
-import json
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.db.models.functions import Lower
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -11,6 +11,7 @@ from django.views.generic import ListView
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
+from core.filters import map_country_terms_to_codes, parse_pill_terms
 from publications.models import Publication
 from events.models import Event
 from seminars.models import Seminar
@@ -207,7 +208,7 @@ def map_country_detail(request, code):
             "subtitle": ", ".join(name for name in author_names if name) or "Unknown Author",
         })
 
-    country_query = urlencode({"q": country_name, "filter": "country"})
+    country_query = urlencode({"countries": code})
 
     context = {
         "country_code": code,
@@ -234,50 +235,61 @@ class UserListView(ListView):
     def get_queryset(self):
         qs = CustomUser.objects.filter(is_active=True, role=self.role).select_related('profile')
 
-        query = self.request.GET.get('q', '')
-        filter_type = self.request.GET.get('filter', 'all')
-
+        query = self.request.GET.get('q', '').strip()
         if query:
-            if filter_type == 'name':
-                qs = qs.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
-            elif filter_type == 'email':
-                qs = qs.filter(email__icontains=query)
-            elif filter_type == 'country':
-                matching_codes = [
-                    code for code, name in COUNTRY_CHOICES
-                    if query.strip().lower() in name.lower()
-                ]
-                if matching_codes:
-                    qs = qs.filter(profile__country_code__in=matching_codes)
-                else:
-                    qs = qs.filter(profile__country_code__iexact=query)
-            elif filter_type == 'position':
-                qs = qs.filter(profile__position__icontains=query)
-            elif filter_type == 'research_interests':
-                qs = qs.filter(profile__research_interests__icontains=query)
-            else:
-                qs = qs.filter(
-                    Q(first_name__icontains=query) |
-                    Q(last_name__icontains=query) |
-                    Q(email__icontains=query) |
-                    Q(profile__position__icontains=query) |
-                    Q(profile__country_code__icontains=query) |
-                    Q(profile__research_interests__icontains=query))
-        return qs
+            qs = qs.filter(
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(profile__position__icontains=query) |
+                Q(profile__education__icontains=query) |
+                Q(profile__research_interests__icontains=query)
+            )
+
+        selected_countries = map_country_terms_to_codes(
+            parse_pill_terms(self.request.GET.get('countries', '')))
+        if selected_countries:
+            qs = qs.filter(profile__country_code__in=selected_countries)
+
+        interest_terms = parse_pill_terms(self.request.GET.get('interests', ''))
+        if interest_terms:
+            interests_query = Q()
+            for term in interest_terms:
+                interests_query |= Q(profile__research_interests__icontains=term)
+            qs = qs.filter(interests_query)
+
+        sort = self.request.GET.get('sort', '')
+        if sort == 'newest':
+            qs = qs.order_by('-date_joined', 'id')
+        else:
+            qs = qs.order_by('first_name', 'last_name', 'id')
+
+        return qs.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['COUNTRY_CHOICES'] = COUNTRY_CHOICES
+        selected_countries = map_country_terms_to_codes(
+            parse_pill_terms(self.request.GET.get('countries', '')))
+        interest_terms = parse_pill_terms(self.request.GET.get('interests', ''))
+
         context['query'] = self.request.GET.get('q', '')
-        context['filter_type'] = self.request.GET.get('filter', 'all')
-        context['countries'] = dict(COUNTRY_CHOICES)
-        context['user_filters'] = [
-            {'value': 'all', 'label': 'All Fields'},
-            {'value': 'name', 'label': 'Name'},
-            {'value': 'country', 'label': 'Country'},
-            {'value': 'position', 'label': 'Position'},
-            {'value': 'research_interests', 'label': 'Research Interests'},
-        ]
+        context['sort'] = self.request.GET.get('sort', '')
+        context['selected_countries'] = selected_countries
+        context['selected_countries_serialized'] = ','.join(selected_countries)
+        context['country_choices'] = COUNTRY_CHOICES
+        context['selected_interests'] = interest_terms
+        context['selected_interests_serialized'] = ','.join(interest_terms)
+
+        filter_params = {}
+        if context['query']:
+            filter_params['q'] = context['query']
+        if context['selected_countries_serialized']:
+            filter_params['countries'] = context['selected_countries_serialized']
+        if context['selected_interests_serialized']:
+            filter_params['interests'] = context['selected_interests_serialized']
+        if context['sort']:
+            filter_params['sort'] = context['sort']
+        context['filter_querystring'] = urlencode(filter_params)
         return context
 
 class ResearchersListView(UserListView):
@@ -309,113 +321,72 @@ def search_accounts(request):
 def publications_list(request):
     publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')
 
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    if query:
+        publications = publications.filter(
+            Q(title__icontains=query) |
+            Q(abstract__icontains=query) |
+            Q(topic__icontains=query) |
+            Q(authors__name__icontains=query) |
+            Q(authors__user__first_name__icontains=query) |
+            Q(authors__user__last_name__icontains=query)
+        ).distinct()
 
-    def parse_query_terms(raw_query):
-        raw_query = (raw_query or '').strip()
-        if not raw_query:
-            return []
+    selected_countries = map_country_terms_to_codes(
+        parse_pill_terms(request.GET.get('countries', '')))
+    if selected_countries:
+        publications = publications.filter(country_code__in=selected_countries)
 
-        parsed_terms = []
-        if raw_query.startswith('['):
-            try:
-                parsed = json.loads(raw_query)
-                if isinstance(parsed, list):
-                    for item in parsed:
-                        if isinstance(item, dict):
-                            value = str(item.get('value', '')).strip()
-                        else:
-                            value = str(item).strip()
-                        if value:
-                            parsed_terms.append(value)
-            except (TypeError, ValueError, json.JSONDecodeError):
-                parsed_terms = []
+    keyword_terms = parse_pill_terms(request.GET.get('keywords', ''))
+    if keyword_terms:
+        keywords_query = Q()
+        for term in keyword_terms:
+            keywords_query |= Q(keywords__icontains=term)
+        publications = publications.filter(keywords_query)
 
-        if not parsed_terms:
-            parsed_terms = [part.strip() for part in raw_query.split(',') if part.strip()]
+    job_market = request.GET.get('job_market') == '1'
+    if job_market:
+        publications = publications.filter(is_job_market=True)
 
-        deduped_terms = []
-        seen = set()
-        for term in parsed_terms:
-            lowered = term.lower()
-            if lowered not in seen:
-                seen.add(lowered)
-                deduped_terms.append(term)
-        return deduped_terms
-
-    query_terms = parse_query_terms(query)
-    filter_type = request.GET.get('filter', 'all')
-
-    publication_filters = [
-        {'value': 'all', 'label': 'All'},
-        {'value': 'title', 'label': 'Title'},
-        {'value': 'authors', 'label': 'Authors'},
-        {'value': 'country', 'label': 'Country'},
-        {'value': 'keywords', 'label': 'Keywords'},
-    ]
-
-    if query_terms:
-        if filter_type == 'title':
-            title_query = Q()
-            for term in query_terms:
-                title_query |= Q(title__icontains=term)
-            publications = publications.filter(title_query)
-        elif filter_type == 'authors':
-            authors_query = Q()
-            for term in query_terms:
-                authors_query |= (
-                    Q(authors__name__icontains=term) |
-                    Q(authors__user__first_name__icontains=term) |
-                    Q(authors__user__last_name__icontains=term)
-                )
-            publications = publications.filter(authors_query).distinct()
-        elif filter_type == 'country':
-            matching_codes = set()
-            available_codes = {code for code, _ in COUNTRY_CHOICES}
-            for term in query_terms:
-                normalized = term.strip().lower()
-                upper_term = term.strip().upper()
-                if upper_term in available_codes:
-                    matching_codes.add(upper_term)
-                for code, name in COUNTRY_CHOICES:
-                    if normalized in name.lower():
-                        matching_codes.add(code)
-            if matching_codes:
-                publications = publications.filter(country_code__in=matching_codes)
-            else:
-                publications = publications.none()
-        elif filter_type == 'keywords':
-            keywords_query = Q()
-            for term in query_terms:
-                keywords_query |= Q(keywords__icontains=term)
-            publications = publications.filter(keywords_query)
-        else:
-            all_query = Q()
-            for term in query_terms:
-                all_query |= (
-                    Q(title__icontains=term) |
-                    Q(authors__name__icontains=term) |
-                    Q(authors__user__first_name__icontains=term) |
-                    Q(authors__user__last_name__icontains=term) |
-                    Q(abstract__icontains=term) |
-                    Q(country_code__icontains=term) |
-                    Q(keywords__icontains=term) |
-                    Q(study_url__icontains=term) |
-                    Q(is_job_market__icontains=term)
-                )
-            publications = publications.filter(all_query).distinct()
+    sort = request.GET.get('sort', 'newest')
+    if sort == 'oldest':
+        publications = publications.order_by('applied_at', 'id')
+    elif sort == 'title':
+        publications = publications.order_by(Lower('title'), 'id')
+    else:
+        sort = 'newest'
+        publications = publications.order_by('-applied_at', '-id')
 
     paginator = Paginator(publications, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    countries = dict(COUNTRY_CHOICES)
+    selected_countries_serialized = ','.join(selected_countries)
+    selected_keywords_serialized = ','.join(keyword_terms)
+
+    filter_params = {}
+    if query:
+        filter_params['q'] = query
+    if selected_countries_serialized:
+        filter_params['countries'] = selected_countries_serialized
+    if selected_keywords_serialized:
+        filter_params['keywords'] = selected_keywords_serialized
+    if job_market:
+        filter_params['job_market'] = '1'
+    if sort:
+        filter_params['sort'] = sort
 
     return render(request, 'publications/publications.html', {
         'publications': page_obj,
-        'COUNTRY_CHOICES': COUNTRY_CHOICES,
-        'query': json.dumps([{'value': term} for term in query_terms]) if query_terms else '',
-        'filter_type': filter_type,
-        'countries': countries,
-        'publication_filters': publication_filters,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'query': query,
+        'sort': sort,
+        'selected_countries': selected_countries,
+        'selected_countries_serialized': selected_countries_serialized,
+        'country_choices': COUNTRY_CHOICES,
+        'selected_keywords': keyword_terms,
+        'selected_keywords_serialized': selected_keywords_serialized,
+        'job_market': job_market,
+        'filter_querystring': urlencode(filter_params),
     })

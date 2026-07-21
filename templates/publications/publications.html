@@ -2,12 +2,189 @@
 {% load static %}
 {% block title %}Discussion Papers{% endblock %}
 {% block content %}
-    <article class="max-w-none format lg:format-lg">
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"
+          rel="stylesheet"
+          type="text/css" />
+    <article class="format lg:format-lg max-w-none">
         <h2>Discussion Papers</h2>
-        <p class="mb-6">Browse working and discussion papers shared by scholars across the network. Search by title, author, or keyword to find work relevant to your research.</p>
-        <div class="not-format">
-            {% include 'partials/_search_form.html' with search_filters=publication_filters filter_type=filter_type query=query search_placeholder='Add one or more search terms' use_tag_pills=True %}
-            {% include 'partials/_publications_list.html' with publications=publications %}
+        <p class="mb-6">Browse working and discussion papers shared by scholars across the network. Search by title, author, or abstract, and filter by country, keyword, or job-market papers.</p>
+        <div class="flex flex-row w-full gap-6">
+            <div class="flex flex-col w-60">
+                <form method="GET" id="filterForm">
+                    <input type="hidden" name="q" value="{{ query }}">
+                    <input type="hidden" name="sort" value="{{ sort }}">
+                    <input type="hidden"
+                           name="countries"
+                           id="countries-hidden"
+                           value="{{ selected_countries_serialized }}">
+                    <input type="hidden"
+                           name="keywords"
+                           id="keywords-hidden"
+                           value="{{ selected_keywords_serialized }}">
+                    <div class="mb-4">
+                        <h4>Countries</h4>
+                        <input type="text"
+                               id="countries-pill-input"
+                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               placeholder="Add countries...">
+                    </div>
+                    <div class="mb-4">
+                        <h4>Keywords</h4>
+                        <input type="text"
+                               id="keywords-pill-input"
+                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               placeholder="Add keywords...">
+                    </div>
+                    <div class="mb-4">
+                        <h4>Type</h4>
+                        <div class="mb-1">
+                            <input id="job-market"
+                                   class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                   type="checkbox"
+                                   name="job_market"
+                                   value="1"
+                                   {% if job_market %}checked{% endif %}>
+                            <label class="select-none ms-1 text-sm font-medium text-heading"
+                                   for="job-market">Job market papers only</label>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex flex-row justify-between">
+                            <button type="submit" class="btn-primary">Apply Filters</button>
+                            <a href="{% url 'publications' %}" class="btn-secondary no-underline">Clear Filters</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
+                <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+                    <form method="GET"
+                          id="searchForm"
+                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+                        <input type="hidden" name="keywords" value="{{ selected_keywords_serialized }}">
+                        {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
+                        <input type="hidden" name="sort" value="{{ sort }}">
+                        <label for="paper-search" class="sr-only">Search papers</label>
+                        <div class="relative flex-1 min-w-0 w-full">
+                            <input type="text"
+                                   id="paper-search"
+                                   name="q"
+                                   value="{{ query }}"
+                                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                                   placeholder="Search by title, author, or abstract..." />
+                        </div>
+                        <button type="submit"
+                                class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+                            <svg class="w-5 h-5"
+                                 aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="24"
+                                 height="24"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                            </svg>
+                            <span class="sr-only">Search</span>
+                        </button>
+                    </form>
+                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+                        <input type="hidden" name="keywords" value="{{ selected_keywords_serialized }}">
+                        {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
+                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                        <label for="sortSelect" class="sr-only">Sort by</label>
+                        <select id="sortSelect"
+                                name="sort"
+                                onchange="this.form.submit()"
+                                class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
+                            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
+                            <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: Title (A–Z)</option>
+                        </select>
+                    </form>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'submit_paper' %}"
+                           class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Paper</a>
+                    {% endif %}
+                </div>
+                {% if publications %}
+                    <div class="not-format">
+                        {% include 'partials/_publications_list.html' with publications=publications %}
+                    </div>
+                    {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
+                {% else %}
+                    {% include "partials/_empty_state.html" with text="No discussion papers match your criteria." %}
+                {% endif %}
+            </div>
         </div>
     </article>
+    <script>
+        (function () {
+            if (typeof Tagify === 'undefined') {
+                return;
+            }
+
+            var countryWhitelist = [
+                {% for value, label in country_choices %}
+                    { value: '{{ value }}', label: '{{ label|escapejs }}' },
+                {% endfor %}
+            ];
+
+            function syncHidden(tagify, hidden) {
+                hidden.value = tagify.value.map(function (item) {
+                    return item.value;
+                }).join(',');
+            }
+
+            function initCountries(inputId, hiddenId, preselected) {
+                var input = document.getElementById(inputId);
+                var hidden = document.getElementById(hiddenId);
+                if (!input || !hidden) {
+                    return;
+                }
+                var tagify = new Tagify(input, {
+                    enforceWhitelist: false,
+                    whitelist: countryWhitelist,
+                    dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'] },
+                    templates: {
+                        dropdownItem: function (tagData) {
+                            return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
+                                '<strong>' + tagData.label + '</strong> <span>(' + tagData.value + ')</span></div>';
+                        }
+                    }
+                });
+                if (preselected.length) {
+                    tagify.addTags(preselected);
+                }
+                tagify.on('change', function () { syncHidden(tagify, hidden); });
+                syncHidden(tagify, hidden);
+            }
+
+            function initFreeText(inputId, hiddenId, preselected) {
+                var input = document.getElementById(inputId);
+                var hidden = document.getElementById(hiddenId);
+                if (!input || !hidden) {
+                    return;
+                }
+                var tagify = new Tagify(input, { dropdown: { enabled: 0 } });
+                if (preselected.length) {
+                    tagify.addTags(preselected);
+                }
+                tagify.on('change', function () { syncHidden(tagify, hidden); });
+                syncHidden(tagify, hidden);
+            }
+
+            initCountries('countries-pill-input', 'countries-hidden', [
+                {% for code in selected_countries %}
+                    { value: '{{ code }}', label: '{% for value, label in country_choices %}{% if value == code %}{{ label|escapejs }}{% endif %}{% endfor %}' },
+                {% endfor %}
+            ]);
+            initFreeText('keywords-pill-input', 'keywords-hidden', [
+                {% for kw in selected_keywords %}'{{ kw|escapejs }}',{% endfor %}
+            ]);
+        })();
+    </script>
 {% endblock %}
