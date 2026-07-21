@@ -14,7 +14,7 @@ from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSub
 
 urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
-    path('profile/<int:pk>', ProfileView.as_view(), name='profile'),
+    path('profile/<int:pk>/', ProfileView.as_view(), name='profile'),
     path('profile/edit/', EditProfileView.as_view(), name='edit_profile'),
     path('accounts/apply/researcher/', ResearcherApplicationView.as_view(), name='apply_researcher'),
     path('accounts/apply/student/', StudentApplicationView.as_view(), name='apply_student'),
