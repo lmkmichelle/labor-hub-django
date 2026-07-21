@@ -120,8 +120,31 @@ class EditProfileViewTests(TestCase):
         response = self.client.get(reverse("edit_profile"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/edit_profile.html")
+        self.assertContains(response, "digest_frequency")
+        self.assertContains(response, "Email preferences")
 
     def test_post_updates_profile_and_crops_avatar(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.post(reverse("edit_profile"), {
+            "email": user.email,
+            "position": "Professor",
+            "country_code": "US",
+            "education": "Cornell",
+            "website": "https://example.com",
+            "biography": "A short biography.",
+            "research_interests_input": '[{"value":"Economics"}]',
+            "digest_frequency": "weekly",
+            "avatar": make_image_file(),
+        })
+        self.assertRedirects(response, reverse("profile"))
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.position, "Professor")
+        self.assertEqual(user.profile.research_interests, ["Economics"])
+        self.assertEqual(user.profile.digest_frequency, "weekly")
+        self.assertTrue(user.profile.avatar)
+
+    def test_post_without_digest_frequency_defaults_off(self):
         user = make_active_user()
         self.client.force_login(user)
         response = self.client.post(reverse("edit_profile"), {
@@ -136,6 +159,4 @@ class EditProfileViewTests(TestCase):
         })
         self.assertRedirects(response, reverse("profile"))
         user.profile.refresh_from_db()
-        self.assertEqual(user.profile.position, "Professor")
-        self.assertEqual(user.profile.research_interests, ["Economics"])
-        self.assertTrue(user.profile.avatar)
+        self.assertEqual(user.profile.digest_frequency, "off")

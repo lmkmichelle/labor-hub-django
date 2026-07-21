@@ -17,6 +17,7 @@ from django.views.generic import CreateView, UpdateView, ListView
 from core.constants import COUNTRY_CHOICES
 from publications.models import Publication
 from publications.utils import handle_keywords
+from .digests import read_unsubscribe_token
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
     StudentApplicationForm
 from .models import CustomUser, Profile, UserApplication
@@ -161,3 +162,20 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
                 size=buffer.tell(),
                 charset=None
             )
+
+
+@require_GET
+def digest_unsubscribe(request, token):
+    """One-click unsubscribe link from digest emails (signed token)."""
+    uid = read_unsubscribe_token(token)
+    profile = None
+    if uid is not None:
+        profile = Profile.objects.filter(user_id=uid).first()
+
+    if profile is not None:
+        if profile.digest_frequency != Profile.DigestFrequency.OFF:
+            profile.digest_frequency = Profile.DigestFrequency.OFF
+            profile.save(update_fields=["digest_frequency"])
+        return render(request, "accounts/digest_unsubscribe.html", {"success": True})
+
+    return render(request, "accounts/digest_unsubscribe.html", {"success": False})

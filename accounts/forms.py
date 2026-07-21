@@ -161,7 +161,7 @@ class UpdateUserForm(forms.ModelForm):
 class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['avatar', 'position', 'country_code', 'education', 'website', 'biography']
+        fields = ['avatar', 'position', 'country_code', 'education', 'website', 'biography', 'digest_frequency']
 
     avatar = forms.ImageField(
         label='Upload a profile picture',
@@ -200,6 +200,14 @@ class UpdateProfileForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"id": "research-interests-input"}),
     )
 
+    digest_frequency = forms.ChoiceField(
+        choices=Profile.DigestFrequency.choices,
+        required=False,
+        label='Email digest frequency',
+        help_text='Get a summary email of newly added papers, events, jobs, and visits.',
+        widget=forms.Select(),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -208,3 +216,6 @@ class UpdateProfileForm(forms.ModelForm):
             tagify_value = json.dumps([{"value": v} if isinstance(v, str) else v for v in initial_interests])
             self.fields["research_interests_input"].initial = tagify_value
             self.fields["research_interests_input"].widget.attrs['value'] = tagify_value
+
+    def clean_digest_frequency(self):
+        return self.cleaned_data.get('digest_frequency') or Profile.DigestFrequency.OFF

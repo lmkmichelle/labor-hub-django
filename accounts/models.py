@@ -106,6 +106,19 @@ class Profile(models.Model):
     biography = models.TextField(blank=True)
     research_interests = JSONField(default=list, blank=True)
 
+    class DigestFrequency(models.TextChoices):
+        OFF = 'off', 'Off'
+        WEEKLY = 'weekly', 'Weekly'
+        MONTHLY = 'monthly', 'Monthly'
+
+    digest_frequency = models.CharField(
+        max_length=10,
+        choices=DigestFrequency.choices,
+        default=DigestFrequency.OFF,
+        help_text="How often to receive an email digest of newly added content.",
+    )
+    last_digest_sent_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return self.user.email
 

@@ -1,0 +1,11 @@
+Hi {{ user.first_name|default:user.email }},
+
+Here's what's recently been added to Labor Hub ({{ total }} update{{ total|pluralize }}):
+{% for section in sections %}
+{{ section.label }}
+{% for item in section.items %}  - {{ item.title }}{% if item.meta %} ({{ item.meta }}){% endif %}
+    {{ item.url }}
+{% endfor %}{% endfor %}
+--
+Manage your email preferences: {{ manage_url }}
+Unsubscribe from digest emails: {{ unsubscribe_url }}

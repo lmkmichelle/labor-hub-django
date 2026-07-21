@@ -186,6 +186,12 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com")
 
+# Public base URL used to build absolute links in outgoing emails (e.g. the
+# weekly/monthly digest), since management commands have no HttpRequest.
+# In production point this at the Cornell/Media3 hostname, e.g.
+# https://laborhub.cornell.edu
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
+
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 

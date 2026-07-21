@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Email preferences{% endblock %}
+
+{% block content %}
+<article class="format lg:format-lg max-w-none">
+    {% if success %}
+        <h2 class="title">You've been unsubscribed</h2>
+        <p>You will no longer receive digest emails from Labor Hub.</p>
+        <p>You can re-enable them at any time from your
+            <a href="{% url 'edit_profile' %}">email preferences</a>.</p>
+    {% else %}
+        <h2 class="title">Link expired or invalid</h2>
+        <p>We couldn't process this unsubscribe link. You can update your
+            preferences directly from your
+            <a href="{% url 'edit_profile' %}">email preferences</a>.</p>
+    {% endif %}
+</article>
+{% endblock %}

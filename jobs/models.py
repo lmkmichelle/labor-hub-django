@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
 
@@ -34,6 +35,10 @@ class Job(models.Model):
     categories = models.JSONField(default=list, blank=True)
     url = models.URLField()
     deadline = models.DateField()
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def get_absolute_url(self):
         return reverse('job-detail', kwargs={'pk': self.pk})
