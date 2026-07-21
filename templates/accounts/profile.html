@@ -80,7 +80,7 @@
     <div class="mt-8">
         <div class="w-full">
             <h3>Biography</h3>
-            <p>{{ user_profile.biography }}</p>
+            {{ user_profile.biography|linebreaks }}
             <h3>Labor Hub Discussion Papers</h3>
             <div class="not-format">
                 {% include "partials/_publications_list.html" %}

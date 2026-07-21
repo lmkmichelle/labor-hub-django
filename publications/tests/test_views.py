@@ -62,6 +62,16 @@ class PublicationDetailViewTests(TestCase):
             reverse("publication_detail", kwargs={"pk": publication.pk}))
         self.assertEqual(response.status_code, 200)
 
+    def test_abstract_preserves_line_breaks(self):
+        publication = make_publication(
+            status="approved",
+            abstract="First paragraph.\n\nSecond paragraph.")
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        self.assertIn("<p>First paragraph.</p>", content)
+        self.assertIn("<p>Second paragraph.</p>", content)
+
 
 class PublicationCreateViewTests(TestCase):
     def test_get_renders_form(self):
@@ -100,3 +110,26 @@ class PublicationUpdateViewTests(TestCase):
         self.assertRedirects(response, reverse("publications"))
         publication.refresh_from_db()
         self.assertEqual(publication.title, "Updated Title")
+
+    def test_edit_form_renders_iso_date_and_round_trips(self):
+        import datetime
+
+        user = make_user()
+        publication = make_publication(
+            status="approved", date=datetime.date(2026, 7, 21))
+        publication.authors.add(Author.objects.create(user=user, name="Jane Doe"))
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("edit_publication", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        # The Flowbite datepicker must be told the value is ISO so it does not
+        # misparse it as mm/dd/yyyy and mangle the date.
+        self.assertIn('datepicker-format="yyyy-mm-dd"', content)
+        self.assertIn('value="2026-07-21"', content)
+
+        self.client.post(
+            reverse("edit_publication", kwargs={"pk": publication.pk}),
+            create_post_data(date="2026-07-21"))
+        publication.refresh_from_db()
+        self.assertEqual(publication.date, datetime.date(2026, 7, 21))

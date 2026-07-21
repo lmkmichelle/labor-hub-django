@@ -30,7 +30,7 @@
 
         {% if seminar.description %}
             <h4>Details</h4>
-            <p>{{ seminar.description }}</p>
+            {{ seminar.description|linebreaks }}
         {% endif %}
         <h4>Countries</h4>
         <div class="mb-6 flex flex-row overflow-auto w-full not-format gap-2">

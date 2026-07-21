@@ -32,7 +32,7 @@
     </div>
 
     <h4>Description</h4>
-    <p>{{ job.description }}</p>
+    {{ job.description|linebreaks }}
 
     <h4>Application Deadline</h4>
     <p>{{ job.deadline|date:"N j, Y" }}</p>
