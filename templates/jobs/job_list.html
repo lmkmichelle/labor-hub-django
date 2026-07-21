@@ -97,7 +97,9 @@
           </form>
         </div>
 
-        {% include 'partials/_list_display.html' with items=jobs card_template='partials/cards/_job_board_card.html' empty_message='There are currently no opportunities matching your criteria.' %}
+        <div class="not-format">
+          {% include 'partials/_list_display.html' with items=jobs card_template='partials/cards/_job_board_card.html' empty_message='There are currently no opportunities matching your criteria.' %}
+        </div>
 
         {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
       </div>

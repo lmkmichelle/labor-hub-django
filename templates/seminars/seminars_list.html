@@ -98,11 +98,12 @@
                     {% endif %}
                 </div>
                 {% if seminars %}
-                    <div class="flex flex-col gap-3 w-full">
+                    <div class="flex flex-col gap-3 w-full not-format">
                         {% for seminar in seminars %}
-                            <a href="{% url 'seminar-detail' seminar.id %}" class="card-surface not-format">
+                            <a href="{% url 'seminar-detail' seminar.id %}" class="card-surface w-full">
                                 <div class="flex flex-row items-center justify-between gap-4">
-                                    <p class="m-0 text-body shrink-0">
+                                    <h5 class="text-xl font-semibold text-heading">{{ seminar.visitor_name|default:"Visiting scholar" }}</h5>
+                                    <p class="text-body shrink-0">
                                         {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
                                             {{ seminar.visit_start|date:"N j" }} - {{ seminar.visit_end|date:"N j, Y" }}
                                         {% else %}
@@ -110,10 +111,9 @@
                                         {% endif %}
                                     </p>
                                 </div>
-                                <p class="mt-1 text-body">Visitor: {{ seminar.visitor_name }}</p>
-                                <p class="text-body">University: {{ seminar.get_university_display }}</p>
+                                <p class="text-body">Visiting {{ seminar.get_university_display }}</p>
                                 {% if seminar.visitor_affiliation %}
-                                    <p class="text-body">Affiliation: {{ seminar.visitor_affiliation }}</p>
+                                    <p class="text-body">From {{ seminar.visitor_affiliation }}</p>
                                 {% endif %}
                                 {% if seminar.country_labels %}
                                     <div class="mt-2 flex flex-row overflow-auto w-full gap-2">

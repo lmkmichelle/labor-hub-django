@@ -313,77 +313,69 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
   function showCountryDetails(countryCode, countryName) {
     const activeData = countryData[currentTab];
     const items = activeData[countryCode] || [];
+    const label = currentTab === 'users' ? 'Scholars' : 'Discussion Papers';
+    const safeCountry = escapeHtml(countryName);
 
-    let displayDiv = document.getElementById('display-items');
-    displayDiv.innerHTML = '';
+    const displayDiv = document.getElementById('display-items');
 
     if (items.length === 0) {
       displayDiv.innerHTML = `
-      <h5>${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h5>
-      <div class="text-center">
-        There are no ${currentTab === 'users' ? 'users' : 'discussion papers'} based in ${countryName}.
-      </div>
-    `;
+        <div class="not-format">
+          <h2 class="text-2xl font-semibold text-heading text-center mb-4">${label} in ${safeCountry}</h2>
+          <div class="rounded-base border border-default bg-neutral-primary-soft p-6 text-center text-sm text-body">
+            There are no ${currentTab === 'users' ? 'scholars' : 'discussion papers'} based in ${safeCountry}.
+          </div>
+        </div>
+      `;
       return;
     }
 
-    let listHtml = '<div class="list-group">';
-    const top5 = items.slice(0, 5);
-    top5.forEach(item => {
-
+    const cards = items.slice(0, 5).map((item) => {
       if (currentTab === 'users') {
-        listHtml += `
-         <a href="{% url 'publication_detail' publication.id %}"
-           class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
-            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Discussion Series #{{ publication.id }}</span>
-            <div class="ml-1 mt-1">
-                <h5 class="text-xl font-semibold text-heading">${item.first_name} ${item.last_name}</h5>
-                <p class="text-body">${item.education}</p>
-                <p>${item.position}</</p>
-            </div>
-        </a>
-      `;
-      } else {
-        listHtml += `
-        <a href="{% url 'publication_detail' publication.id %}"
-           class="bg-neutral-primary-soft block max-w-full p-6 border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium">
-            <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">Discussion Series #{ publication.id }</span>
-            <div class="ml-1 mt-1">
-                <h5 class="text-xl font-semibold text-heading">${item.title}</h5>
-                <p class="text-body">${item.education}</p>
-                <p>>${item.author || 'Unknown Author'}</p>
-            </div>
-        </a>
-      `;
+        const name = escapeHtml(`${item.first_name || ''} ${item.last_name || ''}`.trim());
+        const position = item.position ? `<p class="text-body">${escapeHtml(item.position)}</p>` : '';
+        const education = item.education ? `<p class="text-body">${escapeHtml(item.education)}</p>` : '';
+        return `
+          <div class="card-surface w-full">
+            <h5 class="text-xl font-semibold text-heading">${name}</h5>
+            ${position}
+            ${education}
+          </div>
+        `;
       }
-    });
+      return `
+        <div class="card-surface w-full">
+          <h5 class="text-xl font-semibold text-heading">${escapeHtml(item.title)}</h5>
+          <p class="text-body">${escapeHtml(item.author || 'Unknown Author')}</p>
+        </div>
+      `;
+    }).join('');
 
     let moreLink = '';
     if (items.length > 5) {
-      const countryName = (COUNTRY_CHOICES.find(([code]) => code.toUpperCase() === countryCode.toUpperCase()) || [null, countryCode])[1];
-      const searchUrl = currentTab === 'users' ? '/users/' : '/publications/';
-      const searchParams = new URLSearchParams({
-        q: countryName,
-        filter: 'country'
-      });
-
+      const searchUrl = currentTab === 'users' ? '/researchers/' : '/publications/';
+      const searchParams = new URLSearchParams({ q: countryName, filter: 'country' });
       moreLink = `
-    <a href="${searchUrl}?${searchParams.toString()}"
-      class="nav-link mt-2"
-      style="color: var(--primary); text-decoration-line: none; margin-right: 1rem;">
-      See more...
-    </a>
-  `;
+        <a href="${searchUrl}?${searchParams.toString()}" class="btn-secondary no-underline mt-2">See more...</a>
+      `;
     }
 
     displayDiv.innerHTML = `
-    <h2 class="title text-center" style="font-size:2rem">${currentTab === 'users' ? 'Scholars' : 'Discussion Papers'} in ${countryName}</h2>
-    ${listHtml}
-    ${moreLink}
-  `;
+      <div class="not-format">
+        <h2 class="text-2xl font-semibold text-heading text-center mb-4">${label} in ${safeCountry}</h2>
+        <div class="flex flex-col gap-3">${cards}</div>
+        ${moreLink}
+      </div>
+    `;
   }
 
   function clearCountryDetails() {
