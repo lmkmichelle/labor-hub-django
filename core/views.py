@@ -1,4 +1,5 @@
 from collections import defaultdict
+import json
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
@@ -41,22 +42,31 @@ def home(request):
         })
 
     # Get upcoming seminars (next 6)
+    today = timezone.localdate()
     upcoming_seminars_qs = Seminar.objects.filter(
-        date__gte=timezone.now()
-    ).order_by('date')[:6]
+        Q(visit_end__gte=today) |
+        Q(visit_end__isnull=True, visit_start__gte=today)
+    ).order_by('visit_start')[:6]
 
     # Format seminars for _list_display template
     upcoming_seminars = []
     for seminar in upcoming_seminars_qs:
+        country_labels = seminar.country_labels()
+        if seminar.visit_start and seminar.visit_end and seminar.visit_end != seminar.visit_start:
+            seminar_date = f"{seminar.visit_start.strftime('%b %d')} - {seminar.visit_end.strftime('%b %d')}"
+        elif seminar.visit_start:
+            seminar_date = seminar.visit_start.strftime('%b %d')
+        elif seminar.visit_end:
+            seminar_date = seminar.visit_end.strftime('%b %d')
+        else:
+            seminar_date = ''
         upcoming_seminars.append({
-            'url': f'/seminars/{seminar.id}/' if hasattr(seminar, 'get_absolute_url') else '#',
-            'title': seminar.title,
-            'date': seminar.date.strftime('%b %d'),
-            'subtitle': f'Hosted by {seminar.host.get_full_name()}' if seminar.host else 'Host TBA',
-            'description': f'📍 {seminar.location}',
-            'meta': {
-                'right': seminar.date.strftime('%H:%M')
-            }
+            'url': f'/seminars/{seminar.id}/',
+            'title': seminar.visitor_name or 'Visiting scholar',
+            'date': seminar_date,
+            'subtitle': f'Visiting {seminar.get_university_display()}',
+            'description': seminar.visitor_affiliation or '',
+            'meta': {'right': ', '.join(country_labels[:2]) if country_labels else ''}
         })
 
     # Get new scholars (recently joined, last 6)
@@ -247,6 +257,40 @@ def publications_list(request):
     publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')
 
     query = request.GET.get('q', '')
+
+    def parse_query_terms(raw_query):
+        raw_query = (raw_query or '').strip()
+        if not raw_query:
+            return []
+
+        parsed_terms = []
+        if raw_query.startswith('['):
+            try:
+                parsed = json.loads(raw_query)
+                if isinstance(parsed, list):
+                    for item in parsed:
+                        if isinstance(item, dict):
+                            value = str(item.get('value', '')).strip()
+                        else:
+                            value = str(item).strip()
+                        if value:
+                            parsed_terms.append(value)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                parsed_terms = []
+
+        if not parsed_terms:
+            parsed_terms = [part.strip() for part in raw_query.split(',') if part.strip()]
+
+        deduped_terms = []
+        seen = set()
+        for term in parsed_terms:
+            lowered = term.lower()
+            if lowered not in seen:
+                seen.add(lowered)
+                deduped_terms.append(term)
+        return deduped_terms
+
+    query_terms = parse_query_terms(query)
     filter_type = request.GET.get('filter', 'all')
 
     publication_filters = [
@@ -257,36 +301,56 @@ def publications_list(request):
         {'value': 'keywords', 'label': 'Keywords'},
     ]
 
-    if query:
+    if query_terms:
         if filter_type == 'title':
-            publications = publications.filter(title__icontains=query)
+            title_query = Q()
+            for term in query_terms:
+                title_query |= Q(title__icontains=term)
+            publications = publications.filter(title_query)
         elif filter_type == 'authors':
-            publications = publications.filter(
-                Q(authors__name__icontains=query) |
-                Q(authors__user__first_name__icontains=query) |
-                Q(authors__user__last_name__icontains=query))
+            authors_query = Q()
+            for term in query_terms:
+                authors_query |= (
+                    Q(authors__name__icontains=term) |
+                    Q(authors__user__first_name__icontains=term) |
+                    Q(authors__user__last_name__icontains=term)
+                )
+            publications = publications.filter(authors_query).distinct()
         elif filter_type == 'country':
-            matching_codes = [
-                code for code, name in COUNTRY_CHOICES
-                if query.strip().lower() in name.lower()
-            ]
+            matching_codes = set()
+            available_codes = {code for code, _ in COUNTRY_CHOICES}
+            for term in query_terms:
+                normalized = term.strip().lower()
+                upper_term = term.strip().upper()
+                if upper_term in available_codes:
+                    matching_codes.add(upper_term)
+                for code, name in COUNTRY_CHOICES:
+                    if normalized in name.lower():
+                        matching_codes.add(code)
             if matching_codes:
                 publications = publications.filter(country_code__in=matching_codes)
             else:
-                publications = publications.filter(country_code__iexact=query)
+                publications = publications.none()
         elif filter_type == 'keywords':
-            publications = publications.filter(keywords__icontains=query)
+            keywords_query = Q()
+            for term in query_terms:
+                keywords_query |= Q(keywords__icontains=term)
+            publications = publications.filter(keywords_query)
         else:
-            publications = publications.filter(
-                Q(title__icontains=query) |
-                Q(authors__name__icontains=query) |
-                Q(authors__user__first_name__icontains=query) |
-                Q(authors__user__last_name__icontains=query) |
-                Q(abstract__icontains=query) |
-                Q(country_code__icontains=query) |
-                Q(keywords__icontains=query) |
-                Q(study_url__icontains=query) |
-                Q(is_job_market__icontains=query)).distinct()
+            all_query = Q()
+            for term in query_terms:
+                all_query |= (
+                    Q(title__icontains=term) |
+                    Q(authors__name__icontains=term) |
+                    Q(authors__user__first_name__icontains=term) |
+                    Q(authors__user__last_name__icontains=term) |
+                    Q(abstract__icontains=term) |
+                    Q(country_code__icontains=term) |
+                    Q(keywords__icontains=term) |
+                    Q(study_url__icontains=term) |
+                    Q(is_job_market__icontains=term)
+                )
+            publications = publications.filter(all_query).distinct()
 
     paginator = Paginator(publications, 12)
     page_number = request.GET.get('page')
@@ -297,7 +361,7 @@ def publications_list(request):
     return render(request, 'publications/publications.html', {
         'publications': page_obj,
         'COUNTRY_CHOICES': COUNTRY_CHOICES,
-        'query': query,
+        'query': json.dumps([{'value': term} for term in query_terms]) if query_terms else '',
         'filter_type': filter_type,
         'countries': countries,
         'publication_filters': publication_filters,

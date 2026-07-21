@@ -1,9 +1,16 @@
-{% load static %}
 
 <div class="{{ container_class|default:'flex flex-col gap-3' }}">
     {% for item in items %}
-        {% include "partials/_list_item.html" with title=item.title url=item.url subtitle=item.subtitle description=item.description date=item.date badge=item.badge.text meta=item.meta.right %}
+        {% if card_template %}
+            {% include card_template with item=item %}
+        {% else %}
+            {% include "partials/_list_item.html" with title=item.title url=item.url subtitle=item.subtitle description=item.description date=item.date badge=item.badge.text meta=item.meta.right %}
+        {% endif %}
     {% empty %}
-        {% include "partials/_empty_state.html" with text=empty_message %}
+        {% if empty_template %}
+            {% include empty_template with empty_message=empty_message %}
+        {% else %}
+            {% include "partials/_empty_state.html" with text=empty_message %}
+        {% endif %}
     {% endfor %}
 </div>

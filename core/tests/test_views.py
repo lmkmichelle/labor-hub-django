@@ -60,9 +60,10 @@ class HomeContextTests(TestCase):
             location="Ithaca", status="approved", host=host,
         )
         Seminar.objects.create(
-            title="Upcoming Visit", host=host,
-            date=timezone.now() + timedelta(days=4),
-            location="Ithaca", description="d",
+            visitor_name="Upcoming Visitor",
+            university_name="Cornell University",
+            visit_start=timezone.localdate() + timedelta(days=4),
+            description="d",
         )
         publication = Publication.objects.create(
             title="Recent Paper", abstract="a",
@@ -75,7 +76,7 @@ class HomeContextTests(TestCase):
         titles = [e["title"] for e in response.context["upcoming_events"]]
         self.assertIn("Upcoming Conf", titles)
         seminar_titles = [s["title"] for s in response.context["upcoming_seminars"]]
-        self.assertIn("Upcoming Visit", seminar_titles)
+        self.assertIn("Upcoming Visitor", seminar_titles)
         paper_titles = [p["title"] for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
 

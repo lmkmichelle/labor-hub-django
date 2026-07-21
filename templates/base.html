@@ -123,6 +123,42 @@
                        class="nav-link {% if url_name == 'events-list' %}text-red-700{% endif %}">Events</a>
                   </li>
                   <li>
+                    <button id="jobsDropdownButton"
+                            data-dropdown-toggle="jobsDropdown"
+                            class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700 {% if url_name == 'jobs-list' %}text-red-700{% endif %}">
+                      Jobs
+                      <svg class="w-4 h-4 ms-1.5"
+                           aria-hidden="true"
+                           xmlns="http://www.w3.org/2000/svg"
+                           width="24"
+                           height="24"
+                           fill="none"
+                           viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div id="jobsDropdown"
+                         class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-56">
+                      <ul class="p-2 text-sm text-body font-medium"
+                          aria-labelledby="jobsDropdownButton">
+                        <li>
+                          <a href="{% url 'jobs-list' %}?audience=students"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">For Students</a>
+                        </li>
+                        <li>
+                          <a href="{% url 'jobs-list' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">For Academics</a>
+                        </li>
+                        {% if user.is_authenticated %}
+                          <li>
+                            <a href="{% url 'job-create' %}"
+                               class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post Job</a>
+                          </li>
+                        {% endif %}
+                      </ul>
+                    </div>
+                  </li>
+                  <li>
                     <a href="{% url 'seminars-list' %}"
                        class="nav-link {% if url_name == 'seminars-list' %}text-red-700{% endif %}">Seminars</a>
                   </li>

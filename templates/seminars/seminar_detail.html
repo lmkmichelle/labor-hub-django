@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+    <article class="max-w-none format lg:format-lg">
+        <div>
+            <div class="flex flex-row w-full justify-between items-center">
+                <p>
+                    {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
+                        {{ seminar.visit_start|date:"N j" }} - {{ seminar.visit_end|date:"N j, Y" }}
+                    {% else %}
+                        {{ seminar.visit_start|date:"N j, Y" }}
+                    {% endif %}
+                </p>
+                <div class="not-format"></div>
+            </div>
+            <div class="not-format mb-4">
+                Visitor: {{ seminar.visitor_name }}
+            </div>
+        </div>
+
+        <h4>University</h4>
+        <p>{{ seminar.get_university_display }}</p>
+
+        {% if seminar.visitor_affiliation %}
+            <h4>Affiliation</h4>
+            <p>{{ seminar.visitor_affiliation }}</p>
+        {% endif %}
+
+        <h4>Contact</h4>
+        <p><a href="mailto:{{ seminar.visitor_email }}">{{ seminar.visitor_email }}</a></p>
+
+        <h4>Description</h4>
+        <p>{{ seminar.description }}</p>
+        <h4>Countries</h4>
+        <div class="mb-6 flex flex-row overflow-auto w-full not-format gap-2">
+            {% for country in seminar.country_labels %}
+                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ country }}</span>
+            {% empty %}
+                <p>No countries specified.</p>
+            {% endfor %}
+        </div>
+        <h4>Visit Window</h4>
+        <p>
+            {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
+                {{ seminar.visit_start|date:"l, N j, Y" }} - {{ seminar.visit_end|date:"l, N j, Y" }}
+            {% else %}
+                {{ seminar.visit_start|date:"l, N j, Y" }}
+            {% endif %}
+        </p>
+    </article>
+{% endblock content %}

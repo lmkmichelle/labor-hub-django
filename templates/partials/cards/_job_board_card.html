@@ -1,0 +1,18 @@
+
+<a href="{{ item.get_absolute_url }}" class="card-surface not-format">
+    <div class="flex w-full items-start justify-between gap-4">
+        <h5 class="text-xl font-semibold text-heading m-0">{{ item.title }}</h5>
+        <p class="m-0 shrink-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
+    </div>
+    <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
+    {% if item.country_labels %}
+        <div class="mt-2 flex flex-row w-full gap-2 overflow-auto">
+            {% for country in item.country_labels|slice:":5" %}
+                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ country }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if item.uploader %}
+        <p class="mt-2 text-sm text-body">Posted by {{ item.uploader.get_full_name|default:item.uploader.email }}</p>
+    {% endif %}
+</a>

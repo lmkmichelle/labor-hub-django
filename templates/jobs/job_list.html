@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block content %}
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"
+        rel="stylesheet"
+        type="text/css" />
+  <article class="format lg:format-lg max-w-none">
+    <h2>Job Board</h2>
+    <div class="flex flex-row w-full gap-6 mt-4">
+      <div class="flex flex-col w-60">
+        <form method="GET" id="filterForm">
+          <input type="hidden" name="q" value="{{ query }}">
+          <input type="hidden" name="sort" value="{{ sort }}">
+          {% if audience %}<input type="hidden" name="audience" value="{{ audience }}">{% endif %}
+          <input type="hidden"
+                 name="countries"
+                 id="countries-hidden"
+                 value="{{ selected_countries_serialized }}">
+
+          <div class="mb-4">
+            <h4>Countries</h4>
+            <input type="text"
+                   id="countries-pill-input"
+                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                   placeholder="Add countries...">
+          </div>
+
+          <div class="mb-4">
+            <div class="mb-3">
+              <label for="deadline_from" class="block mb-2.5 text-sm font-medium text-heading">Deadline From</label>
+              <input datepicker
+                     type="text"
+                     id="deadline_from"
+                     name="deadline_from"
+                     value="{{ deadline_from }}"
+                     class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body"
+                     placeholder="Select start date">
+            </div>
+            <div class="mb-3">
+              <label for="deadline_to" class="block mb-2.5 text-sm font-medium text-heading">Deadline To</label>
+              <input datepicker
+                     type="text"
+                     id="deadline_to"
+                     name="deadline_to"
+                     value="{{ deadline_to }}"
+                     class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body"
+                     placeholder="Select end date">
+            </div>
+            <div class="flex flex-row justify-between">
+              <button type="submit" class="btn-primary">Apply Filters</button>
+              <a href="{% if audience %}{% url 'jobs-list' %}?audience={{ audience }}{% else %}{% url 'jobs-list' %}{% endif %}"
+                 class="btn-secondary no-underline">Clear Filters</a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
+        <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+          <form method="GET" id="searchForm" class="flex flex-1 min-w-0 w-full items-center gap-2">
+            <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+            {% if deadline_from %}<input type="hidden" name="deadline_from" value="{{ deadline_from }}">{% endif %}
+            {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
+            {% if audience %}<input type="hidden" name="audience" value="{{ audience }}">{% endif %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+
+            <label for="job-search" class="sr-only">Search jobs</label>
+            <div class="relative flex-1 min-w-0 w-full">
+              <input type="text"
+                     id="job-search"
+                     name="q"
+                     value="{{ query }}"
+                     class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                     placeholder="Search by title or description...">
+            </div>
+            <button type="submit"
+                    class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+              Search
+            </button>
+          </form>
+
+          <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0 not-format">
+            <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+            {% if deadline_from %}<input type="hidden" name="deadline_from" value="{{ deadline_from }}">{% endif %}
+            {% if deadline_to %}<input type="hidden" name="deadline_to" value="{{ deadline_to }}">{% endif %}
+            {% if audience %}<input type="hidden" name="audience" value="{{ audience }}">{% endif %}
+            {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+            <label for="sortSelect" class="sr-only">Sort jobs</label>
+            <select id="sortSelect"
+                    name="sort"
+                    onchange="this.form.submit()"
+                    class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+              <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
+              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest Posted</option>
+            </select>
+          </form>
+        </div>
+
+        {% include 'partials/_list_display.html' with items=jobs card_template='partials/cards/_job_board_card.html' empty_message='There are currently no opportunities matching your criteria.' %}
+
+        {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
+      </div>
+    </div>
+  </article>
+  <script>
+    (function () {
+      var countriesInput = document.getElementById('countries-pill-input');
+      var countriesHidden = document.getElementById('countries-hidden');
+      if (!countriesInput || !countriesHidden) {
+        return;
+      }
+
+      var countryWhitelist = [
+        {% for value, label in country_choices %}
+          { value: '{{ value }}', label: '{{ label|escapejs }}' },
+        {% endfor %}
+      ];
+
+      var tagify = new Tagify(countriesInput, {
+        enforceWhitelist: false,
+        whitelist: countryWhitelist,
+        dropdown: {
+          enabled: 0,
+          closeOnSelect: false,
+          maxItems: 10,
+          searchKeys: ['value', 'label'],
+        },
+        templates: {
+          dropdownItem: function(tagData) {
+            return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
+              '<strong>' + tagData.label + '</strong> <span>(' + tagData.value + ')</span>' +
+              '</div>';
+          }
+        }
+      });
+
+      {% if selected_countries %}
+      tagify.addTags([
+        {% for code in selected_countries %}
+          { value: '{{ code }}', label: '{% for value, label in country_choices %}{% if value == code %}{{ label|escapejs }}{% endif %}{% endfor %}' },
+        {% endfor %}
+      ]);
+      {% endif %}
+
+      function syncCountriesHidden() {
+        countriesHidden.value = tagify.value.map(function (item) {
+          return item.value;
+        }).join(',');
+      }
+
+      tagify.on('change', syncCountriesHidden);
+      syncCountriesHidden();
+    })();
+  </script>
+{% endblock %}
