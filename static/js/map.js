@@ -44,6 +44,15 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
     updateMapColors();
+    applyPanelMetric();
+  }
+
+  // The panel fragment holds both a scholars and a papers section; show only the
+  // one matching the highlighted metric so the toggle drives the panel too.
+  function applyPanelMetric() {
+    panel.querySelectorAll(".map-panel-section").forEach((section) => {
+      section.classList.toggle("hidden", section.dataset.metric !== currentMetric);
+    });
   }
 
   async function loadSummary() {
@@ -70,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(`HTTP ${response.status}`);
       }
       panel.innerHTML = await response.text();
+      applyPanelMetric();
     } catch (err) {
       console.error("Failed to load country details:", err);
       panel.innerHTML =

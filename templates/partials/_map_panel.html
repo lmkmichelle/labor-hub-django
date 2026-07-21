@@ -8,7 +8,7 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle,description}
 <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
     <h3 class="text-xl font-semibold text-heading">{{ country_name }}</h3>
 
-    <section class="mt-4">
+    <section class="map-panel-section mt-4" data-metric="scholars">
         <div class="flex items-baseline justify-between border-b border-default pb-2">
             <h4 class="text-xs font-semibold uppercase tracking-wide text-body">Scholars</h4>
             <span class="text-xs text-body">{{ scholars_total }}</span>
@@ -28,7 +28,7 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle,description}
         {% endif %}
     </section>
 
-    <section class="mt-6">
+    <section class="map-panel-section mt-4" data-metric="papers">
         <div class="flex items-baseline justify-between border-b border-default pb-2">
             <h4 class="text-xs font-semibold uppercase tracking-wide text-body">Discussion Papers</h4>
             <span class="text-xs text-body">{{ papers_total }}</span>

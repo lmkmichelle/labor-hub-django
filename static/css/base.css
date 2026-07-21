@@ -30,25 +30,26 @@
     fill: oklch(50.5% 0.213 27.518);
 }
 
-/* Segmented "highlight on map" toggle (world map page). */
+/* Underline tab toggle (world map page): switches both the map highlighting and
+   the side-panel list between scholars and discussion papers. */
 .map-toggle {
-    background-color: #fff;
-    color: oklch(50.5% 0.213 27.518);
+    display: inline-block;
+    padding: 0.75rem 1rem;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    color: #4B5563;
     cursor: pointer;
     transition: 150ms;
 }
 
-.map-toggle + .map-toggle {
-    border-left: 1px solid #E4E4E4;
-}
-
 .map-toggle:hover {
-    background-color: #FCECEC;
+    color: oklch(50.5% 0.213 27.518);
+    border-bottom-color: #E4E4E4;
 }
 
 .map-toggle.is-active {
-    background-color: oklch(50.5% 0.213 27.518);
-    color: #fff;
+    color: oklch(50.5% 0.213 27.518);
+    border-bottom-color: oklch(50.5% 0.213 27.518);
 }
 
 /* -------------------------------------------------------------------------

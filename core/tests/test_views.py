@@ -128,6 +128,8 @@ class MapCountryDetailTests(TestCase):
         self.assertIn("United States", content)
         self.assertIn("Ada Lovelace", content)
         self.assertIn("Recent Paper", content)
+        self.assertIn('data-metric="scholars"', content)
+        self.assertIn('data-metric="papers"', content)
 
     def test_detail_caps_at_five_with_see_all_link(self):
         for index in range(7):

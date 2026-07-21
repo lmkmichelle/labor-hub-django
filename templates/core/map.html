@@ -15,22 +15,17 @@
          data-summary-url="{% url 'map_summary' %}"
          data-detail-url="{% url 'map_country_detail' '__CODE__' %}">
 
-        <div class="mb-5 flex flex-wrap items-center gap-3">
-            <span class="text-sm text-body">Highlight on map:</span>
-            <div class="inline-flex overflow-hidden rounded-base border border-default"
-                 role="group"
-                 aria-label="Choose what to highlight on the map">
-                <button id="toggle-users"
-                        type="button"
-                        data-metric="scholars"
-                        aria-pressed="true"
-                        class="map-toggle px-4 py-2 text-sm font-medium">Scholars</button>
-                <button id="toggle-papers"
-                        type="button"
-                        data-metric="papers"
-                        aria-pressed="false"
-                        class="map-toggle px-4 py-2 text-sm font-medium">Discussion Papers</button>
-            </div>
+        <div class="mb-5 border-b border-default text-sm font-medium">
+            <button id="toggle-users"
+                    type="button"
+                    data-metric="scholars"
+                    aria-pressed="true"
+                    class="map-toggle">Scholars</button>
+            <button id="toggle-papers"
+                    type="button"
+                    data-metric="papers"
+                    aria-pressed="false"
+                    class="map-toggle">Discussion Papers</button>
         </div>
 
         <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
