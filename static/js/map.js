@@ -55,6 +55,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function clearPanelSelection() {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (selection && selection.rangeCount > 0 && panel.contains(selection.anchorNode)) {
+      selection.removeAllRanges();
+    }
+  }
+
+  function renderPanel(html) {
+    panel.innerHTML = html;
+    applyPanelMetric();
+    // Replacing the panel's content removes the node that held the document's
+    // text caret, so the browser re-collapses the caret to the start of the new
+    // content (the country name). Drop that stray selection if it landed here so
+    // no blinking cursor appears in the panel. Clear again on the next frame in
+    // case the live-region announcement re-places it asynchronously.
+    clearPanelSelection();
+    requestAnimationFrame(clearPanelSelection);
+  }
+
   async function loadSummary() {
     try {
       const response = await fetch(summaryUrl);
@@ -78,14 +97,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      panel.innerHTML = await response.text();
-      applyPanelMetric();
+      renderPanel(await response.text());
     } catch (err) {
       console.error("Failed to load country details:", err);
-      panel.innerHTML =
+      renderPanel(
         '<div class="rounded-base border border-default bg-neutral-primary-soft p-6 text-center text-sm text-body">' +
-        "Sorry, we couldn't load details for this country. Please try again." +
-        "</div>";
+          "Sorry, we couldn't load details for this country. Please try again." +
+          "</div>",
+      );
     } finally {
       panel.removeAttribute("aria-busy");
     }
