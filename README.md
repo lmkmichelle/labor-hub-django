@@ -50,6 +50,25 @@ For a local **MySQL** run, set in `.env`: `DATABASE_ENGINE=mysql`,
 `DATABASE_HOST=127.0.0.1`, `DATABASE_PORT=3306`, and the `DATABASE_*` credentials,
 then create the database in MySQL before running migrations.
 
+### Demo data
+
+To populate the database with realistic demo content (users, profiles, publications,
+events, universities, visits, and jobs) for manual UI testing, run:
+
+```
+py manage.py seed_demo            # create or refresh demo data
+py manage.py seed_demo --reset    # delete demo data first, then re-create it
+```
+
+The command is **idempotent** (safe to run repeatedly and on any machine — it never
+creates duplicates) and computes all dates relative to today, so upcoming events,
+visits, and job deadlines stay in the future. Every demo user shares the password
+`demo12345`; e.g. log in as `admin@laborhub.demo` (admin) or
+`rosa.researcher@laborhub.demo` (researcher). As a safety guard it **refuses to run
+when `DEBUG=False`** (pass `--force` to override), so it can never seed fake data into
+the Cornell Media3 production database. All demo accounts use the `@laborhub.demo`
+e-mail domain, and `--reset` removes only the data this command created.
+
 ## Run with Docker
 
 ```
