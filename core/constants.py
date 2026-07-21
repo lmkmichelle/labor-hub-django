@@ -249,3 +249,39 @@ COUNTRY_CHOICES = [
     ("ZW", "Zimbabwe"),
     ("AX", "Åland Islands"),
 ]
+
+# Recommended labor-economics keywords. Single source of truth for the
+# controlled vocabulary used by the paper keyword field, the profile
+# research-interests field, and the Discussion Papers keyword filter.
+RECOMMENDED_KEYWORDS = [
+    "Education and Human Capital",
+    "Labor Supply",
+    "Labor Demand",
+    "Family and gender",
+    "Unions and collective bargaining",
+    "Active Labor Market Policies",
+    "Migration",
+    "AI and Technological change",
+    "Macro-Labor",
+    "Minimum wages",
+    "Unemployment insurance",
+    "Job search",
+    "Labor markets and demographics",
+    "Personnel economics",
+    "Workers' health and well-being",
+    "Contracts and Organizations",
+    "Job amenities",
+    "Market structure",
+    "Welfare policy",
+    "Applied and policy issues in labor economics",
+    "Structural models of health, retirement, and savings",
+    "Non-standard work",
+    "Crime and Labor",
+    "Geography of labor markets",
+    "Intergenerational mobility",
+    "Labor markets in less developed countries",
+    "Econometric and data methods for labor economists",
+    "Gig economy",
+    "Inequality",
+    "Other",
+]

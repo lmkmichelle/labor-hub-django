@@ -3,38 +3,20 @@ document.addEventListener("DOMContentLoaded", async function () {
   const keywords_input = document.querySelector("#keywords-input");
   const research_interests_input = document.querySelector("#research-interests-input");
   const topic_input = document.querySelector("#topic-input");
-  const additional_keywords = [
-    "Education and Human Capital",
-    "Labor Supply",
-    "Labor Demand",
-    "Family and gender",
-    "Unions and collective bargaining",
-    "Active Labor Market Policies",
-    "Migration",
-    "AI and Technological change",
-    "Macro-Labor",
-    "Minimum wages",
-    "Unemployment insurance",
-    "Job search",
-    "Labor markets and demographics",
-    "Personnel economics",
-    "Workers' health and well-being",
-    "Contracts and Organizations",
-    "Job amenities",
-    "Market structure",
-    "Welfare policy",
-    "Applied and policy issues in labor economics",
-    "Structural models of health, retirement, and savings",
-    "Non-standard work",
-    "Crime and Labor",
-    "Geography of labor markets",
-    "Intergenerational mobility",
-    "Labor markets in less developed countries",
-    "Econometric and data methods for labor economists",
-    "Gig economy",
-    "Inequality",
-    "Other"
-  ];
+
+  function getRecommendedKeywords() {
+    const el = document.getElementById("recommended-keywords-data");
+    if (el) {
+      try {
+        return JSON.parse(el.textContent);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  const additional_keywords = getRecommendedKeywords();
 
   const authors_tag = new Tagify(authors_input, {
     whitelist: [],

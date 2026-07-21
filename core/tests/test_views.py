@@ -200,6 +200,13 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(match, response.context["publications"])
         self.assertNotIn(other, response.context["publications"])
 
+    def test_recommended_keywords_payload_present(self):
+        response = self.client.get(reverse("publications"))
+        self.assertIn("recommended_keywords", response.context)
+        content = response.content.decode()
+        self.assertIn('id="recommended-keywords-data"', content)
+        self.assertIn("Minimum wages", content)
+
     def test_job_market_checkbox_filter(self):
         jm_paper = Publication.objects.create(
             title="Job Market", abstract="a", study_url="https://example.com",
