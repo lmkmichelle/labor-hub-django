@@ -136,6 +136,10 @@
                 {% endfor %}
             ];
 
+            var keywordWhitelist = [
+                {% for kw in recommended_keywords %}'{{ kw|escapejs }}',{% endfor %}
+            ];
+
             function syncHidden(tagify, hidden) {
                 hidden.value = tagify.value.map(function (item) {
                     return item.value;
@@ -166,13 +170,19 @@
                 syncHidden(tagify, hidden);
             }
 
-            function initFreeText(inputId, hiddenId, preselected) {
+            function initFreeText(inputId, hiddenId, preselected, whitelist) {
                 var input = document.getElementById(inputId);
                 var hidden = document.getElementById(hiddenId);
                 if (!input || !hidden) {
                     return;
                 }
-                var tagify = new Tagify(input, { dropdown: { enabled: 0 } });
+                var settings = { dropdown: { enabled: 0 } };
+                if (whitelist && whitelist.length) {
+                    settings.whitelist = whitelist;
+                    settings.enforceWhitelist = false;
+                    settings.dropdown = { enabled: 0, closeOnSelect: false, maxItems: whitelist.length };
+                }
+                var tagify = new Tagify(input, settings);
                 if (preselected.length) {
                     tagify.addTags(preselected);
                 }
@@ -187,7 +197,7 @@
             ]);
             initFreeText('interests-pill-input', 'interests-hidden', [
                 {% for interest in selected_interests %}'{{ interest|escapejs }}',{% endfor %}
-            ]);
+            ], keywordWhitelist);
         })();
     </script>
 {% endblock %}

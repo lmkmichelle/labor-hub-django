@@ -263,3 +263,10 @@ class UserListViewTests(TestCase):
             reverse("researchers"), {"interests": "Labor economics"})
         self.assertIn(match, response.context["users"])
         self.assertNotIn(other, response.context["users"])
+
+    def test_recommended_keywords_payload_present(self):
+        response = self.client.get(reverse("researchers"))
+        self.assertIn("recommended_keywords", response.context)
+        content = response.content.decode()
+        self.assertIn('id="recommended-keywords-data"', content)
+        self.assertIn("interests-pill-input", content)
