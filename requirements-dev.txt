@@ -3,3 +3,7 @@
 #
 # djlint is declared in requirements.txt (it is used by the template lint step).
 coverage~=7.6.0
+
+# Browser end-to-end smoke tests (opt-in; the e2e/ package). After installing,
+# fetch the browser binary once with:  python -m playwright install chromium
+playwright~=1.49

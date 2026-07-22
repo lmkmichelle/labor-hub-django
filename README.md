@@ -124,15 +124,32 @@ coverage report          # or: coverage html  -> htmlcov/index.html
 Each app owns a `tests/` package (`test_models.py`, `test_forms.py`, `test_views.py`,
 etc.) covering models, forms, views, utilities, signals, and template tags.
 
+### Browser end-to-end tests (Playwright)
+
+A small, opt-in browser smoke suite lives in `e2e/`. It drives a real Chromium
+browser (via `StaticLiveServerTestCase`) through the critical, JavaScript-heavy
+flows the test-client tests can't reach: the home page, the login flow, the
+contact form, the submit-a-paper page, and the interactive world map. The suite
+**skips itself by default** (so the normal test run needs no browser) and only
+runs when `RUN_E2E=1` and Playwright's browser are installed:
+
+```
+pip install -r requirements-dev.txt
+python -m playwright install chromium
+RUN_E2E=1 py manage.py test e2e --settings=nole.settings_test
+```
+
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and pull request with three jobs:
+`.github/workflows/ci.yml` runs on every push and pull request with four jobs:
 
 - **Lint** — `djlint templates --lint`.
 - **Tests (SQLite)** — a Python 3.12 / 3.13 matrix that runs `makemigrations --check`,
   `manage.py check`, and the suite under `coverage` using `nole.settings_test`.
 - **Tests (MySQL 8)** — a production-parity job against a MySQL 8 service
   (`DATABASE_ENGINE=mysql`) to catch backend-specific issues before Media3.
+- **Browser E2E (Playwright)** — installs Chromium and runs the opt-in `e2e/`
+  smoke suite with `RUN_E2E=1`.
 
 ## Production (Cornell Media3)
 
