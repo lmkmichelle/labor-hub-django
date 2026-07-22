@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, UpdateView, ListView
@@ -19,7 +19,7 @@ from publications.models import Publication
 from publications.utils import handle_keywords
 from .digests import read_unsubscribe_token
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
-    StudentApplicationForm
+    StudentApplicationForm, EmailPreferencesForm
 from .models import CustomUser, Profile, UserApplication
 
 
@@ -98,20 +98,12 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
     def get_object(self, **kwargs):
         return self.request.user.profile
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if 'user_form' not in context:
-            context['user_form'] = UpdateUserForm(instance=self.request.user)
-        return context
-
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        user_form = UpdateUserForm(request.POST, instance=request.user)
         profile_form = self.get_form()
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
+        if profile_form.is_valid():
             profile = profile_form.save(commit=False)
 
             if 'avatar' in request.FILES:
@@ -123,10 +115,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             messages.success(request, "Profile updated successfully")
             return redirect("profile")
 
-        return self.render_to_response(self.get_context_data(
-            user_form=user_form,
-            form=profile_form
-        ))
+        return self.render_to_response(self.get_context_data(form=profile_form))
 
     def _crop(self, image_file, output_size=(218, 300)):
         with Image.open(image_file) as img:
@@ -162,6 +151,42 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
                 size=buffer.tell(),
                 charset=None
             )
+
+
+class SettingsView(LoginRequiredMixin, View):
+    template_name = "accounts/settings.html"
+
+    def get(self, request):
+        return render(request, self.template_name, self._context(request))
+
+    def _context(self, request, user_form=None, email_prefs_form=None):
+        return {
+            "user_form": user_form if user_form is not None
+            else UpdateUserForm(instance=request.user),
+            "email_prefs_form": email_prefs_form if email_prefs_form is not None
+            else EmailPreferencesForm(instance=request.user.profile),
+            "saved": request.GET.get("saved"),
+        }
+
+    def post(self, request):
+        if "save_account" in request.POST:
+            user_form = UpdateUserForm(request.POST, instance=request.user)
+            if user_form.is_valid():
+                user_form.save()
+                return redirect(f"{reverse('settings')}?saved=account")
+            return render(request, self.template_name,
+                          self._context(request, user_form=user_form))
+
+        if "save_notifications" in request.POST:
+            email_prefs_form = EmailPreferencesForm(
+                request.POST, instance=request.user.profile)
+            if email_prefs_form.is_valid():
+                email_prefs_form.save()
+                return redirect(f"{reverse('settings')}?saved=notifications")
+            return render(request, self.template_name,
+                          self._context(request, email_prefs_form=email_prefs_form))
+
+        return redirect("settings")
 
 
 @require_GET

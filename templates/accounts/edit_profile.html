@@ -18,7 +18,6 @@
         <div class="flex flex-row gap-6 mb-5">
             <!-- Right side fields -->
             <div class="flex flex-col flex-1 min-w-0">
-                {% render_field user_form.email %}
                 {% render_field form.position %}
                 {% render_field form.education %}
                 {% render_field form.country_code %}
@@ -29,9 +28,6 @@
         {% render_field form.website %}
         {% render_field form.biography %}
         {% render_field form.research_interests_input %}
-
-        <h3 class="mt-6">Email preferences</h3>
-        {% render_field form.digest_frequency %}
 
         <div class="flex gap-3">
             <button type="submit" class="btn-primary">

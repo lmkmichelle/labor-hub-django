@@ -120,35 +120,32 @@ class EditProfileViewTests(TestCase):
         response = self.client.get(reverse("edit_profile"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/edit_profile.html")
-        self.assertContains(response, "digest_frequency")
-        self.assertContains(response, "Email preferences")
+        self.assertContains(response, 'name="biography"')
+        self.assertNotContains(response, 'name="digest_frequency"')
+        self.assertNotContains(response, 'name="email"')
 
     def test_post_updates_profile_and_crops_avatar(self):
         user = make_active_user()
         self.client.force_login(user)
         response = self.client.post(reverse("edit_profile"), {
-            "email": user.email,
             "position": "Professor",
             "country_code": "US",
             "education": "Cornell",
             "website": "https://example.com",
             "biography": "A short biography.",
             "research_interests_input": '[{"value":"Economics"}]',
-            "digest_frequency": "weekly",
             "avatar": make_image_file(),
         })
         self.assertRedirects(response, reverse("profile"))
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.position, "Professor")
         self.assertEqual(user.profile.research_interests, ["Economics"])
-        self.assertEqual(user.profile.digest_frequency, "weekly")
         self.assertTrue(user.profile.avatar)
 
     def test_post_without_digest_frequency_defaults_off(self):
         user = make_active_user()
         self.client.force_login(user)
         response = self.client.post(reverse("edit_profile"), {
-            "email": user.email,
             "position": "Professor",
             "country_code": "US",
             "education": "Cornell",
@@ -159,4 +156,72 @@ class EditProfileViewTests(TestCase):
         })
         self.assertRedirects(response, reverse("profile"))
         user.profile.refresh_from_db()
+        self.assertEqual(user.profile.position, "Professor")
+
+
+class SettingsViewTests(TestCase):
+    def test_get_requires_login(self):
+        response = self.client.get(reverse("settings"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_authenticated_renders(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.get(reverse("settings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/settings.html")
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'name="digest_frequency"')
+        self.assertContains(response, reverse("password_change"))
+
+    def test_post_save_account_updates_email(self):
+        user = make_active_user(email="old@example.com")
+        self.client.force_login(user)
+        response = self.client.post(reverse("settings"), {
+            "save_account": "1",
+            "email": "new@example.com",
+        })
+        self.assertRedirects(response, reverse("settings") + "?saved=account")
+        user.refresh_from_db()
+        self.assertEqual(user.email, "new@example.com")
+
+    def test_post_save_notifications_updates_digest(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.post(reverse("settings"), {
+            "save_notifications": "1",
+            "digest_frequency": "weekly",
+        })
+        self.assertRedirects(
+            response, reverse("settings") + "?saved=notifications")
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.digest_frequency, "weekly")
+
+    def test_post_save_notifications_without_frequency_defaults_off(self):
+        user = make_active_user()
+        user.profile.digest_frequency = "weekly"
+        user.profile.save(update_fields=["digest_frequency"])
+        self.client.force_login(user)
+        response = self.client.post(reverse("settings"), {
+            "save_notifications": "1",
+        })
+        self.assertRedirects(
+            response, reverse("settings") + "?saved=notifications")
+        user.profile.refresh_from_db()
         self.assertEqual(user.profile.digest_frequency, "off")
+
+
+class AdminLinkNavTests(TestCase):
+    def test_admin_link_hidden_for_regular_user(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.get(reverse("settings"))
+        self.assertNotContains(response, 'href="/admin/"')
+
+    def test_admin_link_visible_for_staff(self):
+        user = make_active_user(email="staff@example.com")
+        user.is_staff = True
+        user.save(update_fields=["is_staff"])
+        self.client.force_login(user)
+        response = self.client.get(reverse("settings"))
+        self.assertContains(response, 'href="/admin/"')

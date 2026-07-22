@@ -44,9 +44,15 @@
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
                   </li>
                   <li>
-                    <a href="{% url 'password_change' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Change Password</a>
+                    <a href="{% url 'settings' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
                   </li>
+                  {% if user.is_staff %}
+                    <li>
+                      <a href="{% url 'admin:index' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin panel</a>
+                    </li>
+                  {% endif %}
                   <li>
                     <form action="{% url 'logout' %}" method="post">
                       {% csrf_token %}
