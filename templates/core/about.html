@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}About{% endblock title %}
+
+{% block content %}
+  {# Placeholder copy — review and customize (team, affiliation, funding) before launch. #}
+  <article class="format lg:format-lg max-w-none">
+    <h1>About Labor Hub</h1>
+    <p>
+      Labor Hub is an online community for researchers in labor economics. It
+      brings together working papers, upcoming events and workshops, job openings
+      for junior and senior researchers, and planned academic visits — alongside a
+      directory of scholars and an interactive world map of research activity.
+    </p>
+    <p>
+      Our goal is to make it easier for researchers to share their work, discover
+      relevant opportunities, and connect with colleagues around the world.
+    </p>
+    <h2>What you'll find here</h2>
+    <ul>
+      <li>
+        <strong>Discussion papers</strong> — a searchable library of recent working papers.
+      </li>
+      <li>
+        <strong>Events</strong> — workshops and conferences you may want to attend or submit to.
+      </li>
+      <li>
+        <strong>Jobs</strong> — a board of academic openings across career stages.
+      </li>
+      <li>
+        <strong>Visits</strong> — sabbaticals and research visits that members plan to share.
+      </li>
+      <li>
+        <strong>Scholars</strong> — a directory of researchers and their interests.
+      </li>
+    </ul>
+    <p>
+      Have a question or suggestion? We'd love to hear from you — please
+      <a href="{% url 'contact' %}">get in touch</a>.
+    </p>
+  </article>
+{% endblock content %}

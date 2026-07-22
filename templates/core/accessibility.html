@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Accessibility{% endblock title %}
+
+{% block content %}
+  {# Baseline accessibility statement — align with your institution's official EIT/web accessibility policy before launch. #}
+  <article class="format lg:format-lg max-w-none">
+    <h1>Accessibility</h1>
+    <p>
+      Labor Hub is committed to making its content accessible to the widest
+      possible audience, including people with disabilities. We aim to conform to
+      the Web Content Accessibility Guidelines (WCAG) 2.1, Level AA.
+    </p>
+    <h2>Ongoing effort</h2>
+    <p>
+      We regularly review the site to improve the experience for everyone and to
+      apply relevant accessibility standards. Accessibility is an ongoing effort,
+      and some areas may not yet fully meet our target.
+    </p>
+    <h2>Reporting a problem</h2>
+    <p>
+      If you encounter an accessibility barrier, or need information in an
+      alternative format, please <a href="{% url 'contact' %}">let us know</a> and
+      we will work to address it.
+    </p>
+  </article>
+{% endblock content %}

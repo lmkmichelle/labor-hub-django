@@ -3,8 +3,27 @@
     <span class="block text-sm text-body">© {% now "Y" %} Labor Hub. All rights reserved.</span>
     <ul class="flex flex-wrap items-center gap-4 mt-3 text-sm font-medium text-body">
       <li>
+        <a href="{% url 'about' %}" class="hover:text-red-700">About</a>
+      </li>
+      <li>
         <a href="{% url 'contact' %}" class="hover:text-red-700">Contact</a>
       </li>
+      {% if user.is_authenticated %}
+        <li>
+          <a href="{% url 'submit_paper' %}" class="hover:text-red-700">Submit a paper</a>
+        </li>
+      {% endif %}
+      <li>
+        <a href="{% url 'privacy' %}" class="hover:text-red-700">Privacy</a>
+      </li>
+      <li>
+        <a href="{% url 'accessibility' %}" class="hover:text-red-700">Accessibility</a>
+      </li>
+      {% if not user.is_authenticated %}
+        <li>
+          <a href="{% url 'login' %}" class="hover:text-red-700">Sign in</a>
+        </li>
+      {% endif %}
     </ul>
   </div>
 </footer>
