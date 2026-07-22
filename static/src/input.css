@@ -22,6 +22,15 @@
   .form-select {
     @apply block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand;
   }
+  /* File upload -- style the native picker button so it fills the field height
+     instead of a small button floating inside a tall padded box. The container
+     drops its own vertical padding; the ::file-selector-button (Tailwind file:
+     variant) carries the height. Used by the FileInput branch of
+     partials/_form_field.html. */
+  .form-file {
+    @apply block w-full cursor-pointer overflow-hidden bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand
+      file:me-3 file:cursor-pointer file:border-0 file:bg-neutral-tertiary-medium file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-heading hover:file:bg-neutral-tertiary;
+  }
 
   /* Buttons (FR-006) */
   .btn-primary {
