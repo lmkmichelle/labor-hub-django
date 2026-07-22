@@ -1,15 +1,15 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 → 2.0.0
-Ratification: Initial adoption remains 2026-07-20; amended for the Flowbite standard.
+Version change: 2.0.0 → 2.1.0
+Ratification: Initial adoption remains 2026-07-20; amended for the Flowbite standard
+(2.0.0) and the heading-hierarchy rule (2.1.0).
 
 Modified principles:
-- III. User Experience Consistency — REDEFINED: the styling standard moved from
-  django-crispy-forms + Bootstrap 5 to TailwindCSS + Flowbite, with shared template
-  partials for structure and `@apply` component classes for repeated controls; HTMX
-  replaced by Flowbite/Tagify as the progressive-enhancement layer. (MAJOR: a mandated
-  technology inside a principle was removed/replaced.)
+- III. User Experience Consistency — EXPANDED: added a heading-hierarchy rule requiring
+  every page's top-level heading to be `<h2 class="title">`, with subsequent headings
+  stepping down in order and `<h1>` forbidden in page templates. (MINOR: materially
+  expanded guidance within an existing principle.)
 
 Unchanged principles:
 - I. Code Quality, II. Testing Standards, IV. Performance Requirements
@@ -75,6 +75,10 @@ The interface MUST feel like one coherent product across every app and page.
 
 - All pages MUST extend the shared base templates and reuse partials in
   `templates/partials/` rather than re-implementing layout, navigation, or chrome.
+- Heading hierarchy MUST be consistent: every page's top-level heading is an
+  `<h2 class="title">`, and subsequent headings step down in order (`<h3>`, `<h4>`, …)
+  without skipping levels. `<h1>` MUST NOT be used in page templates. This keeps one
+  predictable typographic scale across the site.
 - Styling MUST use the project's TailwindCSS pipeline with Flowbite components. Shared
   structure (list items, pagination, empty states) MUST come from reusable partials in
   `templates/partials/`, and repeated controls (buttons, inputs, selects, nav links) MUST
@@ -164,4 +168,4 @@ Labor Hub project. When guidance conflicts, the constitution wins.
 - **Runtime guidance**: Contributors SHOULD consult `README.md` for setup, migration, and
   build commands; that guidance MUST stay consistent with this constitution.
 
-**Version**: 2.0.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-20
+**Version**: 2.1.0 | **Ratified**: 2026-07-20 | **Last Amended**: 2026-07-22
