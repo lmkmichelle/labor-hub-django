@@ -5,6 +5,7 @@ from .views import StudentsListView, ResearchersListView
 urlpatterns = [
     path('', views.home, name='home'),
     path('map/', views.map_view, name='map'),
+    path('contact/', views.contact, name='contact'),
     path('researchers/', ResearchersListView.as_view(), name='researchers'),
     path('students/', StudentsListView.as_view(), name='students'),
     path('publications/', views.publications_list, name='publications'),

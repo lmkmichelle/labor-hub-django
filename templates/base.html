@@ -170,6 +170,9 @@
       <div class="w-full px-4 mx-auto mt-4 {% block content_max_width %}max-w-screen-xl{% endblock %}">
         {% block content %}{% endblock %}
       </div>
+      {% block footer %}
+        {% include "partials/_footer.html" %}
+      {% endblock %}
       <script src="{% static 'js/flowbite.min.js' %}"></script>
       {{ recommended_keywords|json_script:"recommended-keywords-data" }}
     </body>

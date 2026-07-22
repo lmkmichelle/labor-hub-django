@@ -192,6 +192,11 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com"
 # https://laborhub.cornell.edu
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 
+# Recipient(s) for contact-form submissions. Comma-separate to notify several
+# people. Defaults to DEFAULT_FROM_EMAIL; in production set this to the mailbox
+# that should receive site inquiries.
+CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", DEFAULT_FROM_EMAIL)
+
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 

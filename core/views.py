@@ -1,17 +1,20 @@
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import ListView
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
 from core.filters import map_country_terms_to_codes, parse_pill_terms
+from core.forms import ContactForm
 from publications.models import Publication
 from events.models import Event
 from seminars.models import Seminar
@@ -123,6 +126,57 @@ def home(request):
 
 def map_view(request):
     return render(request, 'core/map.html')
+
+
+def _send_contact_notification(contact_message):
+    """Email the site's contact mailbox about a new submission.
+
+    Sent from ``DEFAULT_FROM_EMAIL`` (a domain the relay is allowed to send as)
+    with ``Reply-To`` set to the submitter, so admins can reply directly. Fails
+    silently because the message is already persisted; a mail hiccup must not
+    500 the visitor.
+    """
+    recipients = [
+        addr.strip()
+        for addr in settings.CONTACT_EMAIL.split(',')
+        if addr.strip()
+    ]
+    if not recipients:
+        return
+    body = (
+        f"Name: {contact_message.name}\n"
+        f"Email: {contact_message.email}\n"
+        f"Submitted: {contact_message.created_at:%Y-%m-%d %H:%M}\n\n"
+        f"{contact_message.message}\n"
+    )
+    EmailMessage(
+        subject=f"[Labor Hub] Contact form: {contact_message.name}",
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=recipients,
+        reply_to=[contact_message.email],
+    ).send(fail_silently=True)
+
+
+@require_http_methods(["GET", "POST"])
+def contact(request):
+    """Public contact form: store the message, notify admins, confirm to user."""
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            if not form.is_spam():
+                message = form.save()
+                _send_contact_notification(message)
+            # Redirect either way (PRG) so refreshes don't resubmit and bots
+            # that trip the honeypot get an indistinguishable success page.
+            return redirect(f"{reverse('contact')}?sent=1")
+    else:
+        form = ContactForm()
+
+    return render(request, 'core/contact.html', {
+        'form': form,
+        'sent': request.GET.get('sent') == '1',
+    })
 
 
 MAP_PANEL_LIMIT = 5

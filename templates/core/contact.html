@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load form_tags %}
+
+{% block title %}Contact{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none mb-6">
+    <h2 class="title">Contact us</h2>
+    <p>
+      Have a question, spotted a bug, or want to get in touch? Send us a message
+      and we'll get back to you.
+    </p>
+  </article>
+
+  <div class="max-w-2xl">
+    {% if sent %}
+      <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50"
+           role="alert">
+        Thanks for reaching out! Your message has been sent and we'll be in touch soon.
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
+             role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      {% render_field form.name %}
+      {% render_field form.email %}
+      {% render_field form.message %}
+
+      {# Honeypot: hidden from people, tempting to bots. A filled value is discarded server-side. #}
+      <div class="hidden" aria-hidden="true">
+        <label for="{{ form.website.id_for_label }}">Website</label>
+        {{ form.website }}
+      </div>
+
+      <button type="submit" class="btn-primary">Send message</button>
+    </form>
+  </div>
+{% endblock content %}
