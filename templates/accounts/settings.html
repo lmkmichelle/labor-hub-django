@@ -4,49 +4,47 @@
 {% block title %}Settings{% endblock title %}
 
 {% block content %}
-  <div class="max-w-2xl">
-    <article class="format lg:format-lg max-w-none mb-6">
-      <h2 class="title">Settings</h2>
-      <p>Manage your account, password, and email preferences.</p>
-    </article>
+  <article class="format lg:format-lg max-w-none mb-6">
+    <h2 class="title">Settings</h2>
+    <p>Manage your account, password, and email preferences.</p>
+  </article>
 
-    {% if saved %}
-      <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50"
-           role="alert">Your settings have been saved.</div>
-    {% endif %}
+  {% if saved %}
+    <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50"
+         role="alert">Your settings have been saved.</div>
+  {% endif %}
 
-    <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
-      <h3 class="text-lg font-semibold text-heading mb-1">Account</h3>
-      <p class="text-sm text-body mb-4">The email address you use to sign in and receive site emails.</p>
-      <form method="post" class="mb-0">
-        {% csrf_token %}
-        {% if user_form.non_field_errors %}
-          <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
-               role="alert">{{ user_form.non_field_errors }}</div>
-        {% endif %}
-        {% render_field user_form.email %}
-        <button type="submit" name="save_account" class="btn-primary mt-2">Save email</button>
-      </form>
-    </section>
+  <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
+    <h3 class="text-lg font-semibold text-heading mb-1">Account</h3>
+    <p class="text-sm text-body mb-4">The email address you use to sign in and receive site emails.</p>
+    <form method="post" class="mb-0">
+      {% csrf_token %}
+      {% if user_form.non_field_errors %}
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
+             role="alert">{{ user_form.non_field_errors }}</div>
+      {% endif %}
+      {% render_field user_form.email %}
+      <button type="submit" name="save_account" class="btn-primary mt-2">Save email</button>
+    </form>
+  </section>
 
-    <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
-      <h3 class="text-lg font-semibold text-heading mb-1">Password</h3>
-      <p class="text-sm text-body mb-4">Change the password you use to sign in.</p>
-      <a href="{% url 'password_change' %}" class="btn-secondary no-underline">Change password</a>
-    </section>
+  <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
+    <h3 class="text-lg font-semibold text-heading mb-1">Password</h3>
+    <p class="text-sm text-body mb-4">Change the password you use to sign in.</p>
+    <a href="{% url 'password_change' %}" class="btn-secondary no-underline">Change password</a>
+  </section>
 
-    <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
-      <h3 class="text-lg font-semibold text-heading mb-1">Email notifications</h3>
-      <p class="text-sm text-body mb-4">Choose how often we email you a summary of newly added content.</p>
-      <form method="post" class="mb-0">
-        {% csrf_token %}
-        {% if email_prefs_form.non_field_errors %}
-          <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
-               role="alert">{{ email_prefs_form.non_field_errors }}</div>
-        {% endif %}
-        {% render_field email_prefs_form.digest_frequency %}
-        <button type="submit" name="save_notifications" class="btn-primary mt-2">Save preferences</button>
-      </form>
-    </section>
-  </div>
+  <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
+    <h3 class="text-lg font-semibold text-heading mb-1">Email notifications</h3>
+    <p class="text-sm text-body mb-4">Choose how often we email you a summary of newly added content.</p>
+    <form method="post" class="mb-0">
+      {% csrf_token %}
+      {% if email_prefs_form.non_field_errors %}
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
+             role="alert">{{ email_prefs_form.non_field_errors }}</div>
+      {% endif %}
+      {% render_field email_prefs_form.digest_frequency %}
+      <button type="submit" name="save_notifications" class="btn-primary mt-2">Save preferences</button>
+    </form>
+  </section>
 {% endblock content %}
