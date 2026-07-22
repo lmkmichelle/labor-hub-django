@@ -13,7 +13,7 @@
       <link rel="stylesheet" href="{% static 'css/base.css' %}" />
     {% endcompress %}
   </head>
-  <body>
+  <body class="flex flex-col min-h-screen">
     {% block navbar %}
       <nav class="bg-neutral-primary w-full z-20 top-0 start-0 border-b border-default">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
@@ -167,7 +167,7 @@
           </div>
         </nav>
       {% endblock %}
-      <div class="w-full px-4 mx-auto mt-4 {% block content_max_width %}max-w-screen-xl{% endblock %}">
+      <div class="grow w-full px-4 mx-auto mt-4 {% block content_max_width %}max-w-screen-xl{% endblock %}">
         {% block content %}{% endblock %}
       </div>
       {% block footer %}
