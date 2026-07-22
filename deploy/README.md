@@ -91,6 +91,8 @@ Then over HTTPS in a browser / with curl:
 - [ ] `GET /` returns 200 and the CSS loads from `/static/...`.
 - [ ] `/admin/` loads and login (a POST) succeeds — confirms CSRF works across the proxy.
 - [ ] Uploading a file (avatar/resume/PDF) saves and serves from `/media/`.
+- [ ] `GET /healthz/` returns `200 ok` (readiness probe; `503` means the DB is unreachable).
+- [ ] If Sentry is configured, trigger a test error and confirm it appears in the dashboard.
 - [ ] Once HTTPS is confirmed, raise `SECURE_HSTS_SECONDS` in `.env`
       (e.g. 3600 → 31536000) and restart the service.
 
@@ -111,3 +113,92 @@ replace the `ProxyPass` / `ProxyPassReverse` lines with a `WSGIDaemonProcess` +
 `WSGIProcessGroup` + `WSGIScriptAlias / /var/www/laborhub/nole/wsgi.py` block. Keep the
 `/static/` and `/media/` aliases exactly as they are. Everything else in this runbook is
 unchanged (skip step 4).
+
+## Operations & incident response
+
+### Health check
+- `GET /healthz/` returns `200 ok` (checks the DB with `SELECT 1`); `503` if the DB is
+  unreachable. Unauthenticated and dependency-light.
+- Point an uptime monitor (UptimeRobot, Better Stack — free tiers) at
+  `https://<host>/healthz/` on a 1–5 min interval, alerting to email/Slack, so you learn
+  the site is down before users report it.
+- The monitor must use the **hostname**, not the bare IP, or Django rejects it via
+  `ALLOWED_HOSTS` (400).
+
+### Error tracking (Sentry)
+- Unhandled exceptions are reported to Sentry when `SENTRY_DSN` is set in `.env` (a no-op
+  otherwise). The Django integration is enabled automatically by `sentry-sdk`.
+- Create a project at sentry.io (or self-host **GlitchTip** — same SDK/DSN), copy the DSN
+  into `.env`, set `SENTRY_ENVIRONMENT=production`, and restart the service.
+- Optional env: `SENTRY_TRACES_SAMPLE_RATE` (performance tracing, default `0.0`),
+  `SENTRY_SEND_PII` (attach user/IP to events, default `0`), `SENTRY_RELEASE` (tag deploys,
+  e.g. the git SHA, for regression tracking).
+- Configure Sentry alert rules (email/Slack on new or regressed issues).
+
+### Logs
+- **App / gunicorn:** logged to stdout → journald. Tail with `journalctl -u laborhub -f`
+  (or `-n 200`). Verbosity via `DJANGO_LOGLEVEL` in `.env`.
+- **Apache access/error:** in Media3's Apache log directory; Media3 retains HTTP/SSL
+  access + error logs for 90 days.
+- Under the mod_wsgi fallback (no gunicorn service), app logs go to the Apache error log
+  instead of journald.
+
+### Scheduled jobs (cron)
+Email digests are sent by a management command. Add to the app user's crontab:
+```cron
+# Weekly digest — Mondays 07:00
+0 7 * * 1  cd /var/www/laborhub && .venv/bin/python manage.py send_digests --frequency weekly
+# Monthly digest — 1st of the month 07:00
+0 7 1 * *  cd /var/www/laborhub && .venv/bin/python manage.py send_digests --frequency monthly
+```
+Use `--dry-run` to preview recipients without sending. Requires SMTP configured
+(`EMAIL_*` in `.env`); otherwise mail uses the console backend and is not delivered.
+
+### Database backup & restore
+Media3 manages the MySQL infrastructure, but **confirm whether application-level backups
+are included**; if not, run your own nightly dump:
+```cron
+# Nightly mysqldump 02:00 (credentials sourced from a root-only env file)
+0 2 * * *  mysqldump --single-transaction -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" | gzip > /var/backups/laborhub/db-$(date +\%F).sql.gz
+```
+Keep dumps **off the VM** (Media3 backup space or S3) and prune old ones. Restore:
+```bash
+gunzip < db-YYYY-MM-DD.sql.gz | mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME"
+```
+Also back up uploaded files in `media/` (or use the S3 storage option). **Test a restore
+into a scratch database at least once** — an untested backup is not a backup.
+
+### Deploy rollback
+```bash
+cd /var/www/laborhub
+git log --oneline -n 10                 # find the last-good commit/tag
+git checkout <good-sha-or-tag>
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python manage.py compress --force && .venv/bin/python manage.py collectstatic --noinput
+sudo systemctl restart laborhub
+```
+> **Migrations do not auto-reverse on `git checkout`.** If the bad release added a
+> migration, reverse it explicitly *before* checking out the old code:
+> `manage.py migrate <app> <previous_migration>`. Prefer additive, backwards-compatible
+> migrations so a code rollback never requires a schema rollback. Tag releases
+> (`git tag -a vX.Y -m ...`) so "last good" is unambiguous.
+
+### Secret rotation
+- **`DJANGO_SECRET_KEY`:** generate a new value
+  (`python -c "import secrets; print(secrets.token_urlsafe(64))"`), update `.env`, restart.
+  This **invalidates all sessions** (everyone is logged out) and outstanding signed tokens
+  (e.g. password-reset links), so rotate during low traffic.
+- **DB / SMTP / AWS / Sentry credentials:** update in `.env` (keep it `chmod 600`) and
+  restart. Never commit secrets — `.env` is git-ignored.
+
+### "Site is down" triage
+1. `curl -I https://<host>/healthz/` — `200`? then app + DB are up; suspect Apache/TLS/DNS.
+   Non-200 or timeout → continue.
+2. `sudo systemctl status laborhub` and `journalctl -u laborhub -n 100` — is gunicorn
+   running, or crash-looping?
+3. Check **Sentry** for a spike or a new issue with a stack trace.
+4. `df -h` (disk full?) and MySQL reachable
+   (`mysqladmin -h "$DB_HOST" -u "$DB_USER" -p ping`)?
+5. Apache: `sudo apachectl configtest` then reload; check the Apache error log.
+6. Was there a recent deploy? **Roll back** (above) to the last-good tag while you
+   investigate.

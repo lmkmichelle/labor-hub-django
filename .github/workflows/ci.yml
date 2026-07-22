@@ -58,6 +58,14 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
       - name: Django system checks
         run: python manage.py check
+      - name: Deployment checks (production settings)
+        env:
+          DJANGO_SETTINGS_MODULE: nole.settings
+          DEBUG: "0"
+          DJANGO_SECRET_KEY: ci-deploy-check-not-a-real-secret-0123456789-abcdefghijklmnop
+          DJANGO_ALLOWED_HOSTS: laborhub.example.edu
+          SECURE_HSTS_SECONDS: "31536000"
+        run: python manage.py check --deploy --fail-level WARNING
       - name: Run tests with coverage
         run: coverage run manage.py test --verbosity 2
       - name: Coverage report

@@ -322,3 +322,19 @@ LOGGING = {
         },
     },
 }
+
+# Error tracking (Sentry). No-op unless SENTRY_DSN is set, so local dev and CI stay
+# offline. The Django integration is auto-enabled by sentry-sdk; see deploy/README.md.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "production"),
+        release=(os.environ.get("SENTRY_RELEASE") or "").strip() or None,
+        # Performance tracing sample rate (0.0 = capture errors only).
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+        # Off by default: don't attach usernames/emails/client IPs to events.
+        send_default_pii=_env_bool("SENTRY_SEND_PII", "0"),
+    )

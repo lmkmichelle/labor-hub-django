@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Server error — Labor Hub</title>
+    <!--
+      Standalone by design. Django's 500 handler renders WITHOUT request context,
+      context processors, or the database, so this page must not extend base.html or
+      use the compress/static template tags. Styles are inlined so the page still
+      renders when the app or static pipeline is broken.
+    -->
+    <style>
+      body { margin: 0; background: #f9fafb; color: #111827;
+             font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      main { max-width: 32rem; margin: 0 auto; padding: 6rem 1.5rem; text-align: center; }
+      h1 { font-size: 3rem; margin: 0 0 0.5rem; color: #b91c1c; }
+      h2 { font-size: 1.25rem; margin: 0 0 1rem; }
+      p { color: #4b5563; line-height: 1.6; }
+      a.home { display: inline-block; margin-top: 1.5rem; padding: 0.6rem 1rem;
+               background: #b91c1c; color: #fff; text-decoration: none; border-radius: 0.375rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>500</h1>
+      <h2>Something went wrong on our end</h2>
+      <p>
+        An unexpected error occurred. It has been logged and we're looking into it.
+        Please try again in a few moments.
+      </p>
+      <a class="home" href="/">Return home</a>
+    </main>
+  </body>
+</html>

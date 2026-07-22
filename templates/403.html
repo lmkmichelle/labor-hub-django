@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2 class="title">Access denied</h2>
+    <p>
+      You don't have permission to view this page. If you're signed in to the wrong
+      account, try signing out and back in. If you think this is a mistake, please
+      <a href="{% url 'contact' %}">contact us</a>.
+    </p>
+    <p>
+      <a href="/" class="btn-primary no-underline">Return home</a>
+    </p>
+  </article>
+{% endblock content %}

@@ -5,6 +5,7 @@ from .views import StudentsListView, ResearchersListView
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('healthz/', views.healthz, name='healthz'),
     path('map/', views.map_view, name='map'),
     path('contact/', views.contact, name='contact'),
     path('about/', TemplateView.as_view(template_name='core/about.html'), name='about'),

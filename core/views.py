@@ -1,9 +1,10 @@
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
+from django.db import connection
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,6 +21,23 @@ from events.models import Event
 from seminars.models import Seminar
 
 country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
+
+
+@require_GET
+def healthz(request):
+    """Liveness/readiness probe: 200 when the DB answers, 503 otherwise.
+
+    Unauthenticated and dependency-light so uptime monitors and Media3 can check
+    the app is up without touching business logic.
+    """
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except Exception:
+        return HttpResponse("db error", status=503, content_type="text/plain")
+    return HttpResponse("ok", status=200, content_type="text/plain")
+
 
 def home(request):
     # Get upcoming events (next 6)
