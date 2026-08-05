@@ -1,10 +1,14 @@
 applications:
   laborhub:
-    type: "python:3.13"
-
-    # Disable the default Python build behaviour so only the hooks below run.
-    build:
-      flavor: none
+    # Composable image: Python is the primary runtime (Django/gunicorn) and is
+    # started automatically; Node.js is included only so the build hook can
+    # compile the Tailwind CSS bundle. "stack" replaces the single-runtime
+    # "build"/"flavor" key.
+    type: "composable:26.05"
+    stack:
+      runtimes:
+        - "python@3.13"
+        - "nodejs@22"
 
     # Exposes DATABASE_HOST/PORT/USERNAME/PASSWORD/PATH to the app. The MariaDB
     # service publishes a "mysql" endpoint; PyMySQL speaks to it via
@@ -13,13 +17,15 @@ applications:
       database: "db:mysql"
 
     hooks:
-      # Build phase: no services/database yet. Install dependencies and
-      # pre-build the django-compressor offline bundle (writes static/CACHE,
-      # which is baked into the read-only app image).
+      # Build phase: no services/database yet. Install Python deps, compile the
+      # Tailwind CSS (npm) into static/src/output.css, then pre-build the
+      # django-compressor offline bundle (all baked into the read-only image).
       build: |
         set -eux
         pip install --upgrade pip
         pip install -r requirements.txt
+        npm install
+        npm run build
         python manage.py compress
       # Deploy phase: the database and the writable mounts are available.
       deploy: |
