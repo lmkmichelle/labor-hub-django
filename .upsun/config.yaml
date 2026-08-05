@@ -22,6 +22,11 @@ applications:
       # django-compressor offline bundle (all baked into the read-only image).
       build: |
         set -eux
+        # The composable (Nix) base Python lives in a read-only store, so create
+        # a virtualenv in the app image and install into it. gunicorn and the
+        # deploy hook call its interpreter explicitly (no runtime shell activation).
+        python3 -m venv .venv
+        . .venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
         npm install
@@ -30,8 +35,8 @@ applications:
       # Deploy phase: the database and the writable mounts are available.
       deploy: |
         set -eux
-        python manage.py collectstatic --noinput
-        python manage.py migrate
+        .venv/bin/python manage.py collectstatic --noinput
+        .venv/bin/python manage.py migrate
 
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
@@ -46,7 +51,7 @@ applications:
 
     web:
       commands:
-        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
+        start: ".venv/bin/gunicorn nole.wsgi:application -b unix:$SOCKET"
       upstream:
         socket_family: unix
       locations:
