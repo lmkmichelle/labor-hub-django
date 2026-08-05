@@ -23,15 +23,14 @@ applications:
       build: |
         set -eux
         # The composable (Nix) base Python lives in a read-only store, so create
-        # a virtualenv in the app image and install into it. gunicorn and the
-        # deploy hook call its interpreter explicitly (no runtime shell activation).
+        # a virtualenv and install into it. Always call the venv interpreter
+        # explicitly (no shell activation, no bare `pip`/`python`, which can
+        # resolve to a broken global shim after a pip self-upgrade).
         python3 -m venv .venv
-        . .venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
+        .venv/bin/python -m pip install -r requirements.txt
         npm install
         npm run build
-        python manage.py compress
+        .venv/bin/python manage.py compress
       # Deploy phase: the database and the writable mounts are available.
       deploy: |
         set -eux
