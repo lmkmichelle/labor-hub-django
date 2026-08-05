@@ -1,14 +1,10 @@
 applications:
   laborhub:
-    # Composable image: Python is the primary runtime (Django/gunicorn) and is
-    # started automatically; Node.js is included only so the build hook can
-    # compile the Tailwind CSS bundle. "stack" replaces the single-runtime
-    # "build"/"flavor" key.
-    type: "composable:26.05"
-    stack:
-      runtimes:
-        - "python@3.13"
-        - "nodejs@22"
+    type: "python:3.13"
+
+    # Only the hooks below run (skip the default Python build behaviour).
+    build:
+      flavor: none
 
     # Exposes DATABASE_HOST/PORT/USERNAME/PASSWORD/PATH to the app. The MariaDB
     # service publishes a "mysql" endpoint; PyMySQL speaks to it via
@@ -17,29 +13,23 @@ applications:
       database: "db:mysql"
 
     hooks:
-      # Build phase: no services/database yet. Install Python deps, compile the
-      # Tailwind CSS (npm) into static/src/output.css, then pre-build the
-      # django-compressor offline bundle (all baked into the read-only image).
+      # Build phase: install Python deps and pre-build the django-compressor
+      # offline bundle from the committed static/src/output.css.
+      #
+      # NOTE: the Tailwind CSS is intentionally NOT compiled here. The Tailwind
+      # v4 CLI (Rust/oxide engine) gets OOM-killed in Upsun's build container.
+      # Rebuild the stylesheet locally with `npm run build` and commit
+      # static/src/output.css whenever the styles change.
       build: |
         set -eux
-        # Compile the Tailwind CSS FIRST, from a clean tree. This must run before
-        # the Python virtualenv is created: Tailwind v4 auto-detects sources by
-        # walking the app directory, and with no .git present during the build it
-        # can't read .gitignore, so it would otherwise scan the freshly-created
-        # .venv (thousands of files) and get OOM-killed. node_modules is ignored
-        # by Tailwind automatically.
-        npm install
-        npm run build
-        # The composable (Nix) base Python is read-only, so install into a venv
-        # and call its interpreter explicitly (no activation, no bare pip/python).
-        python3 -m venv .venv
-        .venv/bin/python -m pip install -r requirements.txt
-        .venv/bin/python manage.py compress
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        python manage.py compress
       # Deploy phase: the database and the writable mounts are available.
       deploy: |
         set -eux
-        .venv/bin/python manage.py collectstatic --noinput
-        .venv/bin/python manage.py migrate
+        python manage.py collectstatic --noinput
+        python manage.py migrate
 
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
@@ -54,7 +44,7 @@ applications:
 
     web:
       commands:
-        start: ".venv/bin/gunicorn nole.wsgi:application -b unix:$SOCKET"
+        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
       upstream:
         socket_family: unix
       locations:
