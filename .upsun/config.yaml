@@ -22,14 +22,18 @@ applications:
       # django-compressor offline bundle (all baked into the read-only image).
       build: |
         set -eux
-        # The composable (Nix) base Python lives in a read-only store, so create
-        # a virtualenv and install into it. Always call the venv interpreter
-        # explicitly (no shell activation, no bare `pip`/`python`, which can
-        # resolve to a broken global shim after a pip self-upgrade).
-        python3 -m venv .venv
-        .venv/bin/python -m pip install -r requirements.txt
+        # Compile the Tailwind CSS FIRST, from a clean tree. This must run before
+        # the Python virtualenv is created: Tailwind v4 auto-detects sources by
+        # walking the app directory, and with no .git present during the build it
+        # can't read .gitignore, so it would otherwise scan the freshly-created
+        # .venv (thousands of files) and get OOM-killed. node_modules is ignored
+        # by Tailwind automatically.
         npm install
         npm run build
+        # The composable (Nix) base Python is read-only, so install into a venv
+        # and call its interpreter explicitly (no activation, no bare pip/python).
+        python3 -m venv .venv
+        .venv/bin/python -m pip install -r requirements.txt
         .venv/bin/python manage.py compress
       # Deploy phase: the database and the writable mounts are available.
       deploy: |
