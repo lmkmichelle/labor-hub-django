@@ -9,7 +9,8 @@ from seminars.models import Seminar, University
 
 
 def make_seminar(visitor_name="Visitor", start_offset=1, end_offset=None,
-                 university_name="Cornell", description="Details", countries=None):
+                 university_name="Cornell", description="Details", countries=None,
+                 status="approved"):
     today = timezone.localdate()
     return Seminar.objects.create(
         visitor_name=visitor_name,
@@ -19,6 +20,7 @@ def make_seminar(visitor_name="Visitor", start_offset=1, end_offset=None,
         visit_end=today + timedelta(days=end_offset) if end_offset is not None else None,
         description=description,
         countries=countries or [],
+        status=status,
     )
 
 
@@ -41,6 +43,13 @@ class SeminarsListViewTests(TestCase):
         response = self.client.get(reverse("seminars-list"), {"show_archived": "1"})
         self.assertIn(past, response.context["seminars"])
         self.assertNotIn(upcoming, response.context["seminars"])
+
+    def test_pending_visits_hidden(self):
+        approved = make_seminar(visitor_name="Approved", start_offset=5)
+        pending = make_seminar(visitor_name="Pending", start_offset=5, status="pending")
+        response = self.client.get(reverse("seminars-list"))
+        self.assertIn(approved, response.context["seminars"])
+        self.assertNotIn(pending, response.context["seminars"])
 
     def test_search_filters_by_visitor_name(self):
         match = make_seminar(visitor_name="Labor Economist")
@@ -68,6 +77,31 @@ class SeminarsListViewTests(TestCase):
         response = self.client.get(reverse("seminars-list"))
         self.assertTrue(response.context["is_paginated"])
         self.assertEqual(len(response.context["seminars"]), 10)
+
+
+class SeminarDetailViewTests(TestCase):
+    def test_detail_renders(self):
+        seminar = make_seminar()
+        response = self.client.get(reverse("seminar-detail", kwargs={"pk": seminar.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "seminars/seminar_detail.html")
+
+    def test_pending_visit_hidden_from_anonymous(self):
+        seminar = make_seminar(status="pending")
+        response = self.client.get(reverse("seminar-detail", kwargs={"pk": seminar.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_owner_can_view_pending_visit(self):
+        owner = CustomUser.objects.create_user(
+            email="owner@example.com", password="pw12345",
+            first_name="Own", last_name="Er", is_active=True,
+        )
+        seminar = make_seminar(status="pending")
+        seminar.posted_by = owner
+        seminar.save()
+        self.client.force_login(owner)
+        response = self.client.get(reverse("seminar-detail", kwargs={"pk": seminar.pk}))
+        self.assertEqual(response.status_code, 200)
 
 
 class SeminarCreateViewTests(TestCase):
@@ -99,6 +133,7 @@ class SeminarCreateViewTests(TestCase):
         seminar = Seminar.objects.get()
         self.assertEqual(seminar.posted_by, self.user)
         self.assertEqual(seminar.countries, ["US"])
+        self.assertEqual(seminar.status, "pending")
         self.assertRedirects(response, reverse("seminars-list"))
 
     def test_create_allows_blank_description(self):

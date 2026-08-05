@@ -57,8 +57,8 @@ def default_since(frequency, now=None):
 def collect_new_content(since):
     """Return the non-empty digest sections for content added after ``since``.
 
-    Only publicly visible content is included: publications and events must be
-    approved; visits and jobs have no moderation step so all count.
+    Only publicly visible (approved) content is included: publications, events,
+    jobs, and visits all go through the same moderation step before appearing.
     """
     sections = []
 
@@ -102,7 +102,7 @@ def collect_new_content(since):
             ],
         })
 
-    jobs = list(Job.objects.filter(created_at__gte=since).order_by("-created_at"))
+    jobs = list(Job.objects.approved().filter(created_at__gte=since).order_by("-created_at"))
     if jobs:
         sections.append({
             "key": "jobs",
@@ -117,7 +117,7 @@ def collect_new_content(since):
             ],
         })
 
-    visits = list(Seminar.objects.filter(created_at__gte=since).order_by("-created_at"))
+    visits = list(Seminar.objects.approved().filter(created_at__gte=since).order_by("-created_at"))
     if visits:
         sections.append({
             "key": "visits",

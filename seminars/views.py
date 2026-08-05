@@ -5,7 +5,7 @@ from urllib.request import urlopen
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -88,7 +88,7 @@ class SeminarsListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = Seminar.objects.select_related('posted_by', 'university')
+        queryset = Seminar.objects.approved().select_related('posted_by', 'university')
 
         show_archived = self.request.GET.get('show_archived') == '1'
         today = timezone.localdate()
@@ -169,6 +169,15 @@ class SeminarDetailView(DetailView):
     def get_queryset(self):
         return Seminar.objects.select_related('posted_by', 'university')
 
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if obj.is_approved:
+            return obj
+        user = self.request.user
+        if user.is_authenticated and obj.posted_by_id == user.id:
+            return obj
+        raise Http404("This visit is not available.")
+
 
 class SeminarCreateView(LoginRequiredMixin, CreateView):
     model = Seminar
@@ -179,9 +188,10 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         seminar = form.save(commit=False)
         seminar.posted_by = self.request.user
+        seminar.status = 'pending'
         seminar.save()
         form.save_m2m()
-        messages.success(self.request, 'Visit submitted successfully.')
+        messages.success(self.request, 'Visit submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
 
 

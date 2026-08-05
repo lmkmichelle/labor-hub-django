@@ -7,13 +7,8 @@
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        {% if user_type == 'student' %}
-            <h2>Directory of Students</h2>
-            <p class="mb-6">Discover the graduate and predoctoral students in the network — their institutions, positions, and research interests. Filter by country or research interest to find peers and collaborators.</p>
-        {% else %}
-            <h2>Directory of Researchers</h2>
-            <p class="mb-6">Meet the researchers in our community. Explore their affiliations, positions, and countries, and filter by country or research interest to find potential collaborators.</p>
-        {% endif %}
+        <h2>Scholars</h2>
+        <p class="mb-6">Browse the members of the Labor Hub community. Search by name, position, or email, and filter by type, country, or research interest to find researchers and students.</p>
         <div class="flex flex-row w-full gap-6">
             <div class="flex flex-col w-60">
                 <form method="GET" id="filterForm">
@@ -27,6 +22,21 @@
                            name="interests"
                            id="interests-hidden"
                            value="{{ selected_interests_serialized }}">
+                    <div class="mb-4">
+                        <h4>Type</h4>
+                        {% for value, label in role_choices %}
+                            <div class="mb-1">
+                                <input id="role-{{ value }}"
+                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                       type="checkbox"
+                                       name="role"
+                                       value="{{ value }}"
+                                       {% if value in selected_roles %}checked{% endif %}>
+                                <label class="select-none ms-1 text-sm font-medium text-heading"
+                                       for="role-{{ value }}">{{ label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
                     <div class="mb-4">
                         <h4>Countries</h4>
                         <input type="text"
@@ -44,7 +54,7 @@
                     <div class="mb-4">
                         <div class="flex flex-row justify-between">
                             <button type="submit" class="btn-primary">Apply Filters</button>
-                            <a href="{% if user_type == 'student' %}{% url 'students' %}{% else %}{% url 'researchers' %}{% endif %}"
+                            <a href="{% url 'scholars' %}"
                                class="btn-secondary no-underline">Clear Filters</a>
                         </div>
                     </div>
@@ -57,6 +67,7 @@
                           class="flex flex-1 min-w-0 w-full items-center gap-2">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="interests" value="{{ selected_interests_serialized }}">
+                        {% for r in selected_roles %}<input type="hidden" name="role" value="{{ r }}">{% endfor %}
                         <input type="hidden" name="sort" value="{{ sort }}">
                         <label for="scholar-search" class="sr-only">Search scholars</label>
                         <div class="relative flex-1 min-w-0 w-full">
@@ -84,6 +95,7 @@
                     <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="interests" value="{{ selected_interests_serialized }}">
+                        {% for r in selected_roles %}<input type="hidden" name="role" value="{{ r }}">{% endfor %}
                         {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
                         <label for="sortSelect" class="sr-only">Sort by</label>
                         <select id="sortSelect"

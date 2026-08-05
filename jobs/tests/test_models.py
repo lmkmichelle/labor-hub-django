@@ -3,6 +3,7 @@ from datetime import date
 from django.test import TestCase
 from django.urls import reverse
 
+from accounts.models import CustomUser
 from jobs.models import COUNTRY_MAP, RANK_MAP, Job
 
 
@@ -37,3 +38,27 @@ class JobModelTests(TestCase):
             job.category_labels(),
             [RANK_MAP["assistant_professor"], RANK_MAP["predoc"]],
         )
+
+    def test_new_job_defaults_to_pending(self):
+        self.assertEqual(self._job().status, "pending")
+
+    def test_approve_sets_status_and_reviewer(self):
+        admin = CustomUser.objects.create_user(
+            email="admin@example.com", password="pw12345",
+            first_name="Ad", last_name="Min", is_active=True, is_staff=True,
+        )
+        job = self._job()
+        job.approve(admin)
+        self.assertEqual(job.status, "approved")
+        self.assertEqual(job.reviewed_by, admin)
+        self.assertIsNotNone(job.reviewed_at)
+
+    def test_reject_sets_status(self):
+        job = self._job()
+        job.reject()
+        self.assertEqual(job.status, "rejected")
+
+    def test_cannot_approve_already_reviewed(self):
+        job = self._job(status="approved")
+        with self.assertRaises(ValueError):
+            job.approve()

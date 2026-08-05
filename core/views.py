@@ -66,7 +66,7 @@ def home(request):
 
     # Get upcoming seminars (next 6)
     today = timezone.localdate()
-    upcoming_seminars_qs = Seminar.objects.filter(
+    upcoming_seminars_qs = Seminar.objects.approved().filter(
         Q(visit_end__gte=today) |
         Q(visit_end__isnull=True, visit_start__gte=today)
     ).order_by('visit_start')[:6]
@@ -288,7 +288,7 @@ def map_country_detail(request, code):
         "scholars": scholars,
         "scholars_total": scholars_total,
         "scholars_more": scholars_total > MAP_PANEL_LIMIT,
-        "scholars_see_all_url": f"{reverse('researchers')}?{country_query}",
+        "scholars_see_all_url": f"{reverse('scholars')}?{country_query}",
         "papers": papers,
         "papers_total": papers_total,
         "papers_more": papers_total > MAP_PANEL_LIMIT,
@@ -296,16 +296,31 @@ def map_country_detail(request, code):
     }
     return render(request, "partials/_map_panel.html", context)
 
-class UserListView(ListView):
+class ScholarsListView(ListView):
+    """Unified directory of every member (students and researchers).
+
+    Consolidates the former separate researcher/student pages into a single page
+    that shares the search box + sidebar filter layout used elsewhere on the
+    site. Administrators are excluded so the directory only lists the two
+    membership categories. The optional ``role`` filter narrows the list to
+    students and/or researchers.
+    """
+
     model = CustomUser
     template_name = 'accounts/users_list.html'
     context_object_name = 'users'
-    paginate_by = 10
+    paginate_by = 12
 
-    role = None
+    MEMBER_ROLES = (CustomUser.Role.STUDENT, CustomUser.Role.RESEARCHER)
+
+    def _selected_roles(self):
+        valid = {CustomUser.Role.STUDENT.value, CustomUser.Role.RESEARCHER.value}
+        return [role for role in self.request.GET.getlist('role') if role in valid]
 
     def get_queryset(self):
-        qs = CustomUser.objects.filter(is_active=True, role=self.role).select_related('profile')
+        qs = CustomUser.objects.filter(
+            is_active=True, role__in=self.MEMBER_ROLES
+        ).select_related('profile')
 
         query = self.request.GET.get('q', '').strip()
         if query:
@@ -317,6 +332,10 @@ class UserListView(ListView):
                 Q(profile__education__icontains=query) |
                 Q(profile__research_interests__icontains=query)
             )
+
+        selected_roles = self._selected_roles()
+        if selected_roles:
+            qs = qs.filter(role__in=selected_roles)
 
         selected_countries = map_country_terms_to_codes(
             parse_pill_terms(self.request.GET.get('countries', '')))
@@ -343,6 +362,7 @@ class UserListView(ListView):
         selected_countries = map_country_terms_to_codes(
             parse_pill_terms(self.request.GET.get('countries', '')))
         interest_terms = parse_pill_terms(self.request.GET.get('interests', ''))
+        selected_roles = self._selected_roles()
 
         context['query'] = self.request.GET.get('q', '')
         context['sort'] = self.request.GET.get('sort', '')
@@ -351,33 +371,24 @@ class UserListView(ListView):
         context['country_choices'] = COUNTRY_CHOICES
         context['selected_interests'] = interest_terms
         context['selected_interests_serialized'] = ','.join(interest_terms)
+        context['role_choices'] = [
+            (CustomUser.Role.STUDENT.value, 'Students'),
+            (CustomUser.Role.RESEARCHER.value, 'Researchers'),
+        ]
+        context['selected_roles'] = selected_roles
 
-        filter_params = {}
+        filter_pairs = []
         if context['query']:
-            filter_params['q'] = context['query']
+            filter_pairs.append(('q', context['query']))
         if context['selected_countries_serialized']:
-            filter_params['countries'] = context['selected_countries_serialized']
+            filter_pairs.append(('countries', context['selected_countries_serialized']))
         if context['selected_interests_serialized']:
-            filter_params['interests'] = context['selected_interests_serialized']
+            filter_pairs.append(('interests', context['selected_interests_serialized']))
+        for role in selected_roles:
+            filter_pairs.append(('role', role))
         if context['sort']:
-            filter_params['sort'] = context['sort']
-        context['filter_querystring'] = urlencode(filter_params)
-        return context
-
-class ResearchersListView(UserListView):
-    role = CustomUser.Role.RESEARCHER
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_type'] = 'researcher'
-        return context
-
-class StudentsListView(UserListView):
-    role = CustomUser.Role.STUDENT
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['user_type'] = 'student'
+            filter_pairs.append(('sort', context['sort']))
+        context['filter_querystring'] = urlencode(filter_pairs)
         return context
 
 @require_GET

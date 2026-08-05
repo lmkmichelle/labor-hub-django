@@ -1,0 +1,26 @@
+# Sourced by Upsun before the build, the deploy hook, and at runtime, on every
+# environment (production and preview branches). It contains NO secrets: every
+# value is resolved at runtime from variables Upsun injects, so it is safe to
+# commit and must be committed for Upsun to pick it up.
+
+export DJANGO_SETTINGS_MODULE="nole.settings"
+
+# Django's SECRET_KEY. PLATFORM_PROJECT_ENTROPY is a unique, per-project value
+# Upsun generates and never stores in the repository.
+export DJANGO_SECRET_KEY="$PLATFORM_PROJECT_ENTROPY"
+
+# Point Django's existing (already env-driven) database settings at the MariaDB
+# relationship defined in .upsun/config.yaml. Upsun exposes DATABASE_HOST,
+# DATABASE_PORT, DATABASE_USERNAME and DATABASE_PASSWORD automatically from the
+# relationship; only the engine and the database name need mapping here (Upsun
+# calls the database name DATABASE_PATH). PyMySQL backs django.db.backends.mysql.
+export DATABASE_ENGINE="mysql"
+export DATABASE_NAME="$DATABASE_PATH"
+
+# Primary URL of the current environment, e.g. https://main-xxxx.upsunapp.com,
+# extracted from the project routes. Used to allow the host and trust it for
+# CSRF, and as the base URL for absolute links in outgoing emails.
+export APP_PRIMARY_URL="$(echo "$PLATFORM_ROUTES" | base64 --decode | jq -r 'to_entries[] | select(.value.primary == true) | .key' | sed 's:/*$::')"
+export DJANGO_ALLOWED_HOSTS="$(echo "$APP_PRIMARY_URL" | sed 's|https\?://||')"
+export CSRF_TRUSTED_ORIGINS="$APP_PRIMARY_URL"
+export SITE_URL="$APP_PRIMARY_URL"

@@ -9,7 +9,7 @@ from jobs.models import Job
 
 
 def make_job(title="Job", deadline_offset=10, url="https://example.com",
-             description="Details", countries=None, categories=None):
+             description="Details", countries=None, categories=None, status="approved"):
     return Job.objects.create(
         title=title,
         description=description,
@@ -17,6 +17,7 @@ def make_job(title="Job", deadline_offset=10, url="https://example.com",
         deadline=timezone.localdate() + timedelta(days=deadline_offset),
         countries=countries or [],
         categories=categories or [],
+        status=status,
     )
 
 
@@ -55,6 +56,13 @@ class JobsListViewTests(TestCase):
         self.assertIn(match, response.context["jobs"])
         self.assertNotIn(other, response.context["jobs"])
 
+    def test_pending_jobs_hidden(self):
+        approved = make_job(title="Approved")
+        pending = make_job(title="Pending", status="pending")
+        response = self.client.get(reverse("jobs-list"))
+        self.assertIn(approved, response.context["jobs"])
+        self.assertNotIn(pending, response.context["jobs"])
+
     def test_country_filter(self):
         match = make_job(title="US Role", countries=["US"])
         other = make_job(title="CA Role", countries=["CA"])
@@ -82,6 +90,23 @@ class JobDetailViewTests(TestCase):
         response = self.client.get(reverse("job-detail", kwargs={"pk": job.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "jobs/job_detail.html")
+
+    def test_pending_job_hidden_from_anonymous(self):
+        job = make_job(status="pending")
+        response = self.client.get(reverse("job-detail", kwargs={"pk": job.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_owner_can_view_pending_job(self):
+        owner = CustomUser.objects.create_user(
+            email="owner@example.com", password="pw12345",
+            first_name="Own", last_name="Er", is_active=True,
+        )
+        job = make_job(status="pending")
+        job.uploader = owner
+        job.save()
+        self.client.force_login(owner)
+        response = self.client.get(reverse("job-detail", kwargs={"pk": job.pk}))
+        self.assertEqual(response.status_code, 200)
 
 
 class JobCreateViewTests(TestCase):
@@ -111,4 +136,5 @@ class JobCreateViewTests(TestCase):
         self.assertEqual(job.uploader, self.user)
         self.assertEqual(job.countries, ["US"])
         self.assertEqual(job.categories, ["postdoc"])
+        self.assertEqual(job.status, "pending")
         self.assertRedirects(response, reverse("jobs-list"))

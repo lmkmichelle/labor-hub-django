@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils import timezone
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
+from core.models import Approvable
 
 
 COUNTRY_MAP = dict(COUNTRY_CHOICES)
@@ -22,7 +23,7 @@ RANK_MAP = dict(RANK_CHOICES)
 JUNIOR_RANKS = ['predoc', 'postdoc']
 
 
-class Job(models.Model):
+class Job(Approvable):
     title = models.CharField(max_length=255)
     uploader = models.ForeignKey(
         CustomUser,

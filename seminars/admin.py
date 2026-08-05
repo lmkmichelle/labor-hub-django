@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from core.admin import ApprovableAdmin
 from core.constants import COUNTRY_CHOICES
 
 from seminars.models import Seminar, University
@@ -27,7 +28,7 @@ class SeminarAdminForm(forms.ModelForm):
 
 # Register your models here.
 
-class SeminarAdmin(admin.ModelAdmin):
+class SeminarAdmin(ApprovableAdmin):
     form = SeminarAdminForm
     list_display = ['visitor_name', 'get_university_name', 'visit_start', 'visit_end', 'posted_by']
     search_fields = [ 'visitor_name', 'visitor_email', 'university__name', 'university_name', 'description']
@@ -47,6 +48,9 @@ class SeminarAdmin(admin.ModelAdmin):
                 'countries',
                 'description',
             )
+        }),
+        ('Review', {
+            'fields': ('review_actions', 'status', 'admin_notes', 'reviewed_at', 'reviewed_by')
         }),
     )
 

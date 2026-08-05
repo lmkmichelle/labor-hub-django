@@ -1,0 +1,65 @@
+applications:
+  laborhub:
+    type: "python:3.13"
+
+    # Disable the default Python build behaviour so only the hooks below run.
+    build:
+      flavor: none
+
+    # Exposes DATABASE_HOST/PORT/USERNAME/PASSWORD/PATH to the app. The MariaDB
+    # service publishes a "mysql" endpoint; PyMySQL speaks to it via
+    # django.db.backends.mysql (see nole/__init__.py + .environment).
+    relationships:
+      database: "db:mysql"
+
+    hooks:
+      # Build phase: no services/database yet. Install dependencies and
+      # pre-build the django-compressor offline bundle (writes static/CACHE,
+      # which is baked into the read-only app image).
+      build: |
+        set -eux
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        python manage.py compress
+      # Deploy phase: the database and the writable mounts are available.
+      deploy: |
+        set -eux
+        python manage.py collectstatic --noinput
+        python manage.py migrate
+
+    # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
+    # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
+    # avatars, resumes and paper PDFs.
+    mounts:
+      "staticfiles":
+        source: storage
+        source_path: staticfiles
+      "media":
+        source: storage
+        source_path: media
+
+    web:
+      commands:
+        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
+      upstream:
+        socket_family: unix
+      locations:
+        "/":
+          passthru: true
+        "/static":
+          allow: true
+          expires: 1h
+          root: "staticfiles"
+        "/media":
+          allow: true
+          expires: 1h
+          root: "media"
+
+routes:
+  "https://{default}/":
+    type: upstream
+    upstream: "laborhub:http"
+
+services:
+  db:
+    type: "mariadb:12.3"

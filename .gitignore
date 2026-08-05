@@ -20,3 +20,10 @@ venv/
 
 # Local SQLite databases
 *.sqlite3
+
+# User-uploaded media. At runtime these live on the Upsun `media` mount (or S3),
+# never in git. Keep the tracked default avatar; ignore all other uploads.
+/media/*
+!/media/avatars/
+/media/avatars/*
+!/media/avatars/default.png

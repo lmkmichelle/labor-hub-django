@@ -219,6 +219,10 @@ class UserApplication(models.Model):
             self.reviewed_by = admin_user
         self.save()
 
+        # Let the new member know their account is live and they can sign in.
+        from accounts.emails import send_application_approved_email
+        send_application_approved_email(user)
+
         return user
 
     def reject(self, admin_user):

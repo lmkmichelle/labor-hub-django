@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.core import mail
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from accounts.models import CustomUser, Profile, ResearchPaper, UserApplication
 
@@ -178,6 +179,27 @@ class UserApplicationTests(TestCase):
                                role=CustomUser.Role.RESEARCHER)
         user = app.approve(advisor=advisor)
         self.assertIsNone(user.advisor)
+
+    @override_settings(SITE_URL="http://testserver")
+    def test_approve_sends_notification_email(self):
+        app = make_application(email="newbie@example.com")
+
+        app.approve()
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["newbie@example.com"])
+        self.assertIn("approved", message.subject.lower())
+        self.assertIn("http://testserver/accounts/login/", message.body)
+        self.assertTrue(
+            any(mimetype == "text/html" for _content, mimetype in message.alternatives)
+        )
+
+    def test_reject_does_not_send_email(self):
+        admin = make_user(email="admin2@example.com", role=CustomUser.Role.ADMIN)
+        app = make_application()
+        app.reject(admin)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_reject_sets_status(self):
         admin = make_user(email="admin@example.com", role=CustomUser.Role.ADMIN)

@@ -65,31 +65,10 @@
               {% else %}
                 <a href="{% url 'login' %}"
                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Log in</a>
-                <button type="button"
-                        data-dropdown-toggle="apply-dropdown-menu"
-                        class="flex items-center text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
+                <a href="{% url 'membership' %}"
+                   class="flex items-center text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
                   Apply
-                </button>
-                <!-- Dropdown -->
-                <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
-                     id="apply-dropdown-menu">
-                  <ul class="p-2 text-sm text-body font-medium" role="none">
-                    <li>
-                      <a href="{% url 'apply_researcher' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                         role="menuitem">
-                        <div class="inline-flex items-center">For Researchers</div>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{% url 'apply_student' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
-                         role="menuitem">
-                        <div class="inline-flex items-center">For Students</div>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                </a>
               {% endif %}
               <button data-collapse-toggle="navbar-cta"
                       type="button"
@@ -137,35 +116,8 @@
                        class="nav-link {% if url_name == 'seminars-list' %}text-red-700{% endif %}">Visits</a>
                   </li>
                   <li>
-                    <!-- Scholars -->
-                    <button id="dropdownNvbarButton"
-                            data-dropdown-toggle="scholarsDropdown"
-                            class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
-                      Scholars
-                      <svg class="w-4 h-4 ms-1.5"
-                           aria-hidden="true"
-                           xmlns="http://www.w3.org/2000/svg"
-                           width="24"
-                           height="24"
-                           fill="none"
-                           viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                      </svg>
-                    </button>
-                    <div id="scholarsDropdown"
-                         class="z-10 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44">
-                      <ul class="p-2 text-sm text-body font-medium"
-                          aria-labelledby="dropdownNvbarButton">
-                        <li>
-                          <a href="{% url 'researchers' %}"
-                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Researchers</a>
-                        </li>
-                        <li>
-                          <a href="{% url 'students' %}"
-                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Students</a>
-                        </li>
-                      </ul>
-                    </div>
+                    <a href="{% url 'scholars' %}"
+                       class="nav-link {% if url_name == 'scholars' %}text-red-700{% endif %}">Scholars</a>
                   </li>
                 </ul>
               {% endwith %}

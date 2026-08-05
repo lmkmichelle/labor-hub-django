@@ -64,6 +64,7 @@ class HomeContextTests(TestCase):
             university_name="Cornell University",
             visit_start=timezone.localdate() + timedelta(days=4),
             description="d",
+            status="approved",
         )
         publication = Publication.objects.create(
             title="Recent Paper", abstract="a",
@@ -221,34 +222,48 @@ class PublicationsListViewTests(TestCase):
         self.assertNotIn(regular, response.context["publications"])
 
 
-class UserListViewTests(TestCase):
-    def test_researchers_list_shows_only_researchers(self):
+class ScholarsListViewTests(TestCase):
+    def test_scholars_list_shows_all_members(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
         student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)
-        response = self.client.get(reverse("researchers"))
+        response = self.client.get(reverse("scholars"))
         self.assertEqual(response.status_code, 200)
         self.assertIn(researcher, response.context["users"])
-        self.assertNotIn(student, response.context["users"])
+        self.assertIn(student, response.context["users"])
 
-    def test_students_list_shows_only_students(self):
+    def test_scholars_list_excludes_admins(self):
+        member = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
+        admin = make_user(email="a@example.com", role=CustomUser.Role.ADMIN)
+        response = self.client.get(reverse("scholars"))
+        self.assertIn(member, response.context["users"])
+        self.assertNotIn(admin, response.context["users"])
+
+    def test_role_filter_shows_only_students(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
         student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)
-        response = self.client.get(reverse("students"))
+        response = self.client.get(reverse("scholars"), {"role": "student"})
         self.assertIn(student, response.context["users"])
         self.assertNotIn(researcher, response.context["users"])
+
+    def test_role_filter_shows_only_researchers(self):
+        researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
+        student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)
+        response = self.client.get(reverse("scholars"), {"role": "researcher"})
+        self.assertIn(researcher, response.context["users"])
+        self.assertNotIn(student, response.context["users"])
 
     def test_name_search_filters_results(self):
         match = make_user(email="match@example.com", first_name="Alice", last_name="Smith")
         other = make_user(email="other@example.com", first_name="Bob", last_name="Jones")
         response = self.client.get(
-            reverse("researchers"), {"q": "Alice", "filter": "name"})
+            reverse("scholars"), {"q": "Alice", "filter": "name"})
         self.assertIn(match, response.context["users"])
         self.assertNotIn(other, response.context["users"])
 
     def test_country_pill_filter(self):
         us_user = make_user(email="us@example.com", country_code="US")
         fr_user = make_user(email="fr@example.com", country_code="FR")
-        response = self.client.get(reverse("researchers"), {"countries": "US"})
+        response = self.client.get(reverse("scholars"), {"countries": "US"})
         self.assertIn(us_user, response.context["users"])
         self.assertNotIn(fr_user, response.context["users"])
 
@@ -260,12 +275,12 @@ class UserListViewTests(TestCase):
         other.profile.research_interests = ["Biology"]
         other.profile.save()
         response = self.client.get(
-            reverse("researchers"), {"interests": "Labor economics"})
+            reverse("scholars"), {"interests": "Labor economics"})
         self.assertIn(match, response.context["users"])
         self.assertNotIn(other, response.context["users"])
 
     def test_recommended_keywords_payload_present(self):
-        response = self.client.get(reverse("researchers"))
+        response = self.client.get(reverse("scholars"))
         self.assertIn("recommended_keywords", response.context)
         content = response.content.decode()
         self.assertIn('id="recommended-keywords-data"', content)

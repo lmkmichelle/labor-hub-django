@@ -62,3 +62,18 @@ class SeminarModelTests(TestCase):
         seminar = Seminar(visitor_name="V", visit_start=date(2030, 5, 1))
         with self.assertRaises(ValidationError):
             seminar.clean()
+
+    def test_new_seminar_defaults_to_pending(self):
+        seminar = Seminar.objects.create(
+            visitor_name="V", university_name="U", visit_start=date(2030, 1, 1),
+        )
+        self.assertEqual(seminar.status, "pending")
+
+    def test_approve_and_reject_guard(self):
+        seminar = Seminar.objects.create(
+            visitor_name="V", university_name="U", visit_start=date(2030, 1, 1),
+        )
+        seminar.approve()
+        self.assertEqual(seminar.status, "approved")
+        with self.assertRaises(ValueError):
+            seminar.reject()

@@ -38,6 +38,18 @@ def application_post_data(**overrides):
     return data
 
 
+class MembershipPageTests(TestCase):
+    def test_membership_page_renders_with_apply_links(self):
+        response = self.client.get(reverse("membership"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/apply_landing.html")
+        content = response.content.decode()
+        self.assertIn("<h2>Apply</h2>", content)
+        self.assertIn("How do I become a member?", content)
+        self.assertIn(reverse("apply_student"), content)
+        self.assertIn(reverse("apply_researcher"), content)
+
+
 class ApplicationViewTests(TestCase):
     def test_apply_researcher_get(self):
         response = self.client.get(reverse("apply_researcher"))

@@ -68,9 +68,9 @@ class CollectNewContentTests(TestCase):
         Job.objects.create(
             title="Postdoc", description="d", url="https://e.com",
             deadline=self.now.date(), countries=["US"],
-            created_at=self.now - timedelta(days=1),
+            created_at=self.now - timedelta(days=1), status="approved",
         )
-        visit = Seminar.objects.create(countries=["US"])
+        visit = Seminar.objects.create(countries=["US"], status="approved")
         Seminar.objects.filter(pk=visit.pk).update(created_at=self.now - timedelta(days=1))
 
         keys = {s["key"] for s in collect_new_content(self.since)}

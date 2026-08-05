@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
@@ -94,7 +95,7 @@ class JobsListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = Job.objects.select_related('uploader').all()
+        queryset = Job.objects.approved().select_related('uploader')
 
         query = self.request.GET.get('q', '').strip()
         if query:
@@ -195,6 +196,15 @@ class JobDetailView(DetailView):
     template_name = 'jobs/job_detail.html'
     context_object_name = 'job'
 
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if obj.is_approved:
+            return obj
+        user = self.request.user
+        if user.is_authenticated and obj.uploader_id == user.id:
+            return obj
+        raise Http404("This job is not available.")
+
 
 class JobCreateView(LoginRequiredMixin, CreateView):
     model = Job
@@ -205,8 +215,9 @@ class JobCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         job = form.save(commit=False)
         job.uploader = self.request.user
+        job.status = 'pending'
         job.save()
         form.save_m2m()
-        messages.success(self.request, 'Job posted successfully.')
+        messages.success(self.request, 'Job submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
 

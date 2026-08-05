@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Apply{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2>Apply</h2>
+    <p>Members are encouraged to contribute, on a voluntary basis, across all sections of the site: working papers, job openings, events and workshops, and planned research visits.</p>
+    <h3>How do I become a member?</h3>
+    <p>Two categories of membership are available. <span class="font-bold text-red-700">Student membership</span> is open to those currently enrolled in graduate study, including doctoral and pre-doctoral researchers. <span class="font-bold text-red-700">Fellow membership</span> is extended to established academics and researchers by invitation or endorsement; existing fellows may endorse both students and academics for admission. Candidates wishing to be considered are invited to complete the application form below.</p>
+    <div class="mt-6 flex flex-wrap gap-3 not-format">
+      <a href="{% url 'apply_student' %}" class="btn-primary no-underline">Apply as a student</a>
+      <a href="{% url 'apply_researcher' %}" class="btn-secondary no-underline">Apply as a fellow</a>
+    </div>
+  </article>
+{% endblock content %}

@@ -2,8 +2,9 @@ from django.db import models
 from django.utils import timezone
 
 from accounts.models import CustomUser
+from core.models import Approvable
 
-class Event(models.Model):
+class Event(Approvable):
     CATEGORY_CHOICES = [
         ('conference', 'Conference'),
         ('podcast', 'Live Podcast'),
@@ -11,12 +12,6 @@ class Event(models.Model):
         ('schools', 'Seasonal Schools'),
         ('courses', 'Courses/Retreats'),
         ('other', 'Other'),
-    ]
-
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
     ]
 
     title = models.CharField(max_length=255)
@@ -33,16 +28,7 @@ class Event(models.Model):
         blank=True,
         related_name='hosted_events'
     )
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    reviewed_by = models.ForeignKey(
-        CustomUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='reviewed_events'
-    )
 
     class Meta:
         ordering = ['date']

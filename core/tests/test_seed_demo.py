@@ -75,6 +75,11 @@ class SeedDemoDataTests(TestCase):
         self.assertEqual(Publication.objects.filter(status="approved").count(), 5)
         # Events are approved and dated in the future.
         self.assertEqual(Event.objects.filter(status="approved").count(), 4)
+        # Visits and jobs are also approved so they pass moderation filters.
+        self.assertEqual(
+            Seminar.objects.filter(status="approved", visitor_email__endswith=DEMO_SUFFIX).count(), 3
+        )
+        self.assertEqual(Job.objects.filter(status="approved").count(), 5)
         # Publications carry authors (both user-linked and external).
         self.assertTrue(all(p.authors.exists() for p in Publication.objects.all()))
 

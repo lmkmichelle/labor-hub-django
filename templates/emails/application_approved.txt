@@ -1,0 +1,15 @@
+Hi {{ user.first_name|default:user.email }},
+
+Great news - your Labor Hub application has been approved and your account is now active.
+
+You can sign in with your email address ({{ user.email }}) and the password you chose when you applied:
+
+{{ login_url }}
+
+Once you're signed in you can post working papers, job openings, events, and research visits, and keep your profile up to date.
+
+Welcome to the community!
+
+--
+The Labor Hub team
+{{ site_url }}

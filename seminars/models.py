@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
+from core.models import Approvable
 
 
 COUNTRY_MAP = dict(COUNTRY_CHOICES)
@@ -29,7 +30,7 @@ class University(models.Model):
         return self.name
 
 
-class Seminar(models.Model):
+class Seminar(Approvable):
     posted_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

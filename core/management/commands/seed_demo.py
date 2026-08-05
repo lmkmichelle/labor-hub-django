@@ -413,6 +413,7 @@ class Command(BaseCommand):
                     ),
                     "countries": countries,
                     "description": description,
+                    "status": "approved",
                 },
             )
             created += int(was_created)
@@ -432,6 +433,7 @@ class Command(BaseCommand):
                     "categories": categories,
                     "url": url,
                     "deadline": today + timedelta(days=deadline_offset),
+                    "status": "approved",
                 },
             )
             created += int(was_created)
