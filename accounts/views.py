@@ -76,7 +76,7 @@ class ProfileView(View):
                 raise Http404("User not found")
         else:
             if not request.user.is_authenticated:
-                return redirect("/login/")
+                return redirect("login")
             profile_user = request.user
 
         authored_publications = Publication.objects.filter(

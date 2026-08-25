@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.urls import reverse_lazy
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -167,7 +169,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_URL = "/login/"
+# Resolved from the URLconf (accounts/urls.py) rather than hardcoded: the login
+# route lives at /accounts/login/, and a stale literal here sends every
+# @login_required redirect to a 404.
+LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = "/"
 
 LOGOUT_REDIRECT_URL = "/"

@@ -111,7 +111,7 @@ class ProfileViewTests(TestCase):
     def test_profile_no_pk_unauthenticated_redirects_to_login(self):
         response = self.client.get(reverse("profile"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/login/")
+        self.assertEqual(response.url, reverse("login"))
 
     def test_profile_no_pk_authenticated_shows_own(self):
         user = make_active_user()
@@ -237,3 +237,24 @@ class AdminLinkNavTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("settings"))
         self.assertContains(response, 'href="/admin/"')
+
+
+class LoginUrlSettingTests(TestCase):
+    """Guard against LOGIN_URL drifting away from the real login route.
+
+    A hardcoded LOGIN_URL that no longer matches accounts/urls.py sends every
+    @login_required / LoginRequiredMixin redirect to a 404 instead of the login
+    page, which is silent until a logged-out user clicks a protected link.
+    """
+
+    def test_login_url_resolves_to_the_login_view(self):
+        from django.conf import settings
+        from django.urls import resolve
+
+        match = resolve(str(settings.LOGIN_URL))
+        self.assertEqual(match.url_name, "login")
+
+    def test_login_required_view_redirects_to_a_page_that_exists(self):
+        response = self.client.get(reverse("settings"), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/login.html")
