@@ -42,6 +42,23 @@ applications:
         source: storage
         source_path: media
 
+    # Scheduled email digests (accounts/management/commands/send_digests.py).
+    # Upsun cron specs are UTC and the project's TIME_ZONE is UTC as well, so
+    # 12:00 UTC is roughly 08:00 in America/New_York (07:00 outside daylight
+    # saving) -- a morning delivery for the Cornell readership rather than an
+    # overnight one. Each cohort matches a Profile.digest_frequency value; a
+    # user whose digest window turns up no new approved content is skipped, so
+    # a quiet week sends nothing.
+    crons:
+      digest-weekly:
+        spec: "0 12 * * 1"
+        commands:
+          start: "python manage.py send_digests --frequency weekly"
+      digest-monthly:
+        spec: "0 12 1 * *"
+        commands:
+          start: "python manage.py send_digests --frequency monthly"
+
     web:
       commands:
         start: "gunicorn nole.wsgi:application -b unix:$SOCKET"

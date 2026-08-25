@@ -24,3 +24,34 @@ export APP_PRIMARY_URL="$(echo "$PLATFORM_ROUTES" | base64 --decode | jq -r 'to_
 export DJANGO_ALLOWED_HOSTS="$(echo "$APP_PRIMARY_URL" | sed 's|https\?://||')"
 export CSRF_TRUSTED_ORIGINS="$APP_PRIMARY_URL"
 export SITE_URL="$APP_PRIMARY_URL"
+
+# --- Outgoing mail --------------------------------------------------------
+# Upsun runs a per-region SMTP relay and injects its address as
+# PLATFORM_SMTP_HOST on every environment that has SMTP enabled (production
+# does; a preview branch may not). Point Django at it when it is present, and
+# otherwise leave the console backend in place so an environment without mail
+# still boots instead of raising on every send.
+#
+# The relay listens on plain port 25 inside the platform network and takes no
+# credentials, so nothing secret is introduced here.
+#
+# NOTE ON THE SENDER ADDRESS: cornell.edu publishes DMARC "p=reject" with no
+# "sp=" tag, which per RFC 7489 extends that reject policy to every subdomain.
+# Mail sent through this relay with any @cornell.edu From (laborhub.ilr.
+# cornell.edu included) fails DMARC and is rejected outright, so the default
+# sender below deliberately uses the platform domain (which publishes no DMARC
+# policy) until ILR IT authorises a real Cornell sender.
+if [ -n "$PLATFORM_SMTP_HOST" ]; then
+    export EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
+    export EMAIL_HOST="$PLATFORM_SMTP_HOST"
+    export EMAIL_PORT="25"
+    export EMAIL_USE_TLS="False"
+fi
+
+# Sender and inbox for site mail. ":=" assigns only when the variable is unset,
+# so setting DEFAULT_FROM_EMAIL / CONTACT_EMAIL as an Upsun project variable
+# overrides these without touching the repository -- which is how the Cornell
+# sender should be applied once IT provides one.
+: "${DEFAULT_FROM_EMAIL:=Labor Hub <noreply@main-bvxea6i-zv7ifts4uu3lk.us-3.platformsh.site>}"
+: "${CONTACT_EMAIL:=mzm24@cornell.edu}"
+export DEFAULT_FROM_EMAIL CONTACT_EMAIL
