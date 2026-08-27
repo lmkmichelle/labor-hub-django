@@ -1,0 +1,22 @@
+{% comment %}
+Detailed event card. Inputs:
+  event   an Event instance
+Used by the Events list page.
+{% endcomment %}
+<a href="{% url 'event-detail' event.id %}" class="card-surface w-full">
+  <div class="card-header">
+    <h5 class="card-title">{{ event.title }}</h5>
+    <div class="card-meta">
+      {% include "partials/_example_badge.html" with show=event.is_example %}
+      <span class="pill-accent">{{ event.get_category_display }}</span>
+      <p class="m-0 text-sm">{{ event.date|date:"N j, Y" }}</p>
+    </div>
+  </div>
+  {% if event.host %}
+    <p class="mt-1 text-sm text-body">Hosted by {{ event.host.get_full_name|default:event.host.email }}</p>
+  {% endif %}
+  {% if event.location %}<p class="mt-1 text-sm text-body">📍 {{ event.location }}</p>{% endif %}
+  {% if event.deadline %}
+    <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
+  {% endif %}
+</a>

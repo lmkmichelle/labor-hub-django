@@ -1,0 +1,16 @@
+{% comment %}
+A horizontal row of pills (countries, categories, research interests). Inputs:
+  labels      iterable of strings; renders nothing when empty
+  limit       slice spec for how many to show, e.g. ":3" (default ":5")
+  pill_class  "pill-accent" (default) or "pill-neutral"
+Replaces four near-identical loops that each hardcoded the same utility string.
+{% endcomment %}
+{% if labels %}
+  {% with slice_spec=limit|default:":5" pill=pill_class|default:"pill-accent" %}
+    <div class="mt-2 flex w-full flex-row gap-2 overflow-auto">
+      {% for label in labels|slice:slice_spec %}
+        <span class="{{ pill }}">{{ label }}</span>
+      {% endfor %}
+    </div>
+  {% endwith %}
+{% endif %}

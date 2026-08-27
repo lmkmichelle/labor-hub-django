@@ -1,0 +1,30 @@
+{% comment %}
+Detailed visit card. Inputs:
+  visit   a Seminar instance
+  title   optional heading override
+  badge   optional extra pill (the profile passes "Pending review")
+The Visits list page titles cards with the visitor's name. On a member's own
+profile that would repeat their name down the page, so the profile passes
+title=visit.get_university_display instead.
+{% endcomment %}
+<a href="{{ visit.get_absolute_url }}" class="card-surface w-full">
+  <div class="card-header">
+    <h5 class="card-title">{% firstof title visit.visitor_name "Visiting scholar" %}</h5>
+    <div class="card-meta">
+      {% include "partials/_example_badge.html" with show=visit.is_example %}
+      {% if badge %}<span class="pill-neutral">{{ badge }}</span>{% endif %}
+      <p class="m-0 text-sm">
+        {% if visit.visit_end and visit.visit_end != visit.visit_start %}
+          {{ visit.visit_start|date:"N j" }} - {{ visit.visit_end|date:"N j, Y" }}
+        {% else %}
+          {{ visit.visit_start|date:"N j, Y" }}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  <p class="mt-1 text-sm text-body">Visiting {{ visit.get_university_display }}</p>
+  {% if visit.visitor_affiliation %}
+    <p class="mt-1 text-sm text-body">From {{ visit.visitor_affiliation }}</p>
+  {% endif %}
+  {% include "partials/cards/_pill_row.html" with labels=visit.country_labels %}
+</a>

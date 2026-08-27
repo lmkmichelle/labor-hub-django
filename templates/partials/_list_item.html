@@ -28,7 +28,7 @@ no view-context changes are required.
     <div class="flex shrink-0 items-center gap-2">
       {% include "partials/_example_badge.html" with show=is_example %}
       {% if badge %}
-        <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{{ badge }}</span>
+        <span class="pill-accent">{{ badge }}</span>
       {% elif date %}
         <small class="text-sm text-body">{{ date }}</small>
       {% endif %}

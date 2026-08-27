@@ -1,28 +1,20 @@
-
+{% comment %}
+Detailed job card. Inputs:
+  item   a Job instance (named "item" because _list_display.html passes it so)
+Used by the Jobs list page.
+{% endcomment %}
 <a href="{{ item.get_absolute_url }}" class="card-surface w-full">
-    <div class="flex w-full items-start justify-between gap-4">
-        <h5 class="text-xl font-semibold text-heading m-0">{{ item.title }}</h5>
-        <div class="flex shrink-0 items-center gap-2">
-            {% include "partials/_example_badge.html" with show=item.is_example %}
-            <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
-        </div>
+  <div class="card-header">
+    <h5 class="card-title">{{ item.title }}</h5>
+    <div class="card-meta">
+      {% include "partials/_example_badge.html" with show=item.is_example %}
+      <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
     </div>
-    {% if item.category_labels %}
-        <div class="mt-2 flex flex-row w-full gap-2 overflow-auto">
-            {% for label in item.category_labels %}
-                <span class="bg-neutral-secondary-medium text-heading text-sm font-medium px-2 py-1 rounded">{{ label }}</span>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
-    {% if item.country_labels %}
-        <div class="mt-2 flex flex-row w-full gap-2 overflow-auto">
-            {% for country in item.country_labels|slice:":5" %}
-                <span class="bg-red-100 text-red-700 text-sm font-medium px-2 py-1 rounded">{{ country }}</span>
-            {% endfor %}
-        </div>
-    {% endif %}
-    {% if item.uploader %}
-        <p class="mt-2 text-sm text-body">Posted by {{ item.uploader.get_full_name|default:item.uploader.email }}</p>
-    {% endif %}
+  </div>
+  {% include "partials/cards/_pill_row.html" with labels=item.category_labels pill_class="pill-neutral" %}
+  <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
+  {% include "partials/cards/_pill_row.html" with labels=item.country_labels %}
+  {% if item.uploader %}
+    <p class="mt-2 text-sm text-body">Posted by {{ item.uploader.get_full_name|default:item.uploader.email }}</p>
+  {% endif %}
 </a>

@@ -355,3 +355,102 @@ class ProfilePublicationVisibilityTests(TestCase):
         self._paper("pending", "Unapproved Paper")
         self.client.force_login(self.owner)
         self.assertContains(self._profile(), "Unapproved Paper")
+
+
+class ProfilePublicationsEmptyStateTests(TestCase):
+    """A member with no papers must see a message, not a silent blank gap.
+
+    The Visits section has always shown one; the Discussion Papers section had no
+    {% empty %} clause at all, so it rendered a heading followed by nothing.
+    """
+
+    def test_member_with_no_papers_gets_an_empty_state(self):
+        user = make_active_user("nopapers@example.com")
+        response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+        self.assertContains(response, "No discussion papers posted yet.")
+
+    def test_empty_state_disappears_once_a_paper_exists(self):
+        from publications.models import Author, Publication
+
+        user = make_active_user("haspapers@example.com")
+        author = Author.objects.create(user=user, name="")
+        paper = Publication.objects.create(
+            title="A Real Paper", abstract="a",
+            study_url="https://example.com", status="approved",
+        )
+        paper.authors.set([author])
+        response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+        self.assertContains(response, "A Real Paper")
+        self.assertNotContains(response, "No discussion papers posted yet.")
+
+
+class ProfileVisitCardDetailTests(TestCase):
+    """The profile now uses the detailed visit card, not the minimal one.
+
+    Detailed means the same card the Visits listing renders: "Visiting <uni>",
+    the affiliation line and country pills -- none of which the minimal card
+    showed. The heading differs by design (university, not visitor name), since
+    the member's own name is already at the top of their profile.
+    """
+
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from seminars.models import Seminar
+
+        self.owner = make_active_user("owner@example.com")
+        today = timezone.localdate()
+        self.visit = Seminar.objects.create(
+            posted_by=self.owner,
+            visitor_name="Ada Lovelace",
+            visitor_email="ada@example.com",
+            visitor_affiliation="Analytical Engine Institute",
+            university_name="Cornell University",
+            countries=["US"],
+            visit_start=today + timedelta(days=10),
+            visit_end=today + timedelta(days=20),
+            status="approved",
+        )
+
+    def _profile(self):
+        return self.client.get(reverse("profile", kwargs={"pk": self.owner.pk}))
+
+    def test_shows_the_detailed_fields(self):
+        response = self._profile()
+        self.assertContains(response, "Visiting Cornell University")
+        self.assertContains(response, "Analytical Engine Institute")
+        self.assertContains(response, "United States")
+
+    def test_titles_the_card_by_university_not_visitor_name(self):
+        response = self._profile()
+        self.assertContains(response, 'class="card-title">Cornell University')
+
+    def test_uses_the_detailed_card_not_the_minimal_one(self):
+        """The minimal card renders an h6/card-surface pair with no card-title."""
+        response = self._profile()
+        self.assertContains(response, "card-title")
+
+
+class VisitsListTitleTests(TestCase):
+    """The title override must not leak from the profile onto the listing."""
+
+    def test_list_page_still_titles_cards_by_visitor_name(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from seminars.models import Seminar
+
+        today = timezone.localdate()
+        Seminar.objects.create(
+            visitor_name="Ada Lovelace",
+            visitor_email="ada@example.com",
+            university_name="Cornell University",
+            visit_start=today + timedelta(days=10),
+            visit_end=today + timedelta(days=20),
+            status="approved",
+        )
+        response = self.client.get(reverse("seminars-list"))
+        self.assertContains(response, 'class="card-title">Ada Lovelace')

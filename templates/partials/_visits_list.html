@@ -2,23 +2,14 @@
 Visits posted by one member, for the profile page. Inputs:
   visits      iterable of Seminar objects (already filtered for the viewer)
   empty_text  optional message shown when there are none
-Each row goes through partials/_list_item.html so a visit card here matches the
-Visits listing and the home page. A still-pending visit is flagged, since the
-owner is the only person who can see it.
+Rows go through partials/cards/_visit_card.html, the same detailed card the
+Visits listing uses -- but titled by university rather than visitor name, since
+the member's own name is already at the top of their profile.
+A still-pending visit is flagged, because its owner is the only one who sees it.
 {% endcomment %}
 <div class="flex flex-col gap-3">
   {% for visit in visits %}
-    {% with start=visit.visit_start|date:"M j, Y" end=visit.visit_end|date:"M j, Y" %}
-      {% with flag=visit.is_approved|yesno:",Pending review" %}
-        {% if end and end != start %}
-          {% with window=start|add:" – "|add:end %}
-            {% include "partials/_list_item.html" with title=visit.get_university_display url=visit.get_absolute_url subtitle=visit.visitor_affiliation date=window badge=flag is_example=visit.is_example %}
-          {% endwith %}
-        {% else %}
-          {% include "partials/_list_item.html" with title=visit.get_university_display url=visit.get_absolute_url subtitle=visit.visitor_affiliation date=start badge=flag is_example=visit.is_example %}
-        {% endif %}
-      {% endwith %}
-    {% endwith %}
+    {% include "partials/cards/_visit_card.html" with visit=visit title=visit.get_university_display badge=visit.is_approved|yesno:",Pending review" %}
   {% empty %}
     {% include "partials/_empty_state.html" with text=empty_text|default:"No visits posted yet." %}
   {% endfor %}

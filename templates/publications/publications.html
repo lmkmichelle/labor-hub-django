@@ -110,14 +110,10 @@
                            class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Paper</a>
                     {% endif %}
                 </div>
-                {% if publications %}
-                    <div class="not-format">
-                        {% include 'partials/_publications_list.html' with publications=publications %}
-                    </div>
-                    {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
-                {% else %}
-                    {% include "partials/_empty_state.html" with text="No discussion papers match your criteria." %}
-                {% endif %}
+                <div class="not-format">
+                    {% include 'partials/_publications_list.html' with publications=publications empty_text="No discussion papers match your criteria." %}
+                </div>
+                {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
             </div>
         </div>
     </article>
