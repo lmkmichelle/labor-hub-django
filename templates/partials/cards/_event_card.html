@@ -15,7 +15,6 @@ Used by the Events list page.
   {% if event.host %}
     <p class="mt-1 text-sm text-body">Hosted by {{ event.host.get_full_name|default:event.host.email }}</p>
   {% endif %}
-  {% if event.location %}<p class="mt-1 text-sm text-body">📍 {{ event.location }}</p>{% endif %}
   {% if event.deadline %}
     <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
   {% endif %}
