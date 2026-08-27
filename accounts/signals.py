@@ -9,7 +9,7 @@ def create_profile(sender, instance, created, **kwargs):
         Profile.objects.create(
             user=instance,
             position='',
-            education='',
+            department='',
             country_code='',
             website='',
             biography='',

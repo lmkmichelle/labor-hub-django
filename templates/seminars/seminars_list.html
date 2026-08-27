@@ -104,6 +104,7 @@
                             <a href="{% url 'seminar-detail' seminar.id %}" class="card-surface w-full">
                                 <div class="flex flex-row items-center justify-between gap-4">
                                     <h5 class="text-xl font-semibold text-heading">{{ seminar.visitor_name|default:"Visiting scholar" }}</h5>
+                                    {% include "partials/_example_badge.html" with show=seminar.is_example %}
                                     <p class="text-body shrink-0">
                                         {% if seminar.visit_end and seminar.visit_end != seminar.visit_start %}
                                             {{ seminar.visit_start|date:"N j" }} - {{ seminar.visit_end|date:"N j, Y" }}

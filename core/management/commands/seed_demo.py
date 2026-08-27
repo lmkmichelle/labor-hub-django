@@ -56,7 +56,8 @@ RESEARCHERS = [
         "rosa.researcher", "Rosa", "Martinez", CustomUser.Role.RESEARCHER, None,
         {
             "position": "Associate Professor of Economics",
-            "education": "PhD Economics, MIT",
+            "department": "Economics",
+            "university_name": "Massachusetts Institute of Technology",
             "country_code": "US",
             "website": "https://example.com/rosa",
             "biography": "Rosa studies active labor market policies and wage dynamics.",
@@ -67,7 +68,8 @@ RESEARCHERS = [
         "sam.scholar", "Sam", "Okafor", CustomUser.Role.RESEARCHER, None,
         {
             "position": "Assistant Professor",
-            "education": "PhD Economics, LSE",
+            "department": "Economics",
+            "university_name": "London School of Economics",
             "country_code": "GB",
             "website": "https://example.com/sam",
             "biography": "Sam works on migration, development, and intergenerational mobility.",
@@ -81,7 +83,8 @@ STUDENTS = [
         "sophia.student", "Sophia", "Chen", CustomUser.Role.STUDENT, "rosa.researcher",
         {
             "position": "PhD Candidate",
-            "education": "MA Economics, Cornell",
+            "department": "Economics",
+            "university_name": "Cornell University",
             "country_code": "CA",
             "website": "",
             "biography": "Sophia researches the gig economy and non-standard work.",
@@ -92,7 +95,8 @@ STUDENTS = [
         "diego.doctoral", "Diego", "Alvarez", CustomUser.Role.STUDENT, "rosa.researcher",
         {
             "position": "Doctoral Researcher",
-            "education": "BA Economics, UBA",
+            "department": "Economics",
+            "university_name": "Universidad de Buenos Aires",
             "country_code": "BR",
             "website": "",
             "biography": "Diego studies education, human capital, and labor supply.",
@@ -106,7 +110,8 @@ ADMINS = [
         "admin", "Ada", "Admin", CustomUser.Role.ADMIN, None,
         {
             "position": "Platform Administrator",
-            "education": "MBA",
+            "department": "Administration",
+            "university_name": "Cornell University",
             "country_code": "US",
             "website": "",
             "biography": "Ada manages the platform and reviews applications.",

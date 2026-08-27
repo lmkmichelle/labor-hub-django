@@ -14,7 +14,7 @@ def base_application_data(**overrides):
         "email": "applicant@example.com",
         "first_name": "Ann",
         "last_name": "Applicant",
-        "education": "Cornell",
+        "department": "Cornell",
         "country_code": "US",
         "motivation": "I want to join.",
         "password1": "pass12345",
@@ -57,7 +57,7 @@ class ResearcherApplicationFormTests(TestCase):
     def test_duplicate_pending_application_email_is_invalid(self):
         UserApplication.objects.create(
             email="applicant@example.com", first_name="X", last_name="Y",
-            position="p", education="e", password="x",
+            position="p", department="e", password="x",
             status=UserApplication.Status.PENDING,
         )
         form = ResearcherApplicationForm(data=base_application_data())

@@ -4,7 +4,7 @@
         {% if card_template %}
             {% include card_template with item=item %}
         {% else %}
-            {% include "partials/_list_item.html" with title=item.title url=item.url subtitle=item.subtitle description=item.description date=item.date badge=item.badge.text meta=item.meta.right %}
+            {% include "partials/_list_item.html" with title=item.title url=item.url subtitle=item.subtitle description=item.description date=item.date badge=item.badge.text meta=item.meta.right is_example=item.is_example %}
         {% endif %}
     {% empty %}
         {% if empty_template %}

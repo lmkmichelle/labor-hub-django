@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load form_tags %}
+{% load static %}
 
 {% block content %}
     <article class="format lg:format-lg max-w-none">
@@ -15,7 +16,14 @@
             {% render_field form.visitor_email %}
             {% render_field form.visitor_affiliation %}
             {% render_select form.country_code label="Country" %}
-            {% render_field form.university %}
+            {# Country drives the affiliation list; see static/js/university-picker.js #}
+            <div data-university-picker
+                 data-endpoint="{% url 'seminar-universities' %}"
+                 data-country-field="{{ form.country_code.id_for_label }}"
+                 data-university-field="{{ form.university.id_for_label }}"
+                 data-placeholder="Choose a university (optional)">
+                {% render_field form.university %}
+            </div>
             {% render_field form.university_name help_text="Use this if your university is not in the dropdown list." %}
 
             <div class="flex flex-row gap-3">
@@ -31,79 +39,6 @@
             </div>
         </form>
     </article>
-    <script>
-        (function () {
-            var countrySelect = document.getElementById('{{ form.country_code.id_for_label }}');
-            var universitySelect = document.getElementById('{{ form.university.id_for_label }}');
-            var universityFieldWrapper = universitySelect ? universitySelect.closest('.mb-5') : null;
-            if (!countrySelect || !universitySelect) {
-                return;
-            }
-
-            var endpoint = '{% url "seminar-universities" %}';
-            var defaultUniversityValue = universitySelect.value;
-
-            function setUniversityVisibility(show) {
-                if (!universityFieldWrapper) {
-                    return;
-                }
-                if (show) {
-                    universityFieldWrapper.classList.remove('hidden');
-                } else {
-                    universityFieldWrapper.classList.add('hidden');
-                }
-            }
-
-            function refillUniversityOptions(universities) {
-                var previous = universitySelect.value || defaultUniversityValue;
-
-                universitySelect.innerHTML = '';
-                var placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.textContent = 'Choose a university (optional)';
-                universitySelect.appendChild(placeholder);
-
-                universities.forEach(function (uni) {
-                    var option = document.createElement('option');
-                    option.value = String(uni.id);
-                    option.textContent = uni.name;
-                    if (String(uni.id) === String(previous)) {
-                        option.selected = true;
-                    }
-                    universitySelect.appendChild(option);
-                });
-            }
-
-            function loadUniversitiesForCountry() {
-                var selectedCountry = (countrySelect.value || '').toUpperCase();
-                if (!selectedCountry) {
-                    setUniversityVisibility(false);
-                    refillUniversityOptions([]);
-                    return;
-                }
-
-                setUniversityVisibility(true);
-                fetch(endpoint + '?country=' + encodeURIComponent(selectedCountry), {
-                    headers: {'X-Requested-With': 'XMLHttpRequest'}
-                })
-                    .then(function (response) {
-                        return response.ok ? response.json() : {universities: []};
-                    })
-                    .then(function (payload) {
-                        var universities = (payload && payload.universities) ? payload.universities : [];
-                        refillUniversityOptions(universities);
-                    })
-                    .catch(function () {
-                        refillUniversityOptions([]);
-                    });
-            }
-
-            countrySelect.addEventListener('change', function () {
-                defaultUniversityValue = '';
-                loadUniversitiesForCountry();
-            });
-            loadUniversitiesForCountry();
-        })();
-    </script>
+    <script src="{% static 'js/university-picker.js' %}"></script>
 {% endblock %}
 

@@ -10,7 +10,7 @@
                         {{ seminar.visit_start|date:"N j, Y" }}
                     {% endif %}
                 </p>
-                <div class="not-format"></div>
+                <div class="not-format">{% include "partials/_example_badge.html" with show=seminar.is_example %}</div>
             </div>
             <div class="not-format mb-4">
                 Visitor: {{ seminar.visitor_name }}

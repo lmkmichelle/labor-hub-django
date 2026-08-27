@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load form_tags %}
+{% load static %}
 
 {% block content %}
 <article class="format lg:format-lg max-w-none">   
@@ -26,13 +27,22 @@
 
     {% render_field form.last_name label="Last Name" placeholder="Last name" %}
 
-    {% render_field form.education label="Current Institution" placeholder="Current Institution" %}
+    {% render_field form.department label="Department" placeholder="Department" %}
 
     {% if form.position %}
         {% render_field form.position label="Position" placeholder="Position" %}
     {% endif %}
 
     {% render_select form.country_code label="Country" empty_label="Choose a country" %}
+
+        {# Country drives the affiliation list; see static/js/university-picker.js #}
+        <div data-university-picker
+             data-endpoint="{% url 'seminar-universities' %}"
+             data-country-field="{{ form.country_code.id_for_label }}"
+             data-university-field="{{ form.university.id_for_label }}">
+        {% render_select form.university label="Affiliation" %}
+    </div>
+    {% render_field form.university_name %}
 
     {% render_field form.motivation label="Motivation" %}
 
@@ -57,4 +67,6 @@
     </div>
 </form>
  </article>
+
+<script src="{% static 'js/university-picker.js' %}"></script>
 {% endblock %}

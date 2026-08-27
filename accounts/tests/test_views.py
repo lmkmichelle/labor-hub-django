@@ -28,7 +28,7 @@ def application_post_data(**overrides):
         "email": "applicant@example.com",
         "first_name": "Ann",
         "last_name": "Applicant",
-        "education": "Cornell",
+        "department": "Cornell",
         "country_code": "US",
         "motivation": "Please let me in.",
         "password1": "pass12345",
@@ -142,7 +142,7 @@ class EditProfileViewTests(TestCase):
         response = self.client.post(reverse("edit_profile"), {
             "position": "Professor",
             "country_code": "US",
-            "education": "Cornell",
+            "department": "Cornell",
             "website": "https://example.com",
             "biography": "A short biography.",
             "research_interests_input": '[{"value":"Economics"}]',
@@ -160,7 +160,7 @@ class EditProfileViewTests(TestCase):
         response = self.client.post(reverse("edit_profile"), {
             "position": "Professor",
             "country_code": "US",
-            "education": "Cornell",
+            "department": "Cornell",
             "website": "https://example.com",
             "biography": "A short biography.",
             "research_interests_input": '[{"value":"Economics"}]',
@@ -258,3 +258,100 @@ class LoginUrlSettingTests(TestCase):
         response = self.client.get(reverse("settings"), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "registration/login.html")
+
+
+class ProfileVisitsTests(TestCase):
+    """Visits a member posted appear on their profile (Seminar.posted_by)."""
+
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from seminars.models import Seminar
+
+        self.Seminar = Seminar
+        self.owner = make_active_user("owner@example.com")
+        self.other = make_active_user("other@example.com")
+        self.today = timezone.localdate()
+        self.delta = timedelta
+
+    def _visit(self, user, status, university_name="Test University"):
+        return self.Seminar.objects.create(
+            posted_by=user,
+            visitor_name="Visitor",
+            visitor_email="visitor@example.com",
+            university_name=university_name,
+            visit_start=self.today + self.delta(days=10),
+            visit_end=self.today + self.delta(days=20),
+            status=status,
+        )
+
+    def _profile(self, user):
+        return self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+
+    def test_approved_visit_shows_on_the_posters_profile(self):
+        self._visit(self.owner, "approved", "Approved University")
+        self.assertContains(self._profile(self.owner), "Approved University")
+
+    def test_visit_does_not_show_on_someone_elses_profile(self):
+        self._visit(self.owner, "approved", "Approved University")
+        self.assertNotContains(self._profile(self.other), "Approved University")
+
+    def test_pending_visit_is_hidden_from_other_viewers(self):
+        self._visit(self.owner, "pending", "Secret University")
+        self.assertNotContains(self._profile(self.owner), "Secret University")
+
+    def test_owner_sees_their_own_pending_visit_flagged(self):
+        self._visit(self.owner, "pending", "Secret University")
+        self.client.force_login(self.owner)
+        response = self._profile(self.owner)
+        self.assertContains(response, "Secret University")
+        self.assertContains(response, "Pending review")
+
+    def test_rejected_visit_is_hidden_even_from_the_owner(self):
+        self._visit(self.owner, "rejected", "Rejected University")
+        self.client.force_login(self.owner)
+        self.assertNotContains(self._profile(self.owner), "Rejected University")
+
+    def test_member_with_no_visits_gets_an_empty_state(self):
+        self.assertContains(self._profile(self.owner), "No visits posted yet.")
+
+    def test_visits_section_precedes_discussion_papers(self):
+        body = self._profile(self.owner).content.decode()
+        self.assertLess(body.index("<h3>Visits</h3>"),
+                        body.index("Labor Hub Discussion Papers"))
+
+
+class ProfilePublicationVisibilityTests(TestCase):
+    """A pending paper must not leak to the public via its author's profile."""
+
+    def setUp(self):
+        from publications.models import Author, Publication
+
+        self.Publication = Publication
+        self.owner = make_active_user("owner@example.com")
+        self.author = Author.objects.create(user=self.owner, name="")
+
+    def _paper(self, status, title):
+        paper = self.Publication.objects.create(
+            title=title, abstract="a", study_url="https://example.com", status=status,
+        )
+        paper.authors.set([self.author])
+        return paper
+
+    def _profile(self):
+        return self.client.get(reverse("profile", kwargs={"pk": self.owner.pk}))
+
+    def test_approved_paper_is_public(self):
+        self._paper("approved", "Approved Paper")
+        self.assertContains(self._profile(), "Approved Paper")
+
+    def test_pending_paper_is_hidden_from_the_public(self):
+        self._paper("pending", "Unapproved Paper")
+        self.assertNotContains(self._profile(), "Unapproved Paper")
+
+    def test_owner_still_sees_their_own_pending_paper(self):
+        self._paper("pending", "Unapproved Paper")
+        self.client.force_login(self.owner)
+        self.assertContains(self._profile(), "Unapproved Paper")

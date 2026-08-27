@@ -5,12 +5,13 @@ from django.db import connection
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_http_methods
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
@@ -39,6 +40,20 @@ def healthz(request):
     return HttpResponse("ok", status=200, content_type="text/plain")
 
 
+class SuperuserTemplateView(UserPassesTestMixin, TemplateView):
+    """A static page restricted to superusers.
+
+    Used for the internal admin guides. ``raise_exception`` is deliberately left
+    at its default of False: AccessMixin then sends an anonymous visitor to the
+    login page (where signing in may well grant access) but raises
+    PermissionDenied -> templates/403.html for someone already signed in, whom a
+    login form would only confuse. Setting it True would 403 both.
+    """
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
 def home(request):
     # Get upcoming events (next 6)
     upcoming_events_qs = Event.objects.filter(
@@ -59,6 +74,7 @@ def home(request):
                 'class': 'bg-primary',
                 'text': event.get_category_display()
             },
+            'is_example': event.is_example,
             'meta': {
                 'right': event.date.strftime('%H:%M')
             }
@@ -89,6 +105,7 @@ def home(request):
             'date': seminar_date,
             'subtitle': f'Visiting {seminar.get_university_display()}',
             'description': seminar.visitor_affiliation or '',
+            'is_example': seminar.is_example,
             'meta': {'right': ', '.join(country_labels[:2]) if country_labels else ''}
         })
 
@@ -129,6 +146,7 @@ def home(request):
             'title': paper.title,
             'date': paper.applied_at.strftime('%b %d'),
             'subtitle': f'Discussion Series #{paper.id}',
+            'is_example': paper.is_example,
             'description': ', '.join(authors) if authors else 'Unknown Author'
         })
 
@@ -257,7 +275,7 @@ def map_country_detail(request, code):
             "title": user.get_full_name() or user.email,
             "url": f"/profile/{user.pk}/",
             "subtitle": user.profile.position or "Position not specified",
-            "description": user.profile.education or "",
+            "description": user.profile.department or "",
         }
         for user in scholars_qs[:MAP_PANEL_LIMIT]
     ]
@@ -329,7 +347,9 @@ class ScholarsListView(ListView):
                 Q(last_name__icontains=query) |
                 Q(email__icontains=query) |
                 Q(profile__position__icontains=query) |
-                Q(profile__education__icontains=query) |
+                Q(profile__department__icontains=query) |
+                Q(profile__university__name__icontains=query) |
+                Q(profile__university_name__icontains=query) |
                 Q(profile__research_interests__icontains=query)
             )
 

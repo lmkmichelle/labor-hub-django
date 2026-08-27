@@ -253,6 +253,24 @@ COUNTRY_CHOICES = [
 # Recommended labor-economics keywords. Single source of truth for the
 # controlled vocabulary used by the paper keyword field, the profile
 # research-interests field, and the Discussion Papers keyword filter.
+#
+# TODO (pending a decision from the professors, Aug 2026): shorten this list.
+# Feedback during pre-launch review was that it is "quite numerous" when filling
+# in a profile. Deferred deliberately -- which terms to keep is an editorial call
+# for the labor-economics faculty, not an engineering one.
+#
+# What whoever picks this up needs to know:
+#   * These 30 terms are ONE shared vocabulary, not several. Editing this list
+#     changes four places at once: the profile research-interests picker, the
+#     publication keywords field, the Discussion Papers keyword filter, and the
+#     Scholars research-interest filter.
+#   * Nothing sets Tagify's `enforceWhitelist`, so the list is advisory
+#     autocomplete only -- members can still type anything. Shortening it
+#     therefore CANNOT invalidate existing tagged data and needs no migration.
+#     It is purely editorial.
+#   * Two delivery paths read this constant: a JSON payload in base.html
+#     consumed by static/js/tagify.js (the edit forms), and a direct template
+#     loop in the two filter sidebars. Both update automatically.
 RECOMMENDED_KEYWORDS = [
     "Education and Human Capital",
     "Labor Supply",

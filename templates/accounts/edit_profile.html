@@ -19,8 +19,16 @@
             <!-- Right side fields -->
             <div class="flex flex-col flex-1 min-w-0">
                 {% render_field form.position %}
-                {% render_field form.education %}
+                {% render_field form.department %}
                 {% render_field form.country_code %}
+        {# Country drives the affiliation list; see static/js/university-picker.js #}
+        <div data-university-picker
+             data-endpoint="{% url 'seminar-universities' %}"
+             data-country-field="{{ form.country_code.id_for_label }}"
+             data-university-field="{{ form.university.id_for_label }}">
+                    {% render_select form.university %}
+                </div>
+                {% render_field form.university_name %}
             </div>
         </div>
 
@@ -43,6 +51,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
 <script src="{% static 'js/tagify.js' %}"></script>
+<script src="{% static 'js/university-picker.js' %}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const avatarInput = document.querySelector('input[name="avatar"]');

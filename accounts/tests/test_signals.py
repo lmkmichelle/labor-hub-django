@@ -12,7 +12,7 @@ class ProfileSignalTests(TestCase):
         self.assertEqual(Profile.objects.filter(user=user).count(), 1)
         profile = user.profile
         self.assertEqual(profile.position, "")
-        self.assertEqual(profile.education, "")
+        self.assertEqual(profile.department, "")
         self.assertEqual(profile.research_interests, [])
 
     def test_profile_not_duplicated_on_resave(self):

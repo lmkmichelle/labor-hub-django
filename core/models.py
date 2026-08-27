@@ -48,6 +48,14 @@ class Approvable(models.Model):
     admin_notes = models.TextField(
         blank=True, help_text="Internal notes for administrators"
     )
+    is_example = models.BooleanField(
+        default=False,
+        help_text=(
+            "Illustrative content seeded for testing, not a real submission. "
+            "Shown publicly with an 'Example' badge and removable in one step "
+            "via `manage.py seed_examples --remove`."
+        ),
+    )
 
     objects = ApprovableQuerySet.as_manager()
 

@@ -24,8 +24,9 @@
                 {{ profile_user.first_name }} {{ profile_user.last_name }}
             </h5>
             <div class="flex flex-col mb-2 ">
-                <span>{{ user_profile.education }}</span>
                 <span>{{ user_profile.position }}</span>
+                {% if user_profile.department %}<span>{{ user_profile.department }}</span>{% endif %}
+                {% if user_profile.get_university_display %}<span>{{ user_profile.get_university_display }}</span>{% endif %}
                 <span>{{ user_profile.get_country_code_display }}</span>
             </div>
             <div class="space-y-1 not-format">
@@ -81,6 +82,10 @@
         <div class="w-full">
             <h3>Biography</h3>
             {{ user_profile.biography|linebreaks }}
+            <h3>Visits</h3>
+            <div class="not-format">
+                {% include "partials/_visits_list.html" with visits=visits %}
+            </div>
             <h3>Labor Hub Discussion Papers</h3>
             <div class="not-format">
                 {% include "partials/_publications_list.html" %}

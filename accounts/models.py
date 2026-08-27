@@ -94,7 +94,20 @@ class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     avatar = models.ImageField(upload_to='avatars', blank=True, null=True)
     position = models.CharField(max_length=100)
-    education = models.CharField(max_length=100)
+    department = models.CharField(max_length=100)
+    # Affiliation. The FK points at the shared University reference table so the
+    # field can be picked from a list; university_name is the escape hatch for
+    # institutions the table does not know about. Same pair as Seminar uses.
+    # Declared as a string so accounts does not import seminars (which already
+    # imports accounts) and create a circular import.
+    university = models.ForeignKey(
+        'seminars.University',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='member_profiles',
+    )
+    university_name = models.CharField(max_length=255, blank=True)
     country_code = models.CharField(
         max_length=2,
         choices=COUNTRY_CHOICES,
@@ -121,6 +134,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.email
+
+    def get_university_display(self):
+        """Affiliation for display: the picked university, else the typed name."""
+        if self.university:
+            return self.university.name
+        return self.university_name
 
     def research_interest_list(self):
         """Return research interests as a flat list of strings.
@@ -150,7 +169,15 @@ class UserApplication(models.Model):
     last_name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, choices=CustomUser.Role.choices, default=CustomUser.Role.RESEARCHER)
     position = models.CharField(max_length=100)
-    education = models.CharField(max_length=100)
+    department = models.CharField(max_length=100)
+    university = models.ForeignKey(
+        'seminars.University',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='applications',
+    )
+    university_name = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=128)
     country_code = models.CharField(
         max_length=2,
@@ -208,7 +235,9 @@ class UserApplication(models.Model):
 
         user.save()
         user.profile.position = self.position
-        user.profile.education = self.education
+        user.profile.department = self.department
+        user.profile.university = self.university
+        user.profile.university_name = self.university_name
         user.profile.country_code = self.country_code
         user.profile.save()
 

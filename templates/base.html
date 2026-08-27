@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>Labor Hub</title>
+    <title>{% block title %}Labor Hub{% endblock title %}</title>
     {% compress css %}
       <link rel="stylesheet" href="{% static 'src/output.css' %}" />
       <link rel="stylesheet" href="{% static 'css/base.css' %}" />
@@ -43,6 +43,12 @@
                     <li>
                       <a href="{% url 'admin:index' %}"
                          class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
+                    </li>
+                  {% endif %}
+                  {% if user.is_superuser %}
+                    <li>
+                      <a href="{% url 'help_index' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin guides</a>
                     </li>
                   {% endif %}
                   <li>

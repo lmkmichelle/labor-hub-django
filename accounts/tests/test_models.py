@@ -129,7 +129,7 @@ def make_application(email="applicant@example.com", role=CustomUser.Role.RESEARC
         last_name="Applicant",
         role=role,
         position="Fellow",
-        education="Cornell",
+        department="Cornell",
         password=make_password("pass12345"),
         country_code="US",
         status=status,
@@ -146,7 +146,7 @@ class UserApplicationTests(TestCase):
         self.assertTrue(user.is_active)
         self.assertEqual(user.role, CustomUser.Role.RESEARCHER)
         self.assertEqual(user.profile.position, "Fellow")
-        self.assertEqual(user.profile.education, "Cornell")
+        self.assertEqual(user.profile.department, "Cornell")
         self.assertEqual(user.profile.country_code, "US")
 
         app.refresh_from_db()

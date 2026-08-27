@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Admin guides{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2 class="title">Admin guides</h2>
+    <p>
+      These pages explain how to run Labor Hub day to day. They are visible only to
+      site administrators — regular members cannot see this section or reach these
+      pages.
+    </p>
+
+    <h3>Guides</h3>
+    <ul>
+      <li>
+        <a href="{% url 'help_applications' %}">Approving and denying new members</a>
+        — reviewing people who apply to join.
+      </li>
+      <li>
+        <a href="{% url 'help_content' %}">Approving papers, events, jobs and visits</a>
+        — reviewing everything members submit.
+      </li>
+    </ul>
+
+    <h3>What needs review right now</h3>
+    <p>
+      Nothing a member submits appears on the public site until an administrator
+      approves it. There is no single screen listing everything awaiting review, so
+      these five links go straight to each pending queue. Bookmark them.
+    </p>
+    <ul>
+      <li>
+        <a href="{% url 'admin:accounts_userapplication_changelist' %}?status__exact=pending">Pending membership applications</a>
+      </li>
+      <li>
+        <a href="{% url 'admin:publications_publication_changelist' %}?status__exact=pending">Pending discussion papers</a>
+      </li>
+      <li>
+        <a href="{% url 'admin:events_event_changelist' %}?status__exact=pending">Pending events</a>
+      </li>
+      <li>
+        <a href="{% url 'admin:jobs_job_changelist' %}?status__exact=pending">Pending jobs</a>
+      </li>
+      <li>
+        <a href="{% url 'admin:seminars_seminar_changelist' %}?status__exact=pending">Pending visits</a>
+      </li>
+    </ul>
+
+    <h3>How the site fits together</h3>
+    <p>
+      Everything is managed from the <a href="{% url 'admin:index' %}">admin area</a>,
+      which you can also reach from the <strong>Admin</strong> link in the menu under
+      your name. It is organised by section:
+    </p>
+    <ul>
+      <li>
+        <strong>Accounts</strong> — <em>User applications</em> (people asking to join)
+        and <em>Users</em> (existing members).
+      </li>
+      <li>
+        <strong>Publications</strong> — discussion papers.
+      </li>
+      <li>
+        <strong>Events</strong> — conferences, workshops, seasonal schools and podcasts.
+      </li>
+      <li>
+        <strong>Jobs</strong> — the job board.
+      </li>
+      <li>
+        <strong>Seminars</strong> — visits. The public site calls these
+        <em>Visits</em>, but the admin section is still labelled
+        <em>Seminars</em>. They are the same thing.
+      </li>
+    </ul>
+
+    <h3>Frequently asked questions</h3>
+
+    <h4>Someone says they submitted something, but I can't find it</h4>
+    <p>
+      Check the pending queue for that section using the links above. If it is not
+      there, check whether it was already approved or rejected: remove
+      <code>?status__exact=pending</code> from the address to see every item, then
+      look at the <strong>Status</strong> column.
+    </p>
+
+    <h4>A member says they never heard back after applying</h4>
+    <p>
+      Approved applicants are emailed automatically. <strong>Rejected applicants are
+      not</strong> — the site sends nothing when you deny an application, so you need
+      to email them yourself if you want them to know.
+    </p>
+
+    <h4>I approved something but it still isn't on the site</h4>
+    <p>
+      Approval is all that controls papers and jobs. Events and visits also have to
+      be in the future: an event whose date has passed will not appear on the home
+      page, and a visit whose end date has passed moves to the
+      <em>Archived</em> tab on the Visits page.
+    </p>
+
+    <h4>I made a mistake — can I undo an approval?</h4>
+    <p>
+      For papers, events, jobs and visits, yes: open the item and change
+      <strong>Status</strong> back to <em>Pending</em>, then approve or reject it
+      properly. For membership applications, no — see the
+      <a href="{% url 'help_applications' %}">membership guide</a> for what to do
+      instead.
+    </p>
+
+    <h4>Can I delete something instead of rejecting it?</h4>
+    <p>
+      You can, but rejecting is usually better: it keeps a record of what was
+      submitted and who reviewed it. Delete only genuine spam.
+    </p>
+
+    <h4>Something here is wrong or missing</h4>
+    <p>
+      These guides are part of the site, so they can be corrected — let the site
+      maintainer know and they can be updated.
+    </p>
+  </article>
+{% endblock content %}

@@ -7,6 +7,7 @@
         <div class="flex flex-row w-full justify-between items-center">
             <p>{{ event.date|date:"N j, Y" }}</p>
             <div class="not-format">
+                {% include "partials/_example_badge.html" with show=event.is_example %}
                 {% comment %} {% if user.is_authenticated and user == event.host %}
                     <a href="{% url 'edit_event' pk=event.pk %}"
                        class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Event</a>

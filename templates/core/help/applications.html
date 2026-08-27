@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Approving new members{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2 class="title">Approving and denying new members</h2>
+    <p>
+      When someone applies to join Labor Hub, their application waits for an
+      administrator to review it. No account exists and they cannot sign in until
+      you approve them.
+    </p>
+    <p>
+      <a href="{% url 'help_index' %}">← Back to the admin guides</a>
+    </p>
+
+    <h3>Reviewing an application</h3>
+    <ol>
+      <li>
+        Open the
+        <a href="{% url 'admin:accounts_userapplication_changelist' %}?status__exact=pending">pending applications list</a>.
+      </li>
+      <li>
+        Each row shows the applicant's email, name, when they applied, and their
+        résumé. To see everything they submitted — including their motivation and
+        any research papers they attached — click their <strong>email address</strong>
+        to open the full application.
+      </li>
+      <li>
+        In the <strong>Approve/Deny Application</strong> column, click
+        <strong>Approve</strong> or <strong>Deny</strong>.
+      </li>
+    </ol>
+    <p>
+      <strong>There is no confirmation step.</strong> One click decides it, and the
+      buttons disappear from that row afterwards. Read the application before you
+      click.
+    </p>
+
+    <h3>What happens when you approve</h3>
+    <ul>
+      <li>Their account is created and activated immediately.</li>
+      <li>
+        Their position, institution and country are copied across to their new
+        profile.
+      </li>
+      <li>
+        They are emailed to say their account is live, with a link to sign in. They
+        use the password they chose when they applied — you never see it and never
+        need to send them one.
+      </li>
+      <li>
+        A green banner confirms
+        <em>"Application approved! User account created for …"</em>.
+      </li>
+    </ul>
+
+    <h3>What happens when you deny</h3>
+    <ul>
+      <li>The application is marked <em>Rejected</em>. No account is created.</li>
+      <li>
+        <strong>The applicant is told nothing.</strong> The site sends no rejection
+        email, and because they have no account there is no way for them to check.
+        If you want them to know, email them yourself — their address is in the
+        <strong>Email</strong> column.
+      </li>
+      <li>
+        The banner is green and says <em>"Application rejected"</em>. Green is just
+        the site's standard confirmation colour; it does not mean you approved
+        anyone.
+      </li>
+    </ul>
+
+    <h3>Things worth knowing before you start</h3>
+
+    <h4>Denying is permanent</h4>
+    <p>
+      A rejected application cannot be reopened from this screen. If you deny someone
+      by mistake, the way to fix it is to create their account by hand under
+      <strong>Accounts → Users → Add user</strong>, or to ask them to apply again.
+    </p>
+
+    <h4>Student applications lose their advisor</h4>
+    <p>
+      Students name an advisor when they apply, but that choice is
+      <strong>not carried over</strong> when you approve them, and it is not shown on
+      the application screen either. If you are approving a student and the advisor
+      link matters, set it afterwards:
+      <strong>Accounts → Users →</strong> the student <strong>→ Advisor</strong>.
+    </p>
+
+    <h4>"A user with this email already exists"</h4>
+    <p>
+      This red message means someone already has an account with that address —
+      usually because it was created by hand, or because the person applied twice.
+      The application stays pending, so nothing is lost. Check
+      <strong>Accounts → Users</strong> for the existing account; if it is genuinely
+      the same person, deny the duplicate application.
+    </p>
+
+    <h4>Approve and Deny only appear while an application is pending</h4>
+    <p>
+      Once reviewed, the column shows plain text such as <em>Status: Approved</em>.
+      If you use a bookmarked or back-button link to a decision you have already
+      made, you will see <em>"This application has already been reviewed."</em>
+    </p>
+
+    <h4>Deleting an application does not delete the member</h4>
+    <p>
+      After approval the account and the application are separate records. Deleting
+      the application leaves the member's account working. To remove a member,
+      delete them under <strong>Accounts → Users</strong> instead — or untick
+      <strong>Active</strong> to suspend them without losing their content.
+    </p>
+  </article>
+{% endblock content %}

@@ -118,6 +118,9 @@
                                          alt="{{ scholar.first_name }} {{ scholar.last_name }}" />
                                     <h5 class="mb-0.5 text-xl font-semibold tracking-tight text-heading">{{ scholar.first_name }} {{ scholar.last_name }}</h5>
                                     <span class="text-sm text-body mb-2">{{ scholar.profile.position|default:"Position not specified" }}</span>
+                                    {% if scholar.profile.get_university_display %}
+                                        <span class="text-sm text-body mb-2">{{ scholar.profile.get_university_display }}</span>
+                                    {% endif %}
                                     {% if scholar.profile.research_interests %}
                                         <div class="flex flex-wrap gap-2 justify-center mb-4">
                                             {% for interest in scholar.profile.research_interest_list|slice:":3" %}

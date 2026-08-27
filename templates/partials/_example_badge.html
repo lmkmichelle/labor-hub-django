@@ -1,0 +1,12 @@
+{% comment %}
+"Example" pill for seeded illustrative content (Approvable.is_example). Input:
+  show   truthy to render the pill; anything falsy renders nothing
+Callers pass the flag rather than the object so this works both for model
+instances ({% include ... with show=job.is_example %}) and for the plain dicts
+the home page builds in the view.
+Amber deliberately differs from the red topic/country pills and the neutral
+category chips, so "this is not a real submission" reads at a glance.
+{% endcomment %}
+{% if show %}
+  <span class="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Example</span>
+{% endif %}

@@ -7,6 +7,7 @@
             <div class="flex flex-row w-full justify-between items-center">
                 <p>{{ publication.formatted_date }}</p>
                 <div class="not-format">
+                    {% include "partials/_example_badge.html" with show=publication.is_example %}
                     {% if user.is_authenticated %}
                         {% for author in publication.authors.all %}
                             {% if author.user == user %}

@@ -15,6 +15,8 @@ from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, UpdateView, ListView
 
 from core.constants import COUNTRY_CHOICES
+from core.models import ApprovalStatus
+from seminars.models import Seminar
 from publications.models import Publication
 from publications.utils import handle_keywords
 from .digests import read_unsubscribe_token
@@ -79,15 +81,40 @@ class ProfileView(View):
                 return redirect("login")
             profile_user = request.user
 
-        authored_publications = Publication.objects.filter(
-            authors__user=profile_user
+        authored_publications = self._visible(
+            Publication.objects.filter(authors__user=profile_user),
+            request,
+            profile_user,
         ).distinct().prefetch_related("authors__user")
+
+        # Visits the member posted. ``posted_by`` is the only link from a visit
+        # back to a member, and the submission form labels the visitor fields
+        # "Your Name"/"Your Email", so the poster is normally the visitor.
+        visits = self._visible(
+            Seminar.objects.filter(posted_by=profile_user),
+            request,
+            profile_user,
+        ).select_related("university").order_by("visit_start", "id")
 
         return render(request, self.template_name, {
             'profile_user': profile_user,
             'user_profile': profile_user.profile,
-            'publications': authored_publications
+            'publications': authored_publications,
+            'visits': visits,
         })
+
+    @staticmethod
+    def _visible(queryset, request, profile_user):
+        """Limit moderated content to what this viewer may see.
+
+        Everyone sees approved items. On your own profile you also see your
+        still-pending submissions, so a paper or visit does not silently vanish
+        between submitting it and an admin approving it. Rejected items are never
+        shown.
+        """
+        if request.user.is_authenticated and request.user == profile_user:
+            return queryset.exclude(status=ApprovalStatus.REJECTED)
+        return queryset.filter(status=ApprovalStatus.APPROVED)
 
 
 class EditProfileView(LoginRequiredMixin, UpdateView):

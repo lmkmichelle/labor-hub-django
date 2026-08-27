@@ -7,6 +7,7 @@ publications, scholars, seminars, events, profile papers). Inputs:
   description optional body text / summary
   meta        optional small right-aligned footer text (e.g. time)
   badge       optional chip shown top-right
+  is_example  truthy to add an "Example" pill alongside the badge/date
   date        optional muted text shown top-right when no badge is given
   location    optional venue line (rendered with a 📍 marker)
   image       optional avatar / thumbnail URL
@@ -24,11 +25,14 @@ no view-context changes are required.
       {% if image %}<img src="{{ image }}" alt="" width="40" height="40" class="h-10 w-10 shrink-0 rounded-full object-cover" />{% endif %}
       <h6 class="text-base font-semibold text-heading">{{ title }}</h6>
     </div>
-    {% if badge %}
-      <span class="shrink-0 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{{ badge }}</span>
-    {% elif date %}
-      <small class="shrink-0 text-sm text-body">{{ date }}</small>
-    {% endif %}
+    <div class="flex shrink-0 items-center gap-2">
+      {% include "partials/_example_badge.html" with show=is_example %}
+      {% if badge %}
+        <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{{ badge }}</span>
+      {% elif date %}
+        <small class="text-sm text-body">{{ date }}</small>
+      {% endif %}
+    </div>
   </div>
   {% if subtitle %}<p class="mt-1 text-sm text-body">{{ subtitle }}</p>{% endif %}
   {% if location %}<p class="mt-1 text-sm text-body">📍 {{ location }}</p>{% endif %}

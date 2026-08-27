@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Approving submissions{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2 class="title">Approving papers, events, jobs and visits</h2>
+    <p>
+      Everything members submit — discussion papers, events, job postings and visits
+      — is held for review. It is invisible to the public until an administrator
+      approves it. All four work exactly the same way, so once you have done one you
+      have done them all.
+    </p>
+    <p>
+      <a href="{% url 'help_index' %}">← Back to the admin guides</a>
+    </p>
+
+    <h3>Where each type lives</h3>
+    <ul>
+      <li>
+        <a href="{% url 'admin:publications_publication_changelist' %}?status__exact=pending">Discussion papers</a>
+        — under <strong>Publications</strong>.
+      </li>
+      <li>
+        <a href="{% url 'admin:events_event_changelist' %}?status__exact=pending">Events</a>
+        — conferences, workshops, seasonal schools and podcasts.
+      </li>
+      <li>
+        <a href="{% url 'admin:jobs_job_changelist' %}?status__exact=pending">Jobs</a>
+      </li>
+      <li>
+        <a href="{% url 'admin:seminars_seminar_changelist' %}?status__exact=pending">Visits</a>
+        — listed under <strong>Seminars</strong> in the admin area.
+      </li>
+    </ul>
+
+    <h3>Approving one item</h3>
+    <ol>
+      <li>Open the relevant list from the links above.</li>
+      <li>
+        Click the item's title to read what was submitted. Check the details are
+        sensible and that any link works.
+      </li>
+      <li>
+        Go back to the list and click <strong>Approve</strong> or
+        <strong>Reject</strong> in the <strong>Review</strong> column on the right.
+      </li>
+    </ol>
+    <p>
+      Approving publishes the item immediately. There is no confirmation step, and
+      the buttons disappear once the item has been reviewed.
+    </p>
+
+    <h3>Approving several at once</h3>
+    <ol>
+      <li>
+        Open the list and make sure you are looking at the pending items only — use
+        the <strong>By status → Pending</strong> filter on the right, or the links
+        above.
+      </li>
+      <li>Tick the checkbox beside each item you want to publish.</li>
+      <li>
+        At the top of the list, choose
+        <strong>Approve selected pending items</strong> from the
+        <strong>Action</strong> menu and click <strong>Go</strong>.
+      </li>
+    </ol>
+    <p>
+      If the confirmation says fewer items than you selected, that is expected:
+      anything already approved or rejected is skipped silently. Filter to
+      <em>Pending</em> first and the numbers will match.
+    </p>
+
+    <h3>Always use the Approve button, not the Status dropdown</h3>
+    <p>
+      When you open an item there is also a <strong>Status</strong> dropdown you can
+      change by hand. It works, but it skips the review record: the site will not
+      note who approved the item or when, and those fields cannot be filled in
+      afterwards.
+    </p>
+    <p>
+      Use the <strong>Approve</strong> and <strong>Reject</strong> buttons, or the
+      bulk action, for anything you are actually reviewing. The dropdown is useful
+      for one thing only: putting a mistakenly reviewed item back to
+      <em>Pending</em> so you can decide again properly.
+    </p>
+
+    <h3>Rejecting</h3>
+    <p>
+      Rejected items stay in the system but never appear publicly. The submitter is
+      not notified — as with membership applications, the site sends no rejection
+      email, so contact them yourself if an explanation would help. Use
+      <strong>Admin notes</strong> on the item to record why you rejected it; those
+      notes are internal and never shown publicly.
+    </p>
+
+    <h3>Approved but still not showing?</h3>
+    <p>
+      Approval is the only requirement for papers and jobs. Two types also depend on
+      dates:
+    </p>
+    <ul>
+      <li>
+        <strong>Events</strong> — an event whose date has passed still appears on the
+        Events page but drops off the home page.
+      </li>
+      <li>
+        <strong>Visits</strong> — once the visit's end date has passed it moves to
+        the <em>Archived</em> tab. A visit with no dates at all will not appear in
+        either tab, so make sure a start date is filled in.
+      </li>
+    </ul>
+    <p>
+      If something still looks wrong, check the <strong>Status</strong> column really
+      does say <em>Approved</em> — it is easy to click Reject by mistake, since the
+      two buttons sit side by side.
+    </p>
+  </article>
+{% endblock content %}

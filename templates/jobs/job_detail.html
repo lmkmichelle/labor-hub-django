@@ -5,7 +5,7 @@
     <div>
         <div class="flex flex-row w-full justify-between items-center">
             <p>{{ job.deadline|date:"N j, Y" }}</p>
-            <div class="not-format"></div>
+            <div class="not-format">{% include "partials/_example_badge.html" with show=job.is_example %}</div>
         </div>
         <div class="flex flex-row gap-2 items-center w-full overflow-auto">
             <h3>{{ job.title }}</h3>

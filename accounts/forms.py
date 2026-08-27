@@ -5,6 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password
 
 from core.constants import COUNTRY_CHOICES
+from seminars.models import University
+
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
 
 
@@ -41,9 +43,23 @@ class BaseApplicationForm(forms.ModelForm):
         help_text='Enter the same password as before, for verification.'
     )
 
-    education = forms.CharField(
-        label='Current Institution',
+    department = forms.CharField(
+        label='Department',
         widget=forms.TextInput()
+    )
+
+    university = forms.ModelChoiceField(
+        queryset=University.objects.none(),
+        required=False,
+        label='Affiliation',
+        empty_label='Choose your institution',
+        help_text="Pick a country first. Not listed? Type it in the box below.",
+    )
+
+    university_name = forms.CharField(
+        required=False,
+        label='Affiliation (if not listed above)',
+        widget=forms.TextInput(),
     )
 
     class Meta:
@@ -53,10 +69,18 @@ class BaseApplicationForm(forms.ModelForm):
             "first_name",
             "last_name",
             "resume",
-            "education",
+            "department",
+            "university",
+            "university_name",
             "country_code",
             "motivation"
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Same reasoning as UpdateProfileForm: accept any university on POST
+        # while the rendered <select> is narrowed by country via JS.
+        self.fields['university'].queryset = University.objects.order_by('name')
 
     def save(self, commit=True):
         application = super().save(commit=False)
@@ -161,7 +185,8 @@ class UpdateUserForm(forms.ModelForm):
 class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['avatar', 'position', 'country_code', 'education', 'website', 'biography']
+        fields = ['avatar', 'position', 'department', 'university', 'university_name',
+                  'country_code', 'website', 'biography']
 
     avatar = forms.ImageField(
         label='Upload a profile picture',
@@ -174,13 +199,27 @@ class UpdateProfileForm(forms.ModelForm):
         widget=forms.Textarea()
     )
 
-    education = forms.CharField(
-        label='Current Institution',
+    department = forms.CharField(
+        label='Department',
         widget=forms.TextInput()
     )
 
+    university = forms.ModelChoiceField(
+        queryset=University.objects.none(),
+        required=False,
+        label='Affiliation',
+        empty_label='Choose your institution',
+        help_text="Pick a country first. Not listed? Type it in the box below.",
+    )
+
+    university_name = forms.CharField(
+        required=False,
+        label='Affiliation (if not listed above)',
+        widget=forms.TextInput(),
+    )
+
     position = forms.CharField(
-        label='Current Affiliation',
+        label='Position',
         widget=forms.TextInput()
     )
 
@@ -202,6 +241,10 @@ class UpdateProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Populate the affiliation choices from the whole table so a POSTed
+        # university validates, while the rendered <select> starts narrow and is
+        # refilled by JS once a country is chosen.
+        self.fields['university'].queryset = University.objects.order_by('name')
 
         if self.instance and self.instance.research_interests:
             initial_interests = self.instance.research_interests
