@@ -165,3 +165,36 @@ class ExampleBadgeTests(TestCase):
         self.assertContains(response, "A Real Job")
         self.assertNotContains(response, "_example_badge")
         self.assertNotContains(response, "bg-amber-100")
+
+
+class ExamplePaperPillTests(TestCase):
+    """The example paper isn't actually part of the discussion series."""
+
+    def setUp(self):
+        run()
+        self.paper = Publication.objects.get()
+
+    def test_no_discussion_series_pill_on_the_publications_list(self):
+        response = self.client.get("/publications/")
+        self.assertNotContains(response, "Discussion Series #")
+
+    def test_no_discussion_series_pill_on_the_home_page(self):
+        response = self.client.get("/")
+        self.assertNotContains(response, "Discussion Series #")
+
+    def test_real_paper_still_gets_the_pill(self):
+        run("--remove")
+        author = Author.objects.create(user=None, name="Real Author")
+        paper = Publication.objects.create(
+            title="A Real Paper", abstract="Real.",
+            study_url="https://real.example.edu", status="approved",
+        )
+        paper.authors.set([author])
+        response = self.client.get("/publications/")
+        self.assertContains(response, f"Discussion Series #{paper.id}")
+
+    def test_no_discussion_series_text_on_the_example_event_card(self):
+        """Pre-existing copy-paste bug: the home page event card also printed
+        this text, which never made sense for an event regardless of is_example."""
+        response = self.client.get("/")
+        self.assertNotContains(response, "Discussion Series #")

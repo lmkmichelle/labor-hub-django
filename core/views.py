@@ -68,7 +68,9 @@ def home(request):
             'url': f'/events/{event.id}/',
             'title': event.title,
             'date': event.date.strftime('%b %d'),
-            'subtitle': f'Discussion Series #{event.id}' if hasattr(event, 'id') else '',
+            # No 'subtitle' here: this previously read
+            # f'Discussion Series #{event.id}', a leftover from copying the
+            # papers dict below -- meaningless (and always-true) for an event.
             'description': f'📍 {event.location}',
             'badge': {
                 'class': 'bg-primary',
@@ -145,7 +147,8 @@ def home(request):
             'url': f'/publications/{paper.id}/',
             'title': paper.title,
             'date': paper.applied_at.strftime('%b %d'),
-            'subtitle': f'Discussion Series #{paper.id}',
+            # Example papers aren't actually part of the discussion series.
+            'subtitle': '' if paper.is_example else f'Discussion Series #{paper.id}',
             'is_example': paper.is_example,
             'description': ', '.join(authors) if authors else 'Unknown Author'
         })
