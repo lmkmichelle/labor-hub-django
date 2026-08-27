@@ -46,8 +46,22 @@ def handle_authors(raw_input):
 
 
 def handle_keywords(raw_input):
+    """Normalise a Tagify value into a flat list of strings.
+
+    Tolerates an empty or malformed value: these fields are optional, so a blank
+    submission must produce an empty list rather than raising JSONDecodeError.
+    """
+    if not (raw_input or '').strip():
+        return []
+    try:
+        entries = json.loads(raw_input)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(entries, list):
+        return []
+
     keywords = []
-    for entry in json.loads(raw_input):
+    for entry in entries:
         if isinstance(entry, dict):
             value = entry.get('value', '')
         else:
@@ -60,7 +74,7 @@ def handle_keywords(raw_input):
 def process_publication_form(request, form):
     publication = form.save(commit=False)
 
-    raw_keywords = request.POST.get('keywords_input', '[]')
+    raw_keywords = request.POST.get('keywords_input') or '[]'
     publication.keywords = handle_keywords(raw_keywords)
     
     topic_input = request.POST.get('topic_input', '')

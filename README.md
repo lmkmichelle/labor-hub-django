@@ -5,8 +5,10 @@ The database is **MySQL** (matching Cornell Media3 hosting); **SQLite** works ou
 the box for zero-setup local development. Node.js is only used to (re)build the
 Tailwind CSS bundle at build time — the compiled `static/src/output.css` is committed,
 so it is not required to run the app. Flowbite's JavaScript is likewise vendored as a
-committed static asset (`static/js/flowbite.min.js`, loaded via `{% static %}`), so the
-app pulls **no runtime assets from a CDN**.
+committed static asset (`static/js/flowbite.min.js`, loaded via `{% static %}`).
+One exception remains: **Tagify** (the pill/tag inputs) is still loaded from an
+unpinned `cdn.jsdelivr.net` URL in the form and filter templates. Vendoring it
+alongside Flowbite is tracked as follow-up work.
 
 > **Styling convention.** Forms render through the shared field partials/tags
 > (`{% render_field %}` / `{% render_select %}`); shared list/pagination/empty-state
@@ -18,37 +20,94 @@ app pulls **no runtime assets from a CDN**.
 
 ## Prerequisites
 
-- Python 3.12+ (use the `py` launcher on Windows)
+- Python 3.12+ (`python3` on macOS/Linux; the `py` launcher on Windows)
 - MySQL 8 (optional locally — SQLite is the default)
 - Node.js (optional — only to rebuild Tailwind CSS)
 
 ## Run without Docker (local dev)
 
-```powershell
+### macOS / Linux
+
+```bash
 # 1. Create and activate a virtual environment
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+python3 -m venv .venv
+source .venv/bin/activate
 
 # 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Configure environment
-copy .env.example .env
-#    Defaults to SQLite (no database setup needed). For local MySQL instead, set
-#    DATABASE_ENGINE=mysql and DATABASE_HOST=127.0.0.1 in .env.
+# 3. Configure environment  <-- do not skip this
+cp .env.example .env
+#    Defaults to SQLite (no database setup needed) and DEBUG=1. For local MySQL
+#    instead, set DATABASE_ENGINE=mysql and DATABASE_HOST=127.0.0.1 in .env.
 
-# 4. (Optional) rebuild Tailwind CSS after editing templates/styles
+# 4. Apply migrations and start the server
+python manage.py migrate
+python manage.py runserver
+```
+
+Then open <http://localhost:8000/>.
+
+### Windows (PowerShell)
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+### Rebuilding the CSS (optional)
+
+Only needed after editing templates or `static/src/input.css`; the compiled
+bundle is committed, so a plain checkout runs without Node.
+
+```
 npm install
 npm run watch          # or `npm run build` for a one-off minified build
-
-# 5. Apply migrations and start the server
-py manage.py migrate
-py manage.py runserver
 ```
+
+### Step 3 is not optional
+
+Without a `.env`, the app falls back to **production** defaults — `DEBUG=0`,
+which turns on the HTTPS redirect, offline asset compression and secure-only
+cookies, and leaves `DJANGO_SECRET_KEY` unset. A local run then fails, and the
+first error is usually the confusing one below rather than anything about the
+missing file:
+
+```
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'localhost:8000'.
+You may need to add 'localhost' to ALLOWED_HOSTS.
+```
+
+`cp .env.example .env` fixes it. (`ALLOWED_HOSTS` now defaults to
+`localhost,127.0.0.1,[::1]`, so that particular error should not recur, but the
+rest of the production defaults still apply until `.env` exists.)
 
 For a local **MySQL** run, set in `.env`: `DATABASE_ENGINE=mysql`,
 `DATABASE_HOST=127.0.0.1`, `DATABASE_PORT=3306`, and the `DATABASE_*` credentials,
 then create the database in MySQL before running migrations.
+
+### Giving yourself an account
+
+There is no public sign-up for administrators — membership normally goes through
+the application-and-approval flow, which needs an approver to already exist. To
+create the first one (or to onboard faculty directly):
+
+```
+python manage.py create_staff_user "Ada Lovelace <ada@example.edu>" --superuser --country US
+```
+
+It prints a generated temporary password once. Sign in at
+<http://localhost:8000/accounts/login/> and change it at
+`/accounts/password-change/`. Re-running skips accounts that already exist;
+`--reset-existing` issues a new password instead.
+
+Superusers get an **Admin guides** entry in the menu under their name
+(<http://localhost:8000/help/>) documenting how to approve applicants and review
+submitted papers, events, jobs and visits.
 
 ### Demo data
 
@@ -56,8 +115,8 @@ To populate the database with realistic demo content (users, profiles, publicati
 events, universities, visits, and jobs) for manual UI testing, run:
 
 ```
-py manage.py seed_demo            # create or refresh demo data
-py manage.py seed_demo --reset    # delete demo data first, then re-create it
+python manage.py seed_demo            # create or refresh demo data
+python manage.py seed_demo --reset    # delete demo data first, then re-create it
 ```
 
 The command is **idempotent** (safe to run repeatedly and on any machine — it never
@@ -68,6 +127,23 @@ visits, and job deadlines stay in the future. Every demo user shares the passwor
 when `DEBUG=False`** (pass `--force` to override), so it can never seed fake data into
 the Cornell Media3 production database. All demo accounts use the `@laborhub.demo`
 e-mail domain, and `--reset` removes only the data this command created.
+
+### Example content (safe on the live site)
+
+`seed_demo` above is **local-only** — it creates fake users, including a superuser
+with a shared password, and refuses to run when `DEBUG=False`. For putting one
+worked example in each section of the *real* site during testing, use
+`seed_examples` instead:
+
+```
+python manage.py seed_examples            # one job, paper, visit and workshop
+python manage.py seed_examples --remove   # delete them again
+```
+
+It creates no accounts, leaves ownership unset so nothing appears on a real
+member's profile, and flags every row it writes so each one renders with a
+visible **Example** badge and `--remove` can undo it exactly. Pass
+`--owner someone@example.edu` to attribute the examples to a member instead.
 
 ## Run with Docker
 
@@ -103,11 +179,11 @@ offline compression and HTTPS redirects, and provides a fixed secret key.
 
 ```
 # Run the whole suite (fast, in-memory SQLite)
-py manage.py test --settings=nole.settings_test
+python manage.py test --settings=nole.settings_test
 
 # Run a single app or test module
-py manage.py test accounts --settings=nole.settings_test
-py manage.py test accounts.tests.test_models --settings=nole.settings_test
+python manage.py test accounts --settings=nole.settings_test
+python manage.py test accounts.tests.test_models --settings=nole.settings_test
 ```
 
 ### Coverage
@@ -136,7 +212,7 @@ runs when `RUN_E2E=1` and Playwright's browser are installed:
 ```
 pip install -r requirements-dev.txt
 python -m playwright install chromium
-RUN_E2E=1 py manage.py test e2e --settings=nole.settings_test
+RUN_E2E=1 python manage.py test e2e --settings=nole.settings_test
 ```
 
 ## Continuous integration

@@ -43,7 +43,17 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DEBUG", "0")
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
+# Default covers the addresses a local runserver is reached on -- "localhost"
+# included, since http://localhost:8000/ is what most browsers autocomplete to
+# and a 127.0.0.1-only default rejects it with a bare DisallowedHost. Production
+# always sets DJANGO_ALLOWED_HOSTS explicitly (see .environment on Upsun).
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]"
+    ).split(",")
+    if host.strip()
+]
 
 # Application definition
 

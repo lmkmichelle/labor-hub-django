@@ -188,15 +188,20 @@ class UpdateProfileForm(forms.ModelForm):
         fields = ['avatar', 'position', 'department', 'university', 'university_name',
                   'country_code', 'website', 'biography']
 
+    # These mirror Profile's blank=True fields. Declaring them required here
+    # made a picture, a website and at least one research interest mandatory
+    # before anyone could save any profile edit at all.
     avatar = forms.ImageField(
         label='Upload a profile picture',
         help_text='Please ensure that the image contains a clear subject.',
-        widget=forms.FileInput
+        widget=forms.FileInput,
+        required=False,
     )
 
     biography = forms.CharField(
         label='Biography',
-        widget=forms.Textarea()
+        widget=forms.Textarea(),
+        required=False,
     )
 
     department = forms.CharField(
@@ -231,12 +236,14 @@ class UpdateProfileForm(forms.ModelForm):
 
     website = forms.URLField(
         label='Personal Website',
-        widget=forms.URLInput()
+        widget=forms.URLInput(),
+        required=False,
     )
 
     research_interests_input = forms.CharField(
         label='Research Interests',
         widget=forms.TextInput(attrs={"id": "research-interests-input"}),
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):

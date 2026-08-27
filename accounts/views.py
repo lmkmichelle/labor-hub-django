@@ -135,7 +135,7 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
 
             if 'avatar' in request.FILES:
                 profile.avatar = self._crop(request.FILES['avatar'])
-            raw_interests = self.request.POST.get('research_interests_input', '[]')
+            raw_interests = self.request.POST.get('research_interests_input') or '[]'
             profile.research_interests = handle_keywords(raw_interests)
 
             profile.save()

@@ -60,10 +60,6 @@ class ProfileFormTests(TestCase):
         self.assertEqual(form.fields["department"].label, "Department")
         self.assertEqual(form.fields["position"].label, "Position")
 
-    # NOTE: these assert on the university field specifically rather than on
-    # form.is_valid(). UpdateProfileForm declares `avatar` and `website` without
-    # required=False, so a bound form without them is invalid for reasons that
-    # predate the affiliation work and are unrelated to it.
     def test_a_posted_university_is_accepted(self):
         """Regression: the queryset starts empty, so __init__ must widen it."""
         cornell = University.objects.create(name="Cornell University", country_code="US")
@@ -77,9 +73,8 @@ class ProfileFormTests(TestCase):
             },
             instance=user.profile,
         )
-        form.is_valid()
-        self.assertNotIn("university", form.errors)
-        self.assertEqual(form.cleaned_data.get("university"), cornell)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["university"], cornell)
 
     def test_affiliation_is_optional(self):
         user = make_user()
@@ -92,9 +87,7 @@ class ProfileFormTests(TestCase):
             },
             instance=user.profile,
         )
-        form.is_valid()
-        self.assertNotIn("university", form.errors)
-        self.assertNotIn("university_name", form.errors)
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 class ApplicationApprovalCarriesAffiliationTests(TestCase):
@@ -156,3 +149,100 @@ class ProfilePageTests(TestCase):
         self.assertContains(response, "Professor")
         self.assertContains(response, "Economics")
         self.assertContains(response, "Cornell University")
+
+
+class OptionalProfileFieldTests(TestCase):
+    """Only position, department and country are genuinely required.
+
+    Regression: avatar, website, biography and research interests were declared
+    required on the form even though all four are blank=True on the model, so a
+    member could not save any profile edit without uploading a picture and
+    typing a website URL.
+    """
+
+    OPTIONAL = ["avatar", "website", "biography", "research_interests_input"]
+
+    def test_optional_fields_are_not_required(self):
+        form = UpdateProfileForm()
+        for name in self.OPTIONAL:
+            with self.subTest(field=name):
+                self.assertFalse(form.fields[name].required)
+
+    def test_position_and_department_remain_required(self):
+        form = UpdateProfileForm()
+        for name in ["position", "department"]:
+            with self.subTest(field=name):
+                self.assertTrue(form.fields[name].required)
+
+    def test_a_minimal_edit_is_valid(self):
+        user = make_user()
+        form = UpdateProfileForm(
+            data={
+                "position": "Professor", "department": "Economics",
+                "country_code": "US",
+            },
+            instance=user.profile,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+
+class EditProfileViewTests(TestCase):
+    """End-to-end through the real view, which is where the crash would happen."""
+
+    def setUp(self):
+        self.user = make_user()
+        self.client.force_login(self.user)
+
+    def _post(self, **overrides):
+        data = {
+            "position": "Professor",
+            "department": "Economics",
+            "country_code": "US",
+        }
+        data.update(overrides)
+        return self.client.post(reverse("edit_profile"), data)
+
+    def test_saving_without_a_picture_or_website_succeeds(self):
+        response = self._post()
+        self.assertRedirects(response, reverse("profile"))
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.department, "Economics")
+
+    def test_blank_research_interests_does_not_crash(self):
+        """handle_keywords used to raise JSONDecodeError on an empty string."""
+        response = self._post(research_interests_input="")
+        self.assertRedirects(response, reverse("profile"))
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.research_interests, [])
+
+    def test_research_interests_still_save_when_provided(self):
+        self._post(research_interests_input='[{"value": "Migration"}]')
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.research_interests, ["Migration"])
+
+    def test_malformed_research_interests_are_ignored_not_fatal(self):
+        response = self._post(research_interests_input="not json")
+        self.assertRedirects(response, reverse("profile"))
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.research_interests, [])
+
+    def test_editing_without_reuploading_keeps_the_existing_avatar(self):
+        """A save must not silently wipe a picture the member uploaded earlier."""
+        from io import BytesIO
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        buffer = BytesIO()
+        Image.new("RGB", (400, 400), "red").save(buffer, format="JPEG")
+        self.user.profile.avatar = SimpleUploadedFile(
+            "before.jpg", buffer.getvalue(), content_type="image/jpeg"
+        )
+        self.user.profile.save()
+        original = self.user.profile.avatar.name
+        self.assertTrue(original)
+
+        self._post(position="Still A Professor")
+
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.avatar.name, original)
