@@ -1,8 +1,8 @@
 """nole project package.
 
 Use PyMySQL as a drop-in replacement for MySQLdb so DATABASE_ENGINE=mysql works
-with the pure-Python driver (no system build tools needed on Windows or the
-Cornell Media3 Linux host). Guarded so environments without PyMySQL installed
+with the pure-Python driver (no system build tools needed on Windows or in the
+Upsun build container). Guarded so environments without PyMySQL installed
 (e.g. a local SQLite run) still import cleanly.
 """
 

@@ -30,6 +30,10 @@ applications:
         set -eux
         python manage.py collectstatic --noinput
         python manage.py migrate
+        # Populate the affiliation picker's University table on the first deploy.
+        # --if-empty makes later deploys a no-op; `|| true` keeps a Hipolabs
+        # outage from failing the deploy (the picker falls back to a live fetch).
+        python manage.py import_universities --if-empty || true
 
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as

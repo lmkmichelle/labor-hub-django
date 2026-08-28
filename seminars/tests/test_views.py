@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -179,3 +180,11 @@ class UniversitiesByCountryTests(TestCase):
         response = self.client.get(reverse("seminar-universities"), {"country": "US"})
         names = [uni["name"] for uni in response.json()["universities"]]
         self.assertIn("Cornell", names)
+
+    def test_live_fallback_fetches_over_https(self):
+        with patch("seminars.views.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = OSError("blocked")
+            self.client.get(reverse("seminar-universities"), {"country": "US"})
+
+        called_url = mock_urlopen.call_args[0][0]
+        self.assertTrue(called_url.startswith("https://"))

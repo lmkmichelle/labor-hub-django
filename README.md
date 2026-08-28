@@ -1,8 +1,8 @@
 # Labor Hub
 
 Django 5.2 web app: server-rendered templates + Tailwind CSS v4 + Flowbite.
-The database is **MySQL** (matching Cornell Media3 hosting); **SQLite** works out of
-the box for zero-setup local development. Node.js is only used to (re)build the
+The database is **MySQL/MariaDB** (matching the MariaDB service on Upsun); **SQLite**
+works out of the box for zero-setup local development. Node.js is only used to (re)build the
 Tailwind CSS bundle at build time — the compiled `static/src/output.css` is committed,
 so it is not required to run the app. Flowbite's JavaScript is likewise vendored as a
 committed static asset (`static/js/flowbite.min.js`, loaded via `{% static %}`).
@@ -125,7 +125,7 @@ visits, and job deadlines stay in the future. Every demo user shares the passwor
 `demo12345`; e.g. log in as `admin@laborhub.demo` (admin) or
 `rosa.researcher@laborhub.demo` (researcher). As a safety guard it **refuses to run
 when `DEBUG=False`** (pass `--force` to override), so it can never seed fake data into
-the Cornell Media3 production database. All demo accounts use the `@laborhub.demo`
+the production database. All demo accounts use the `@laborhub.demo`
 e-mail domain, and `--reset` removes only the data this command created.
 
 ### Example content (safe on the live site)
@@ -223,23 +223,35 @@ RUN_E2E=1 python manage.py test e2e --settings=nole.settings_test
 - **Tests (SQLite)** — a Python 3.12 / 3.13 matrix that runs `makemigrations --check`,
   `manage.py check`, and the suite under `coverage` using `nole.settings_test`.
 - **Tests (MySQL 8)** — a production-parity job against a MySQL 8 service
-  (`DATABASE_ENGINE=mysql`) to catch backend-specific issues before Media3.
+  (`DATABASE_ENGINE=mysql`) to catch backend-specific issues before deploying.
 - **Browser E2E (Playwright)** — installs Chromium and runs the opt-in `e2e/`
   smoke suite with `RUN_E2E=1`.
 
-## Production (Cornell Media3)
+## Production (Upsun)
 
-Media3 is a managed Linux VM (Apache + managed MySQL + system Python), **not** a
-container host, so production runs natively — not under Docker. The app is served by
-**gunicorn** behind **Apache** (reverse proxy + TLS), and Apache serves `/static/`
-and `/media/` directly from disk.
+Production runs on **Upsun**. The app is served by **gunicorn** over a Unix socket to
+Upsun's router, which terminates TLS and serves `/static/` and `/media/` from the
+persistent mounts. The database is the **MariaDB** service declared as a relationship.
 
-Deployment artifacts and a step-by-step runbook live in [`deploy/`](deploy/README.md):
+Two committed files configure the whole deployment:
 
-- `deploy/gunicorn.conf.py` / `deploy/gunicorn.service` — gunicorn config + systemd unit
-- `deploy/apache/laborhub.conf` — Apache reverse-proxy vhost (static/media aliases + SSL)
-- `deploy/README.md` — full Media3 deployment checklist
+- [`.upsun/config.yaml`](.upsun/config.yaml) — the application (build/deploy hooks, the
+  MariaDB relationship, the `staticfiles`/`media` mounts, the gunicorn start command,
+  and the two digest cron jobs), the route, and the service.
+- [`.environment`](.environment) — sourced on every environment, **contains no secrets**.
+  It derives `DJANGO_SECRET_KEY` from Upsun's per-project entropy, and
+  `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS` / `SITE_URL` from the injected route
+  table, so preview branches configure themselves. It also points Django at Upsun's SMTP
+  relay when one is available.
 
-Production behaviour is driven entirely by environment variables (`DEBUG=0`, a real
-`DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and the MySQL
-`DATABASE_*` values); see `.env.example`.
+Because both files resolve their values at runtime, a normal deploy is just a push — no
+per-environment variables need to be set by hand. The overridable ones (`SENTRY_DSN`,
+`DEFAULT_FROM_EMAIL`, `CONTACT_EMAIL`) are set as Upsun project variables.
+
+**One manual step:** the Tailwind v4 CLI (Rust/oxide engine) gets OOM-killed in Upsun's
+build container, so the stylesheet is *not* compiled during the build. Run
+`npm run build` locally and commit `static/src/output.css` whenever the styles change.
+
+Everything environment-specific is still driven by plain environment variables
+(`DEBUG=0`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, the
+`DATABASE_*` values); see `.env.example` for the full list if you deploy elsewhere.

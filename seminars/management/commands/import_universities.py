@@ -27,17 +27,30 @@ class Command(BaseCommand):
             default=0,
             help='Maximum number of rows to import (0 = no limit).',
         )
+        parser.add_argument(
+            '--if-empty',
+            action='store_true',
+            help=(
+                'Skip the import when the University table already has rows. '
+                'Lets the Upsun deploy hook run this once without re-fetching '
+                'the full list on every deploy.'
+            ),
+        )
 
     def handle(self, *args, **options):
         country = (options.get('country') or '').strip()
         source = (options.get('source') or 'hipolabs').strip()
         limit = int(options.get('limit') or 0)
 
+        if options.get('if_empty') and University.objects.exists():
+            self.stdout.write('University table already populated; skipping import.')
+            return
+
         query = {}
         if country:
             query['country'] = country
 
-        url = 'http://universities.hipolabs.com/search'
+        url = 'https://universities.hipolabs.com/search'
         if query:
             url = f"{url}?{urlencode(query)}"
 

@@ -1,12 +1,12 @@
 """Send email digests of newly added content to opted-in users.
 
-Intended to be run from the host's scheduler (cron on Media3), once per
-cohort, e.g.::
+Intended to be run from a scheduler, once per cohort. In production these are
+the two ``crons`` entries in ``.upsun/config.yaml`` (specs are UTC)::
 
-    # Mondays 07:00 - weekly digests
-    0 7 * * 1  python manage.py send_digests --frequency weekly
-    # 1st of the month 07:00 - monthly digests
-    0 7 1 * *  python manage.py send_digests --frequency monthly
+    # Mondays 12:00 UTC - weekly digests
+    0 12 * * 1  python manage.py send_digests --frequency weekly
+    # 1st of the month 12:00 UTC - monthly digests
+    0 12 1 * *  python manage.py send_digests --frequency monthly
 """
 from django.core.management.base import BaseCommand
 from django.utils import timezone

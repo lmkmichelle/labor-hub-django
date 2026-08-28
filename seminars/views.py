@@ -199,7 +199,7 @@ def _fetch_universities_for_country(country_name):
     if not country_name:
         return []
 
-    url = f"http://universities.hipolabs.com/search?{urlencode({'country': country_name})}"
+    url = f"https://universities.hipolabs.com/search?{urlencode({'country': country_name})}"
     try:
         with urlopen(url, timeout=20) as response:
             payload = response.read().decode('utf-8')

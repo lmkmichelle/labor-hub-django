@@ -6,8 +6,8 @@ Why a management command (and not a fixture or a data migration)?
       past one. This command hashes passwords properly (demo logins actually
       work) and computes every date relative to *today*, so upcoming events,
       visits, and job deadlines are always in the future.
-    * A data migration would run in *every* environment, including Cornell
-      Media3 production -- you never want fake users there. This command is
+    * A data migration would run in *every* environment, including Upsun
+      production -- you never want fake users there. This command is
       explicit and opt-in, and it refuses to run when ``DEBUG`` is off unless
       ``--force`` is given.
 

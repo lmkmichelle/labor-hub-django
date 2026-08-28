@@ -28,8 +28,8 @@ country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
 def healthz(request):
     """Liveness/readiness probe: 200 when the DB answers, 503 otherwise.
 
-    Unauthenticated and dependency-light so uptime monitors and Media3 can check
-    the app is up without touching business logic.
+    Unauthenticated and dependency-light so uptime monitors and the Upsun router
+    can check the app is up without touching business logic.
     """
     try:
         with connection.cursor() as cursor:
