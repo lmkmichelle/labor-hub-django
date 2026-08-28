@@ -78,10 +78,22 @@ COMPRESS_ROOT = BASE_DIR / "static"
 
 # In production (DEBUG off) run django-compressor in offline mode: the
 # {% compress css %} bundle is prebuilt at deploy time (`manage.py compress`) and
-# then gathered by collectstatic for Apache to serve. Disabled in local dev.
+# then gathered by collectstatic for the Upsun router to serve. Disabled in local dev.
 COMPRESS_ENABLED = not DEBUG
 
 COMPRESS_OFFLINE = not DEBUG
+
+# Only concatenate + rewrite relative url() refs; do NOT re-minify. The Tailwind
+# build already ships `output.css` minified (`npm run build` uses --minify), and
+# django-compressor's default rCSSMinFilter (rcssmin 1.2.2) corrupts it: it drops
+# the `]` from the second `[type=url]` in Tailwind Preflight's
+# `:is([type=text],...,[type=url],[type=password],...)` reset, leaving an
+# unterminated attribute selector that makes browsers discard the entire
+# `components` + `utilities` layers -- i.e. the whole site renders unstyled.
+COMPRESS_FILTERS = {
+    "css": ["compressor.filters.css_default.CssAbsoluteFilter"],
+    "js": ["compressor.filters.jsmin.rJSMinFilter"],
+}
 
 # Ensure Django can find app/static and project static files
 STATICFILES_FINDERS = [
@@ -148,7 +160,7 @@ else:
         }
     }
 
-# MySQL (e.g. Cornell Media3) needs utf8mb4 for full Unicode support.
+# MySQL/MariaDB (the Upsun `db` service) needs utf8mb4 for full Unicode support.
 if DATABASE_ENGINE == "mysql":
     DATABASES["default"]["OPTIONS"] = {
         "charset": "utf8mb4",
@@ -203,8 +215,8 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com"
 
 # Public base URL used to build absolute links in outgoing emails (e.g. the
 # weekly/monthly digest), since management commands have no HttpRequest.
-# In production point this at the Cornell/Media3 hostname, e.g.
-# https://laborhub.cornell.edu
+# On Upsun this is derived from the injected route table in `.environment`; set
+# it explicitly elsewhere, e.g. https://laborhub.example.edu
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 
 # Recipient(s) for contact-form submissions. Comma-separate to notify several
@@ -294,7 +306,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Production security hardening. Applied when DEBUG is off so local HTTP dev is
-# unaffected. TLS is terminated at the Media3 Apache reverse proxy, which sets
+# unaffected. TLS is terminated at the Upsun router, which sets
 # X-Forwarded-Proto; SECURE_PROXY_SSL_HEADER lets Django detect HTTPS.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -308,8 +320,8 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = "DENY"
 
-# Logging: send app logs to stdout so the gunicorn systemd unit / journald captures
-# them (Apache keeps its own access/error logs).
+# Logging: send app logs to stdout so the platform's log collector captures them
+# (Upsun records them in the application log; the router keeps its own access log).
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -339,7 +351,8 @@ LOGGING = {
 }
 
 # Error tracking (Sentry). No-op unless SENTRY_DSN is set, so local dev and CI stay
-# offline. The Django integration is auto-enabled by sentry-sdk; see deploy/README.md.
+# offline. The Django integration is auto-enabled by sentry-sdk; set SENTRY_DSN as an
+# Upsun project variable to turn it on in production.
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
 if SENTRY_DSN:
     import sentry_sdk
