@@ -1,0 +1,29 @@
+{% comment %}
+One member's postings of a single type, for the profile page. Inputs:
+  items            iterable already filtered for the viewer
+  card_template    partial rendering one item (passed as `item`)
+  delete_url_name  named URL for owner deletion, taking the item pk
+  is_own_profile   when true, render a Delete button under each item
+  empty_text       message shown when there are none
+A still-pending item is flagged, since only its owner can see it.
+{% endcomment %}
+<div class="flex flex-col gap-3">
+  {% for item in items %}
+    <div>
+      {% include card_template with item=item event=item job=item %}
+      {% if not item.is_approved %}
+        <p class="mt-1 text-sm text-body">Pending review</p>
+      {% endif %}
+      {% if is_own_profile %}
+        <form method="post" action="{% url delete_url_name item.pk %}"
+              class="mt-1"
+              onsubmit="return confirm('Delete this? This cannot be undone.');">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary">Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  {% empty %}
+    {% include "partials/_empty_state.html" with text=empty_text %}
+  {% endfor %}
+</div>
