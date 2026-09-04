@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, DetailView, ListView
 from core.constants import COUNTRY_CHOICES
+from core.views import OwnerDeleteView
 
 from seminars.forms import SeminarForm
 from seminars.models import Seminar, University
@@ -185,6 +186,19 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
     template_name = 'seminars/seminar_form.html'
     success_url = reverse_lazy('seminars-list')
 
+    def get_initial(self):
+        # The visitor is normally the logged-in poster; prefill from their
+        # account and profile, leaving every field editable.
+        initial = super().get_initial()
+        user = self.request.user
+        profile = getattr(user, 'profile', None)
+        initial.setdefault('visitor_name', user.get_full_name())
+        initial.setdefault('visitor_email', user.email)
+        if profile is not None:
+            initial.setdefault(
+                'visitor_affiliation', profile.get_university_display())
+        return initial
+
     def form_valid(self, form):
         seminar = form.save(commit=False)
         seminar.posted_by = self.request.user
@@ -255,3 +269,10 @@ def universities_by_country(request):
     return JsonResponse({'universities': data})
 
 
+
+
+class SeminarDeleteView(OwnerDeleteView):
+    model = Seminar
+    owner_field = 'posted_by'
+    success_url = reverse_lazy('seminars-list')
+    success_message = 'Your visit has been deleted.'

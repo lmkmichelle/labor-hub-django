@@ -77,7 +77,10 @@ class Seminar(Approvable):
         if self.visit_start and self.visit_end and self.visit_end < self.visit_start:
             raise ValidationError({'visit_end': 'Visit end date cannot be earlier than visit start date.'})
         if not self.university and not (self.university_name or '').strip():
-            raise ValidationError({'university_name': 'Provide a university or a custom university name.'})
+            # Keyed on ``university`` (which every form exposes) rather than
+            # ``university_name``: the public form dropped the free-text field,
+            # and add_error() rejects a key the form does not have.
+            raise ValidationError({'university': 'Provide a university or a custom university name.'})
 
     def __str__(self):
         return f"{self.visitor_name} visiting {self.get_university_display()} ({self.visit_start})"
