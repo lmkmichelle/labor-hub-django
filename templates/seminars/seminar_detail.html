@@ -48,5 +48,14 @@
                 {{ seminar.visit_start|date:"l, N j, Y" }}
             {% endif %}
         </p>
+
+        {% if user.is_authenticated and user == seminar.posted_by %}
+            <form method="post" action="{% url 'visit-delete' pk=seminar.pk %}"
+                  class="not-format mt-6"
+                  onsubmit="return confirm('Delete this visit? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="btn-secondary">Delete visit</button>
+            </form>
+        {% endif %}
     </article>
 {% endblock content %}

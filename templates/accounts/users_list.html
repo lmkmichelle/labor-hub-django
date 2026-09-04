@@ -117,6 +117,9 @@
                                          src="{% if scholar.profile.avatar %}{{ scholar.profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
                                          alt="{{ scholar.first_name }} {{ scholar.last_name }}" />
                                     <h5 class="mb-0.5 text-xl font-semibold tracking-tight text-heading">{{ scholar.first_name }} {{ scholar.last_name }}</h5>
+                                    {% if scholar.is_student %}
+                                        <span class="pill-accent mb-1">Student</span>
+                                    {% endif %}
                                     <span class="text-sm text-body mb-2">{{ scholar.profile.position|default:"Position not specified" }}</span>
                                     {% if scholar.profile.get_university_display %}
                                         <span class="text-sm text-body mb-2">{{ scholar.profile.get_university_display }}</span>

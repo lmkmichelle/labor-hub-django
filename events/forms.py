@@ -1,8 +1,27 @@
 from datetime import time as dtime, datetime
+
+# Deadlines with no time component are treated as end-of-day.
+DEADLINE_DEFAULT_TIME = dtime(23, 59)
 from django import forms
+from django.conf import settings
 from django.utils import timezone
 
 from .models import Event
+
+# Friendly names for the wall-clock zones we expect to run in; falls back to the
+# raw zone key for anything else.
+_TZ_LABELS = {
+    "America/New_York": "Eastern Time",
+    "America/Chicago": "Central Time",
+    "America/Denver": "Mountain Time",
+    "America/Los_Angeles": "Pacific Time",
+    "UTC": "UTC",
+}
+
+
+def deadline_timezone_label():
+    return _TZ_LABELS.get(settings.TIME_ZONE, settings.TIME_ZONE)
+
 
 class EventForm(forms.ModelForm):
     title = forms.CharField(
@@ -12,9 +31,16 @@ class EventForm(forms.ModelForm):
     )
 
     description = forms.CharField(
-        label="Event Description",
+        label="Description & Application Instructions",
         widget=forms.Textarea,
-        required=False
+        required=False,
+        help_text="Include how and where to apply or register, if relevant.",
+    )
+
+    application_url = forms.URLField(
+        label="Application Link (Optional)",
+        widget=forms.URLInput,
+        required=False,
     )
     
     date = forms.DateField(
@@ -37,21 +63,15 @@ class EventForm(forms.ModelForm):
     )
 
     deadline_date = forms.DateField(
-        label="Application Deadline Date",
+        label="Application Deadline (Optional)",
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         required=False,
     )
 
-    deadline_time = forms.TimeField(
-        label="Application Deadline Time (optional, defaults to 11:59 PM)",
-        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-        required=False,
-        initial='23:59',
-    )
-
     class Meta:
         model = Event
-        fields = ['title', 'description', 'date', 'end_date', 'deadline', 'location', 'category']
+        fields = ['title', 'description', 'date', 'end_date', 'deadline',
+                  'application_url', 'location', 'category']
 
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Title'}),
@@ -74,19 +94,25 @@ class EventForm(forms.ModelForm):
         self.fields['end_date'].required = False
         self.fields['deadline'].required = False
 
-        # Pre-populate split fields when editing an existing event
+        # Members cannot submit a Live Podcast; admins add those directly.
+        self.fields['category'].choices = Event.PUBLIC_CATEGORY_CHOICES
+
+        tz_label = deadline_timezone_label()
+        self.fields['deadline_date'].help_text = (
+            f"Applications are due by 11:59 PM {tz_label} on this date."
+        )
+
+        # Pre-populate the split field when editing an existing event
         if self.instance and self.instance.pk and self.instance.deadline:
-            self.fields['deadline_date'].initial = self.instance.deadline.date()
-            self.fields['deadline_time'].initial = self.instance.deadline.strftime('%H:%M')
+            local_deadline = timezone.localtime(self.instance.deadline)
+            self.fields['deadline_date'].initial = local_deadline.date()
 
     def clean(self):
         cleaned_data = super().clean()
         deadline_date = cleaned_data.get('deadline_date')
-        deadline_time = cleaned_data.get('deadline_time')
 
         if deadline_date:
-            t = deadline_time if deadline_time else dtime(23, 59)
-            naive_dt = datetime.combine(deadline_date, t)
+            naive_dt = datetime.combine(deadline_date, DEADLINE_DEFAULT_TIME)
             cleaned_data['deadline'] = timezone.make_aware(naive_dt)
         else:
             cleaned_data['deadline'] = None

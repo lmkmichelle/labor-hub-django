@@ -117,15 +117,18 @@ class SeminarCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
+    def _university(self):
+        return University.objects.create(name="Cornell University", country_code="US")
+
     def test_authenticated_user_can_create(self):
         self.client.force_login(self.user)
+        university = self._university()
         response = self.client.post(reverse("seminar-create"), {
             "country_code": "US",
             "visitor_name": "New Visitor",
             "visitor_email": "new@example.com",
             "visitor_affiliation": "",
-            "university": "",
-            "university_name": "Cornell University",
+            "university": university.pk,
             "visit_start": timezone.localdate().isoformat(),
             "visit_end": "",
             "description": "A planned visit.",
@@ -139,13 +142,13 @@ class SeminarCreateViewTests(TestCase):
 
     def test_create_allows_blank_description(self):
         self.client.force_login(self.user)
+        university = self._university()
         response = self.client.post(reverse("seminar-create"), {
             "country_code": "US",
             "visitor_name": "No Details Visitor",
             "visitor_email": "nodetails@example.com",
             "visitor_affiliation": "",
-            "university": "",
-            "university_name": "Cornell University",
+            "university": university.pk,
             "visit_start": timezone.localdate().isoformat(),
             "visit_end": "",
             "description": "",
@@ -154,6 +157,25 @@ class SeminarCreateViewTests(TestCase):
         seminar = Seminar.objects.get()
         self.assertEqual(seminar.description, "")
         self.assertRedirects(response, reverse("seminars-list"))
+
+    def test_university_is_now_required(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("seminar-create"), {
+            "country_code": "US",
+            "visitor_name": "Missing University",
+            "visitor_email": "missing@example.com",
+            "visit_start": timezone.localdate().isoformat(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Seminar.objects.count(), 0)
+        self.assertIn("university", response.context["form"].errors)
+
+    def test_form_prefills_visitor_fields_from_user(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("seminar-create"))
+        form = response.context["form"]
+        self.assertEqual(form.initial["visitor_name"], self.user.get_full_name())
+        self.assertEqual(form.initial["visitor_email"], self.user.email)
 
 
 class VisitsUrlRedirectTests(TestCase):
@@ -188,3 +210,30 @@ class UniversitiesByCountryTests(TestCase):
 
         called_url = mock_urlopen.call_args[0][0]
         self.assertTrue(called_url.startswith("https://"))
+
+
+class SeminarDeleteViewTests(TestCase):
+    def setUp(self):
+        self.owner = CustomUser.objects.create_user(
+            email="visitowner@example.com", password="pass12345",
+            first_name="Visit", last_name="Owner", is_active=True,
+        )
+        self.other = CustomUser.objects.create_user(
+            email="visitstranger@example.com", password="pass12345",
+            first_name="No", last_name="One", is_active=True,
+        )
+        self.visit = make_seminar()
+        self.visit.posted_by = self.owner
+        self.visit.save()
+
+    def test_non_owner_gets_404(self):
+        self.client.force_login(self.other)
+        response = self.client.post(reverse("visit-delete", args=[self.visit.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Seminar.objects.filter(pk=self.visit.pk).exists())
+
+    def test_owner_can_delete(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("visit-delete", args=[self.visit.pk]))
+        self.assertRedirects(response, reverse("seminars-list"))
+        self.assertFalse(Seminar.objects.filter(pk=self.visit.pk).exists())

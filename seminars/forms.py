@@ -19,7 +19,6 @@ class SeminarForm(forms.ModelForm):
             'visitor_email',
             'visitor_affiliation',
             'university',
-            'university_name',
             'visit_start',
             'visit_end',
             'description',
@@ -33,8 +32,7 @@ class SeminarForm(forms.ModelForm):
             'visitor_name': 'Your Name',
             'visitor_email': 'Your Email',
             'visitor_affiliation': 'Affiliation (Optional)',
-            'university': 'University (Choose from list)',
-            'university_name': 'University Name (if not listed)',
+            'university': 'University',
             'visit_start': 'Visit Start Date',
             'visit_end': 'Visit End Date (Optional)',
             'description': 'Details (Optional)',
@@ -50,8 +48,11 @@ class SeminarForm(forms.ModelForm):
 
         self.fields['description'].required = False
         self.fields['university'].queryset = University.objects.order_by('name')
-        self.fields['university'].required = False
-        self.fields['university_name'].required = False
+        self.fields['university'].required = True
+        self.fields['university'].help_text = (
+            "Pick a country first. If your institution isn't listed, let us know "
+            "through the contact form and we'll add it."
+        )
         self.fields['visit_end'].required = False
 
         # Seed dropdown from existing JSON list when editing.

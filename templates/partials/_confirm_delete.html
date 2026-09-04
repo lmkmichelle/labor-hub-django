@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}
+    Confirm deletion
+{% endblock title %}
+{% block content %}
+    <article class="format lg:format-lg max-w-none">
+        <h3 class="title">Delete this item?</h3>
+        <p class="mb-6">
+            You are about to permanently delete
+            <strong>{{ object }}</strong>. This cannot be undone.
+        </p>
+        <form method="post" class="not-format flex gap-3">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">Delete</button>
+            <a href="{{ cancel_url }}" class="btn-secondary no-underline">Cancel</a>
+        </form>
+    </article>
+{% endblock content %}

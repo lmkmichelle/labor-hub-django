@@ -39,6 +39,17 @@
                     <a href="{% url 'profile' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Profile</a>
                   </li>
+                  {% if user.is_researcher %}
+                    <li>
+                      <a href="{% url 'advisee_applications' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">
+                        Advisees
+                        {% if pending_advisee_count %}
+                          <span class="ms-2 pill-accent">{{ pending_advisee_count }}</span>
+                        {% endif %}
+                      </a>
+                    </li>
+                  {% endif %}
                    {% if user.is_staff %}
                     <li>
                       <a href="{% url 'admin:index' %}"

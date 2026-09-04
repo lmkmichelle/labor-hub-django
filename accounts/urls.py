@@ -11,13 +11,16 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSubmittedView, ResearcherApplicationView, \
-    StudentApplicationView, SettingsView, digest_unsubscribe
+    StudentApplicationView, SettingsView, digest_unsubscribe, AdviseeApplicationsView, advisee_approve, advisee_reject
 
 urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
     path('profile/<int:pk>/', ProfileView.as_view(), name='profile'),
     path('profile/edit/', EditProfileView.as_view(), name='edit_profile'),
     path('settings/', SettingsView.as_view(), name='settings'),
+    path('accounts/advisees/', AdviseeApplicationsView.as_view(), name='advisee_applications'),
+    path('accounts/advisees/<int:pk>/approve/', advisee_approve, name='advisee_approve'),
+    path('accounts/advisees/<int:pk>/reject/', advisee_reject, name='advisee_reject'),
     path('accounts/digest/unsubscribe/<str:token>/', digest_unsubscribe, name='digest_unsubscribe'),
     path('accounts/membership/', TemplateView.as_view(template_name='accounts/apply_landing.html'), name='membership'),
     path('accounts/apply/researcher/', ResearcherApplicationView.as_view(), name='apply_researcher'),

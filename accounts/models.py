@@ -189,6 +189,7 @@ class UserApplication(models.Model):
         help_text="Why do you want to join this platform?",
         blank=True
     )
+    website = models.URLField(blank=True)
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )
@@ -216,12 +217,23 @@ class UserApplication(models.Model):
     class Meta:
         ordering = ['-applied_at']
 
+    def get_university_display(self):
+        """Affiliation for display: the picked university, else the typed name."""
+        if self.university:
+            return self.university.name
+        return self.university_name
+
     def approve(self, admin_user=None, advisor=None):
         if self.status != 'pending':
             raise ValueError("Only pending applications can be approved")
 
         if CustomUser.objects.filter(email=self.email).exists():
             raise ValueError("A user with this email already exists")
+
+        # Fall back to the advisor the student named on the application. Without
+        # this, approving a student through the admin (which passes no advisor)
+        # silently drops the advisor link.
+        advisor = advisor or self.advisor
 
         user = CustomUser.objects.create(
             email=self.email,
@@ -239,6 +251,7 @@ class UserApplication(models.Model):
         user.profile.university = self.university
         user.profile.university_name = self.university_name
         user.profile.country_code = self.country_code
+        user.profile.website = self.website
         user.profile.save()
 
         self.status = self.Status.APPROVED

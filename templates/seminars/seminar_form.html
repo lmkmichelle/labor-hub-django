@@ -2,8 +2,13 @@
 {% load form_tags %}
 {% load static %}
 
+{% block title %}
+    Submit a visit
+{% endblock title %}
+
 {% block content %}
     <article class="format lg:format-lg max-w-none">
+        <h3 class="title">Submit a Visit</h3>
         <form method="POST" class="mb-8" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -21,10 +26,9 @@
                  data-endpoint="{% url 'seminar-universities' %}"
                  data-country-field="{{ form.country_code.id_for_label }}"
                  data-university-field="{{ form.university.id_for_label }}"
-                 data-placeholder="Choose a university (optional)">
-                {% render_field form.university %}
+                 data-placeholder="Choose a university">
+                {% render_select form.university %}
             </div>
-            {% render_field form.university_name help_text="Use this if your university is not in the dropdown list." %}
 
             <div class="flex flex-row gap-3">
                 <div class="flex-1">{% render_field form.visit_start %}</div>

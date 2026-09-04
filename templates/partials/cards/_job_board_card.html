@@ -11,6 +11,9 @@ Used by the Jobs list page.
       <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
     </div>
   </div>
+  {% if item.employer %}
+    <p class="mt-1 text-sm text-body">{{ item.employer }}</p>
+  {% endif %}
   {% include "partials/cards/_pill_row.html" with labels=item.category_labels pill_class="pill-neutral" limit=":" %}
   <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
   {% include "partials/cards/_pill_row.html" with labels=item.country_labels %}

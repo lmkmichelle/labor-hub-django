@@ -125,6 +125,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.recommended_keywords",
+                "core.context_processors.pending_advisee_count",
             ],
         },
     },
@@ -232,7 +233,9 @@ PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+# The site serves a mostly US labor-economics audience and event deadlines are
+# entered and displayed in one wall-clock zone (see events.forms.EventForm).
+TIME_ZONE = os.environ.get("TIME_ZONE", "America/New_York")
 
 USE_I18N = True
 

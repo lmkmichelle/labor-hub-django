@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% load form_tags %}
 
-{% if object %}
-Edit Paper
-{% else %}
-Submit Paper
-{% endif %}
+{% block title %}
+    {% if object %}Edit event{% else %}Create an event{% endif %}
+{% endblock title %}
 
 {% block content %}
-<article class="format lg:format-lg max-w-none">   
-<h3 class="title">Create an Event</h3>
+<article class="format lg:format-lg max-w-none">
+<h3 class="title">{% if object %}Edit event{% else %}Create an Event{% endif %}</h3>
 {% load static %}
 
 <form method="POST" class="mb-8" enctype="multipart/form-data">
@@ -28,17 +26,9 @@ Submit Paper
 
     {% render_field form.end_date %}
 
-    <div>
-        <p class="block mb-2.5 text-sm font-medium text-heading">Application Deadline <span class="text-body font-normal">(Optional)</span></p>
-        <div class="flex flex-row gap-3">
-            <div class="flex-1">
-                {% render_field form.deadline_date label="Deadline Date" %}
-            </div>
-            <div class="flex-1">
-                {% render_field form.deadline_time label="Deadline Time" %}
-            </div>
-        </div>
-    </div>
+    {% render_field form.deadline_date %}
+
+    {% render_field form.application_url %}
 
     {% render_field form.location %}
 

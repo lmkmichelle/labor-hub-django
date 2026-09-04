@@ -3,7 +3,7 @@ from django import forms
 from core.admin import ApprovableAdmin
 from core.constants import COUNTRY_CHOICES
 
-from seminars.models import Seminar, University
+from seminars.models import Seminar
 
 
 class SeminarAdminForm(forms.ModelForm):
@@ -35,7 +35,7 @@ class SeminarAdmin(ApprovableAdmin):
     list_filter = ['visit_start', 'countries']
 
     fieldsets = (
-        ('Seminar Information', {
+        ('Visit Information', {
             'fields': (
                 'posted_by',
                 'visitor_name',
@@ -59,10 +59,8 @@ class SeminarAdmin(ApprovableAdmin):
     get_university_name.short_description = 'University'
 
 
-@admin.register(University)
-class UniversityAdmin(admin.ModelAdmin):
-    list_display = ['name', 'country_code', 'website', 'source']
-    search_fields = ['name', 'country_code', 'source', 'external_id']
-
+# University is reference data (populated by import_universities and picked
+# from a dropdown on the public forms) rather than something admins moderate
+# or edit by hand, so it is deliberately not registered here.
 admin.site.register(Seminar, SeminarAdmin)
 

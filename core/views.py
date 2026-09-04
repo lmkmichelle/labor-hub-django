@@ -5,13 +5,14 @@ from django.db import connection
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.http import HttpResponse, JsonResponse
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_http_methods
-from django.views.generic import ListView, TemplateView
+from django.views.generic import DeleteView, ListView, TemplateView
 
 from accounts.models import CustomUser
 from core.constants import COUNTRY_CHOICES
@@ -22,6 +23,33 @@ from events.models import Event
 from seminars.models import Seminar
 
 country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
+
+
+class OwnerDeleteView(LoginRequiredMixin, DeleteView):
+    """Delete a content row, but only one the current user owns.
+
+    Subclasses set ``model``, ``owner_field`` (``host`` / ``uploader`` /
+    ``posted_by``) and ``success_url``. Restricting the queryset to the owner
+    means a non-owner gets a plain 404 and learns nothing about the row. The
+    GET renders templates/partials/_confirm_delete.html; the POST deletes.
+    """
+    owner_field = None
+    template_name = "partials/_confirm_delete.html"
+    success_message = "Deleted."
+
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            **{self.owner_field: self.request.user}
+        )
+
+    def form_valid(self, form):
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("cancel_url", self.get_success_url())
+        return context
 
 
 @require_GET
