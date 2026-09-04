@@ -56,6 +56,13 @@ class Seminar(Approvable):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # The public site and admin both call these "Visits"; the model/app
+        # stay named "seminars" internally to avoid a disruptive rename of
+        # tables, migrations, and URLs.
+        verbose_name = 'Visit'
+        verbose_name_plural = 'Visits'
+
     def get_absolute_url(self):
         return reverse('seminar-detail', kwargs={'pk': self.pk})
 
