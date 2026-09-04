@@ -15,7 +15,7 @@ class EventAdmin(ApprovableAdmin):
     fieldsets = (
         ('Event Information', {
             'fields': ('title', 'description', 'date', 'end_date', 'deadline',
-                       'location', 'category', 'host')
+                       'application_url', 'location', 'category', 'host')
         }),
         ('Review', {
             'fields': ('review_actions', 'status', 'admin_notes', 'created_at',

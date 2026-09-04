@@ -42,7 +42,24 @@
 
     {% if event.deadline %}
         <h4>Application Deadline</h4>
-        <p>{{ event.deadline|date:"N j, Y, g:i A" }}</p>
+        <p>{{ event.deadline|date:"N j, Y, g:i A" }} ({{ event.deadline|date:"T" }})</p>
+    {% endif %}
+
+    {% if event.application_url %}
+        <h4>Where to Apply</h4>
+        <p>
+            <a class="text-red-700 underline" href="{{ event.application_url }}"
+               target="_blank" rel="noopener noreferrer">{{ event.application_url }}</a>
+        </p>
+    {% endif %}
+
+    {% if user.is_authenticated and user == event.host %}
+        <form method="post" action="{% url 'event-delete' pk=event.pk %}"
+              class="not-format mt-6"
+              onsubmit="return confirm('Delete this event? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary">Delete event</button>
+        </form>
     {% endif %}
 </article>
 {% endblock content %}

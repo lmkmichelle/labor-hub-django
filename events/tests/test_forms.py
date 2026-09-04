@@ -1,4 +1,4 @@
-from datetime import time as dtime, timedelta
+from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -20,19 +20,12 @@ def form_data(**overrides):
 
 
 class EventFormDeadlineTests(TestCase):
-    def test_combines_deadline_date_and_time(self):
-        form = EventForm(data=form_data(
-            deadline_date="2025-05-01", deadline_time="14:30"))
+    def test_deadline_date_sets_end_of_day_deadline(self):
+        form = EventForm(data=form_data(deadline_date="2025-05-01"))
         self.assertTrue(form.is_valid(), form.errors)
         deadline = form.cleaned_data["deadline"]
         self.assertIsNotNone(deadline)
         self.assertTrue(timezone.is_aware(deadline))
-        self.assertEqual((deadline.hour, deadline.minute), (14, 30))
-
-    def test_defaults_deadline_time_to_end_of_day(self):
-        form = EventForm(data=form_data(deadline_date="2025-05-01"))
-        self.assertTrue(form.is_valid(), form.errors)
-        deadline = form.cleaned_data["deadline"]
         self.assertEqual((deadline.hour, deadline.minute), (23, 59))
 
     def test_no_deadline_date_yields_none(self):
@@ -40,7 +33,10 @@ class EventFormDeadlineTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertIsNone(form.cleaned_data["deadline"])
 
-    def test_prefills_split_fields_when_editing(self):
+    def test_deadline_time_is_no_longer_a_form_field(self):
+        self.assertNotIn("deadline_time", EventForm().fields)
+
+    def test_prefills_deadline_date_when_editing(self):
         deadline = timezone.make_aware(
             timezone.datetime(2025, 5, 1, 9, 15))
         event = Event.objects.create(
@@ -50,4 +46,30 @@ class EventFormDeadlineTests(TestCase):
         )
         form = EventForm(instance=event)
         self.assertEqual(form.fields["deadline_date"].initial, deadline.date())
-        self.assertEqual(form.fields["deadline_time"].initial, "09:15")
+
+
+class EventFormCategoryAndApplicationTests(TestCase):
+    def test_podcast_is_not_a_public_submission_choice(self):
+        form = EventForm()
+        values = [value for value, _ in form.fields["category"].choices]
+        self.assertNotIn("podcast", values)
+
+    def test_podcast_still_available_for_display_and_filtering(self):
+        values = [value for value, _ in Event.CATEGORY_CHOICES]
+        self.assertIn("podcast", values)
+
+    def test_submitting_podcast_is_rejected(self):
+        form = EventForm(data=form_data(category="podcast"))
+        self.assertFalse(form.is_valid())
+        self.assertIn("category", form.errors)
+
+    def test_application_url_is_optional(self):
+        form = EventForm(data=form_data())
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_application_url_is_saved(self):
+        form = EventForm(data=form_data(
+            application_url="https://example.org/apply"))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(
+            form.cleaned_data["application_url"], "https://example.org/apply")

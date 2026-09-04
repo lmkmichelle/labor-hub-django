@@ -9,6 +9,8 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from datetime import datetime
 
+from core.views import OwnerDeleteView
+
 from .models import Event
 from .forms import EventForm
 
@@ -108,3 +110,10 @@ class EventCreateView(LoginRequiredMixin, CreateView):
         event.save()
         messages.success(self.request, 'Event submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
+
+
+class EventDeleteView(OwnerDeleteView):
+    model = Event
+    owner_field = 'host'
+    success_url = reverse_lazy('events-list')
+    success_message = 'Your event has been deleted.'

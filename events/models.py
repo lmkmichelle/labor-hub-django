@@ -14,11 +14,20 @@ class Event(Approvable):
         ('other', 'Other'),
     ]
 
+    # Categories a member may pick when submitting an event. "Live Podcast" is
+    # admin-only, so it is excluded here while staying in CATEGORY_CHOICES for
+    # display and for the public list-page filter facet.
+    PUBLIC_CATEGORY_CHOICES = [c for c in CATEGORY_CHOICES if c[0] != 'podcast']
+
     title = models.CharField(max_length=255)
     description = models.TextField()
     date = models.DateTimeField()
     end_date = models.DateTimeField(null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True, help_text='Application deadline for this event')
+    application_url = models.URLField(
+        blank=True,
+        help_text='Link to the application or registration page for this event',
+    )
     location = models.CharField(max_length=255)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     host = models.ForeignKey(

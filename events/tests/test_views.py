@@ -117,3 +117,39 @@ class EventCreateViewTests(TestCase):
         event = Event.objects.get(title="New Event")
         self.assertEqual(event.host, user)
         self.assertEqual(event.status, "pending")
+
+
+class EventDeleteViewTests(TestCase):
+    def setUp(self):
+        self.host = make_user(email="owner@example.com")
+        self.other = make_user(email="stranger@example.com")
+        self.event = make_event(host=self.host)
+
+    def test_anonymous_is_redirected_to_login(self):
+        response = self.client.post(
+            reverse("event-delete", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+        self.assertTrue(Event.objects.filter(pk=self.event.pk).exists())
+
+    def test_non_owner_gets_404(self):
+        self.client.force_login(self.other)
+        response = self.client.post(
+            reverse("event-delete", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Event.objects.filter(pk=self.event.pk).exists())
+
+    def test_get_renders_confirmation_without_deleting(self):
+        self.client.force_login(self.host)
+        response = self.client.get(
+            reverse("event-delete", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "partials/_confirm_delete.html")
+        self.assertTrue(Event.objects.filter(pk=self.event.pk).exists())
+
+    def test_owner_can_delete(self):
+        self.client.force_login(self.host)
+        response = self.client.post(
+            reverse("event-delete", args=[self.event.pk]))
+        self.assertRedirects(response, reverse("events-list"))
+        self.assertFalse(Event.objects.filter(pk=self.event.pk).exists())

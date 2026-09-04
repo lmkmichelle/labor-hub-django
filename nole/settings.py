@@ -232,7 +232,9 @@ PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+# The site serves a mostly US labor-economics audience and event deadlines are
+# entered and displayed in one wall-clock zone (see events.forms.EventForm).
+TIME_ZONE = os.environ.get("TIME_ZONE", "America/New_York")
 
 USE_I18N = True
 
