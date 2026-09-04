@@ -86,11 +86,19 @@
             <div class="not-format">
                 {% include "partials/_visits_list.html" with visits=visits %}
             </div>
+            <h3>Events</h3>
+            <div class="not-format">
+                {% include "partials/_profile_postings.html" with items=events card_template="partials/cards/_event_card.html" delete_url_name="event-delete" is_own_profile=is_own_profile empty_text="No events posted yet." %}
+            </div>
+            <h3>Jobs</h3>
+            <div class="not-format">
+                {% include "partials/_profile_postings.html" with items=jobs card_template="partials/cards/_job_board_card.html" delete_url_name="job-delete" is_own_profile=is_own_profile empty_text="No job postings yet." %}
+            </div>
             <h3>Labor Hub Discussion Papers</h3>
             <div class="not-format">
                 {% include "partials/_publications_list.html" %}
             </div>
-            
+
         </div>
     </div>
 </article>

@@ -5,21 +5,25 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, When
 from django.http import JsonResponse, Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, UpdateView, ListView
 
 from core.constants import COUNTRY_CHOICES
 from core.models import ApprovalStatus
+from events.models import Event
+from jobs.models import Job
 from seminars.models import Seminar
 from publications.models import Publication
 from publications.utils import handle_keywords
 from .digests import read_unsubscribe_token
+from .emails import send_advisor_review_email, send_application_submitted_email
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
     StudentApplicationForm, EmailPreferencesForm
 from .models import CustomUser, Profile, UserApplication
@@ -31,12 +35,15 @@ class BaseApplicationView(CreateView):
     template_name = 'accounts/apply.html'
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(
             self.request,
             "Your application has been submitted successfully! "
             "You will receive an email notification once it has been reviewed."
         )
-        return super().form_valid(form)
+        # self.object is the freshly-saved UserApplication.
+        send_application_submitted_email(self.object)
+        return response
 
 class ResearcherApplicationView(BaseApplicationView):
     form_class = ResearcherApplicationForm
@@ -48,6 +55,12 @@ class ResearcherApplicationView(BaseApplicationView):
 
 class StudentApplicationView(BaseApplicationView):
     form_class = StudentApplicationForm
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Let the named advisor know they can review it without an admin.
+        send_advisor_review_email(self.object)
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -96,11 +109,26 @@ class ProfileView(View):
             profile_user,
         ).select_related("university").order_by("visit_start", "id")
 
+        events = self._visible(
+            Event.objects.filter(host=profile_user),
+            request,
+            profile_user,
+        ).order_by("date", "id")
+
+        jobs = self._visible(
+            Job.objects.filter(uploader=profile_user),
+            request,
+            profile_user,
+        ).order_by("deadline", "id")
+
         return render(request, self.template_name, {
             'profile_user': profile_user,
             'user_profile': profile_user.profile,
             'publications': authored_publications,
             'visits': visits,
+            'events': events,
+            'jobs': jobs,
+            'is_own_profile': request.user.is_authenticated and request.user == profile_user,
         })
 
     @staticmethod
@@ -214,6 +242,81 @@ class SettingsView(LoginRequiredMixin, View):
                           self._context(request, email_prefs_form=email_prefs_form))
 
         return redirect("settings")
+
+
+class AdviseeApplicationsView(LoginRequiredMixin, ListView):
+    """Student applications naming the logged-in researcher as advisor.
+
+    Advisors approve or decline their own advisees here without ever touching
+    the admin. Staff keep the admin path for every application.
+    """
+    template_name = "accounts/advisee_applications.html"
+    context_object_name = "applications"
+    paginate_by = 12
+
+    def get_queryset(self):
+        return (
+            UserApplication.objects.filter(
+                advisor=self.request.user,
+                role=CustomUser.Role.STUDENT,
+            )
+            .select_related("advisor", "university")
+            .annotate(
+                _pending_first=Case(
+                    When(status=UserApplication.Status.PENDING, then=0),
+                    default=1,
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("_pending_first", "-applied_at")
+        )
+
+
+def _get_own_advisee(request, pk):
+    """Fetch a student application this user advises, or 404.
+
+    The advisor filter *is* the authorization check, so a wrong advisor gets a
+    plain 404 and learns nothing about whether the row exists.
+    """
+    return get_object_or_404(
+        UserApplication,
+        pk=pk,
+        advisor=request.user,
+        role=CustomUser.Role.STUDENT,
+    )
+
+
+@login_required
+@require_POST
+def advisee_approve(request, pk):
+    application = _get_own_advisee(request, pk)
+    if application.status != UserApplication.Status.PENDING:
+        messages.error(request, "This application has already been reviewed.")
+    else:
+        try:
+            user = application.approve(admin_user=request.user, advisor=request.user)
+            messages.success(
+                request,
+                f"Approved. An account has been created for {user.email}.",
+            )
+        except ValueError as exc:
+            messages.error(request, str(exc))
+    return redirect("advisee_applications")
+
+
+@login_required
+@require_POST
+def advisee_reject(request, pk):
+    application = _get_own_advisee(request, pk)
+    if application.status != UserApplication.Status.PENDING:
+        messages.error(request, "This application has already been reviewed.")
+    else:
+        application.reject(request.user)
+        messages.success(
+            request,
+            f"Declined the application from {application.email}.",
+        )
+    return redirect("advisee_applications")
 
 
 @require_GET

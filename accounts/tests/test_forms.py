@@ -1,12 +1,18 @@
 from django.contrib.auth.hashers import check_password
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from accounts.forms import (
+    MAX_RESEARCH_PAPERS,
     ResearcherApplicationForm,
     StudentApplicationForm,
     UpdateProfileForm,
 )
 from accounts.models import CustomUser, UserApplication
+
+
+def _pdf(name):
+    return SimpleUploadedFile(name, b"%PDF-1.4 fake", content_type="application/pdf")
 
 
 def base_application_data(**overrides):
@@ -63,6 +69,34 @@ class ResearcherApplicationFormTests(TestCase):
         form = ResearcherApplicationForm(data=base_application_data())
         self.assertFalse(form.is_valid())
         self.assertIn("email", form.errors)
+
+    def test_optional_website_is_saved(self):
+        form = ResearcherApplicationForm(
+            data=base_application_data(website="https://example.org/me"))
+        self.assertTrue(form.is_valid(), form.errors)
+        application = form.save()
+        self.assertEqual(application.website, "https://example.org/me")
+
+    def test_more_than_max_research_papers_is_rejected(self):
+        files = {
+            "research_papers": [
+                _pdf(f"p{i}.pdf") for i in range(MAX_RESEARCH_PAPERS + 1)
+            ]
+        }
+        form = ResearcherApplicationForm(
+            data=base_application_data(), files=files)
+        self.assertFalse(form.is_valid())
+        self.assertIn("research_papers", form.errors)
+
+    def test_max_research_papers_is_accepted(self):
+        files = {
+            "research_papers": [
+                _pdf(f"p{i}.pdf") for i in range(MAX_RESEARCH_PAPERS)
+            ]
+        }
+        form = ResearcherApplicationForm(
+            data=base_application_data(), files=files)
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 class StudentApplicationFormTests(TestCase):

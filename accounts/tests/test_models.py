@@ -122,7 +122,7 @@ class ProfileModelTests(TestCase):
 
 
 def make_application(email="applicant@example.com", role=CustomUser.Role.RESEARCHER,
-                     status=UserApplication.Status.PENDING):
+                     status=UserApplication.Status.PENDING, **extra):
     return UserApplication.objects.create(
         email=email,
         first_name="Ann",
@@ -133,6 +133,7 @@ def make_application(email="applicant@example.com", role=CustomUser.Role.RESEARC
         password=make_password("pass12345"),
         country_code="US",
         status=status,
+        **extra,
     )
 
 
@@ -172,6 +173,21 @@ class UserApplicationTests(TestCase):
         user = app.approve(advisor=advisor)
         self.assertTrue(user.is_student())
         self.assertEqual(user.advisor, advisor)
+
+    def test_approve_student_falls_back_to_named_advisor(self):
+        # Regression: approving a student without passing advisor= (the admin
+        # path) used to drop the advisor the student chose on the application.
+        advisor = make_user(email="named-advisor@example.com")
+        app = make_application(email="student3@example.com",
+                               role=CustomUser.Role.STUDENT, advisor=advisor)
+        user = app.approve()
+        self.assertEqual(user.advisor, advisor)
+
+    def test_approve_copies_website_to_profile(self):
+        app = make_application(email="haswebsite@example.com",
+                               website="https://example.org/me")
+        user = app.approve()
+        self.assertEqual(user.profile.website, "https://example.org/me")
 
     def test_approve_researcher_ignores_advisor(self):
         advisor = make_user(email="advisor@example.com")

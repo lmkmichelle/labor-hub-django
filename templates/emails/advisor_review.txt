@@ -1,0 +1,14 @@
+Hi {{ advisor.first_name|default:advisor.email }},
+
+{{ application.first_name }} {{ application.last_name }} has applied to join Labor Hub as a student and listed you as their advisor.
+
+As their advisor you can approve or decline this application yourself - you do not need an administrator to do it.
+
+Review the application:
+{{ review_url }}
+
+If you were not expecting this, you can decline the application from the same page, or ignore this email and an administrator will review it.
+
+--
+The Labor Hub team
+{{ site_url }}

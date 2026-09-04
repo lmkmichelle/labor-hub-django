@@ -9,9 +9,19 @@ from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
 
+# Maximum research papers a researcher applicant may attach.
+MAX_RESEARCH_PAPERS = 2
+
 
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
+
+    def __init__(self, attrs=None):
+        # The shared _form_field.html partial only emits the ``multiple``
+        # attribute when it is present in widget.attrs, so set it here or the
+        # browser file picker silently allows just one file.
+        attrs = {"multiple": True, **(attrs or {})}
+        super().__init__(attrs)
 
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
@@ -48,6 +58,18 @@ class BaseApplicationForm(forms.ModelForm):
         widget=forms.TextInput()
     )
 
+    position = forms.CharField(
+        label='Position',
+        widget=forms.TextInput(),
+        required=False,
+    )
+
+    website = forms.URLField(
+        label='Personal Website (optional)',
+        widget=forms.URLInput(),
+        required=False,
+    )
+
     university = forms.ModelChoiceField(
         queryset=University.objects.none(),
         required=False,
@@ -65,15 +87,17 @@ class BaseApplicationForm(forms.ModelForm):
     class Meta:
         model = UserApplication
         fields = (
-            "email",
             "first_name",
             "last_name",
-            "resume",
-            "department",
+            "country_code",
             "university",
             "university_name",
-            "country_code",
-            "motivation"
+            "department",
+            "position",
+            "motivation",
+            "website",
+            "resume",
+            "email",
         )
 
     def __init__(self, *args, **kwargs):
@@ -120,11 +144,19 @@ class BaseApplicationForm(forms.ModelForm):
 
 class ResearcherApplicationForm(BaseApplicationForm):
     research_papers = MultipleFileField(
-        label="Upload up to 3 research papers (PDF only)",
+        label=f"Upload up to {MAX_RESEARCH_PAPERS} research papers (PDF only)",
         required=False)
 
     class Meta(BaseApplicationForm.Meta):
         fields = BaseApplicationForm.Meta.fields + ("research_papers",)
+
+    def clean_research_papers(self):
+        papers = [p for p in (self.cleaned_data.get("research_papers") or []) if p]
+        if len(papers) > MAX_RESEARCH_PAPERS:
+            raise forms.ValidationError(
+                f"Please upload at most {MAX_RESEARCH_PAPERS} research papers."
+            )
+        return papers
 
 class AdvisorChoiceField(forms.ModelChoiceField):
     """Renders advisor options as "Full Name - Position" (presentation only)."""

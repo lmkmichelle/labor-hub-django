@@ -27,12 +27,6 @@
 
     {% render_field form.last_name label="Last Name" placeholder="Last name" %}
 
-    {% render_field form.department label="Department" placeholder="Department" %}
-
-    {% if form.position %}
-        {% render_field form.position label="Position" placeholder="Position" %}
-    {% endif %}
-
     {% render_select form.country_code label="Country" empty_label="Choose a country" %}
 
         {# Country drives the affiliation list; see static/js/university-picker.js #}
@@ -44,15 +38,19 @@
     </div>
     {% render_field form.university_name %}
 
+    {% render_field form.department label="Department" placeholder="Department" %}
+
+    {% render_field form.position label="Position" placeholder="Position" %}
+
     {% render_field form.motivation label="Motivation" %}
+
+    {% render_field form.website label="Personal Website (optional)" placeholder="https://" %}
 
     {% render_field form.resume label="Upload Resume/CV (PDF only)" %}
 
     {% if form.research_papers %}
-        {% render_field form.research_papers label="Upload Research Papers (PDF only)" help_text="Upload up to 3 research papers in PDF format" %}
+        {% render_field form.research_papers label="Upload Research Papers (PDF only)" help_text="Upload up to 2 research papers in PDF format" %}
     {% endif %}
-
-    
 
     {% render_field form.email label="Email" placeholder="net-id@school.edu" %}
 

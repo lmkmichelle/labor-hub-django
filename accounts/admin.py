@@ -8,6 +8,25 @@ from django.utils.html import format_html
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
 
 
+# Colours mirror the site's .pill-* roles (accent red for students). Inline
+# style is used because the Django admin changelist has no template hook and
+# djlint only lints templates, not admin.py.
+_ROLE_BADGE_COLOURS = {
+    CustomUser.Role.STUDENT: ('#b91c1c', '#fee2e2'),
+    CustomUser.Role.RESEARCHER: ('#1f2937', '#e5e7eb'),
+    CustomUser.Role.ADMIN: ('#92400e', '#fef3c7'),
+}
+
+
+def _role_badge(role, label):
+    fg, bg = _ROLE_BADGE_COLOURS.get(role, ('#1f2937', '#e5e7eb'))
+    return format_html(
+        '<span style="display:inline-block; padding:2px 8px; border-radius:9999px; '
+        'font-size:11px; font-weight:600; color:{}; background:{};">{}</span>',
+        fg, bg, label,
+    )
+
+
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
@@ -16,7 +35,7 @@ class ProfileInline(admin.StackedInline):
 class ResearchPaperInline(admin.TabularInline):
     model = ResearchPaper
     extra = 1
-    max_num = 3
+    max_num = 2
     can_delete = True
     fields = ['paper', 'uploaded_at']
     readonly_fields = ['uploaded_at']
@@ -37,9 +56,14 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('email', 'password1', 'password2'),
         }),
     )
-    list_display = ('email', 'first_name', 'last_name', 'is_staff')
+    list_display = ('email', 'first_name', 'last_name', 'role_badge', 'is_staff')
+    list_filter = BaseUserAdmin.list_filter + ('role',)
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
+
+    @admin.display(description='Role', ordering='role')
+    def role_badge(self, obj):
+        return _role_badge(obj.role, obj.get_role_display())
 
 
 @admin.register(UserApplication)
@@ -49,6 +73,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
         "email",
         "first_name",
         "last_name",
+        'role_badge',
         'status',
         'resume',
         'account_actions',
@@ -56,7 +81,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
         'reviewed_by'
     ]
 
-    list_filter = ['status', 'applied_at']
+    list_filter = ['status', 'role', 'applied_at']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume']
     ordering = ['-applied_at']
@@ -64,12 +89,16 @@ class UserApplicationAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Application Info', {
             'fields': ('email', 'first_name', 'last_name', 'role', 'position', 'department', 'university', 'university_name',
-                       'country_code', 'motivation')
+                       'country_code', 'website', 'motivation', 'advisor')
         }),
         ('Review', {
             'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
         }),
     )
+
+    @admin.display(description='Role', ordering='role')
+    def role_badge(self, obj):
+        return _role_badge(obj.role, obj.get_role_display())
 
     def get_urls(self):
         urls = super().get_urls()
