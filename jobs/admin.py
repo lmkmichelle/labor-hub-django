@@ -30,14 +30,14 @@ class JobAdminForm(forms.ModelForm):
 @admin.register(Job)
 class JobAdmin(ApprovableAdmin):
     form = JobAdminForm
-    list_display = ('title', 'display_categories', 'uploader', 'deadline')
-    search_fields = ('title', 'description', 'uploader__first_name', 'uploader__last_name', 'uploader__email')
+    list_display = ('title', 'employer', 'display_categories', 'uploader', 'deadline')
+    search_fields = ('title', 'employer', 'description', 'uploader__first_name', 'uploader__last_name', 'uploader__email')
     ordering = ('deadline',)
 
     fieldsets = (
         ('Job Information', {
-            'fields': ('title', 'uploader', 'description', 'countries',
-                       'categories', 'url', 'deadline')
+            'fields': ('title', 'employer', 'pay', 'uploader', 'description',
+                       'countries', 'categories', 'url', 'deadline')
         }),
         ('Review', {
             'fields': ('review_actions', 'status', 'admin_notes', 'reviewed_at', 'reviewed_by')

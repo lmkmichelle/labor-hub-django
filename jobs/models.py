@@ -25,6 +25,16 @@ JUNIOR_RANKS = ['predoc', 'postdoc']
 
 class Job(Approvable):
     title = models.CharField(max_length=255)
+    employer = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Hiring institution or organization',
+    )
+    pay = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='e.g. "$70,000–85,000 / year" or "Competitive". Optional.',
+    )
     uploader = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

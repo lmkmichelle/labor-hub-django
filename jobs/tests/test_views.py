@@ -138,3 +138,35 @@ class JobCreateViewTests(TestCase):
         self.assertEqual(job.categories, ["postdoc"])
         self.assertEqual(job.status, "pending")
         self.assertRedirects(response, reverse("jobs-list"))
+
+
+class JobDeleteViewTests(TestCase):
+    def setUp(self):
+        self.owner = CustomUser.objects.create_user(
+            email="jobowner@example.com", password="pass12345",
+            first_name="Job", last_name="Owner", is_active=True,
+        )
+        self.other = CustomUser.objects.create_user(
+            email="jobstranger@example.com", password="pass12345",
+            first_name="No", last_name="One", is_active=True,
+        )
+        self.job = make_job()
+        self.job.uploader = self.owner
+        self.job.save()
+
+    def test_anonymous_redirected_to_login(self):
+        response = self.client.post(reverse("job-delete", args=[self.job.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    def test_non_owner_gets_404(self):
+        self.client.force_login(self.other)
+        response = self.client.post(reverse("job-delete", args=[self.job.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Job.objects.filter(pk=self.job.pk).exists())
+
+    def test_owner_can_delete(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("job-delete", args=[self.job.pk]))
+        self.assertRedirects(response, reverse("jobs-list"))
+        self.assertFalse(Job.objects.filter(pk=self.job.pk).exists())

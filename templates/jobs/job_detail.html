@@ -10,6 +10,9 @@
         <div class="flex flex-row gap-2 items-center w-full overflow-auto">
             <h3>{{ job.title }}</h3>
         </div>
+        {% if job.employer %}
+            <p class="not-format mb-2 text-body">{{ job.employer }}</p>
+        {% endif %}
         {% if job.country_labels %}
             <div class="not-format flex flex-row overflow-auto w-full gap-2 mb-2">
                 {% for country in job.country_labels %}
@@ -34,6 +37,11 @@
     <h4>Description</h4>
     {{ job.description|linebreaks }}
 
+    {% if job.pay %}
+        <h4>Pay</h4>
+        <p>{{ job.pay }}</p>
+    {% endif %}
+
     <h4>Application Deadline</h4>
     <p>{{ job.deadline|date:"N j, Y" }}</p>
 
@@ -48,5 +56,14 @@
             Apply Externally
         </a>
     </div>
+
+    {% if user.is_authenticated and user == job.uploader %}
+        <form method="post" action="{% url 'job-delete' pk=job.pk %}"
+              class="not-format mt-6"
+              onsubmit="return confirm('Delete this job posting? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary">Delete posting</button>
+        </form>
+    {% endif %}
 </article>
 {% endblock content %}

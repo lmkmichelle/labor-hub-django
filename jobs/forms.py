@@ -26,11 +26,13 @@ class JobForm(forms.ModelForm):
         model = Job
         fields = [
             'title',
+            'employer',
             'country_code',
             'categories',
             'description',
             'url',
             'deadline',
+            'pay',
         ]
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
@@ -38,9 +40,11 @@ class JobForm(forms.ModelForm):
         }
         labels = {
             'title': 'Job Title',
+            'employer': 'Employer / Institution (optional)',
             'description': 'Job Description',
             'url': 'Application URL',
             'deadline': 'Application Deadline',
+            'pay': 'Pay (optional)',
         }
 
     def __init__(self, *args, **kwargs):
@@ -51,6 +55,8 @@ class JobForm(forms.ModelForm):
         self.fields['description'].required = True
         self.fields['url'].required = True
         self.fields['deadline'].required = True
+        self.fields['employer'].required = False
+        self.fields['pay'].required = False
 
         existing_countries = self.instance.countries if self.instance and self.instance.pk else []
         if existing_countries:

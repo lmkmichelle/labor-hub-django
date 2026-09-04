@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
 from core.constants import COUNTRY_CHOICES
+from core.views import OwnerDeleteView
 
 from .forms import JobForm
 from .models import JUNIOR_RANKS, RANK_CHOICES, Job
@@ -101,6 +102,7 @@ class JobsListView(ListView):
         if query:
             queryset = queryset.filter(
                 Q(title__icontains=query) |
+                Q(employer__icontains=query) |
                 Q(description__icontains=query)
             )
 
@@ -221,3 +223,10 @@ class JobCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, 'Job submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
 
+
+
+class JobDeleteView(OwnerDeleteView):
+    model = Job
+    owner_field = 'uploader'
+    success_url = reverse_lazy('jobs-list')
+    success_message = 'Your job posting has been deleted.'

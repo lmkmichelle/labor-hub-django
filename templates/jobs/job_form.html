@@ -14,13 +14,18 @@
         {% endif %}
 
         {% render_field form.title %}
+        {% render_field form.employer %}
         {% render_select form.country_code label="Country" %}
         {% render_field form.description %}
         {% render_field form.url %}
         {% render_field form.deadline %}
+        {% render_field form.pay %}
 
         <div class="mb-5">
-            <span class="block mb-2 text-sm font-medium text-heading">{{ form.categories.label }}</span>
+            <span class="block mb-0.5 text-sm font-medium text-heading">{{ form.categories.label }}</span>
+            {% if form.categories.help_text %}
+                <p class="mt-0 mb-2 text-sm text-gray-500 dark:text-gray-300">{{ form.categories.help_text }}</p>
+            {% endif %}
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {% for choice in form.categories %}
                     <div class="flex items-center">
@@ -31,9 +36,6 @@
                     </div>
                 {% endfor %}
             </div>
-            {% if form.categories.help_text %}
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">{{ form.categories.help_text }}</p>
-            {% endif %}
             {% if form.categories.errors %}
                 <p class="mt-2 text-sm text-red-600">{{ form.categories.errors.0 }}</p>
             {% endif %}
