@@ -176,9 +176,9 @@ EVENTS = [
         "schools", "Ithaca, NY", "rosa.researcher", 45, 10,
     ),
     (
-        "Live Podcast: The Future of Work",
+        "Panel: The Future of Work",
         "A recorded panel on automation, the gig economy, and job quality.",
-        "podcast", "Online", "sophia.student", 60, 18,
+        "other", "Online", "sophia.student", 60, 18,
     ),
 ]
 
