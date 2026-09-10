@@ -67,8 +67,7 @@ class HomeContextTests(TestCase):
             status="approved",
         )
         publication = Publication.objects.create(
-            title="Recent Paper", abstract="a",
-            study_url="https://example.com", status="approved",
+            title="Recent Paper", abstract="a", status="approved",
         )
         publication.authors.add(Author.objects.create(user=host, name="Host User"))
 
@@ -93,7 +92,7 @@ class MapSummaryApiTests(TestCase):
     def test_summary_counts_scholars_and_papers(self):
         make_user(email="us@example.com", country_code="US")
         publication = Publication.objects.create(
-            title="Paper", abstract="a", study_url="https://example.com",
+            title="Paper", abstract="a",
             status="approved", country_code="US",
         )
         publication.authors.add(Author.objects.create(user=None, name="Anon"))
@@ -105,7 +104,7 @@ class MapSummaryApiTests(TestCase):
 
     def test_summary_excludes_pending_papers(self):
         Publication.objects.create(
-            title="Pending", abstract="a", study_url="https://example.com",
+            title="Pending", abstract="a",
             status="pending", country_code="FR",
         )
         response = self.client.get(reverse("map_summary"))
@@ -114,8 +113,7 @@ class MapSummaryApiTests(TestCase):
     def test_summary_excludes_none_and_multinational_papers(self):
         for code in ("NONE", "MULTI"):
             Publication.objects.create(
-                title=f"Paper {code}", abstract="a",
-                study_url="https://example.com", status="approved",
+                title=f"Paper {code}", abstract="a", status="approved",
                 country_code=code,
             )
         data = self.client.get(reverse("map_summary")).json()
@@ -132,7 +130,7 @@ class MapCountryDetailTests(TestCase):
         make_user(email="us@example.com", first_name="Ada", last_name="Lovelace",
                   country_code="US")
         publication = Publication.objects.create(
-            title="Recent Paper", abstract="a", study_url="https://example.com",
+            title="Recent Paper", abstract="a",
             status="approved", country_code="US",
         )
         publication.authors.add(Author.objects.create(user=None, name="Anon"))
@@ -177,11 +175,11 @@ class SearchAccountsTests(TestCase):
 class PublicationsListViewTests(TestCase):
     def test_only_approved_publications_shown(self):
         approved = Publication.objects.create(
-            title="Approved", abstract="a", study_url="https://example.com",
+            title="Approved", abstract="a",
             status="approved",
         )
         pending = Publication.objects.create(
-            title="Pending", abstract="a", study_url="https://example.com",
+            title="Pending", abstract="a",
             status="pending",
         )
         response = self.client.get(reverse("publications"))
@@ -192,11 +190,11 @@ class PublicationsListViewTests(TestCase):
 
     def test_country_pill_filter(self):
         us_paper = Publication.objects.create(
-            title="US Paper", abstract="a", study_url="https://example.com",
+            title="US Paper", abstract="a",
             status="approved", country_code="US",
         )
         fr_paper = Publication.objects.create(
-            title="FR Paper", abstract="a", study_url="https://example.com",
+            title="FR Paper", abstract="a",
             status="approved", country_code="FR",
         )
         response = self.client.get(reverse("publications"), {"countries": "US"})
@@ -205,11 +203,11 @@ class PublicationsListViewTests(TestCase):
 
     def test_country_pill_filter_matches_multinational(self):
         multi = Publication.objects.create(
-            title="Multi Paper", abstract="a", study_url="https://example.com",
+            title="Multi Paper", abstract="a",
             status="approved", country_code="MULTI",
         )
         us_paper = Publication.objects.create(
-            title="US Paper", abstract="a", study_url="https://example.com",
+            title="US Paper", abstract="a",
             status="approved", country_code="US",
         )
         response = self.client.get(
@@ -217,16 +215,16 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(multi, response.context["publications"])
         self.assertNotIn(us_paper, response.context["publications"])
 
-    def test_keyword_pill_filter(self):
+    def test_topic_pill_filter(self):
         match = Publication.objects.create(
-            title="Wages", abstract="a", study_url="https://example.com",
-            status="approved", keywords=["Minimum wages"],
+            title="Wages", abstract="a",
+            status="approved", topic=["Minimum wages"],
         )
         other = Publication.objects.create(
-            title="Trade", abstract="a", study_url="https://example.com",
-            status="approved", keywords=["Trade"],
+            title="Migration", abstract="a",
+            status="approved", topic=["Migration"],
         )
-        response = self.client.get(reverse("publications"), {"keywords": "Minimum wages"})
+        response = self.client.get(reverse("publications"), {"topics": "Minimum wages"})
         self.assertIn(match, response.context["publications"])
         self.assertNotIn(other, response.context["publications"])
 
@@ -237,7 +235,7 @@ class PublicationsListViewTests(TestCase):
     def test_card_links_member_authors_but_not_external_ones(self):
         member = make_user(email="authormember@example.com")
         paper = Publication.objects.create(
-            title="Co-authored", abstract="a", study_url="https://example.com",
+            title="Co-authored", abstract="a",
             status="approved",
         )
         paper.authors.add(Author.objects.create(user=member, name="A Member"))
@@ -252,11 +250,11 @@ class PublicationsListViewTests(TestCase):
 
     def test_job_market_checkbox_filter(self):
         jm_paper = Publication.objects.create(
-            title="Job Market", abstract="a", study_url="https://example.com",
+            title="Job Market", abstract="a",
             status="approved", is_job_market=True,
         )
         regular = Publication.objects.create(
-            title="Regular", abstract="a", study_url="https://example.com",
+            title="Regular", abstract="a",
             status="approved", is_job_market=False,
         )
         response = self.client.get(reverse("publications"), {"job_market": "1"})

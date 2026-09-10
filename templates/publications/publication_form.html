@@ -38,19 +38,13 @@ Submit Paper
     {% render_field form.title placeholder="Paper title" %}
     
     {% render_field form.authors_input placeholder="Authors" %}
-    
-    {% render_field form.date %}
-    
+
     {% render_field form.abstract placeholder="Abstract" %}
-    
+
     {% render_select form.country_code empty_label="Choose a country" %}
-    
-    {% render_field form.topic_input placeholder="Research Topic" %}
-    
-    {% render_field form.keywords_input placeholder="Keywords" %}
-    
-    {% render_field form.study_url placeholder="https://example.com" %}
-    
+
+    {% render_field form.topics_input placeholder="Research topics" help_text="Pick one or more from the list." %}
+
     <div class="mb-5">
         <div class="flex items-center">
             <input type="checkbox" name="{{ form.is_job_market.name }}" id="{{ form.is_job_market.id_for_label }}" {% if form.is_job_market.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">

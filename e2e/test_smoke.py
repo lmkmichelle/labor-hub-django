@@ -65,7 +65,6 @@ class SmokeTests(PlaywrightSmokeTestCase):
         Publication.objects.create(
             title="E2E Map Paper",
             abstract="Abstract for the map smoke test.",
-            study_url="https://example.com/e2e-map-paper",
             country_code="US",
             status="approved",
         )

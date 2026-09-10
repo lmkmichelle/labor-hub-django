@@ -186,8 +186,7 @@ class ExamplePaperPillTests(TestCase):
         run("--remove")
         author = Author.objects.create(user=None, name="Real Author")
         paper = Publication.objects.create(
-            title="A Real Paper", abstract="Real.",
-            study_url="https://real.example.edu", status="approved",
+            title="A Real Paper", abstract="Real.", status="approved",
         )
         paper.authors.set([author])
         response = self.client.get("/publications/")

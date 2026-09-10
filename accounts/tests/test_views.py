@@ -335,7 +335,7 @@ class ProfilePublicationVisibilityTests(TestCase):
 
     def _paper(self, status, title):
         paper = self.Publication.objects.create(
-            title=title, abstract="a", study_url="https://example.com", status=status,
+            title=title, abstract="a", status=status,
         )
         paper.authors.set([self.author])
         return paper
@@ -375,8 +375,7 @@ class ProfilePublicationsEmptyStateTests(TestCase):
         user = make_active_user("haspapers@example.com")
         author = Author.objects.create(user=user, name="")
         paper = Publication.objects.create(
-            title="A Real Paper", abstract="a",
-            study_url="https://example.com", status="approved",
+            title="A Real Paper", abstract="a", status="approved",
         )
         paper.authors.set([author])
         response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))

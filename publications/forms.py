@@ -1,18 +1,89 @@
 import json
-from django import forms
-from django.core.files.base import ContentFile
-from django.urls import reverse_lazy
-from django.conf import settings
-from core.constants import PAPER_COUNTRY_CHOICES
-from .models import Publication
 import os
-from PyPDF2 import PdfMerger
 from io import BytesIO
+
+from django import forms
+from django.conf import settings
+from django.core.files.base import ContentFile
+from PyPDF2 import PdfMerger
+
+from core.constants import PAPER_COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
+from .models import Publication
+from .utils import handle_keywords
+
 
 class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'date', 'abstract', 'country_code', 'study_url', 'is_job_market', 'pdf']
+        fields = ['title', 'abstract', 'country_code', 'is_job_market', 'pdf']
+
+    authors_input = forms.CharField(
+        required=True,
+        label='Authors',
+        widget=forms.TextInput(attrs={'id': 'authors-input'}),
+    )
+
+    topics_input = forms.CharField(
+        required=True,
+        label='Research Topic(s)',
+        widget=forms.TextInput(attrs={'id': 'topics-input'}),
+    )
+
+    country_code = forms.ChoiceField(
+        choices=PAPER_COUNTRY_CHOICES,
+        required=True,
+        label='Country of Study',
+    )
+
+    is_job_market = forms.BooleanField(
+        required=False,
+        label='Is this a job market paper?',
+    )
+
+    pdf = forms.FileField(
+        required=False,
+        label='Upload Paper',
+        widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            if self.instance.topic:
+                self.fields["topics_input"].widget.attrs['value'] = json.dumps(
+                    [{"value": t} for t in self.instance.topic]
+                )
+            if self.instance.authors.exists():
+                initial_authors = [
+                    {"value": str(author)} for author in self.instance.authors.all()
+                ]
+                self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
+
+    def clean_topics_input(self):
+        """Enforce the closed research-topic vocabulary server-side.
+
+        Tagify's ``enforceWhitelist`` is client-only; a hand-crafted POST could
+        still carry anything. Values are matched case-insensitively and returned
+        in their canonical RECOMMENDED_KEYWORDS spelling.
+        """
+        values = handle_keywords(self.cleaned_data.get('topics_input', ''))
+        allowed = {k.lower(): k for k in RECOMMENDED_KEYWORDS}
+        cleaned, unknown = [], []
+        for value in values:
+            match = allowed.get(value.strip().lower())
+            if match:
+                if match not in cleaned:
+                    cleaned.append(match)
+            else:
+                unknown.append(value)
+        if unknown:
+            raise forms.ValidationError(
+                "Not a recognised research topic: " + ", ".join(unknown)
+            )
+        if not cleaned:
+            raise forms.ValidationError("Select at least one research topic.")
+        return cleaned
 
     def save(self, commit=True):
         publication = super().save(commit=False)
@@ -39,62 +110,3 @@ class PublicationForm(forms.ModelForm):
             self.save_m2m()
 
         return publication
-    authors_input = forms.CharField(
-        required=True,
-        label='Authors',
-        widget=forms.TextInput(attrs={'id': 'authors-input'}),
-    )
-
-    topic_input = forms.CharField(
-        required=True,
-        label='Research Topic',
-        widget=forms.TextInput(),
-    )
-
-    keywords_input = forms.CharField(
-        required=True,
-        label='Additional Keywords',
-        widget=forms.TextInput(attrs={'id': 'keywords-input'}),
-    )
-
-    country_code = forms.ChoiceField(
-        choices=PAPER_COUNTRY_CHOICES,
-        required=True,
-        label='Country of Study',
-    )
-
-    study_url = forms.CharField(
-        required=True,
-        label='Link to Study',
-        widget=forms.URLInput(),
-    )
-
-    is_job_market = forms.BooleanField(
-        required=False,
-        label='Is this a job market study?',
-    )
-
-    pdf = forms.FileField(
-        required=False,
-        label='Upload Paper',
-        widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if self.instance and self.instance.pk:
-            if self.instance.keywords:
-                initial_interests = [
-                    {"value": keyword} for keyword in self.instance.keyword_list()
-                ]
-                self.fields["keywords_input"].widget.attrs['value'] = json.dumps(initial_interests)
-                
-            if self.instance.authors.exists():
-                initial_authors = [
-                    {"value": str(author)} for author in self.instance.authors.all()
-                ]
-                self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
-            
-            if self.instance.topic:
-                self.fields["topic_input"].widget.attrs['value'] = self.instance.topic

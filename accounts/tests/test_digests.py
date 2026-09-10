@@ -31,7 +31,7 @@ def make_user(email="digest@example.com", frequency=Profile.DigestFrequency.WEEK
 
 def make_publication(title, applied_at, status="approved", country_code="US"):
     pub = Publication.objects.create(
-        title=title, abstract="a", study_url="https://example.com",
+        title=title, abstract="a",
         status=status, country_code=country_code,
     )
     Publication.objects.filter(pk=pub.pk).update(applied_at=applied_at)

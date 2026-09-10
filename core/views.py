@@ -479,12 +479,14 @@ def publications_list(request):
     if selected_countries:
         publications = publications.filter(country_code__in=selected_countries)
 
-    keyword_terms = parse_pill_terms(request.GET.get('keywords', ''))
-    if keyword_terms:
-        keywords_query = Q()
-        for term in keyword_terms:
-            keywords_query |= Q(keywords__icontains=term)
-        publications = publications.filter(keywords_query)
+    topic_terms = parse_pill_terms(request.GET.get('topics', ''))
+    if topic_terms:
+        topics_query = Q()
+        for term in topic_terms:
+            # topic is a JSONField list; __icontains works on SQLite/MySQL
+            # (the app's engines) but not on Postgres jsonb.
+            topics_query |= Q(topic__icontains=term)
+        publications = publications.filter(topics_query)
 
     job_market = request.GET.get('job_market') == '1'
     if job_market:
@@ -504,15 +506,15 @@ def publications_list(request):
     page_obj = paginator.get_page(page_number)
 
     selected_countries_serialized = ','.join(selected_countries)
-    selected_keywords_serialized = ','.join(keyword_terms)
+    selected_topics_serialized = ','.join(topic_terms)
 
     filter_params = {}
     if query:
         filter_params['q'] = query
     if selected_countries_serialized:
         filter_params['countries'] = selected_countries_serialized
-    if selected_keywords_serialized:
-        filter_params['keywords'] = selected_keywords_serialized
+    if selected_topics_serialized:
+        filter_params['topics'] = selected_topics_serialized
     if job_market:
         filter_params['job_market'] = '1'
     if sort:
@@ -527,8 +529,8 @@ def publications_list(request):
         'selected_countries': selected_countries,
         'selected_countries_serialized': selected_countries_serialized,
         'country_choices': PAPER_COUNTRY_CHOICES,
-        'selected_keywords': keyword_terms,
-        'selected_keywords_serialized': selected_keywords_serialized,
+        'selected_topics': topic_terms,
+        'selected_topics_serialized': selected_topics_serialized,
         'job_market': job_market,
         'filter_querystring': urlencode(filter_params),
     })

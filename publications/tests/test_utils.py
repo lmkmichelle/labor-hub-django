@@ -1,10 +1,15 @@
 import json
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from accounts.models import CustomUser
-from publications.models import Author
-from publications.utils import handle_authors, handle_keywords
+from publications.forms import PublicationForm
+from publications.models import Author, Publication
+from publications.utils import (
+    handle_authors,
+    handle_keywords,
+    process_publication_form,
+)
 
 
 class HandleKeywordsTests(TestCase):
@@ -51,3 +56,21 @@ class HandleAuthorsTests(TestCase):
         self.assertIsNone(authors[0].user)
         self.assertEqual(authors[0].name, "Unknown Person")
         self.assertTrue(Author.objects.filter(name="Unknown Person").exists())
+
+
+class ProcessPublicationFormTests(TestCase):
+    def test_topic_comes_from_cleaned_data_not_raw_post(self):
+        data = {
+            "title": "Study", "abstract": "a", "country_code": "US",
+            "authors_input": '[{"value":"Jane Doe"}]',
+            "topics_input": '[{"value":"labor supply"}]',
+        }
+        form = PublicationForm(data=data)
+        self.assertTrue(form.is_valid(), form.errors)
+        request = RequestFactory().post("/publications/submit/", data)
+        request.user = CustomUser(is_active=True)
+        publication = process_publication_form(request, form)
+        # Canonical casing from clean_topics_input, stored as a list.
+        self.assertEqual(publication.topic, ["Labor Supply"])
+        self.assertEqual(
+            Publication.objects.get(pk=publication.pk).authors.count(), 1)

@@ -123,38 +123,34 @@ ADMINS = [
 # External (non-user) co-authors, referenced by name only.
 EXTERNAL_AUTHORS = ["J. P. Laurent", "Mei Tanaka"]
 
-# (title, author_keys, country_code, topic, keywords, study_url, is_job_market)
+# (title, author_keys, country_code, topics, is_job_market)
 # author_keys are either a demo user local-part or an external author name.
+# topics are exact RECOMMENDED_KEYWORDS values.
 PUBLICATIONS = [
     (
         "Education and Human Capital in the Modern Labor Market",
-        ["rosa.researcher", "sophia.student"], "US", "Education and Human Capital",
-        ["Education and Human Capital", "Labor Supply"],
-        "https://example.com/education-human-capital", False,
+        ["rosa.researcher", "sophia.student"], "US",
+        ["Education and Human Capital", "Labor Supply"], False,
     ),
     (
         "Active Labor Market Policies and Unemployment Insurance",
-        ["rosa.researcher"], "GB", "Active Labor Market Policies",
-        ["Active Labor Market Policies", "Unemployment Insurance", "Job Search"],
-        "https://example.com/labor-market-policies", True,
+        ["rosa.researcher"], "GB",
+        ["Active Labor Market Policies", "Unemployment insurance", "Job search"], True,
     ),
     (
         "Migration, Family, and Intergenerational Mobility",
-        ["sam.scholar", "Mei Tanaka"], "CA", "Migration",
-        ["Migration", "Intergenerational Mobility", "Inequality"],
-        "https://example.com/migration-mobility", False,
+        ["sam.scholar", "Mei Tanaka"], "MULTI",
+        ["Migration", "Intergenerational mobility", "Inequality"], False,
     ),
     (
         "AI, Technological Change, and the Gig Economy",
-        ["sophia.student", "J. P. Laurent"], "DE", "AI and Technological Change",
-        ["AI and Technological Change", "Gig Economy", "Non-standard Work"],
-        "https://example.com/ai-gig-economy", True,
+        ["sophia.student", "J. P. Laurent"], "DE",
+        ["AI and Technological change", "Gig economy", "Non-standard work"], True,
     ),
     (
         "Workers' Health, Well-being, and Job Amenities",
-        ["diego.doctoral"], "FR", "Workers' Health and Well-being",
-        ["Workers' Health and Well-being", "Job Amenities", "Welfare Policy"],
-        "https://example.com/health-job-amenities", False,
+        ["diego.doctoral"], "FR",
+        ["Workers' health and well-being", "Job amenities", "Welfare policy"], False,
     ),
 ]
 
@@ -345,15 +341,13 @@ class Command(BaseCommand):
 
     def _seed_publications(self, users):
         created = 0
-        for title, author_keys, country, topic, keywords, url, is_job_market in PUBLICATIONS:
+        for title, author_keys, country, topics, is_job_market in PUBLICATIONS:
             pub, was_created = Publication.objects.update_or_create(
                 title=title,
                 defaults={
-                    "abstract": f"{topic}: a demo abstract for local UI testing.",
+                    "abstract": f"{topics[0]}: a demo abstract for local UI testing.",
                     "country_code": country,
-                    "topic": topic,
-                    "keywords": keywords,
-                    "study_url": url,
+                    "topic": topics,
                     "is_job_market": is_job_market,
                     "status": "approved",
                 },
