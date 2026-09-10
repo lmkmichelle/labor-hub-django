@@ -27,7 +27,7 @@
                       class="flex items-center justify-between w-full py-2 px-3 rounded font-medium md:hover:bg-transparent md:border-0 md:p-0 hover:text-red-700">
                 {{ user.get_full_name }}
               </button>
-              <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44"
+              <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-56"
                    id="user-dropdown">
                 <div class="px-4 py-2 text-sm border-b border-default">
                   <span class="block text-heading font-medium">{{ user.get_full_name }}</span>
@@ -65,6 +65,18 @@
                   <li>
                     <a href="{% url 'submit_paper' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'job-create' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post a Job</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'seminar-create' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post a Visit</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'event-create' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Event</a>
                   </li>
                   <li>
                     <a href="{% url 'settings' %}"
