@@ -49,6 +49,15 @@
                         {% endif %}
                       </a>
                     </li>
+                    <li>
+                      <a href="{% url 'advised_papers' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">
+                        Advised papers
+                        {% if pending_paper_ack_count %}
+                          <span class="ms-2 pill-accent">{{ pending_paper_ack_count }}</span>
+                        {% endif %}
+                      </a>
+                    </li>
                   {% endif %}
                    {% if user.is_staff %}
                     <li>
