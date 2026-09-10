@@ -6,7 +6,7 @@
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        <h2>Visits</h2>
+        <h2>Long-Distance Visits</h2>
         <p class="mb-6">Here you will find information about research visits, such as a sabbatical, that members have planned, allowing colleagues to see who will be at what institutions in their area and when. It is intended to facilitate additional meetings, seminars, and new collaborations. Members are invited to post their forthcoming visits so that others in the community are aware of their presence.</p>
         <div class="flex flex-row w-full gap-6">
             <div class="flex flex-col w-60">
@@ -39,6 +39,21 @@
                                placeholder="Add countries...">
                     </div>
                     <div class="mb-4">
+                        <h4>Visit Type</h4>
+                        {% for value, label in visit_type_choices %}
+                            <div class="mb-1">
+                                <input id="visit-type-{{ value }}"
+                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                       type="checkbox"
+                                       name="visit_type"
+                                       value="{{ value }}"
+                                       {% if value in selected_visit_types %}checked{% endif %}>
+                                <label class="select-none ms-1 text-sm font-medium text-heading"
+                                       for="visit-type-{{ value }}">{{ label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-4">
                         <div class="flex flex-row justify-between">
                             <button type="submit" class="btn-primary">Apply Filters</button>
                             <a href="{% url 'seminars-list' %}" class="btn-secondary no-underline">Clear Filters</a>
@@ -56,6 +71,7 @@
                                value="{{ selected_countries_serialized }}">
                         {% if show_archived %}<input type="hidden" name="show_archived" value="1">{% endif %}
                         <input type="hidden" name="sort" value="{{ sort }}">
+                        {% for t in selected_visit_types %}<input type="hidden" name="visit_type" value="{{ t }}">{% endfor %}
                         <label for="seminar-search" class="sr-only">Search visits</label>
                         <div class="relative flex-1 min-w-0 w-full">
                             <input type="text"
@@ -85,6 +101,7 @@
                                value="{{ selected_countries_serialized }}">
                         {% if show_archived %}<input type="hidden" name="show_archived" value="1">{% endif %}
                         {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                        {% for t in selected_visit_types %}<input type="hidden" name="visit_type" value="{{ t }}">{% endfor %}
                         <label for="sortSelect" class="sr-only">Sort by</label>
                         <select id="sortSelect"
                                 name="sort"
@@ -95,7 +112,7 @@
                         </select>
                     </form>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'seminar-create' %}" class="btn-primary shrink-0 whitespace-nowrap no-underline">Coordinate Visit</a>
+                        <a href="{% url 'seminar-create' %}" class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Visit</a>
                     {% endif %}
                 </div>
                 {% if seminars %}

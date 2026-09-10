@@ -15,10 +15,8 @@ class SeminarForm(forms.ModelForm):
         model = Seminar
         fields = [
             'country_code',
-            'visitor_name',
-            'visitor_email',
-            'visitor_affiliation',
             'university',
+            'visit_type',
             'visit_start',
             'visit_end',
             'description',
@@ -29,10 +27,8 @@ class SeminarForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 5}),
         }
         labels = {
-            'visitor_name': 'Your Name',
-            'visitor_email': 'Your Email',
-            'visitor_affiliation': 'Affiliation (Optional)',
             'university': 'University',
+            'visit_type': 'Visit Type',
             'visit_start': 'Visit Start Date',
             'visit_end': 'Visit End Date (Optional)',
             'description': 'Details (Optional)',
@@ -41,10 +37,13 @@ class SeminarForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['visitor_name'].required = True
-        self.fields['visitor_email'].required = True
         self.fields['visit_start'].required = True
         self.fields['country_code'].required = True
+
+        self.fields['visit_type'].required = True
+        self.fields['visit_type'].choices = (
+            [('', 'Choose a visit type')] + list(Seminar.VisitType.choices)
+        )
 
         self.fields['description'].required = False
         self.fields['university'].queryset = University.objects.order_by('name')

@@ -125,6 +125,13 @@ class SeminarsListView(ListView):
                     matching_ids.append(seminar.id)
             queryset = queryset.filter(id__in=matching_ids)
 
+        valid_visit_types = {code for code, _ in Seminar.VisitType.choices}
+        selected_visit_types = [
+            t for t in self.request.GET.getlist('visit_type') if t in valid_visit_types
+        ]
+        if selected_visit_types:
+            queryset = queryset.filter(visit_type__in=selected_visit_types)
+
         sort = self.request.GET.get('sort', '')
         if sort == 'newest':
             queryset = queryset.order_by('-id')
@@ -141,6 +148,11 @@ class SeminarsListView(ListView):
         country_terms = _parse_country_terms(self.request.GET.get('countries', ''))
         selected_countries = _map_country_terms_to_codes(country_terms)
 
+        valid_visit_types = {code for code, _ in Seminar.VisitType.choices}
+        selected_visit_types = [
+            t for t in self.request.GET.getlist('visit_type') if t in valid_visit_types
+        ]
+
         context['query'] = self.request.GET.get('q', '')
         context['show_archived'] = self.request.GET.get('show_archived') == '1'
         context['sort'] = self.request.GET.get('sort', '')
@@ -148,6 +160,8 @@ class SeminarsListView(ListView):
         context['selected_country_labels'] = [COUNTRY_MAP.get(code, code) for code in selected_countries]
         context['selected_countries_serialized'] = ','.join(selected_countries)
         context['country_choices'] = COUNTRY_CHOICES
+        context['visit_type_choices'] = Seminar.VisitType.choices
+        context['selected_visit_types'] = selected_visit_types
 
         filter_params = {}
         if context['query']:
@@ -158,7 +172,9 @@ class SeminarsListView(ListView):
             filter_params['sort'] = context['sort']
         if context['selected_countries_serialized']:
             filter_params['countries'] = context['selected_countries_serialized']
-        context['filter_querystring'] = urlencode(filter_params)
+        if selected_visit_types:
+            filter_params['visit_type'] = selected_visit_types
+        context['filter_querystring'] = urlencode(filter_params, doseq=True)
         return context
 
 
@@ -186,22 +202,13 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
     template_name = 'seminars/seminar_form.html'
     success_url = reverse_lazy('seminars-list')
 
-    def get_initial(self):
-        # The visitor is normally the logged-in poster; prefill from their
-        # account and profile, leaving every field editable.
-        initial = super().get_initial()
-        user = self.request.user
-        profile = getattr(user, 'profile', None)
-        initial.setdefault('visitor_name', user.get_full_name())
-        initial.setdefault('visitor_email', user.email)
-        if profile is not None:
-            initial.setdefault(
-                'visitor_affiliation', profile.get_university_display())
-        return initial
-
     def form_valid(self, form):
         seminar = form.save(commit=False)
         seminar.posted_by = self.request.user
+        # The visitor is always the logged-in poster: the name/email fields are
+        # not on the form, so no one can advertise a visit on someone's behalf.
+        seminar.visitor_name = self.request.user.get_full_name()
+        seminar.visitor_email = self.request.user.email
         seminar.status = 'pending'
         seminar.save()
         form.save_m2m()

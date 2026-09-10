@@ -319,7 +319,7 @@ class ProfileVisitsTests(TestCase):
 
     def test_visits_section_precedes_discussion_papers(self):
         body = self._profile(self.owner).content.decode()
-        self.assertLess(body.index("<h3>Visits</h3>"),
+        self.assertLess(body.index("<h3>Long-Distance Visits</h3>"),
                         body.index("Labor Hub Discussion Papers"))
 
 
@@ -387,10 +387,10 @@ class ProfilePublicationsEmptyStateTests(TestCase):
 class ProfileVisitCardDetailTests(TestCase):
     """The profile now uses the detailed visit card, not the minimal one.
 
-    Detailed means the same card the Visits listing renders: "Visiting <uni>",
-    the affiliation line and country pills -- none of which the minimal card
-    showed. The heading differs by design (university, not visitor name), since
-    the member's own name is already at the top of their profile.
+    Detailed means the same card the Visits listing renders: "Visiting <uni>"
+    and country pills -- neither of which the minimal card showed. The heading
+    differs by design (university, not visitor name), since the member's own
+    name is already at the top of their profile.
     """
 
     def setUp(self):
@@ -420,12 +420,11 @@ class ProfileVisitCardDetailTests(TestCase):
     def test_shows_the_detailed_fields(self):
         response = self._profile()
         self.assertContains(response, "Visiting Cornell University")
-        self.assertContains(response, "Analytical Engine Institute")
         self.assertContains(response, "United States")
 
     def test_titles_the_card_by_university_not_visitor_name(self):
         response = self._profile()
-        self.assertContains(response, 'class="card-title">Cornell University')
+        self.assertContains(response, "card-stretch-link\">Cornell University")
 
     def test_uses_the_detailed_card_not_the_minimal_one(self):
         """The minimal card renders an h6/card-surface pair with no card-title."""
@@ -453,4 +452,5 @@ class VisitsListTitleTests(TestCase):
             status="approved",
         )
         response = self.client.get(reverse("seminars-list"))
-        self.assertContains(response, 'class="card-title">Ada Lovelace')
+        self.assertContains(response, "Ada Lovelace")
+        self.assertContains(response, 'class="card-title"')

@@ -23,6 +23,9 @@ title=visit.get_university_display instead.
     </div>
   </div>
   <p class="mt-1 text-sm text-body">Visiting {{ visit.get_university_display }}</p>
+  {% if visit.visit_type %}
+    <p class="mt-1 text-sm text-body">{{ visit.get_visit_type_display }}</p>
+  {% endif %}
   {% include "partials/cards/_pill_row.html" with labels=visit.country_labels %}
   {% if visit.posted_by %}
     <p class="mt-2 text-sm text-body text-right">
