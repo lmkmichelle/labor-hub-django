@@ -40,9 +40,20 @@
     @apply inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 text-body bg-neutral-secondary-medium border border-default-medium rounded-base shadow-xs hover:bg-neutral-tertiary-medium hover:text-heading focus:outline-none focus:ring-4 focus:ring-neutral-tertiary;
   }
 
-  /* List/card container surface (FR-002) */
+  /* List/card container surface (FR-002).
+     `relative` anchors the stretched title link below. The card root is a
+     <div>, not an <a>, so poster/author links inside it stay independently
+     clickable (a nested <a> is invalid HTML). */
   .card-surface {
-    @apply block p-6 bg-neutral-primary-soft border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium;
+    @apply relative block p-6 bg-neutral-primary-soft border border-default rounded-base shadow-xs hover:bg-neutral-secondary-medium;
+  }
+  /* The card title carries the whole-card click target via a stretched
+     pseudo-element; inner links raise themselves above it with z-10. */
+  .card-stretch-link {
+    @apply no-underline text-inherit after:absolute after:inset-0 after:content-[''];
+  }
+  .card-inline-link {
+    @apply relative z-10 text-red-700 hover:underline;
   }
 
   /* Detailed content card (papers, events, jobs, visits). The surface above is

@@ -3,9 +3,9 @@ Detailed event card. Inputs:
   event   an Event instance
 Used by the Events list page.
 {% endcomment %}
-<a href="{% url 'event-detail' event.id %}" class="card-surface w-full">
+<div class="card-surface w-full">
   <div class="card-header">
-    <h5 class="card-title">{{ event.title }}</h5>
+    <h5 class="card-title"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=event.is_example %}
       <span class="pill-accent">{{ event.get_category_display }}</span>
@@ -18,4 +18,4 @@ Used by the Events list page.
   {% if event.deadline %}
     <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
   {% endif %}
-</a>
+</div>
