@@ -68,7 +68,10 @@ class ProcessPublicationFormTests(TestCase):
         form = PublicationForm(data=data)
         self.assertTrue(form.is_valid(), form.errors)
         request = RequestFactory().post("/publications/submit/", data)
-        request.user = CustomUser(is_active=True)
+        request.user = CustomUser.objects.create_user(
+            email="submitter@example.com", password="pass12345",
+            first_name="Sub", last_name="Mitter", is_active=True,
+        )
         publication = process_publication_form(request, form)
         # Canonical casing from clean_topics_input, stored as a list.
         self.assertEqual(publication.topic, ["Labor Supply"])

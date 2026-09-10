@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from accounts.models import CustomUser
 from publications.forms import PublicationForm
 
 
@@ -8,12 +9,19 @@ def valid_form_data(**overrides):
         "title": "A Study",
         "abstract": "Abstract text.",
         "country_code": "US",
-        "is_job_market": True,
+        "is_job_market": "",
         "authors_input": '[{"value":"Jane Doe"}]',
         "topics_input": '[{"value":"Labor Supply"}]',
     }
     data.update(overrides)
     return data
+
+
+def make_researcher(email="advisor@example.com"):
+    return CustomUser.objects.create_user(
+        email=email, password="pass12345", first_name="Ada", last_name="Visor",
+        role=CustomUser.Role.RESEARCHER, is_active=True,
+    )
 
 
 class PublicationFormTests(TestCase):
@@ -63,6 +71,32 @@ class PublicationFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         publication = form.save()
         self.assertFalse(publication.is_job_market)
+
+    def test_job_market_paper_requires_an_advisor(self):
+        form = PublicationForm(data=valid_form_data(is_job_market=True))
+        self.assertFalse(form.is_valid())
+        self.assertIn("jm_advisor", form.errors)
+
+    def test_job_market_paper_with_a_researcher_advisor_is_valid(self):
+        advisor = make_researcher()
+        form = PublicationForm(data=valid_form_data(
+            is_job_market=True, jm_advisor=advisor.pk))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().jm_advisor, advisor)
+
+    def test_students_are_not_in_the_advisor_queryset(self):
+        student = CustomUser.objects.create_user(
+            email="student@example.com", password="pass12345",
+            first_name="Sam", last_name="Student",
+            role=CustomUser.Role.STUDENT, is_active=True,
+        )
+        self.assertNotIn(student, PublicationForm().fields["jm_advisor"].queryset)
+
+    def test_advisor_is_discarded_when_box_unchecked(self):
+        advisor = make_researcher()
+        form = PublicationForm(data=valid_form_data(jm_advisor=advisor.pk))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data["jm_advisor"])
 
     def test_country_accepts_the_multinational_sentinel(self):
         form = PublicationForm(data=valid_form_data(country_code="MULTI"))

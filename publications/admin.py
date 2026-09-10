@@ -18,15 +18,21 @@ class AuthorAdmin(admin.ModelAdmin):
 
 class PublicationAdmin(ApprovableAdmin):
     inlines = [AuthorInline]
-    list_display = ['title', 'applied_at', 'country_code', 'is_job_market']
+    list_display = ['title', 'applied_at', 'country_code', 'is_job_market',
+                    'jm_advisor', 'jm_advisor_acknowledged']
     search_fields = ['title', 'abstract']
-    list_filter = ['applied_at', 'is_job_market']
-    readonly_fields = ['applied_at']
+    list_filter = ['applied_at', 'is_job_market', 'jm_advisor_acknowledged']
+    readonly_fields = ['applied_at', 'submitted_by', 'jm_advisor_responded_at']
+    autocomplete_fields = ['jm_advisor']
 
     fieldsets = (
         ('Publication Info', {
             'fields': ('title', 'authors', 'abstract', 'country_code',
-                       'topic', 'is_job_market', 'pdf')
+                       'topic', 'is_job_market', 'pdf', 'submitted_by')
+        }),
+        ('Job market advisor', {
+            'fields': ('jm_advisor', 'jm_advisor_acknowledged',
+                       'jm_advisor_responded_at')
         }),
         ('Review', {
             'fields': ('review_actions', 'status', 'admin_notes', 'applied_at',

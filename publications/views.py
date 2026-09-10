@@ -27,7 +27,7 @@ class PublicationDetailView(DetailView):
         raise Http404("This publication is not available.")
 
 
-class PublicationCreateView(CreateView):
+class PublicationCreateView(LoginRequiredMixin, CreateView):
     model = Publication
     form_class = PublicationForm
     template_name = 'publications/publication_form.html'

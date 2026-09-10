@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from PyPDF2 import PdfMerger
 
+from accounts.models import CustomUser
 from core.constants import PAPER_COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
 from .models import Publication
 from .utils import handle_keywords
@@ -15,7 +16,8 @@ from .utils import handle_keywords
 class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'abstract', 'country_code', 'is_job_market', 'pdf']
+        fields = ['title', 'abstract', 'country_code', 'is_job_market',
+                  'jm_advisor', 'pdf']
 
     authors_input = forms.CharField(
         required=True,
@@ -40,6 +42,13 @@ class PublicationForm(forms.ModelForm):
         label='Is this a job market paper?',
     )
 
+    jm_advisor = forms.ModelChoiceField(
+        queryset=CustomUser.objects.none(),
+        required=False,
+        label='Advisor on Job Market Paper?',
+        help_text='The researcher supervising this job market paper.',
+    )
+
     pdf = forms.FileField(
         required=False,
         label='Upload Paper',
@@ -48,6 +57,10 @@ class PublicationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields['jm_advisor'].queryset = CustomUser.objects.filter(
+            role=CustomUser.Role.RESEARCHER, is_active=True,
+        ).order_by('first_name', 'last_name')
 
         if self.instance and self.instance.pk:
             if self.instance.topic:
@@ -83,6 +96,18 @@ class PublicationForm(forms.ModelForm):
             )
         if not cleaned:
             raise forms.ValidationError("Select at least one research topic.")
+        return cleaned
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('is_job_market') and not cleaned.get('jm_advisor'):
+            self.add_error(
+                'jm_advisor',
+                'Select your advisor for a job market paper.',
+            )
+        if not cleaned.get('is_job_market'):
+            # An advisor picked without ticking the box is ignored.
+            cleaned['jm_advisor'] = None
         return cleaned
 
     def save(self, commit=True):

@@ -78,6 +78,9 @@ def process_publication_form(request, form):
     # RECOMMENDED_KEYWORDS values.
     publication.topic = form.cleaned_data.get('topics_input') or []
 
+    if publication.pk is None and request.user.is_authenticated:
+        publication.submitted_by = request.user
+
     publication.save()
 
     raw_authors = request.POST.get('authors_input', '[]')

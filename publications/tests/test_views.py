@@ -27,7 +27,7 @@ def create_post_data(**overrides):
         "title": "New Paper",
         "abstract": "Some abstract.",
         "country_code": "US",
-        "is_job_market": True,
+        "is_job_market": "",
         "authors_input": '[{"value":"Jane Doe"}]',
         "topics_input": '[{"value":"Labor Supply"}]',
     }
@@ -87,13 +87,23 @@ class PublicationCreateViewTests(TestCase):
     def setUp(self):
         self.user = make_user()
 
+    def test_get_requires_login(self):
+        response = self.client.get(reverse("submit_paper"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    def test_post_requires_login(self):
+        response = self.client.post(reverse("submit_paper"), create_post_data())
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Publication.objects.filter(title="New Paper").exists())
+
     def test_get_renders_form_when_logged_in(self):
         self.client.force_login(self.user)
         response = self.client.get(reverse("submit_paper"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "publications/publication_form.html")
 
-    def test_post_creates_publication_with_authors_and_topics(self):
+    def test_post_creates_publication_and_records_the_submitter(self):
         self.client.force_login(self.user)
         response = self.client.post(reverse("submit_paper"), create_post_data())
         self.assertRedirects(response, reverse("publications"))
@@ -101,6 +111,7 @@ class PublicationCreateViewTests(TestCase):
         self.assertEqual(publication.status, "pending")
         self.assertEqual(publication.topic, ["Labor Supply"])
         self.assertEqual(publication.authors.count(), 1)
+        self.assertEqual(publication.submitted_by, self.user)
 
     def test_off_whitelist_topic_is_rejected(self):
         self.client.force_login(self.user)
