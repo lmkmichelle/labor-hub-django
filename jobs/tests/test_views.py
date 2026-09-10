@@ -84,6 +84,21 @@ class JobsListViewTests(TestCase):
         self.assertEqual(len(response.context["jobs"]), 10)
 
 
+class JobsListPosterLinkTests(TestCase):
+    def test_card_links_poster_name_to_profile(self):
+        poster = CustomUser.objects.create_user(
+            email="poster@example.com", password="x", first_name="Pat",
+            last_name="Poster", role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        job = make_job()
+        job.uploader = poster
+        job.save()
+        response = self.client.get(reverse("jobs-list"))
+        self.assertContains(response, "Posted by")
+        self.assertContains(
+            response, f'href="{reverse("profile", args=[poster.pk])}"')
+
+
 class JobDetailViewTests(TestCase):
     def test_detail_renders(self):
         job = make_job()

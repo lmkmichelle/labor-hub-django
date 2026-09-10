@@ -25,6 +25,21 @@ def make_seminar(visitor_name="Visitor", start_offset=1, end_offset=None,
     )
 
 
+class SeminarsListPosterLinkTests(TestCase):
+    def test_card_links_poster_name_to_profile(self):
+        poster = CustomUser.objects.create_user(
+            email="visitposter@example.com", password="x", first_name="Val",
+            last_name="Visitor", role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        visit = make_seminar()
+        visit.posted_by = poster
+        visit.save()
+        response = self.client.get(reverse("seminars-list"))
+        self.assertContains(response, "Posted by")
+        self.assertContains(
+            response, f'href="{reverse("profile", args=[poster.pk])}"')
+
+
 class SeminarsListViewTests(TestCase):
     def test_list_renders(self):
         response = self.client.get(reverse("seminars-list"))

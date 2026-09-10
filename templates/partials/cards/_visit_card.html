@@ -23,8 +23,11 @@ title=visit.get_university_display instead.
     </div>
   </div>
   <p class="mt-1 text-sm text-body">Visiting {{ visit.get_university_display }}</p>
-  {% if visit.visitor_affiliation %}
-    <p class="mt-1 text-sm text-body">From {{ visit.visitor_affiliation }}</p>
-  {% endif %}
   {% include "partials/cards/_pill_row.html" with labels=visit.country_labels %}
+  {% if visit.posted_by %}
+    <p class="mt-2 text-sm text-body text-right">
+      Posted by
+      <a href="{% url 'profile' pk=visit.posted_by.id %}" class="card-inline-link">{{ visit.posted_by.get_full_name|default:visit.posted_by.email }}</a>
+    </p>
+  {% endif %}
 </div>

@@ -204,6 +204,19 @@ class PublicationsListViewTests(TestCase):
     def test_recommended_keywords_payload_present(self):
         response = self.client.get(reverse("publications"))
         self.assertIn("recommended_keywords", response.context)
+
+    def test_card_links_member_authors_but_not_external_ones(self):
+        member = make_user(email="authormember@example.com")
+        paper = Publication.objects.create(
+            title="Co-authored", abstract="a", study_url="https://example.com",
+            status="approved",
+        )
+        paper.authors.add(Author.objects.create(user=member, name="A Member"))
+        paper.authors.add(Author.objects.create(user=None, name="Outside Collaborator"))
+        response = self.client.get(reverse("publications"))
+        self.assertContains(
+            response, f'href="{reverse("profile", args=[member.pk])}"')
+        self.assertContains(response, "Outside Collaborator")
         content = response.content.decode()
         self.assertIn('id="recommended-keywords-data"', content)
         self.assertIn("Minimum wages", content)
