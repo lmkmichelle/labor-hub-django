@@ -140,6 +140,7 @@ class JobCreateViewTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.post(reverse("job-create"), {
             "title": "New Job",
+            "employer": "Cornell University",
             "country_code": "US",
             "description": "A job posting.",
             "url": "https://jobs.example.com",

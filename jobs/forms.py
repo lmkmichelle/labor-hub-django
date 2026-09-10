@@ -40,7 +40,7 @@ class JobForm(forms.ModelForm):
         }
         labels = {
             'title': 'Job Title',
-            'employer': 'Employer / Institution (optional)',
+            'employer': 'Employer / Institution',
             'description': 'Job Description',
             'url': 'Application URL',
             'deadline': 'Application Deadline',
@@ -55,7 +55,7 @@ class JobForm(forms.ModelForm):
         self.fields['description'].required = True
         self.fields['url'].required = True
         self.fields['deadline'].required = True
-        self.fields['employer'].required = False
+        self.fields['employer'].required = True
         self.fields['pay'].required = False
 
         existing_countries = self.instance.countries if self.instance and self.instance.pk else []

@@ -214,27 +214,27 @@ SEMINARS = [
 JOBS = [
     (
         "Assistant Professor of Labor Economics",
-        "Tenure-track position in applied labor economics. PhD required.",
+        "Cornell University", "Tenure-track position in applied labor economics. PhD required.",
         "admin", ["US"], ["assistant_professor"], "https://example.com/jobs/assistant-professor", 45,
     ),
     (
         "Predoctoral Research Fellow",
-        "Two-year predoctoral fellowship supporting labor and public economics research.",
+        "Princeton University", "Two-year predoctoral fellowship supporting labor and public economics research.",
         "rosa.researcher", ["US", "GB"], ["predoc"], "https://example.com/jobs/predoc", 30,
     ),
     (
         "Postdoctoral Associate in Migration Studies",
-        "Postdoctoral appointment on a funded migration and development project.",
+        "University of Toronto", "Postdoctoral appointment on a funded migration and development project.",
         "sam.scholar", ["CA"], ["postdoc"], "https://example.com/jobs/postdoc", 60,
     ),
     (
         "Open-Rank Professorship in Economics",
-        "Senior faculty search open to associate and full professors in labor and public economics.",
+        "London School of Economics", "Senior faculty search open to associate and full professors in labor and public economics.",
         "sam.scholar", ["GB"], ["associate_professor", "full_professor"], "https://example.com/jobs/open-rank", 20,
     ),
     (
         "Research Data Analyst",
-        "Support empirical labor research: data cleaning, analysis, and reproducibility.",
+        "IZA Institute of Labor Economics", "Support empirical labor research: data cleaning, analysis, and reproducibility.",
         "admin", ["US", "IN"], ["predoc", "postdoc", "other"], "https://example.com/jobs/data-analyst", 90,
     ),
 ]
@@ -427,11 +427,12 @@ class Command(BaseCommand):
     def _seed_jobs(self, users):
         today = timezone.localdate()
         created = 0
-        for (title, description, uploader_key, countries,
+        for (title, employer, description, uploader_key, countries,
              categories, url, deadline_offset) in JOBS:
             _job, was_created = Job.objects.update_or_create(
                 title=title,
                 defaults={
+                    "employer": employer,
                     "description": description,
                     "uploader": users.get(uploader_key),
                     "countries": countries,
