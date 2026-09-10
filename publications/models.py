@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import JSONField
 
 from accounts.models import CustomUser
-from core.constants import COUNTRY_CHOICES
+from core.constants import PAPER_COUNTRY_CHOICES
 from core.models import Approvable
 
 User = get_user_model()
@@ -25,8 +25,8 @@ class Publication(Approvable):
     date = models.DateField(default=timezone.now)
     abstract = models.TextField()
     country_code = models.CharField(
-        max_length=2,
-        choices=COUNTRY_CHOICES,
+        max_length=16,
+        choices=PAPER_COUNTRY_CHOICES,
         blank=True,
         null=True
     )

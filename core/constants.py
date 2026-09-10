@@ -250,6 +250,19 @@ COUNTRY_CHOICES = [
     ("AX", "Åland Islands"),
 ]
 
+# Country-of-study choices for discussion papers. A paper's study may cover no
+# single country or several, so two self-describing sentinels lead the list
+# (deliberately not 2-char ISO codes -- they must never alias a real country or
+# an SVG path id on the World Map). Reads that aggregate papers by country must
+# exclude PAPER_SPECIAL_COUNTRY_CODES.
+PAPER_COUNTRY_NONE = "NONE"
+PAPER_COUNTRY_MULTINATIONAL = "MULTI"
+PAPER_SPECIAL_COUNTRY_CODES = (PAPER_COUNTRY_NONE, PAPER_COUNTRY_MULTINATIONAL)
+PAPER_COUNTRY_CHOICES = [
+    (PAPER_COUNTRY_NONE, "None"),
+    (PAPER_COUNTRY_MULTINATIONAL, "Multinational"),
+] + list(COUNTRY_CHOICES)
+
 # Recommended labor-economics keywords. Single source of truth for the
 # controlled vocabulary used by the paper keyword field, the profile
 # research-interests field, and the Discussion Papers keyword filter.

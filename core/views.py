@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
@@ -15,7 +15,11 @@ from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import DeleteView, ListView, TemplateView
 
 from accounts.models import CustomUser
-from core.constants import COUNTRY_CHOICES
+from core.constants import (
+    COUNTRY_CHOICES,
+    PAPER_COUNTRY_CHOICES,
+    PAPER_SPECIAL_COUNTRY_CODES,
+)
 from core.filters import map_country_terms_to_codes, parse_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
@@ -273,6 +277,7 @@ def map_summary(request):
     paper_counts = (
         Publication.objects.filter(status="approved", country_code__isnull=False)
         .exclude(country_code="")
+        .exclude(country_code__in=PAPER_SPECIAL_COUNTRY_CODES)
         .values("country_code")
         .annotate(total=Count("id"))
     )
@@ -293,6 +298,8 @@ def map_country_detail(request, code):
     shared ``_list_item`` partial) and avoids duplicating card HTML in JavaScript.
     """
     code = code.upper()
+    if code in PAPER_SPECIAL_COUNTRY_CODES:
+        raise Http404("No map panel for that code.")
     country_name = dict(COUNTRY_CHOICES).get(code, code)
 
     scholars_qs = (
@@ -467,7 +474,8 @@ def publications_list(request):
         ).distinct()
 
     selected_countries = map_country_terms_to_codes(
-        parse_pill_terms(request.GET.get('countries', '')))
+        parse_pill_terms(request.GET.get('countries', '')),
+        choices=PAPER_COUNTRY_CHOICES)
     if selected_countries:
         publications = publications.filter(country_code__in=selected_countries)
 
@@ -518,7 +526,7 @@ def publications_list(request):
         'sort': sort,
         'selected_countries': selected_countries,
         'selected_countries_serialized': selected_countries_serialized,
-        'country_choices': COUNTRY_CHOICES,
+        'country_choices': PAPER_COUNTRY_CHOICES,
         'selected_keywords': keyword_terms,
         'selected_keywords_serialized': selected_keywords_serialized,
         'job_market': job_market,

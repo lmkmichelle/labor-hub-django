@@ -52,7 +52,7 @@
         <h4>Abstract</h4>
         {{ publication.abstract|linebreaks }}
         <h4>Country of study</h4>
-        <p>{{ publication.country_code }}</p>
+        <p>{{ publication.get_country_code_display|default:"Not specified" }}</p>
         <h4>Topic of study</h4>
         <p>{{ publication.topic }}</p>
         

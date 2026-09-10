@@ -111,6 +111,21 @@ class MapSummaryApiTests(TestCase):
         response = self.client.get(reverse("map_summary"))
         self.assertNotIn("FR", response.json())
 
+    def test_summary_excludes_none_and_multinational_papers(self):
+        for code in ("NONE", "MULTI"):
+            Publication.objects.create(
+                title=f"Paper {code}", abstract="a",
+                study_url="https://example.com", status="approved",
+                country_code=code,
+            )
+        data = self.client.get(reverse("map_summary")).json()
+        self.assertNotIn("NONE", data)
+        self.assertNotIn("MULTI", data)
+
+    def test_country_detail_404s_for_a_sentinel_code(self):
+        response = self.client.get(reverse("map_country_detail", args=["MULTI"]))
+        self.assertEqual(response.status_code, 404)
+
 
 class MapCountryDetailTests(TestCase):
     def test_detail_renders_scholars_and_papers(self):
@@ -187,6 +202,20 @@ class PublicationsListViewTests(TestCase):
         response = self.client.get(reverse("publications"), {"countries": "US"})
         self.assertIn(us_paper, response.context["publications"])
         self.assertNotIn(fr_paper, response.context["publications"])
+
+    def test_country_pill_filter_matches_multinational(self):
+        multi = Publication.objects.create(
+            title="Multi Paper", abstract="a", study_url="https://example.com",
+            status="approved", country_code="MULTI",
+        )
+        us_paper = Publication.objects.create(
+            title="US Paper", abstract="a", study_url="https://example.com",
+            status="approved", country_code="US",
+        )
+        response = self.client.get(
+            reverse("publications"), {"countries": "Multinational"})
+        self.assertIn(multi, response.context["publications"])
+        self.assertNotIn(us_paper, response.context["publications"])
 
     def test_keyword_pill_filter(self):
         match = Publication.objects.create(

@@ -41,3 +41,13 @@ class PublicationFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         publication = form.save()
         self.assertFalse(publication.is_job_market)
+
+    def test_country_accepts_the_multinational_sentinel(self):
+        form = PublicationForm(data=valid_form_data(country_code="MULTI"))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().country_code, "MULTI")
+
+    def test_country_rejects_an_unknown_code(self):
+        form = PublicationForm(data=valid_form_data(country_code="ZZ"))
+        self.assertFalse(form.is_valid())
+        self.assertIn("country_code", form.errors)

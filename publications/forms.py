@@ -3,7 +3,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.urls import reverse_lazy
 from django.conf import settings
-from core.constants import COUNTRY_CHOICES
+from core.constants import PAPER_COUNTRY_CHOICES
 from .models import Publication
 import os
 from PyPDF2 import PdfMerger
@@ -58,7 +58,7 @@ class PublicationForm(forms.ModelForm):
     )
 
     country_code = forms.ChoiceField(
-        choices=COUNTRY_CHOICES,
+        choices=PAPER_COUNTRY_CHOICES,
         required=True,
         label='Country of Study',
     )
