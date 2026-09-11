@@ -62,6 +62,14 @@ class ApplicationViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["application_type"], "Student")
 
+    def test_apply_page_renders_other_networks_and_conditional_urls(self):
+        response = self.client.get(reverse("apply_researcher"))
+        content = response.content.decode()
+        for network in ("CESifo", "NBER", "CEPR", "IZA"):
+            self.assertIn(f'value="{network}"', content)
+        self.assertEqual(content.count("data-conditional-field"), 4)
+        self.assertIn('name="network_url_nber"', content)
+
     def test_apply_researcher_post_creates_application(self):
         response = self.client.post(
             reverse("apply_researcher"), application_post_data())

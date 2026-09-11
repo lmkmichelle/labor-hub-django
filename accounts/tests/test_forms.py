@@ -77,6 +77,43 @@ class ResearcherApplicationFormTests(TestCase):
         application = form.save()
         self.assertEqual(application.website, "https://example.org/me")
 
+    def test_other_networks_default_to_empty(self):
+        form = ResearcherApplicationForm(data=base_application_data())
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().other_networks, [])
+
+    def test_other_networks_saved_with_urls_in_choice_order(self):
+        form = ResearcherApplicationForm(data=base_application_data(
+            other_networks=["IZA", "NBER"],
+            network_url_nber="https://nber.org/me",
+            network_url_iza="https://iza.org/me",
+        ))
+        self.assertTrue(form.is_valid(), form.errors)
+        application = form.save()
+        self.assertEqual(application.other_networks, [
+            {"network": "NBER", "url": "https://nber.org/me"},
+            {"network": "IZA", "url": "https://iza.org/me"},
+        ])
+
+    def test_url_for_an_unchecked_network_is_discarded(self):
+        form = ResearcherApplicationForm(data=base_application_data(
+            other_networks=["NBER"],
+            network_url_nber="https://nber.org/me",
+            network_url_cepr="https://cepr.org/ghost",
+        ))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().other_networks, [
+            {"network": "NBER", "url": "https://nber.org/me"},
+        ])
+
+    def test_checked_network_without_a_url_is_allowed(self):
+        form = ResearcherApplicationForm(data=base_application_data(
+            other_networks=["CESifo"]))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.save().other_networks, [
+            {"network": "CESifo", "url": ""},
+        ])
+
     def test_more_than_max_research_papers_is_rejected(self):
         files = {
             "research_papers": [

@@ -46,6 +46,37 @@
 
     {% render_field form.website label="Personal Website (optional)" placeholder="https://" %}
 
+    <div class="mb-5">
+        <span class="block mb-2 text-sm font-medium text-heading">{{ form.other_networks.label }}</span>
+        {% for checkbox in form.other_networks %}
+            <div class="flex items-center mb-1">
+                {{ checkbox.tag }}
+                <label for="{{ checkbox.id_for_label }}" class="ml-2 text-sm font-medium text-heading">{{ checkbox.choice_label }}</label>
+            </div>
+        {% endfor %}
+        {% if form.other_networks.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.other_networks.errors.0 }}</p>
+        {% endif %}
+    </div>
+
+    {# Each reveals only when its network is ticked; see static/js/conditional-field.js #}
+    <div data-conditional-field data-when-checked-name="other_networks"
+         data-when-checked-value="CESifo" data-target="{{ form.network_url_cesifo.id_for_label }}">
+        {% render_field form.network_url_cesifo placeholder="https://" %}
+    </div>
+    <div data-conditional-field data-when-checked-name="other_networks"
+         data-when-checked-value="NBER" data-target="{{ form.network_url_nber.id_for_label }}">
+        {% render_field form.network_url_nber placeholder="https://" %}
+    </div>
+    <div data-conditional-field data-when-checked-name="other_networks"
+         data-when-checked-value="CEPR" data-target="{{ form.network_url_cepr.id_for_label }}">
+        {% render_field form.network_url_cepr placeholder="https://" %}
+    </div>
+    <div data-conditional-field data-when-checked-name="other_networks"
+         data-when-checked-value="IZA" data-target="{{ form.network_url_iza.id_for_label }}">
+        {% render_field form.network_url_iza placeholder="https://" %}
+    </div>
+
     {% render_field form.resume label="Upload Resume/CV (PDF only)" %}
 
     {% if form.research_papers %}
@@ -67,4 +98,5 @@
  </article>
 
 <script src="{% static 'js/university-picker.js' %}"></script>
+<script src="{% static 'js/conditional-field.js' %}"></script>
 {% endblock %}

@@ -263,6 +263,15 @@ PAPER_COUNTRY_CHOICES = [
     (PAPER_COUNTRY_MULTINATIONAL, "Multinational"),
 ] + list(COUNTRY_CHOICES)
 
+# Other research networks an applicant may already belong to (membership
+# application, admin review only -- not shown publicly).
+OTHER_NETWORK_CHOICES = [
+    ("CESifo", "CESifo"),
+    ("NBER", "NBER"),
+    ("CEPR", "CEPR"),
+    ("IZA", "IZA"),
+]
+
 # Recommended labor-economics keywords. Single source of truth for the
 # controlled vocabulary used by the paper keyword field, the profile
 # research-interests field, and the Discussion Papers keyword filter.

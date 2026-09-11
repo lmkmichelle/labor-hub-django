@@ -189,6 +189,13 @@ class UserApplicationTests(TestCase):
         user = app.approve()
         self.assertEqual(user.profile.website, "https://example.org/me")
 
+    def test_approve_does_not_carry_other_networks_to_profile(self):
+        app = make_application(
+            email="networked@example.com",
+            other_networks=[{"network": "NBER", "url": "https://nber.org/me"}])
+        user = app.approve()
+        self.assertFalse(hasattr(user.profile, "other_networks"))
+
     def test_approve_researcher_ignores_advisor(self):
         advisor = make_user(email="advisor@example.com")
         app = make_application(email="researcher2@example.com",
