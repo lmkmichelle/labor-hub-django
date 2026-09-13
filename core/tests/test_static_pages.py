@@ -39,3 +39,26 @@ class FooterLinkTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse('home'))
         self.assertContains(response, f'href="{reverse("submit_paper")}"')
+
+
+class NavbarPostLinksTests(TestCase):
+    """The logged-in user dropdown offers Post a Job/Visit/Event alongside
+    Submit a paper; anonymous visitors see none of them."""
+
+    post_link_names = ('job-create', 'seminar-create', 'event-create')
+
+    def test_hidden_for_anonymous(self):
+        response = self.client.get(reverse('home'))
+        for name in self.post_link_names:
+            self.assertNotContains(response, f'href="{reverse(name)}"')
+
+    def test_shown_when_authenticated(self):
+        user = CustomUser.objects.create_user(
+            email='navbar@example.com', password='navbar-test-pw',
+            first_name='Nav', last_name='Bar',
+            role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse('home'))
+        for name in self.post_link_names:
+            self.assertContains(response, f'href="{reverse(name)}"')

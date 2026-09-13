@@ -4,9 +4,9 @@ Detailed discussion-paper card. Inputs:
 Used by the Discussion Papers list page and by member profiles, via
 partials/_publications_list.html.
 {% endcomment %}
-<a href="{% url 'publication_detail' publication.id %}" class="card-surface w-full">
+<div class="card-surface w-full">
   <div class="card-header">
-    <h5 class="card-title">{{ publication.title }}</h5>
+    <h5 class="card-title"><a href="{% url 'publication_detail' publication.id %}" class="card-stretch-link">{{ publication.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=publication.is_example %}
       {% if not publication.is_example %}
@@ -17,9 +17,10 @@ partials/_publications_list.html.
   </div>
   <p class="mt-1 text-sm text-body">
     {% for author in publication.authors.all %}
-      {{ author.user.get_full_name|default:author.name }}{% if not forloop.last %},{% endif %}
+      {% if author.user %}<a href="{% url 'profile' pk=author.user.id %}" class="card-inline-link">{{ author.user.get_full_name }}</a>{% else %}{{ author.name }}{% endif %}{% if not forloop.last %},{% endif %}
     {% empty %}
       Unknown Author
     {% endfor %}
   </p>
-</a>
+  {% include "partials/cards/_pill_row.html" with labels=publication.topic %}
+</div>

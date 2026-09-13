@@ -3,12 +3,12 @@
 {% load static %}
 
 {% block title %}
-    Submit a visit
+    Post a Long-Distance Visit
 {% endblock title %}
 
 {% block content %}
     <article class="format lg:format-lg max-w-none">
-        <h3 class="title">Submit a Visit</h3>
+        <h3 class="title">Post a Long-Distance Visit</h3>
         <form method="POST" class="mb-8" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -17,9 +17,11 @@
                 </div>
             {% endif %}
 
-            {% render_field form.visitor_name %}
-            {% render_field form.visitor_email %}
-            {% render_field form.visitor_affiliation %}
+            <div class="mb-5">
+                <p class="mb-1 text-sm font-medium text-heading">Posting as</p>
+                <p class="m-0 text-sm text-body">{{ user.get_full_name }} · {{ user.email }}</p>
+            </div>
+
             {% render_select form.country_code label="Country" %}
             {# Country drives the affiliation list; see static/js/university-picker.js #}
             <div data-university-picker
@@ -30,6 +32,8 @@
                 {% render_select form.university %}
             </div>
 
+            {% render_select form.visit_type %}
+
             <div class="flex flex-row gap-3">
                 <div class="flex-1">{% render_field form.visit_start %}</div>
                 <div class="flex-1">{% render_field form.visit_end %}</div>
@@ -38,7 +42,7 @@
             {% render_field form.description %}
 
             <div class="flex gap-3 mb-5">
-                <button type="submit" class="btn-primary">Submit</button>
+                <button type="submit" class="btn-primary">Post Visit</button>
                 <a href="{% url 'seminars-list' %}" class="btn-secondary no-underline">Cancel</a>
             </div>
         </form>

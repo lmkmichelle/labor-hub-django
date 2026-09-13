@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password
 
-from core.constants import COUNTRY_CHOICES
+from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES
 from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
@@ -84,6 +84,16 @@ class BaseApplicationForm(forms.ModelForm):
         widget=forms.TextInput(),
     )
 
+    other_networks = forms.MultipleChoiceField(
+        choices=OTHER_NETWORK_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'w-4 h-4 text-brand bg-gray-100 border-gray-300 '
+                     'rounded focus:ring-brand focus:ring-2',
+        }),
+        label='Are you a member of any of the following other networks?',
+    )
+
     class Meta:
         model = UserApplication
         fields = (
@@ -106,9 +116,30 @@ class BaseApplicationForm(forms.ModelForm):
         # while the rendered <select> is narrowed by country via JS.
         self.fields['university'].queryset = University.objects.order_by('name')
 
+        # One URL field per network, shown by JS only when its box is ticked.
+        for code, _label in OTHER_NETWORK_CHOICES:
+            self.fields[f'network_url_{code.lower()}'] = forms.URLField(
+                required=False, label=f'{code} profile URL',
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        selected = cleaned.get('other_networks') or []
+        cleaned['other_networks_payload'] = [
+            {
+                'network': code,
+                'url': cleaned.get(f'network_url_{code.lower()}', '') or '',
+            }
+            for code, _label in OTHER_NETWORK_CHOICES
+            if code in selected
+        ]
+        return cleaned
+
     def save(self, commit=True):
         application = super().save(commit=False)
         application.password = make_password(self.cleaned_data["password1"])
+        application.other_networks = self.cleaned_data.get(
+            'other_networks_payload', [])
 
         if commit:
             application.save()

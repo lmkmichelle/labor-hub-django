@@ -6,6 +6,7 @@ from jobs.forms import JobForm
 def job_form_data(**overrides):
     data = {
         "title": "Postdoc",
+        "employer": "Cornell University",
         "country_code": "US",
         "description": "Details.",
         "url": "https://example.com",
@@ -50,9 +51,18 @@ class JobFormTests(TestCase):
 
 
 class JobFormPayEmployerTests(TestCase):
-    def test_pay_and_employer_are_optional(self):
-        form = JobForm(data=job_form_data())
+    def test_pay_is_optional(self):
+        data = job_form_data()
+        data.pop("pay", None)
+        form = JobForm(data=data)
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_employer_is_required(self):
+        data = job_form_data()
+        data.pop("employer")
+        form = JobForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("employer", form.errors)
 
     def test_pay_and_employer_round_trip(self):
         form = JobForm(data=job_form_data(

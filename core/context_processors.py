@@ -30,3 +30,24 @@ def pending_advisee_count(request):
             status=UserApplication.Status.PENDING,
         ).count()
     }
+
+
+def pending_paper_ack_count(request):
+    """Number of job market papers awaiting this user's advisor acknowledgement.
+
+    Same short-circuit as pending_advisee_count; base.html shows an "Advised
+    papers" link with a count badge for researchers who have some.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated and user.is_researcher()):
+        return {"pending_paper_ack_count": 0}
+
+    from publications.models import Publication
+
+    return {
+        "pending_paper_ack_count": Publication.objects.filter(
+            jm_advisor=user,
+            is_job_market=True,
+            jm_advisor_acknowledged__isnull=True,
+        ).count()
+    }

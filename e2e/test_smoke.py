@@ -54,6 +54,7 @@ class SmokeTests(PlaywrightSmokeTestCase):
     def test_submit_paper_page_renders(self):
         """The submit-a-paper form renders its heading and title field."""
         page = self.page
+        self.login(USER_EMAIL, USER_PASSWORD)
         page.goto(self.url("submit_paper"), wait_until="domcontentloaded")
         expect(
             page.get_by_role("heading", name=re.compile("Submit a paper", re.I))
@@ -65,7 +66,6 @@ class SmokeTests(PlaywrightSmokeTestCase):
         Publication.objects.create(
             title="E2E Map Paper",
             abstract="Abstract for the map smoke test.",
-            study_url="https://example.com/e2e-map-paper",
             country_code="US",
             status="approved",
         )

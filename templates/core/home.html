@@ -59,7 +59,7 @@
       <li role="presentation">
         <button class="home-tab" id="tab-seminars" type="button" role="tab"
                 data-tabs-target="#panel-seminars" aria-controls="panel-seminars" aria-selected="false">
-          Upcoming Visits <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
+          Upcoming Long-Distance Visits <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
         </button>
       </li>
     </ul>
@@ -96,8 +96,8 @@
     <!-- Upcoming Seminars -->
     <div class="hidden pt-6" id="panel-seminars" role="tabpanel" aria-labelledby="tab-seminars">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">Upcoming Visits</h2>
-        <a href="{% url 'seminars-list' %}" class="btn-primary">See all visits</a>
+        <h2 class="text-lg font-semibold text-heading">Upcoming Long-Distance Visits</h2>
+        <a href="{% url 'seminars-list' %}" class="btn-primary">See all long-distance visits</a>
       </div>
       {% include 'partials/_list_display.html' with items=upcoming_seminars container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming visits to display." %}
     </div>

@@ -24,7 +24,6 @@ def make_publication(**overrides):
     fields = dict(
         title="A Study",
         abstract="Abstract text.",
-        study_url="https://example.com/study",
     )
     fields.update(overrides)
     return Publication.objects.create(**fields)
@@ -53,10 +52,14 @@ class PublicationModelTests(TestCase):
         publication = make_publication(title="Labor Markets")
         self.assertEqual(str(publication), "Labor Markets")
 
-    def test_keyword_list_normalizes_dicts_and_strings(self):
-        publication = make_publication(
-            keywords=[{"value": "economics"}, "labor", {"value": "  "}, ""])
-        self.assertEqual(publication.keyword_list(), ["economics", "labor"])
+    def test_formatted_date_uses_the_submission_timestamp(self):
+        publication = make_publication()
+        self.assertEqual(
+            publication.formatted_date(),
+            f"{publication.applied_at:%Y-%m-%d}")
+
+    def test_topic_defaults_to_an_empty_list(self):
+        self.assertEqual(make_publication().topic, [])
 
     def test_approve_transitions_from_pending(self):
         admin = make_admin()

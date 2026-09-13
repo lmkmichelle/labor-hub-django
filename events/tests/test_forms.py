@@ -49,14 +49,12 @@ class EventFormDeadlineTests(TestCase):
 
 
 class EventFormCategoryAndApplicationTests(TestCase):
-    def test_podcast_is_not_a_public_submission_choice(self):
-        form = EventForm()
-        values = [value for value, _ in form.fields["category"].choices]
-        self.assertNotIn("podcast", values)
+    def test_podcast_is_gone_from_category_choices(self):
+        self.assertNotIn("podcast", dict(Event.CATEGORY_CHOICES))
 
-    def test_podcast_still_available_for_display_and_filtering(self):
-        values = [value for value, _ in Event.CATEGORY_CHOICES]
-        self.assertIn("podcast", values)
+    def test_public_choices_match_the_full_set(self):
+        self.assertEqual(
+            list(Event.PUBLIC_CATEGORY_CHOICES), list(Event.CATEGORY_CHOICES))
 
     def test_submitting_podcast_is_rejected(self):
         form = EventForm(data=form_data(category="podcast"))

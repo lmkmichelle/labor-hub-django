@@ -110,9 +110,7 @@ class Command(BaseCommand):
                     "question, the data and identification strategy, and the main "
                     "finding in a paragraph or two."
                 ),
-                "study_url": "https://example.edu/papers/minimum-wages",
-                "topic": "Minimum wages",
-                "keywords": ["Minimum wages", "Labor Demand"],
+                "topic": ["Minimum wages", "Labor Demand"],
                 "country_code": "US",
                 "status": "approved",
             },

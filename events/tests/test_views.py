@@ -27,6 +27,15 @@ def make_event(title="Event", offset_days=1, status="approved", **overrides):
     return Event.objects.create(**fields)
 
 
+class EventsListPosterLinkTests(TestCase):
+    def test_card_links_host_name_to_profile(self):
+        host = make_user(email="eventhost@example.com")
+        make_event(host=host)
+        response = self.client.get(reverse("events-list"))
+        self.assertContains(
+            response, f'href="{reverse("profile", args=[host.pk])}"')
+
+
 class EventsListViewTests(TestCase):
     def test_only_approved_events_are_listed(self):
         approved = make_event(title="Approved", status="approved")

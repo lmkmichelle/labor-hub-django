@@ -31,6 +31,10 @@ class University(models.Model):
 
 
 class Seminar(Approvable):
+    class VisitType(models.TextChoices):
+        OPEN = 'open', 'Open to extending'
+        LONG_TERM = 'long_term', 'Long-term stay'
+
     posted_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -41,6 +45,13 @@ class Seminar(Approvable):
     visitor_name = models.CharField(max_length=255, null=True, blank=True)
     visitor_email = models.EmailField(null=True, blank=True)
     visitor_affiliation = models.CharField(max_length=255, null=True, blank=True)
+    visit_type = models.CharField(
+        max_length=20,
+        choices=VisitType.choices,
+        blank=True,
+        default='',
+        help_text='How flexible the visit dates are.',
+    )
     university = models.ForeignKey(
         University,
         on_delete=models.SET_NULL,

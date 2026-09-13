@@ -1,0 +1,14 @@
+Hi {{ advisor.first_name|default:advisor.email }},
+
+{% if submitter %}{{ submitter.get_full_name }}{% else %}Someone{% endif %} has submitted a job market paper to Labor Hub and listed you as the advisor on it:
+
+"{{ publication.title }}"
+
+Please confirm or decline that you are the advisor on this job market paper. Your response is recorded with the submission for the Labor Hub team to review.
+
+Respond here:
+{{ review_url }}
+
+--
+The Labor Hub team
+{{ site_url }}

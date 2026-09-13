@@ -74,11 +74,12 @@ def handle_keywords(raw_input):
 def process_publication_form(request, form):
     publication = form.save(commit=False)
 
-    raw_keywords = request.POST.get('keywords_input') or '[]'
-    publication.keywords = handle_keywords(raw_keywords)
-    
-    topic_input = request.POST.get('topic_input', '')
-    publication.topic = topic_input
+    # clean_topics_input has already normalised these to a list of exact
+    # RECOMMENDED_KEYWORDS values.
+    publication.topic = form.cleaned_data.get('topics_input') or []
+
+    if publication.pk is None and request.user.is_authenticated:
+        publication.submitted_by = request.user
 
     publication.save()
 

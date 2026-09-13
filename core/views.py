@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
@@ -15,7 +15,11 @@ from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import DeleteView, ListView, TemplateView
 
 from accounts.models import CustomUser
-from core.constants import COUNTRY_CHOICES
+from core.constants import (
+    COUNTRY_CHOICES,
+    PAPER_COUNTRY_CHOICES,
+    PAPER_SPECIAL_COUNTRY_CODES,
+)
 from core.filters import map_country_terms_to_codes, parse_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
@@ -273,6 +277,7 @@ def map_summary(request):
     paper_counts = (
         Publication.objects.filter(status="approved", country_code__isnull=False)
         .exclude(country_code="")
+        .exclude(country_code__in=PAPER_SPECIAL_COUNTRY_CODES)
         .values("country_code")
         .annotate(total=Count("id"))
     )
@@ -293,6 +298,8 @@ def map_country_detail(request, code):
     shared ``_list_item`` partial) and avoids duplicating card HTML in JavaScript.
     """
     code = code.upper()
+    if code in PAPER_SPECIAL_COUNTRY_CODES:
+        raise Http404("No map panel for that code.")
     country_name = dict(COUNTRY_CHOICES).get(code, code)
 
     scholars_qs = (
@@ -467,16 +474,19 @@ def publications_list(request):
         ).distinct()
 
     selected_countries = map_country_terms_to_codes(
-        parse_pill_terms(request.GET.get('countries', '')))
+        parse_pill_terms(request.GET.get('countries', '')),
+        choices=PAPER_COUNTRY_CHOICES)
     if selected_countries:
         publications = publications.filter(country_code__in=selected_countries)
 
-    keyword_terms = parse_pill_terms(request.GET.get('keywords', ''))
-    if keyword_terms:
-        keywords_query = Q()
-        for term in keyword_terms:
-            keywords_query |= Q(keywords__icontains=term)
-        publications = publications.filter(keywords_query)
+    topic_terms = parse_pill_terms(request.GET.get('topics', ''))
+    if topic_terms:
+        topics_query = Q()
+        for term in topic_terms:
+            # topic is a JSONField list; __icontains works on SQLite/MySQL
+            # (the app's engines) but not on Postgres jsonb.
+            topics_query |= Q(topic__icontains=term)
+        publications = publications.filter(topics_query)
 
     job_market = request.GET.get('job_market') == '1'
     if job_market:
@@ -496,15 +506,15 @@ def publications_list(request):
     page_obj = paginator.get_page(page_number)
 
     selected_countries_serialized = ','.join(selected_countries)
-    selected_keywords_serialized = ','.join(keyword_terms)
+    selected_topics_serialized = ','.join(topic_terms)
 
     filter_params = {}
     if query:
         filter_params['q'] = query
     if selected_countries_serialized:
         filter_params['countries'] = selected_countries_serialized
-    if selected_keywords_serialized:
-        filter_params['keywords'] = selected_keywords_serialized
+    if selected_topics_serialized:
+        filter_params['topics'] = selected_topics_serialized
     if job_market:
         filter_params['job_market'] = '1'
     if sort:
@@ -518,9 +528,9 @@ def publications_list(request):
         'sort': sort,
         'selected_countries': selected_countries,
         'selected_countries_serialized': selected_countries_serialized,
-        'country_choices': COUNTRY_CHOICES,
-        'selected_keywords': keyword_terms,
-        'selected_keywords_serialized': selected_keywords_serialized,
+        'country_choices': PAPER_COUNTRY_CHOICES,
+        'selected_topics': topic_terms,
+        'selected_topics_serialized': selected_topics_serialized,
         'job_market': job_market,
         'filter_querystring': urlencode(filter_params),
     })

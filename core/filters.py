@@ -48,24 +48,38 @@ def parse_pill_terms(raw_value):
     return deduped_terms
 
 
-def map_country_terms_to_codes(terms):
-    """Resolve free-text country terms (names or ISO codes) to ISO codes."""
+def map_country_terms_to_codes(terms, choices=COUNTRY_CHOICES):
+    """Resolve free-text country terms (names or ISO codes) to codes.
+
+    ``choices`` defaults to ``COUNTRY_CHOICES``; the discussion-papers filter
+    passes ``PAPER_COUNTRY_CHOICES`` so its "None" / "Multinational" sentinels
+    resolve too. Exact code and exact-label matches are tried before the
+    substring pass, so a sentinel can't be shadowed by a country name.
+    """
     if not terms:
         return []
 
+    available_codes = {code for code, _ in choices}
     selected_codes = []
     seen = set()
     for term in terms:
         normalized = term.strip().lower()
         upper_term = term.strip().upper()
 
-        if upper_term in _AVAILABLE_CODES and upper_term not in seen:
+        if upper_term in available_codes and upper_term not in seen:
             seen.add(upper_term)
             selected_codes.append(upper_term)
             continue
 
-        for code, label in COUNTRY_CHOICES:
-            if normalized == label.lower() or normalized in label.lower():
+        exact = next(
+            (code for code, label in choices if label.lower() == normalized), None)
+        if exact and exact not in seen:
+            seen.add(exact)
+            selected_codes.append(exact)
+            continue
+
+        for code, label in choices:
+            if normalized and normalized in label.lower():
                 if code not in seen:
                     seen.add(code)
                     selected_codes.append(code)

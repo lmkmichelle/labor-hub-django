@@ -12,9 +12,19 @@
                 </p>
                 <div class="not-format">{% include "partials/_example_badge.html" with show=seminar.is_example %}</div>
             </div>
-            <div class="not-format mb-4">
-                Visitor: {{ seminar.visitor_name }}
+            <div class="not-format mb-2">
+                Visitor:
+                {% if seminar.posted_by %}
+                    <a class="card-inline-link" href="{% url 'profile' pk=seminar.posted_by.id %}">{{ seminar.visitor_name }}</a>
+                {% else %}
+                    {{ seminar.visitor_name }}
+                {% endif %}
             </div>
+            {% if seminar.visit_type %}
+                <div class="not-format mb-4">
+                    <span class="pill-accent">{{ seminar.get_visit_type_display }}</span>
+                </div>
+            {% endif %}
         </div>
 
         <h4>University</h4>

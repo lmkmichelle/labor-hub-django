@@ -250,9 +250,31 @@ COUNTRY_CHOICES = [
     ("AX", "Åland Islands"),
 ]
 
+# Country-of-study choices for discussion papers. A paper's study may cover no
+# single country or several, so two self-describing sentinels lead the list
+# (deliberately not 2-char ISO codes -- they must never alias a real country or
+# an SVG path id on the World Map). Reads that aggregate papers by country must
+# exclude PAPER_SPECIAL_COUNTRY_CODES.
+PAPER_COUNTRY_NONE = "NONE"
+PAPER_COUNTRY_MULTINATIONAL = "MULTI"
+PAPER_SPECIAL_COUNTRY_CODES = (PAPER_COUNTRY_NONE, PAPER_COUNTRY_MULTINATIONAL)
+PAPER_COUNTRY_CHOICES = [
+    (PAPER_COUNTRY_NONE, "None"),
+    (PAPER_COUNTRY_MULTINATIONAL, "Multinational"),
+] + list(COUNTRY_CHOICES)
+
+# Other research networks an applicant may already belong to (membership
+# application, admin review only -- not shown publicly).
+OTHER_NETWORK_CHOICES = [
+    ("CESifo", "CESifo"),
+    ("NBER", "NBER"),
+    ("CEPR", "CEPR"),
+    ("IZA", "IZA"),
+]
+
 # Recommended labor-economics keywords. Single source of truth for the
-# controlled vocabulary used by the paper keyword field, the profile
-# research-interests field, and the Discussion Papers keyword filter.
+# controlled vocabulary used by the paper "Research Topic(s)" field, the profile
+# research-interests field, and the Discussion Papers topic filter.
 #
 # TODO (pending a decision from the professors, Aug 2026): shorten this list.
 # Feedback during pre-launch review was that it is "quite numerous" when filling
@@ -262,12 +284,13 @@ COUNTRY_CHOICES = [
 # What whoever picks this up needs to know:
 #   * These 30 terms are ONE shared vocabulary, not several. Editing this list
 #     changes four places at once: the profile research-interests picker, the
-#     publication keywords field, the Discussion Papers keyword filter, and the
-#     Scholars research-interest filter.
-#   * Nothing sets Tagify's `enforceWhitelist`, so the list is advisory
-#     autocomplete only -- members can still type anything. Shortening it
-#     therefore CANNOT invalidate existing tagged data and needs no migration.
-#     It is purely editorial.
+#     publication Research Topic(s) field, the Discussion Papers topic filter,
+#     and the Scholars research-interest filter.
+#   * The PAPER form (only) sets Tagify's `enforceWhitelist` AND re-checks
+#     server-side in PublicationForm.clean_topics_input, so removing a term here
+#     will reject NEW paper submissions that use it (stored rows are untouched --
+#     no migration needed, but a data cleanup would be wise). The profile and
+#     the filter sidebars remain advisory autocomplete only.
 #   * Two delivery paths read this constant: a JSON payload in base.html
 #     consumed by static/js/tagify.js (the edit forms), and a direct template
 #     loop in the two filter sidebars. Both update automatically.

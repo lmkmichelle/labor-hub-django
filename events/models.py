@@ -7,17 +7,15 @@ from core.models import Approvable
 class Event(Approvable):
     CATEGORY_CHOICES = [
         ('conference', 'Conference'),
-        ('podcast', 'Live Podcast'),
         ('workshop', 'Workshop'),
         ('schools', 'Seasonal Schools'),
         ('courses', 'Courses/Retreats'),
         ('other', 'Other'),
     ]
 
-    # Categories a member may pick when submitting an event. "Live Podcast" is
-    # admin-only, so it is excluded here while staying in CATEGORY_CHOICES for
-    # display and for the public list-page filter facet.
-    PUBLIC_CATEGORY_CHOICES = [c for c in CATEGORY_CHOICES if c[0] != 'podcast']
+    # Kept as an alias: EventForm and the list facet both reference it, and the
+    # member-visible set is now identical to the full set.
+    PUBLIC_CATEGORY_CHOICES = CATEGORY_CHOICES
 
     title = models.CharField(max_length=255)
     description = models.TextField()

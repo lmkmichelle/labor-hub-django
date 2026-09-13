@@ -20,9 +20,9 @@
                            id="countries-hidden"
                            value="{{ selected_countries_serialized }}">
                     <input type="hidden"
-                           name="keywords"
-                           id="keywords-hidden"
-                           value="{{ selected_keywords_serialized }}">
+                           name="topics"
+                           id="topics-hidden"
+                           value="{{ selected_topics_serialized }}">
                     <div class="mb-4">
                         <h4>Countries</h4>
                         <input type="text"
@@ -31,11 +31,11 @@
                                placeholder="Add countries...">
                     </div>
                     <div class="mb-4">
-                        <h4>Keywords</h4>
+                        <h4>Research Topics</h4>
                         <input type="text"
-                               id="keywords-pill-input"
+                               id="topics-pill-input"
                                class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
-                               placeholder="Add keywords...">
+                               placeholder="Add topics...">
                     </div>
                     <div class="mb-4">
                         <h4>Type</h4>
@@ -64,7 +64,7 @@
                           id="searchForm"
                           class="flex flex-1 min-w-0 w-full items-center gap-2">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
-                        <input type="hidden" name="keywords" value="{{ selected_keywords_serialized }}">
+                        <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
                         {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
                         <input type="hidden" name="sort" value="{{ sort }}">
                         <label for="paper-search" class="sr-only">Search papers</label>
@@ -92,7 +92,7 @@
                     </form>
                     <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
-                        <input type="hidden" name="keywords" value="{{ selected_keywords_serialized }}">
+                        <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
                         {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
                         {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
                         <label for="sortSelect" class="sr-only">Sort by</label>
@@ -188,8 +188,8 @@
                     { value: '{{ code }}', label: '{% for value, label in country_choices %}{% if value == code %}{{ label|escapejs }}{% endif %}{% endfor %}' },
                 {% endfor %}
             ]);
-            initFreeText('keywords-pill-input', 'keywords-hidden', [
-                {% for kw in selected_keywords %}'{{ kw|escapejs }}',{% endfor %}
+            initFreeText('topics-pill-input', 'topics-hidden', [
+                {% for kw in selected_topics %}'{{ kw|escapejs }}',{% endfor %}
             ], keywordWhitelist);
         })();
     </script>

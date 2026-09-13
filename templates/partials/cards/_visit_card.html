@@ -7,9 +7,9 @@ The Visits list page titles cards with the visitor's name. On a member's own
 profile that would repeat their name down the page, so the profile passes
 title=visit.get_university_display instead.
 {% endcomment %}
-<a href="{{ visit.get_absolute_url }}" class="card-surface w-full">
+<div class="card-surface w-full">
   <div class="card-header">
-    <h5 class="card-title">{% firstof title visit.visitor_name "Visiting scholar" %}</h5>
+    <h5 class="card-title"><a href="{{ visit.get_absolute_url }}" class="card-stretch-link">{% firstof title visit.visitor_name "Visiting scholar" %}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=visit.is_example %}
       {% if badge %}<span class="pill-neutral">{{ badge }}</span>{% endif %}
@@ -23,8 +23,14 @@ title=visit.get_university_display instead.
     </div>
   </div>
   <p class="mt-1 text-sm text-body">Visiting {{ visit.get_university_display }}</p>
-  {% if visit.visitor_affiliation %}
-    <p class="mt-1 text-sm text-body">From {{ visit.visitor_affiliation }}</p>
+  {% if visit.visit_type %}
+    <p class="mt-1 text-sm text-body">{{ visit.get_visit_type_display }}</p>
   {% endif %}
   {% include "partials/cards/_pill_row.html" with labels=visit.country_labels %}
-</a>
+  {% if visit.posted_by %}
+    <p class="mt-2 text-sm text-body text-right">
+      Posted by
+      <a href="{% url 'profile' pk=visit.posted_by.id %}" class="card-inline-link">{{ visit.posted_by.get_full_name|default:visit.posted_by.email }}</a>
+    </p>
+  {% endif %}
+</div>

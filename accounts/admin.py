@@ -83,13 +83,13 @@ class UserApplicationAdmin(admin.ModelAdmin):
 
     list_filter = ['status', 'role', 'applied_at']
     search_fields = ['email', 'first_name', 'last_name']
-    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume']
+    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'other_networks']
     ordering = ['-applied_at']
 
     fieldsets = (
         ('Application Info', {
             'fields': ('email', 'first_name', 'last_name', 'role', 'position', 'department', 'university', 'university_name',
-                       'country_code', 'website', 'motivation', 'advisor')
+                       'country_code', 'website', 'other_networks', 'motivation', 'advisor')
         }),
         ('Review', {
             'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')

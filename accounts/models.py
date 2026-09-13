@@ -190,6 +190,9 @@ class UserApplication(models.Model):
         blank=True
     )
     website = models.URLField(blank=True)
+    # [{"network": "NBER", "url": "..."}] -- declared networks, admin review
+    # only. Never copied to Profile, never shown publicly.
+    other_networks = models.JSONField(default=list, blank=True)
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )

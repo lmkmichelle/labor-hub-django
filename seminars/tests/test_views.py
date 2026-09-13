@@ -25,6 +25,21 @@ def make_seminar(visitor_name="Visitor", start_offset=1, end_offset=None,
     )
 
 
+class SeminarsListPosterLinkTests(TestCase):
+    def test_card_links_poster_name_to_profile(self):
+        poster = CustomUser.objects.create_user(
+            email="visitposter@example.com", password="x", first_name="Val",
+            last_name="Visitor", role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        visit = make_seminar()
+        visit.posted_by = poster
+        visit.save()
+        response = self.client.get(reverse("seminars-list"))
+        self.assertContains(response, "Posted by")
+        self.assertContains(
+            response, f'href="{reverse("profile", args=[poster.pk])}"')
+
+
 class SeminarsListViewTests(TestCase):
     def test_list_renders(self):
         response = self.client.get(reverse("seminars-list"))
@@ -120,62 +135,89 @@ class SeminarCreateViewTests(TestCase):
     def _university(self):
         return University.objects.create(name="Cornell University", country_code="US")
 
-    def test_authenticated_user_can_create(self):
-        self.client.force_login(self.user)
-        university = self._university()
-        response = self.client.post(reverse("seminar-create"), {
+    def _post_data(self, university, **overrides):
+        data = {
             "country_code": "US",
-            "visitor_name": "New Visitor",
-            "visitor_email": "new@example.com",
-            "visitor_affiliation": "",
             "university": university.pk,
+            "visit_type": "open",
             "visit_start": timezone.localdate().isoformat(),
             "visit_end": "",
             "description": "A planned visit.",
-        })
+        }
+        data.update(overrides)
+        return data
+
+    def test_authenticated_user_can_create(self):
+        self.client.force_login(self.user)
+        university = self._university()
+        response = self.client.post(
+            reverse("seminar-create"), self._post_data(university))
         self.assertEqual(Seminar.objects.count(), 1)
         seminar = Seminar.objects.get()
         self.assertEqual(seminar.posted_by, self.user)
         self.assertEqual(seminar.countries, ["US"])
+        self.assertEqual(seminar.visit_type, "open")
         self.assertEqual(seminar.status, "pending")
         self.assertRedirects(response, reverse("seminars-list"))
+
+    def test_visitor_name_and_email_come_from_the_account(self):
+        self.client.force_login(self.user)
+        university = self._university()
+        self.client.post(reverse("seminar-create"), self._post_data(
+            university, visitor_name="Someone Else",
+            visitor_email="attacker@example.com"))
+        seminar = Seminar.objects.get()
+        self.assertEqual(seminar.visitor_name, self.user.get_full_name())
+        self.assertEqual(seminar.visitor_email, self.user.email)
 
     def test_create_allows_blank_description(self):
         self.client.force_login(self.user)
         university = self._university()
-        response = self.client.post(reverse("seminar-create"), {
-            "country_code": "US",
-            "visitor_name": "No Details Visitor",
-            "visitor_email": "nodetails@example.com",
-            "visitor_affiliation": "",
-            "university": university.pk,
-            "visit_start": timezone.localdate().isoformat(),
-            "visit_end": "",
-            "description": "",
-        })
+        response = self.client.post(
+            reverse("seminar-create"), self._post_data(university, description=""))
         self.assertEqual(Seminar.objects.count(), 1)
-        seminar = Seminar.objects.get()
-        self.assertEqual(seminar.description, "")
+        self.assertEqual(Seminar.objects.get().description, "")
         self.assertRedirects(response, reverse("seminars-list"))
+
+    def test_visit_type_is_required(self):
+        self.client.force_login(self.user)
+        university = self._university()
+        data = self._post_data(university)
+        data.pop("visit_type")
+        response = self.client.post(reverse("seminar-create"), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Seminar.objects.count(), 0)
+        self.assertIn("visit_type", response.context["form"].errors)
 
     def test_university_is_now_required(self):
         self.client.force_login(self.user)
         response = self.client.post(reverse("seminar-create"), {
             "country_code": "US",
-            "visitor_name": "Missing University",
-            "visitor_email": "missing@example.com",
+            "visit_type": "open",
             "visit_start": timezone.localdate().isoformat(),
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Seminar.objects.count(), 0)
         self.assertIn("university", response.context["form"].errors)
 
-    def test_form_prefills_visitor_fields_from_user(self):
-        self.client.force_login(self.user)
-        response = self.client.get(reverse("seminar-create"))
-        form = response.context["form"]
-        self.assertEqual(form.initial["visitor_name"], self.user.get_full_name())
-        self.assertEqual(form.initial["visitor_email"], self.user.email)
+
+class VisitTypeFilterTests(TestCase):
+    def test_facet_filters_by_visit_type(self):
+        open_visit = make_seminar(visitor_name="Open One", start_offset=3)
+        open_visit.visit_type = "open"
+        open_visit.save()
+        long_visit = make_seminar(visitor_name="Long One", start_offset=4)
+        long_visit.visit_type = "long_term"
+        long_visit.save()
+
+        response = self.client.get(reverse("seminars-list"), {"visit_type": "open"})
+        self.assertIn(open_visit, response.context["seminars"])
+        self.assertNotIn(long_visit, response.context["seminars"])
+
+    def test_unknown_visit_type_is_ignored(self):
+        visit = make_seminar(start_offset=3)
+        response = self.client.get(reverse("seminars-list"), {"visit_type": "bogus"})
+        self.assertIn(visit, response.context["seminars"])
 
 
 class VisitsUrlRedirectTests(TestCase):

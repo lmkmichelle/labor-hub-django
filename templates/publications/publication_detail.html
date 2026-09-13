@@ -52,21 +52,16 @@
         <h4>Abstract</h4>
         {{ publication.abstract|linebreaks }}
         <h4>Country of study</h4>
-        <p>{{ publication.country_code }}</p>
-        <h4>Topic of study</h4>
-        <p>{{ publication.topic }}</p>
-        
-        <h4>Keywords</h4>
-        <div class="flex flex-row overflow-auto w-full not-format gap-2 mb-6">
+        <p>{{ publication.get_country_code_display|default:"Not specified" }}</p>
+
+        <h4>Research Topic(s)</h4>
+        <div class="flex flex-row flex-wrap w-full not-format gap-2 mb-6">
             {% if publication.is_job_market %}
-                <span class="pill-accent">Job Market</span>
+                <span class="pill-accent">Job Market Paper</span>
             {% endif %}
-            {% for keyword in publication.keyword_list %}
-                <span class="pill-accent">{{ keyword }}</span>
+            {% for topic in publication.topic %}
+                <span class="pill-accent">{{ topic }}</span>
             {% endfor %}
         </div>
-
-        <h4>Link to study</h4>
-        <a href="{{ publication.study_url }}" class="pb-3">{{ publication.study_url }}</a>
     </article>
 {% endblock content %}
