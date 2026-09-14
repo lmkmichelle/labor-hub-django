@@ -18,17 +18,20 @@ class AuthorAdmin(admin.ModelAdmin):
 
 class PublicationAdmin(ApprovableAdmin):
     inlines = [AuthorInline]
-    list_display = ['title', 'applied_at', 'country_code', 'is_job_market',
-                    'jm_advisor', 'jm_advisor_acknowledged']
+    list_display = ['title', 'discussion_paper_number', 'applied_at', 'country_code',
+                    'is_job_market', 'jm_advisor', 'jm_advisor_acknowledged']
     search_fields = ['title', 'abstract']
     list_filter = ['applied_at', 'is_job_market', 'jm_advisor_acknowledged']
-    readonly_fields = ['applied_at', 'submitted_by', 'jm_advisor_responded_at']
+    readonly_fields = ['applied_at', 'submitted_by', 'jm_advisor_responded_at',
+                       'discussion_paper_number', 'pdf_original']
     autocomplete_fields = ['jm_advisor']
+    actions = ApprovableAdmin.actions + ('regenerate_cover',)
 
     fieldsets = (
         ('Publication Info', {
             'fields': ('title', 'authors', 'abstract', 'country_code',
-                       'topic', 'is_job_market', 'pdf', 'submitted_by')
+                       'topic', 'is_job_market', 'discussion_paper_number',
+                       'pdf_original', 'pdf', 'submitted_by')
         }),
         ('Job market advisor', {
             'fields': ('jm_advisor', 'jm_advisor_acknowledged',
@@ -39,6 +42,15 @@ class PublicationAdmin(ApprovableAdmin):
                        'reviewed_at', 'reviewed_by')
         }),
     )
+
+    @admin.action(description="Regenerate the cover page for selected papers")
+    def regenerate_cover(self, request, queryset):
+        updated = 0
+        for publication in queryset:
+            if publication.discussion_paper_number is not None:
+                publication.rebuild_covered_pdf()
+                updated += 1
+        self.message_user(request, f"Regenerated the cover for {updated} paper(s).")
 
 
 admin.site.register(Publication, PublicationAdmin)

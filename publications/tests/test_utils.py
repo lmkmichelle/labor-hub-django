@@ -77,3 +77,44 @@ class ProcessPublicationFormTests(TestCase):
         self.assertEqual(publication.topic, ["Labor Supply"])
         self.assertEqual(
             Publication.objects.get(pk=publication.pk).authors.count(), 1)
+
+    def test_editing_an_approved_paper_rebuilds_its_cover(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PyPDF2 import PdfReader
+        from reportlab.pdfgen import canvas
+
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf)
+        c.drawString(100, 700, "body")
+        c.showPage()
+        c.save()
+
+        submitter = CustomUser.objects.create_user(
+            email="approved-author@example.com", password="pass12345",
+            first_name="App", last_name="Roved", is_active=True,
+        )
+        publication = Publication.objects.create(title="Old Title", abstract="a")
+        publication.pdf_original.save(
+            "o.pdf", SimpleUploadedFile("o.pdf", buf.getvalue()), save=True,
+        )
+        publication.discussion_paper_number = 5
+        publication.save(update_fields=["discussion_paper_number"])
+
+        data = {
+            "title": "New Title", "abstract": "a", "country_code": "US",
+            "authors_input": '[{"value":"App Roved"}]',
+            "topics_input": '[{"value":"labor supply"}]',
+        }
+        form = PublicationForm(data=data, instance=publication)
+        self.assertTrue(form.is_valid(), form.errors)
+        request = RequestFactory().post("/publications/1/edit/", data)
+        request.user = submitter
+
+        process_publication_form(request, form)
+        publication.refresh_from_db()
+        with publication.pdf.open('rb') as f:
+            reader = PdfReader(f)
+            self.assertEqual(len(reader.pages), 2)
+            self.assertIn("NEW TITLE", reader.pages[0].extract_text())

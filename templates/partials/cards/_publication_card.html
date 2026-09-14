@@ -9,9 +9,8 @@ partials/_publications_list.html.
     <h5 class="card-title"><a href="{% url 'publication_detail' publication.id %}" class="card-stretch-link">{{ publication.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=publication.is_example %}
-      {% if not publication.is_example %}
-        {# Example papers are not part of the discussion series. #}
-        <span class="pill-accent">Discussion Series #{{ publication.id }}</span>
+      {% if publication.discussion_paper_number %}
+        <span class="pill-accent">Discussion Paper No. {{ publication.discussion_paper_number }}</span>
       {% endif %}
     </div>
   </div>

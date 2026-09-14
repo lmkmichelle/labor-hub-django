@@ -86,4 +86,11 @@ def process_publication_form(request, form):
     raw_authors = request.POST.get('authors_input', '[]')
     publication.authors.set(handle_authors(raw_authors))
 
+    # Idempotent and a no-op unless the paper is already numbered and has an
+    # upload, so it's simplest (and safest against a missed edge case) to
+    # just always re-run it rather than try to detect which fields changed --
+    # an editor changing the title/authors on an already-approved paper must
+    # not leave a stale cover behind.
+    publication.rebuild_covered_pdf()
+
     return publication
