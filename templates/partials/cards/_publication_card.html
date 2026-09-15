@@ -9,8 +9,8 @@ partials/_publications_list.html.
     <h5 class="card-title"><a href="{% url 'publication_detail' publication.id %}" class="card-stretch-link">{{ publication.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=publication.is_example %}
-      {% if publication.discussion_paper_number %}
-        <span class="pill-accent">Discussion Paper No. {{ publication.discussion_paper_number }}</span>
+      {% if publication.display_number %}
+        <span class="pill-accent">Discussion Paper No. {{ publication.display_number }}</span>
       {% endif %}
       {% if publication.status == 'pending' %}
         <span class="pill-neutral">Pending review</span>

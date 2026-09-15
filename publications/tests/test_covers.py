@@ -44,6 +44,14 @@ class RenderCoverPageTests(SimpleTestCase):
         self.assertIn('A STUDY OF LABOR MARKETS', text)  # \MakeUppercase
         self.assertIn('Jane Doe', text)
 
+    def test_job_market_paper_number_label_renders_as_is(self):
+        """Publication.display_number already formats a job-market paper's
+        number as "J3"; the renderer just interpolates whatever string it's
+        given, so this is a job-market-specific smoke test of that path."""
+        data = render_cover_page("J3", 'A Study of Labor Markets', ['Jane Doe'])
+        text = PdfReader(io.BytesIO(data)).pages[0].extract_text()
+        self.assertIn('Discussion Paper No. J3', text)
+
     def test_long_title_still_fits_one_page(self):
         long_title = 'A Very Long Discussion Paper Title About ' + ' '.join(
             ['Labor', 'Markets', 'And', 'Networks'] * 10

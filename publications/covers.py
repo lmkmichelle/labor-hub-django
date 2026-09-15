@@ -115,6 +115,11 @@ def render_cover_page(number, title, authors):
     """Render a single-page PDF: the vendored backdrop plus the paper's
     number, title, and authors overlaid in the .tex's positions/styles.
 
+    ``number`` is the display label already formatted by the caller --
+    a plain integer-like value ("5") for the regular series, or "J3" for a
+    job-market paper's own series (see Publication.display_number) -- and is
+    interpolated into "Discussion Paper No. {number}" as-is.
+
     Returns the page as bytes.
     """
     overlay_buffer = io.BytesIO()

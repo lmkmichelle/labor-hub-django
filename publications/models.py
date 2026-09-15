@@ -47,8 +47,16 @@ class Publication(Approvable):
     applied_at = models.DateTimeField(auto_now_add=True)
 
     # Assigned the first time the paper is approved; None until then. Example
-    # papers never get one (see assign_discussion_paper_number).
+    # papers never get one, and job-market papers get job_market_paper_number
+    # instead -- see assign_discussion_paper_number().
     discussion_paper_number = models.PositiveIntegerField(
+        null=True, blank=True, unique=True,
+    )
+    # A separate "J" series for job-market papers (displayed as J1, J2, ...),
+    # assigned instead of discussion_paper_number -- a job-market paper never
+    # holds both. Independent counter, so it starts at 1 regardless of how
+    # many regular papers have already been numbered.
+    job_market_paper_number = models.PositiveIntegerField(
         null=True, blank=True, unique=True,
     )
 
@@ -83,23 +91,41 @@ class Publication(Approvable):
     def has_advisor_response(self):
         return self.jm_advisor_acknowledged is not None
 
-    def assign_discussion_paper_number(self):
-        """Assign the next number in the discussion-paper series, once.
+    @property
+    def display_number(self):
+        """The number shown on the card/cover: "J3" for a job-market paper's
+        own series, or the plain integer for the regular series. None until
+        the paper has been assigned one of the two."""
+        if self.job_market_paper_number is not None:
+            return f"J{self.job_market_paper_number}"
+        if self.discussion_paper_number is not None:
+            return str(self.discussion_paper_number)
+        return None
 
-        No-op if already numbered, and for example/seed rows -- those never
-        consume a slot in the real series. `unique=True` is the backstop
-        against a race; the transaction+lock is what actually prevents one.
+    def assign_discussion_paper_number(self):
+        """Assign the next number in the paper's series, once.
+
+        A job-market paper gets the next slot in its own independent "J"
+        series (job_market_paper_number); every other paper gets the next
+        slot in the regular series (discussion_paper_number) -- never both.
+        No-op if already numbered, and for example/seed rows, which never
+        consume a slot in either series. `unique=True` on each field is the
+        backstop against a race; the transaction+lock is what actually
+        prevents one.
         """
-        if self.discussion_paper_number is not None or self.is_example:
+        if self.is_example:
+            return
+        field = 'job_market_paper_number' if self.is_job_market else 'discussion_paper_number'
+        if getattr(self, field) is not None:
             return
         with transaction.atomic():
             current_max = (
                 Publication.objects.select_for_update()
-                .exclude(discussion_paper_number=None)
-                .aggregate(Max('discussion_paper_number'))['discussion_paper_number__max']
+                .exclude(**{field: None})
+                .aggregate(Max(field))[f'{field}__max']
             )
-            self.discussion_paper_number = (current_max or 0) + 1
-            self.save(update_fields=['discussion_paper_number'])
+            setattr(self, field, (current_max or 0) + 1)
+            self.save(update_fields=[field])
 
     def rebuild_covered_pdf(self, save=True):
         """(Re)build the public `pdf` as pdf_original with a fresh cover
@@ -107,11 +133,11 @@ class Publication(Approvable):
         that's what makes calling this twice idempotent instead of stacking
         a second cover on top of the first.
 
-        No-op if there's no upload yet, or no discussion paper number yet
-        (an unapproved paper's own author can still download the plain
+        No-op if there's no upload yet, or no paper number yet (an
+        unapproved paper's own author can still download the plain
         pdf_original via `pdf` in the meantime; see PublicationForm.save()).
         """
-        if not self.pdf_original or self.discussion_paper_number is None:
+        if not self.pdf_original or self.display_number is None:
             return
         # Local import: registering the cover fonts (and finding the vendored
         # static assets) at every model-module import would be wasted work
@@ -122,9 +148,9 @@ class Publication(Approvable):
         with self.pdf_original.open('rb') as f:
             original_bytes = f.read()
         covered = build_covered_pdf(
-            original_bytes, self.discussion_paper_number, self.title, author_names,
+            original_bytes, self.display_number, self.title, author_names,
         )
-        filename = f"DP{self.discussion_paper_number}-{slugify(self.title)[:60]}.pdf"
+        filename = f"DP{self.display_number}-{slugify(self.title)[:60]}.pdf"
         self.pdf.save(filename, ContentFile(covered), save=save)
 
     def approve(self, admin_user=None):

@@ -180,10 +180,11 @@ def home(request):
             'title': paper.title,
             'date': paper.applied_at.strftime('%b %d'),
             # Unnumbered (unapproved or example) papers aren't actually part
-            # of the discussion series yet.
+            # of the discussion series yet. display_number covers both the
+            # regular series ("5") and a job-market paper's own "J" series.
             'subtitle': (
-                f'Discussion Paper No. {paper.discussion_paper_number}'
-                if paper.discussion_paper_number else ''
+                f'Discussion Paper No. {paper.display_number}'
+                if paper.display_number else ''
             ),
             'is_example': paper.is_example,
             'description': ', '.join(authors) if authors else 'Unknown Author'

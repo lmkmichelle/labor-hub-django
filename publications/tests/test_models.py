@@ -148,6 +148,63 @@ class DiscussionPaperNumberTests(TestCase):
         real.refresh_from_db()
         self.assertEqual(real.discussion_paper_number, 1)
 
+    def test_regular_paper_display_number_is_plain(self):
+        admin = make_admin()
+        publication = make_publication()
+        publication.approve(admin)
+        publication.refresh_from_db()
+        self.assertEqual(publication.display_number, "1")
+
+
+class JobMarketPaperNumberTests(TestCase):
+    """Job-market papers get their own independent "J" series (item 16),
+    separate from the regular discussion_paper_number series."""
+
+    def test_job_market_papers_get_their_own_sequence_starting_at_1(self):
+        admin = make_admin()
+        first = make_publication(title="First JM", is_job_market=True)
+        second = make_publication(title="Second JM", is_job_market=True)
+
+        first.approve(admin)
+        second.approve(admin)
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.job_market_paper_number, 1)
+        self.assertEqual(second.job_market_paper_number, 2)
+        self.assertIsNone(first.discussion_paper_number)
+        self.assertIsNone(second.discussion_paper_number)
+
+    def test_job_market_series_is_independent_of_the_regular_series(self):
+        admin = make_admin()
+        regular = make_publication(title="Regular")
+        jm = make_publication(title="JM", is_job_market=True)
+
+        regular.approve(admin)
+        jm.approve(admin)
+
+        regular.refresh_from_db()
+        jm.refresh_from_db()
+        # The JM paper is the first job-market paper, so J1 -- regardless of
+        # how many regular papers have already been numbered.
+        self.assertEqual(regular.discussion_paper_number, 1)
+        self.assertEqual(jm.job_market_paper_number, 1)
+        self.assertIsNone(jm.discussion_paper_number)
+
+    def test_job_market_paper_display_number_has_a_j_prefix(self):
+        admin = make_admin()
+        publication = make_publication(is_job_market=True)
+        publication.approve(admin)
+        publication.refresh_from_db()
+        self.assertEqual(publication.display_number, "J1")
+
+    def test_example_job_market_papers_are_never_numbered(self):
+        admin = make_admin()
+        publication = make_publication(is_job_market=True, is_example=True)
+        publication.approve(admin)
+        publication.refresh_from_db()
+        self.assertIsNone(publication.job_market_paper_number)
+
 
 class RebuildCoveredPdfTests(TestCase):
     def _numbered_publication_with_upload(self, title="A Study"):

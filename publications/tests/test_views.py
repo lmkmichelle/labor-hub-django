@@ -106,6 +106,34 @@ class PublicationDetailViewTests(TestCase):
         self.assertNotContains(response, "Edit Paper")
 
 
+class PublicationsListDisplayNumberTests(TestCase):
+    """The list-page card shows a job-market paper's own "J" number, not the
+    regular series (item 16's separate counter)."""
+
+    def test_job_market_paper_shows_its_j_number(self):
+        admin = CustomUser.objects.create_user(
+            email="admin2@example.com", password="pass12345",
+            first_name="Ad", last_name="Min", role=CustomUser.Role.ADMIN,
+            is_active=True,
+        )
+        publication = make_publication(status="pending", is_job_market=True)
+        publication.approve(admin)
+        response = self.client.get(reverse("publications"))
+        self.assertContains(response, "Discussion Paper No. J1")
+
+    def test_regular_paper_shows_the_plain_number(self):
+        admin = CustomUser.objects.create_user(
+            email="admin3@example.com", password="pass12345",
+            first_name="Ad", last_name="Min", role=CustomUser.Role.ADMIN,
+            is_active=True,
+        )
+        publication = make_publication(status="pending")
+        publication.approve(admin)
+        response = self.client.get(reverse("publications"))
+        self.assertContains(response, "Discussion Paper No. 1")
+        self.assertNotContains(response, "Discussion Paper No. J")
+
+
 class PublicationCreateViewTests(TestCase):
     def setUp(self):
         self.user = make_user()
