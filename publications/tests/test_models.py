@@ -3,6 +3,7 @@ import io
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.test import TestCase
+from django.urls import reverse
 from PyPDF2 import PdfReader
 from reportlab.pdfgen import canvas
 
@@ -225,5 +226,46 @@ class ApprovePdfLifecycleTests(TestCase):
         )
         publication.approve(admin)
         publication.refresh_from_db()
+        with publication.pdf.open('rb') as f:
+            self.assertEqual(len(PdfReader(f).pages), 2)
+
+    def test_flipping_status_in_the_admin_change_form_also_builds_the_cover(self):
+        """Regression: `status` is directly editable on the change form (not
+        just via the Approve button); saving that must still route through
+        approve() -- and its cover-building side effect -- not a raw save()."""
+        admin = CustomUser.objects.create_superuser(
+            email="super@example.com", password="pass12345",
+            first_name="Sup", last_name="Er",
+        )
+        publication = make_publication()
+        publication.pdf_original.save(
+            "o.pdf", SimpleUploadedFile("o.pdf", make_pdf_bytes()), save=True,
+        )
+        author = Author.objects.create(user=None, name="An Author")
+        publication.authors.set([author])
+        self.client.force_login(admin)
+        data = {
+            "title": publication.title, "abstract": publication.abstract,
+            "authors": [author.pk],
+            "country_code": "", "topic": "[]", "is_job_market": "",
+            "status": "approved", "admin_notes": "",
+            "Publication_authors-TOTAL_FORMS": "0",
+            "Publication_authors-INITIAL_FORMS": "0",
+            "Publication_authors-MIN_NUM_FORMS": "0",
+            "Publication_authors-MAX_NUM_FORMS": "0",
+        }
+        response = self.client.post(
+            reverse("admin:publications_publication_change", args=[publication.pk]), data,
+        )
+        errors = (
+            response.context["adminform"].form.errors
+            if response.status_code == 200 else None
+        )
+        self.assertEqual(response.status_code, 302, errors)
+
+        publication.refresh_from_db()
+        self.assertEqual(publication.status, "approved")
+        self.assertEqual(publication.reviewed_by, admin)
+        self.assertIsNotNone(publication.discussion_paper_number)
         with publication.pdf.open('rb') as f:
             self.assertEqual(len(PdfReader(f).pages), 2)
