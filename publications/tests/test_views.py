@@ -1,3 +1,4 @@
+from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.urls import reverse
 
@@ -81,6 +82,28 @@ class PublicationDetailViewTests(TestCase):
             reverse("publication_detail", kwargs={"pk": publication.pk}))
         self.assertContains(response, "Labor Supply")
         self.assertContains(response, "Migration")
+
+    def test_download_link_appears_before_edit_paper_for_an_author(self):
+        user = make_user()
+        publication = make_publication(status="approved")
+        publication.authors.add(Author.objects.create(user=user, name="Jane Doe"))
+        publication.pdf.save("paper.pdf", ContentFile(b"%PDF-1.4 test"), save=True)
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        self.assertLess(
+            content.index(publication.pdf.url), content.index("Edit Paper"),
+            "the download link should render before the Edit Paper button",
+        )
+
+    def test_download_link_alone_for_a_non_author(self):
+        publication = make_publication(status="approved")
+        publication.pdf.save("paper.pdf", ContentFile(b"%PDF-1.4 test"), save=True)
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        self.assertContains(response, publication.pdf.url)
+        self.assertNotContains(response, "Edit Paper")
 
 
 class PublicationCreateViewTests(TestCase):
