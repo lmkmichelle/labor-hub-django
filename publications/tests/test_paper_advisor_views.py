@@ -13,9 +13,9 @@ def make_researcher(email="advisor@example.com"):
     )
 
 
-def make_jm_paper(advisor, title="JM Paper", acknowledged=None, **extra):
+def make_jm_paper(advisor, title="JM Paper", acknowledged=None, status="approved", **extra):
     return Publication.objects.create(
-        title=title, abstract="a", status="approved",
+        title=title, abstract="a", status=status,
         is_job_market=True, jm_advisor=advisor,
         jm_advisor_acknowledged=acknowledged, **extra,
     )
@@ -53,6 +53,25 @@ class AdvisedPapersListTests(TestCase):
         self.client.force_login(make_researcher())
         response = self.client.get(reverse("advised_papers"))
         self.assertEqual(list(response.context["papers"]), [])
+
+    def test_intro_clarifies_confirming_does_not_publish_the_paper(self):
+        self.client.force_login(make_researcher())
+        response = self.client.get(reverse("advised_papers"))
+        self.assertContains(response, "does not make the paper public")
+
+    def test_pending_paper_shows_a_pending_review_pill(self):
+        advisor = make_researcher()
+        make_jm_paper(advisor, title="Pending", status="pending")
+        self.client.force_login(advisor)
+        response = self.client.get(reverse("advised_papers"))
+        self.assertContains(response, "Pending review")
+
+    def test_approved_paper_shows_no_pending_review_pill(self):
+        advisor = make_researcher()
+        make_jm_paper(advisor, title="Approved", status="approved")
+        self.client.force_login(advisor)
+        response = self.client.get(reverse("advised_papers"))
+        self.assertNotContains(response, "Pending review")
 
 
 class PaperAckActionTests(TestCase):

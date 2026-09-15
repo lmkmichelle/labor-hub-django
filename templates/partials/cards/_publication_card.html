@@ -12,6 +12,9 @@ partials/_publications_list.html.
       {% if publication.discussion_paper_number %}
         <span class="pill-accent">Discussion Paper No. {{ publication.discussion_paper_number }}</span>
       {% endif %}
+      {% if publication.status == 'pending' %}
+        <span class="pill-neutral">Pending review</span>
+      {% endif %}
     </div>
   </div>
   <p class="mt-1 text-sm text-body">

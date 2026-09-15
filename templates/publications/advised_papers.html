@@ -8,7 +8,9 @@
         <p class="mb-6">
             Job market papers that name you as the advisor. Confirm or decline
             each one; your response is recorded with the submission for the Labor
-            Hub team to review.
+            Hub team to review. Confirming here does not make the paper public on
+            its own -- it still goes through a separate Labor Hub review before it
+            appears on the site.
         </p>
 
         {% if messages %}
@@ -35,6 +37,9 @@
                                 <span class="pill-accent">Job Market Paper</span>
                                 {% if paper.has_advisor_response %}
                                     <span class="pill-neutral">{{ paper.jm_advisor_acknowledged|yesno:"Acknowledged,Declined" }}</span>
+                                {% endif %}
+                                {% if paper.status == 'pending' %}
+                                    <span class="pill-neutral">Pending review</span>
                                 {% endif %}
                             </div>
                         </div>
