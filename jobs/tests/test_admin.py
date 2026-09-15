@@ -42,6 +42,31 @@ class JobAdminApprovalTests(TestCase):
         job.refresh_from_db()
         self.assertEqual(job.status, "rejected")
 
+    def test_editing_status_directly_in_the_change_form_still_records_the_reviewer(self):
+        """Regression: `status` is an editable field in the change form (not
+        just the Approve/Reject buttons); flipping it there must still route
+        through approve()/reject() so reviewed_at/reviewed_by -- and any
+        subclass side effect -- fire, not a raw save()."""
+        job = self._job()
+        data = {
+            "title": job.title, "employer": "", "pay": "",
+            "description": job.description, "url": job.url,
+            "deadline": "2030-01-01", "status": "approved", "admin_notes": "",
+            "countries": [], "categories": [],
+        }
+        response = self.client.post(
+            reverse("admin:jobs_job_change", args=[job.pk]), data,
+        )
+        errors = (
+            response.context["adminform"].form.errors
+            if response.status_code == 200 else None
+        )
+        self.assertEqual(response.status_code, 302, errors)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "approved")
+        self.assertEqual(job.reviewed_by, self.admin)
+        self.assertIsNotNone(job.reviewed_at)
+
     def test_bulk_approve_action(self):
         j1 = self._job()
         j2 = self._job()

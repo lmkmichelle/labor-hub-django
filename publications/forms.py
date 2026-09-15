@@ -1,11 +1,7 @@
 import json
-import os
-from io import BytesIO
 
 from django import forms
-from django.conf import settings
 from django.core.files.base import ContentFile
-from PyPDF2 import PdfMerger
 
 from accounts.models import CustomUser
 from core.constants import PAPER_COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
@@ -113,22 +109,17 @@ class PublicationForm(forms.ModelForm):
     def save(self, commit=True):
         publication = super().save(commit=False)
 
-        if self.cleaned_data.get('pdf'):
-            cover_path = os.path.join(settings.STATIC_ROOT, 'pdfs', 'cover.pdf')
-
-            merger = PdfMerger()
-            merger.append(cover_path)
-            merger.append(self.cleaned_data.get('pdf'))
-
-            output = BytesIO()
-            merger.write(output)
-            output.seek(0)
-
-            publication.pdf.save(
-                self.cleaned_data.get('pdf').name,
-                ContentFile(output.getvalue()),
-                save=False
-            )
+        upload = self.cleaned_data.get('pdf')
+        if upload:
+            # Keep the author's file untouched on pdf_original -- the only
+            # thing Publication.rebuild_covered_pdf() ever reads from -- and
+            # mirror it onto pdf uncovered for now, so the author can still
+            # download their own not-yet-approved paper. The branded cover
+            # replaces it once the paper is approved (see approve()).
+            content = ContentFile(upload.read())
+            publication.pdf_original.save(upload.name, content, save=False)
+            content.seek(0)
+            publication.pdf.save(upload.name, ContentFile(content.read()), save=False)
 
         if commit:
             publication.save()

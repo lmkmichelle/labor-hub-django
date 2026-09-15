@@ -176,24 +176,28 @@ class ExamplePaperPillTests(TestCase):
 
     def test_no_discussion_series_pill_on_the_publications_list(self):
         response = self.client.get("/publications/")
-        self.assertNotContains(response, "Discussion Series #")
+        self.assertNotContains(response, "Discussion Paper No.")
 
     def test_no_discussion_series_pill_on_the_home_page(self):
         response = self.client.get("/")
-        self.assertNotContains(response, "Discussion Series #")
+        self.assertNotContains(response, "Discussion Paper No.")
 
     def test_real_paper_still_gets_the_pill(self):
         run("--remove")
         author = Author.objects.create(user=None, name="Real Author")
-        paper = Publication.objects.create(
-            title="A Real Paper", abstract="Real.", status="approved",
+        admin = CustomUser.objects.create_user(
+            email="admin@example.com", password="pass12345",
+            first_name="Ada", last_name="Min", role=CustomUser.Role.ADMIN,
+            is_active=True,
         )
+        paper = Publication.objects.create(title="A Real Paper", abstract="Real.")
         paper.authors.set([author])
+        paper.approve(admin)
         response = self.client.get("/publications/")
-        self.assertContains(response, f"Discussion Series #{paper.id}")
+        self.assertContains(response, f"Discussion Paper No. {paper.discussion_paper_number}")
 
     def test_no_discussion_series_text_on_the_example_event_card(self):
         """Pre-existing copy-paste bug: the home page event card also printed
         this text, which never made sense for an event regardless of is_example."""
         response = self.client.get("/")
-        self.assertNotContains(response, "Discussion Series #")
+        self.assertNotContains(response, "Discussion Paper No.")

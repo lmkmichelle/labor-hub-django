@@ -364,6 +364,16 @@ class ProfilePublicationVisibilityTests(TestCase):
         self.client.force_login(self.owner)
         self.assertContains(self._profile(), "Unapproved Paper")
 
+    def test_owners_pending_paper_shows_a_pending_review_pill(self):
+        self._paper("pending", "Unapproved Paper")
+        self.client.force_login(self.owner)
+        self.assertContains(self._profile(), "Pending review")
+
+    def test_approved_paper_shows_no_pending_review_pill(self):
+        self._paper("approved", "Approved Paper")
+        self.client.force_login(self.owner)
+        self.assertNotContains(self._profile(), "Pending review")
+
 
 class ProfilePublicationsEmptyStateTests(TestCase):
     """A member with no papers must see a message, not a silent blank gap.

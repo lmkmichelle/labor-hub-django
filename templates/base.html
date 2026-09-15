@@ -39,7 +39,12 @@
                     <a href="{% url 'profile' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Profile</a>
                   </li>
+                  <li>
+                    <a href="{% url 'settings' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
+                  </li>
                   {% if user.is_researcher %}
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
                     <li>
                       <a href="{% url 'advisee_applications' %}"
                          class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">
@@ -59,18 +64,7 @@
                       </a>
                     </li>
                   {% endif %}
-                   {% if user.is_staff %}
-                    <li>
-                      <a href="{% url 'admin:index' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
-                    </li>
-                  {% endif %}
-                  {% if user.is_superuser %}
-                    <li>
-                      <a href="{% url 'help_index' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin guides</a>
-                    </li>
-                  {% endif %}
+                  <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
                   <li>
                     <a href="{% url 'submit_paper' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
@@ -87,11 +81,20 @@
                     <a href="{% url 'event-create' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Event</a>
                   </li>
-                  <li>
-                    <a href="{% url 'settings' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
-                  </li>
-                  <li>
+                  {% if user.is_staff %}
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
+                    <li>
+                      <a href="{% url 'admin:index' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
+                    </li>
+                    {% if user.is_superuser %}
+                      <li>
+                        <a href="{% url 'help_index' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin Docs</a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                  <li class="mt-2 border-t border-default pt-2">
                     <form action="{% url 'logout' %}" method="post">
                       {% csrf_token %}
                       <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:cursor-pointer hover:text-heading rounded"
@@ -128,7 +131,7 @@
             <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
                  id="navbar-cta">
               {% with request.resolver_match.url_name as url_name %}
-                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-default rounded-base bg-neutral-secondary-soft md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-neutral-primary">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-default rounded-base bg-neutral-secondary-soft md:flex-row md:space-x-6 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-neutral-primary">
                   <li>
                     <a href="/"
                        class="nav-link {% if url_name == 'home' %}text-red-700{% endif %}">Home</a>
@@ -156,6 +159,10 @@
                   <li>
                     <a href="{% url 'scholars' %}"
                        class="nav-link {% if url_name == 'scholars' %}text-red-700{% endif %}">Scholars</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'contact' %}"
+                       class="nav-link whitespace-nowrap {% if url_name == 'contact' %}text-red-700{% endif %}">Contact Us</a>
                   </li>
                 </ul>
               {% endwith %}

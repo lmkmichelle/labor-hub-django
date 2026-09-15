@@ -38,6 +38,32 @@ class ApprovableAdmin(admin.ModelAdmin):
                 readonly.append(field)
         return readonly
 
+    def save_model(self, request, obj, form, change):
+        # `status` is directly editable in the change form (so an admin can,
+        # say, revert an approved item to pending), which means flipping it
+        # to approved/rejected there and clicking Save would otherwise call
+        # obj.save() directly -- bypassing approve()/reject() entirely, so
+        # reviewed_at/reviewed_by never get set and a subclass's side effects
+        # (e.g. Publication assigning a discussion_paper_number and building
+        # its cover PDF) silently never fire. Route that one transition
+        # through the real method instead, exactly as the Approve/Reject
+        # buttons do; every other save (add, or edit with no pending ->
+        # approved/rejected transition) is untouched.
+        if (
+            change
+            and 'status' in form.changed_data
+            and form.initial.get('status') == ApprovalStatus.PENDING
+            and obj.status in (ApprovalStatus.APPROVED, ApprovalStatus.REJECTED)
+        ):
+            target_status = obj.status
+            obj.status = ApprovalStatus.PENDING
+            if target_status == ApprovalStatus.APPROVED:
+                obj.approve(request.user)
+            else:
+                obj.reject(request.user)
+            return
+        super().save_model(request, obj, form, change)
+
     # -- bulk actions ---------------------------------------------------------
     @admin.action(description="Approve selected pending items")
     def approve_selected(self, request, queryset):

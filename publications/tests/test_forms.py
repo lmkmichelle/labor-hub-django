@@ -1,4 +1,9 @@
+import io
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from PyPDF2 import PdfReader
+from reportlab.pdfgen import canvas
 
 from accounts.models import CustomUser
 from publications.forms import PublicationForm
@@ -107,3 +112,24 @@ class PublicationFormTests(TestCase):
         form = PublicationForm(data=valid_form_data(country_code="ZZ"))
         self.assertFalse(form.is_valid())
         self.assertIn("country_code", form.errors)
+
+    def test_upload_is_stored_uncovered_on_both_pdf_fields(self):
+        """The form itself no longer merges a cover in -- that only happens
+        once the paper is approved and numbered (see Publication.approve)."""
+        buf = io.BytesIO()
+        c = canvas.Canvas(buf)
+        c.drawString(100, 700, "author's own text")
+        c.showPage()
+        c.save()
+        upload = SimpleUploadedFile("paper.pdf", buf.getvalue(), content_type="application/pdf")
+
+        form = PublicationForm(data=valid_form_data(), files={"pdf": upload})
+        self.assertTrue(form.is_valid(), form.errors)
+        publication = form.save()
+
+        self.assertTrue(publication.pdf)
+        self.assertTrue(publication.pdf_original)
+        with publication.pdf.open('rb') as f:
+            reader = PdfReader(f)
+            self.assertEqual(len(reader.pages), 1)
+            self.assertIn("author's own text", reader.pages[0].extract_text())

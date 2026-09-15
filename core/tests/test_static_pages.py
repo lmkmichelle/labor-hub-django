@@ -41,6 +41,27 @@ class FooterLinkTests(TestCase):
         self.assertContains(response, f'href="{reverse("submit_paper")}"')
 
 
+class NavbarContactLinkTests(TestCase):
+    """"Contact Us" appears in the top nav (not just the footer) for everyone."""
+
+    def test_present_for_anonymous_and_authenticated(self):
+        response = self.client.get(reverse('home'))
+        self.assertContains(response, 'Contact Us')
+
+        user = CustomUser.objects.create_user(
+            email='navcontact@example.com', password='navcontact-test-pw',
+            first_name='Nav', last_name='Contact',
+            role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse('home'))
+        self.assertContains(response, 'Contact Us')
+
+    def test_highlighted_on_contact_page(self):
+        response = self.client.get(reverse('contact'))
+        self.assertContains(response, 'class="nav-link whitespace-nowrap text-red-700">Contact Us')
+
+
 class NavbarPostLinksTests(TestCase):
     """The logged-in user dropdown offers Post a Job/Visit/Event alongside
     Submit a paper; anonymous visitors see none of them."""

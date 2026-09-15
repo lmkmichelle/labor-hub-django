@@ -74,7 +74,7 @@
         {% if request.user == user_profile.user %}
             <div class="w-full lg:w-auto">
                 <a href="{% url 'edit_profile' %}"
-                 class="text-white no-underline bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Profile</a>
+                 class="text-white no-underline whitespace-nowrap bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Profile</a>
             </div>
         {% endif %}
     </div>
