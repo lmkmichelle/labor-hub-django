@@ -39,7 +39,14 @@
                     <a href="{% url 'profile' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Profile</a>
                   </li>
+                  <li>
+                    <a href="{% url 'settings' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
+                  </li>
                   {% if user.is_researcher %}
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
+                      Advising
+                    </li>
                     <li>
                       <a href="{% url 'advisee_applications' %}"
                          class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">
@@ -59,18 +66,9 @@
                       </a>
                     </li>
                   {% endif %}
-                   {% if user.is_staff %}
-                    <li>
-                      <a href="{% url 'admin:index' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
-                    </li>
-                  {% endif %}
-                  {% if user.is_superuser %}
-                    <li>
-                      <a href="{% url 'help_index' %}"
-                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin guides</a>
-                    </li>
-                  {% endif %}
+                  <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
+                    Post content
+                  </li>
                   <li>
                     <a href="{% url 'submit_paper' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
@@ -87,11 +85,22 @@
                     <a href="{% url 'event-create' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Event</a>
                   </li>
-                  <li>
-                    <a href="{% url 'settings' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
-                  </li>
-                  <li>
+                  {% if user.is_staff %}
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
+                      Admin
+                    </li>
+                    <li>
+                      <a href="{% url 'admin:index' %}"
+                         class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
+                    </li>
+                    {% if user.is_superuser %}
+                      <li>
+                        <a href="{% url 'help_index' %}"
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin guides</a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                  <li class="mt-2 border-t border-default pt-2">
                     <form action="{% url 'logout' %}" method="post">
                       {% csrf_token %}
                       <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:cursor-pointer hover:text-heading rounded"
