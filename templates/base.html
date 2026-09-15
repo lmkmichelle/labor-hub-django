@@ -44,9 +44,7 @@
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Settings</a>
                   </li>
                   {% if user.is_researcher %}
-                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
-                      Advising
-                    </li>
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
                     <li>
                       <a href="{% url 'advisee_applications' %}"
                          class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">
@@ -66,9 +64,7 @@
                       </a>
                     </li>
                   {% endif %}
-                  <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
-                    Post content
-                  </li>
+                  <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
                   <li>
                     <a href="{% url 'submit_paper' %}"
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
@@ -86,9 +82,7 @@
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Event</a>
                   </li>
                   {% if user.is_staff %}
-                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body">
-                      Admin
-                    </li>
+                    <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
                     <li>
                       <a href="{% url 'admin:index' %}"
                          class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin</a>
@@ -96,7 +90,7 @@
                     {% if user.is_superuser %}
                       <li>
                         <a href="{% url 'help_index' %}"
-                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin guides</a>
+                           class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Admin Docs</a>
                       </li>
                     {% endif %}
                   {% endif %}
