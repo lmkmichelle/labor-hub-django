@@ -136,23 +136,28 @@ def collect_new_content(since):
 
 
 def build_digest_email(user, sections):
-    """Render the subject/text/html for a digest to ``user``."""
+    """Render the subject/text/html for a digest to ``user``.
+
+    Also returns the unsubscribe URL so the caller can set a List-Unsubscribe
+    header without recomputing (and re-signing) the token.
+    """
     total = sum(len(section["items"]) for section in sections)
+    unsubscribe_url = absolute_url(
+        reverse("digest_unsubscribe",
+                kwargs={"token": make_unsubscribe_token(user)})
+    )
     context = {
         "user": user,
         "sections": sections,
         "total": total,
         "site_url": settings.SITE_URL.rstrip("/"),
         "manage_url": absolute_url(reverse("edit_profile")),
-        "unsubscribe_url": absolute_url(
-            reverse("digest_unsubscribe",
-                    kwargs={"token": make_unsubscribe_token(user)})
-        ),
+        "unsubscribe_url": unsubscribe_url,
     }
     subject = "Labor Hub: {} new update{}".format(total, "" if total == 1 else "s")
     text_body = render_to_string("emails/digest.txt", context)
     html_body = render_to_string("emails/digest.html", context)
-    return subject, text_body, html_body
+    return subject, text_body, html_body, unsubscribe_url
 
 
 def send_user_digest(user, now=None):
@@ -174,10 +179,21 @@ def send_user_digest(user, now=None):
     if not sections:
         return False
 
-    subject, text_body, html_body = build_digest_email(user, sections)
-    message = EmailMultiAlternatives(subject, text_body, to=[user.email])
+    subject, text_body, html_body, unsubscribe_url = build_digest_email(user, sections)
+    message = EmailMultiAlternatives(
+        subject, text_body, from_email=settings.DIGEST_FROM_EMAIL, to=[user.email],
+        headers={"List-Unsubscribe": f"<{unsubscribe_url}>"},
+    )
     message.attach_alternative(html_body, "text/html")
-    message.send()
+    # Unlike every other send site in this codebase, this one runs unattended
+    # from cron across every subscriber in one pass -- fail_silently keeps one
+    # bad address or a transient relay error from aborting the remaining
+    # digests. send_digests still reports counts, so the failure isn't
+    # invisible, just non-fatal.
+    sent = message.send(fail_silently=True)
+
+    if not sent:
+        return False
 
     profile.last_digest_sent_at = now
     profile.save(update_fields=["last_digest_sent_at"])

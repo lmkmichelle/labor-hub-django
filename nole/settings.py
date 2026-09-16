@@ -215,6 +215,19 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com")
 
+# Sender for Django's own error/security mail (e.g. mail_admins, a broken-link
+# report). Unset previously, which meant it fell back to Django's built-in
+# default of "root@localhost" -- silently undeliverable through the same relay
+# everything else uses. Reuses DEFAULT_FROM_EMAIL unless overridden.
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+# Sender for the weekly/monthly digest only (see accounts/digests.py). Kept
+# separate from DEFAULT_FROM_EMAIL so a spam complaint on bulk digest mail
+# doesn't risk the sending reputation of transactional mail (approvals,
+# password resets). Defaults to DEFAULT_FROM_EMAIL until a dedicated address
+# (e.g. digest@laborhub.cornell.edu) is provisioned and set as a project variable.
+DIGEST_FROM_EMAIL = os.environ.get("DIGEST_FROM_EMAIL", DEFAULT_FROM_EMAIL)
+
 # Public base URL used to build absolute links in outgoing emails (e.g. the
 # weekly/monthly digest), since management commands have no HttpRequest.
 # On Upsun this is derived from the injected route table in `.environment`; set
