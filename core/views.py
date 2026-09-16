@@ -416,7 +416,7 @@ class ScholarsListView(ListView):
         if sort == 'newest':
             qs = qs.order_by('-date_joined', 'id')
         else:
-            qs = qs.order_by('first_name', 'last_name', 'id')
+            qs = qs.order_by('last_name', 'first_name', 'id')
 
         return qs.distinct()
 

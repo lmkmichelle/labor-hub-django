@@ -325,3 +325,10 @@ class ScholarsListViewTests(TestCase):
         content = response.content.decode()
         self.assertIn('id="recommended-keywords-data"', content)
         self.assertIn("interests-pill-input", content)
+
+    def test_default_sort_is_by_last_name(self):
+        zoe = make_user(email="zoe@example.com", first_name="Zoe", last_name="Adams")
+        adam = make_user(email="adam@example.com", first_name="Adam", last_name="Zeta")
+        response = self.client.get(reverse("scholars"))
+        users = list(response.context["users"])
+        self.assertLess(users.index(zoe), users.index(adam))
