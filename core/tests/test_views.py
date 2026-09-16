@@ -5,7 +5,7 @@ an empty database) plus behavioral coverage of the home context, map, JSON API
 endpoints, account list views, and search.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
@@ -79,6 +79,29 @@ class HomeContextTests(TestCase):
         self.assertIn("Upcoming Visitor", seminar_titles)
         paper_titles = [p["title"] for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
+
+
+class HomeEventTimeDisplayTests(TestCase):
+    def test_home_card_does_not_show_a_utc_time_for_a_midnight_local_event(self):
+        # The event form only collects a date, so a saved event is stored as
+        # local midnight -- which timezone.make_aware turns into 04:00 or
+        # 05:00 UTC depending on daylight saving. Raw strftime on that value
+        # used to print the UTC time verbatim instead of localizing it.
+        naive_midnight = datetime.combine(
+            timezone.localdate() + timedelta(days=3), datetime.min.time())
+        Event.objects.create(
+            title="Midnight Event", description="d",
+            date=timezone.make_aware(naive_midnight),
+            location="Ithaca", status="approved",
+        )
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        event = next(
+            e for e in response.context["upcoming_events"]
+            if e["title"] == "Midnight Event")
+        self.assertFalse(event.get("meta"))
+        self.assertNotContains(response, "04:00")
+        self.assertNotContains(response, "05:00")
 
 
 class MapViewTests(TestCase):

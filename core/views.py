@@ -99,7 +99,7 @@ def home(request):
         upcoming_events.append({
             'url': f'/events/{event.id}/',
             'title': event.title,
-            'date': event.date.strftime('%b %d'),
+            'date': timezone.localtime(event.date).strftime('%b %d'),
             # No 'subtitle' here: this previously read
             # f'Discussion Series #{event.id}', a leftover from copying the
             # papers dict below -- meaningless (and always-true) for an event.
@@ -109,9 +109,10 @@ def home(request):
                 'text': event.get_category_display()
             },
             'is_example': event.is_example,
-            'meta': {
-                'right': event.date.strftime('%H:%M')
-            }
+            # No 'meta' (right-aligned time): the event form only collects a
+            # date, so every event is stored at local midnight -- showing a
+            # time here was always either noise (00:00) or, before this was
+            # localized, a stray UTC offset like 04:00.
         })
 
     # Get upcoming seminars (next 6)
