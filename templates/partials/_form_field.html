@@ -29,7 +29,7 @@
                   class="form-input"
                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                   {% if required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
-    {% elif widget_name == 'FileInput' or widget_name == 'ClearableFileInput' %}
+    {% elif is_file %}
         <input class="form-file"
                id="{{ field.id_for_label }}" name="{{ field.name }}" type="file"
                {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}

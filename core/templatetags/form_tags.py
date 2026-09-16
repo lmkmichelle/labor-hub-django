@@ -1,4 +1,4 @@
-from django import template
+from django import forms, template
 from datetime import date, datetime
 
 register = template.Library()
@@ -46,6 +46,11 @@ def render_field(field, label=None, placeholder=None, help_text=None, required=N
         'placeholder': resolved_placeholder,
         'help_text': resolved_help_text,
         'widget_name': widget_name,
+        # Checked by isinstance rather than widget_name so any FileInput
+        # subclass (e.g. a multi-file widget) renders as a file input --
+        # matching on the class name silently dropped the `multiple`
+        # attribute for any widget not named exactly FileInput/ClearableFileInput.
+        'is_file': isinstance(widget, forms.FileInput),
         'date_value': _normalize_date_value(raw_value),
         'required': resolved_required,
     }
