@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load form_tags %}
+{% load static %}
 
 {% block title %}
     {% if object %}Edit event{% else %}Create an event{% endif %}
@@ -8,7 +9,6 @@
 {% block content %}
 <article class="format lg:format-lg max-w-none">
 <h3 class="title">{% if object %}Edit event{% else %}Create an Event{% endif %}</h3>
-{% load static %}
 
 <form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
@@ -30,7 +30,17 @@
 
     {% render_field form.application_url %}
 
-    {% render_field form.location %}
+    {% render_select form.country_code label="Country" %}
+    {# Country drives the city suggestions; see static/js/city-picker.js #}
+    <div data-city-picker
+         data-endpoint="{% url 'cities-by-country' %}"
+         data-country-field="{{ form.country_code.id_for_label }}"
+         data-city-field="{{ form.city.id_for_label }}">
+        {% render_field form.city %}
+        <datalist id="city-options"></datalist>
+    </div>
+
+    {% render_field form.venue %}
 
     {% render_field form.category %}
 
@@ -43,4 +53,5 @@
 
 </form>
  </article>
+<script src="{% static 'js/city-picker.js' %}"></script>
 {% endblock %}

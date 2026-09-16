@@ -35,11 +35,12 @@
                {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}
                {% if field.field.widget.attrs.multiple %}multiple{% endif %}>
     {% else %}
-        <input type="{{ field.field.widget.input_type|default:'text' }}" 
-               name="{{ field.name }}" 
-               id="{{ field.id_for_label }}" 
+        <input type="{{ field.field.widget.input_type|default:'text' }}"
+               name="{{ field.name }}"
+               id="{{ field.id_for_label }}"
                value="{{ field.field.widget.attrs.value|default:field.value|default:'' }}"
                class="form-input"
+               {% if field.field.widget.attrs.list %}list="{{ field.field.widget.attrs.list }}"{% endif %}
                {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                {% if required %}required{% endif %} />
     {% endif %}

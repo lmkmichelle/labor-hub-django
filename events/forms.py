@@ -5,6 +5,8 @@ DEADLINE_DEFAULT_TIME = dtime(23, 59)
 from django import forms
 from django.utils import timezone
 
+from core.constants import COUNTRY_CHOICES
+
 from .models import Event
 
 
@@ -40,11 +42,26 @@ class EventForm(forms.ModelForm):
         required=False
     )
     
-    location = forms.CharField(
-        label="Location of Event",
+    country_code = forms.ChoiceField(
+        choices=[('', 'Choose a country')] + list(COUNTRY_CHOICES),
+        required=True,
+        label='Country',
+    )
+
+    city = forms.CharField(
+        label="City",
+        widget=forms.TextInput(attrs={'list': 'city-options'}),
+        max_length=255,
+        required=True,
+        help_text="Pick a country first; start typing for suggestions.",
+    )
+
+    venue = forms.CharField(
+        label="Venue (Optional)",
         widget=forms.TextInput,
         max_length=255,
-        required=True
+        required=False,
+        help_text="E.g. a building or conference center name.",
     )
 
     deadline_date = forms.DateField(
@@ -56,7 +73,7 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         fields = ['title', 'description', 'date', 'end_date', 'deadline',
-                  'application_url', 'location', 'category']
+                  'application_url', 'country_code', 'city', 'venue', 'category']
 
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Title'}),
@@ -64,7 +81,6 @@ class EventForm(forms.ModelForm):
             'date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'deadline': forms.HiddenInput(),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Location'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
         }
         labels = {

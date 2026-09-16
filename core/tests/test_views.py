@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
+from core.models import City
 from events.models import Event
 from publications.models import Author, Publication
 from seminars.models import Seminar
@@ -193,6 +194,22 @@ class SearchAccountsTests(TestCase):
         response = self.client.get(reverse("search_accounts"), {"q": "Jane"})
         data = response.json()
         self.assertTrue(any(item["value"] == "Jane Doe" for item in data))
+
+
+class CitiesByCountryTests(TestCase):
+    def test_returns_cities_for_a_valid_country(self):
+        City.objects.create(geoname_id=1, name="Ithaca", country_code="US", population=30000)
+        City.objects.create(geoname_id=2, name="Paris", country_code="FR", population=2000000)
+        response = self.client.get(reverse("cities-by-country"), {"country": "us"})
+        self.assertEqual(response.json(), {"cities": ["Ithaca"]})
+
+    def test_invalid_country_code_returns_empty_list(self):
+        response = self.client.get(reverse("cities-by-country"), {"country": "ZZ"})
+        self.assertEqual(response.json(), {"cities": []})
+
+    def test_missing_country_returns_empty_list(self):
+        response = self.client.get(reverse("cities-by-country"))
+        self.assertEqual(response.json(), {"cities": []})
 
 
 class PublicationsListViewTests(TestCase):

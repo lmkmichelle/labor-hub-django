@@ -11,10 +11,12 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
+from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import DeleteView, ListView, TemplateView
 
 from accounts.models import CustomUser
+from core.models import City
 from core.constants import (
     COUNTRY_CHOICES,
     PAPER_COUNTRY_CHOICES,
@@ -463,6 +465,25 @@ def search_accounts(request):
         {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
         for u in users
     ], safe=False)
+
+@require_GET
+@cache_control(max_age=86400)
+def cities_by_country(request):
+    """City suggestions for the event-location picker.
+
+    Unlike ``search_accounts`` in seminars/views.py's university endpoint,
+    there is no live fallback fetch here: the City table is a one-time
+    GeoNames import (see ``import_cities``), not something to hit a
+    third-party API for on every miss.
+    """
+    country_code = (request.GET.get('country') or '').strip().upper()
+    valid_codes = {code for code, _ in COUNTRY_CHOICES}
+    if country_code not in valid_codes:
+        return JsonResponse({'cities': []})
+
+    queryset = City.objects.filter(country_code=country_code)
+    return JsonResponse({'cities': [city.display_name for city in queryset]})
+
 
 @require_GET
 def publications_list(request):

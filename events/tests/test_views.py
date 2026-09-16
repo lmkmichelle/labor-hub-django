@@ -125,7 +125,8 @@ class EventCreateViewTests(TestCase):
             "title": "New Event",
             "description": "desc",
             "date": "2025-06-01",
-            "location": "Ithaca",
+            "country_code": "US",
+            "city": "Ithaca",
             "category": "conference",
         })
         self.assertRedirects(response, reverse("events-list"))
