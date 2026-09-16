@@ -3,24 +3,9 @@ from datetime import time as dtime, datetime
 # Deadlines with no time component are treated as end-of-day.
 DEADLINE_DEFAULT_TIME = dtime(23, 59)
 from django import forms
-from django.conf import settings
 from django.utils import timezone
 
 from .models import Event
-
-# Friendly names for the wall-clock zones we expect to run in; falls back to the
-# raw zone key for anything else.
-_TZ_LABELS = {
-    "America/New_York": "Eastern Time",
-    "America/Chicago": "Central Time",
-    "America/Denver": "Mountain Time",
-    "America/Los_Angeles": "Pacific Time",
-    "UTC": "UTC",
-}
-
-
-def deadline_timezone_label():
-    return _TZ_LABELS.get(settings.TIME_ZONE, settings.TIME_ZONE)
 
 
 class EventForm(forms.ModelForm):
@@ -96,11 +81,6 @@ class EventForm(forms.ModelForm):
 
         # Members cannot submit a Live Podcast; admins add those directly.
         self.fields['category'].choices = Event.PUBLIC_CATEGORY_CHOICES
-
-        tz_label = deadline_timezone_label()
-        self.fields['deadline_date'].help_text = (
-            f"Applications are due by 11:59 PM {tz_label} on this date."
-        )
 
         # Pre-populate the split field when editing an existing event
         if self.instance and self.instance.pk and self.instance.deadline:
