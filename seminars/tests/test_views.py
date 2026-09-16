@@ -107,6 +107,11 @@ class SeminarDetailViewTests(TestCase):
         response = self.client.get(reverse("seminar-detail", kwargs={"pk": seminar.pk}))
         self.assertEqual(response.status_code, 404)
 
+    def test_url_in_description_is_clickable(self):
+        seminar = make_seminar(description="More info: https://example.com/visit")
+        response = self.client.get(reverse("seminar-detail", kwargs={"pk": seminar.pk}))
+        self.assertContains(response, 'href="https://example.com/visit"')
+
     def test_owner_can_view_pending_visit(self):
         owner = CustomUser.objects.create_user(
             email="owner@example.com", password="pw12345",

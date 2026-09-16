@@ -35,7 +35,7 @@
     </div>
 
     <h4>Description</h4>
-    {{ job.description|linebreaks }}
+    {{ job.description|urlize|linebreaks }}
 
     {% if job.pay %}
         <h4>Pay</h4>

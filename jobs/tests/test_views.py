@@ -111,6 +111,11 @@ class JobDetailViewTests(TestCase):
         response = self.client.get(reverse("job-detail", kwargs={"pk": job.pk}))
         self.assertEqual(response.status_code, 404)
 
+    def test_url_in_description_is_clickable(self):
+        job = make_job(description="Apply at https://example.com/careers")
+        response = self.client.get(reverse("job-detail", kwargs={"pk": job.pk}))
+        self.assertContains(response, 'href="https://example.com/careers"')
+
     def test_owner_can_view_pending_job(self):
         owner = CustomUser.objects.create_user(
             email="owner@example.com", password="pw12345",

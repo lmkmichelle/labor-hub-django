@@ -28,7 +28,7 @@
     </div>
 
     <h4>Description</h4>
-    {{ event.description|linebreaks }}
+    {{ event.description|urlize|linebreaks }}
 
     <h4>Location</h4>
     <p>{{ event.location }}</p>
