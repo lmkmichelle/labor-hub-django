@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load text_filters %}
 {% block title %}{{ publication.title }}{% endblock %}
 {% block content %}
     <article class="max-w-none format lg:format-lg">
@@ -8,6 +9,21 @@
                 <p>{{ publication.formatted_date }}</p>
                 <div class="not-format flex flex-wrap items-center justify-end gap-2">
                     {% include "partials/_example_badge.html" with show=publication.is_example %}
+                    {% if publication.display_number %}
+                        <a href="{% url 'publication_bibtex' pk=publication.pk %}"
+                           class="p-2 -m-2"
+                           aria-label="Download citation (BibTeX)"
+                           title="Download citation (BibTeX)">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="20"
+                                 height="20"
+                                 class="inline"
+                                 fill="var(--primary)"
+                                 viewBox="0 0 16 16">
+                                <path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 8.85 7.558V11a1 1 0 0 0 1 1zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 2.85 7.558V11a1 1 0 0 0 1 1z" />
+                            </svg>
+                        </a>
+                    {% endif %}
                     {% if publication.pdf %}
                         <a href="{{ publication.pdf.url }}"
                            download="{{ publication.title }}.pdf"
@@ -21,21 +37,6 @@
                                  viewBox="0 0 16 16">
                                 <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
                                 <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
-                            </svg>
-                        </a>
-                    {% endif %}
-                    {% if publication.display_number %}
-                        <a href="{% url 'publication_bibtex' pk=publication.pk %}"
-                           class="p-2 -m-2"
-                           aria-label="Download citation (BibTeX)"
-                           title="Download citation (BibTeX)">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 width="20"
-                                 height="20"
-                                 class="inline"
-                                 fill="var(--primary)"
-                                 viewBox="0 0 16 16">
-                                <path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 8.85 7.558V11a1 1 0 0 0 1 1zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 2.85 7.558V11a1 1 0 0 0 1 1z" />
                             </svg>
                         </a>
                     {% endif %}
@@ -65,7 +66,7 @@
             </div>
         </div>
         <h4>Abstract</h4>
-        {{ publication.abstract|linebreaks }}
+        {{ publication.abstract|soften_linebreaks|linebreaks }}
         <h4>Country of study</h4>
         <p>{{ publication.get_country_code_display|default:"Not specified" }}</p>
 

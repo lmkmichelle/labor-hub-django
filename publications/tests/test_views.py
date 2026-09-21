@@ -69,6 +69,23 @@ class PublicationDetailViewTests(TestCase):
         self.assertIn("<p>First paragraph.</p>", content)
         self.assertIn("<p>Second paragraph.</p>", content)
 
+    def test_hard_wrapped_abstract_is_not_forced_into_narrow_lines(self):
+        """A PDF-pasted abstract with a newline at every ~85-character line
+        break shouldn't render as a <br> at each of those points -- that
+        forces the paragraph to wrap at the source document's line width
+        instead of the reader's actual screen width."""
+        publication = make_publication(
+            status="approved",
+            abstract="This paper exploits\nestablishment mobility as a novel\nsource.")
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        self.assertNotIn("<br", content.split("Abstract</h4>")[1].split("<h4>")[0])
+        self.assertIn(
+            "This paper exploits establishment mobility as a novel source.",
+            content,
+        )
+
     def test_detail_shows_country_label_not_the_raw_code(self):
         publication = make_publication(status="approved", country_code="MULTI")
         response = self.client.get(

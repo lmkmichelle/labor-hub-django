@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load text_filters %}
 {% block title %}{{ job.title }}{% endblock %}
 {% block content %}
 <article class="max-w-none format lg:format-lg">
@@ -35,7 +36,7 @@
     </div>
 
     <h4>Description</h4>
-    {{ job.description|urlize|linebreaks }}
+    {{ job.description|soften_linebreaks|urlize|linebreaks }}
 
     {% if job.pay %}
         <h4>Pay</h4>
