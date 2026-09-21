@@ -86,6 +86,21 @@ class PublicationDetailViewTests(TestCase):
             content,
         )
 
+    def test_crlf_hard_wrapped_abstract_is_not_forced_into_narrow_lines(self):
+        """The real-world case (and the exact bug found in production): a
+        PDF/Word paste normally carries \\r\\n line endings, not bare \\n."""
+        publication = make_publication(
+            status="approved",
+            abstract="This paper exploits\r\nestablishment mobility as a novel\r\nsource.")
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        self.assertNotIn("<br", content.split("Abstract</h4>")[1].split("<h4>")[0])
+        self.assertIn(
+            "This paper exploits establishment mobility as a novel source.",
+            content,
+        )
+
     def test_detail_shows_country_label_not_the_raw_code(self):
         publication = make_publication(status="approved", country_code="MULTI")
         response = self.client.get(
