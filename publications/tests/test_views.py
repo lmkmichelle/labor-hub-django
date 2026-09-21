@@ -106,6 +106,63 @@ class PublicationDetailViewTests(TestCase):
         self.assertNotContains(response, "Edit Paper")
 
 
+class PublicationBibtexViewTests(TestCase):
+    def test_numbered_paper_downloads_bibtex(self):
+        admin = CustomUser.objects.create_user(
+            email="admin4@example.com", password="pass12345",
+            first_name="Ad", last_name="Min", role=CustomUser.Role.ADMIN,
+            is_active=True,
+        )
+        publication = make_publication(status="pending")
+        publication.approve(admin)
+        response = self.client.get(
+            reverse("publication_bibtex", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertIn("@techreport{", response.content.decode())
+
+    def test_unnumbered_paper_404s(self):
+        publication = make_publication(status="approved")
+        response = self.client.get(
+            reverse("publication_bibtex", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_pending_unnumbered_paper_404s_even_for_its_own_author(self):
+        user = make_user()
+        publication = make_publication(status="pending")
+        publication.authors.add(Author.objects.create(user=user, name="Jane Doe"))
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse("publication_bibtex", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_pending_paper_hidden_from_a_stranger(self):
+        publication = make_publication(status="pending")
+        publication.discussion_paper_number = 1
+        publication.save()
+        response = self.client.get(
+            reverse("publication_bibtex", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_cite_link_only_shown_when_numbered(self):
+        publication = make_publication(status="approved")
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        self.assertNotContains(response, ">Cite<")
+
+        admin = CustomUser.objects.create_user(
+            email="admin5@example.com", password="pass12345",
+            first_name="Ad", last_name="Min", role=CustomUser.Role.ADMIN,
+            is_active=True,
+        )
+        publication.status = "pending"
+        publication.save()
+        publication.approve(admin)
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        self.assertContains(response, ">Cite<")
+
+
 class PublicationsListDisplayNumberTests(TestCase):
     """The list-page card shows a job-market paper's own "J" number, not the
     regular series (item 16's separate counter)."""

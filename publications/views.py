@@ -2,17 +2,38 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, IntegerField, When
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.utils.text import slugify
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, CreateView, ListView, UpdateView
 
+from publications.citations import build_bibtex
 from publications.emails import send_paper_advisor_ack_email
 from publications.forms import PublicationForm
 from publications.models import Publication
 from .utils import process_publication_form
+
+
+def _get_visible_publication(pk, user):
+    """The single visibility rule for a publication's own pages: public once
+    approved, otherwise visible only to its own authors. Shared by the detail
+    page and the citation download so there's one place that decides this,
+    not two hand-rolled checks."""
+    obj = get_object_or_404(Publication, pk=pk)
+
+    if obj.status == 'approved':
+        return obj
+
+    authors_users = [author.user for author in obj.authors.all() if author.user]
+
+    if user.is_authenticated and user in authors_users:
+        return obj
+
+    raise Http404("This publication is not available.")
+
 
 class PublicationDetailView(DetailView):
     model = Publication
@@ -20,17 +41,7 @@ class PublicationDetailView(DetailView):
     context_object_name = 'publication'
 
     def get_object(self, queryset=None):
-        obj = super().get_object(queryset)
-
-        if obj.status == 'approved':
-            return obj
-
-        authors_users = [author.user for author in obj.authors.all() if author.user]
-
-        if self.request.user.is_authenticated and self.request.user in authors_users:
-            return obj
-
-        raise Http404("This publication is not available.")
+        return _get_visible_publication(self.kwargs['pk'], self.request.user)
 
 
 class PublicationCreateView(LoginRequiredMixin, CreateView):
@@ -142,3 +153,23 @@ def paper_ack_confirm(request, pk):
 @require_POST
 def paper_ack_decline(request, pk):
     return _record_response(request, pk, False)
+
+
+@require_GET
+def publication_bibtex(request, pk):
+    """Download a BibTeX .bib file citing this paper. 404 until the paper
+    has a display_number -- a citation naming an unstable/blank number
+    shouldn't circulate."""
+    publication = _get_visible_publication(pk, request.user)
+    if publication.display_number is None:
+        raise Http404("This publication does not have a citation yet.")
+
+    url = request.build_absolute_uri(
+        reverse('publication_detail', kwargs={'pk': publication.pk})
+    )
+    body = build_bibtex(publication, url)
+    filename = f"DP{publication.display_number}-{slugify(publication.title)[:60]}.bib"
+
+    response = HttpResponse(body, content_type="text/plain; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
