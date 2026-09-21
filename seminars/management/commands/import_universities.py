@@ -50,7 +50,12 @@ class Command(BaseCommand):
         if country:
             query['country'] = country
 
-        url = 'https://universities.hipolabs.com/search'
+        # hipolabs' API only listens on plain HTTP -- port 443 refuses the
+        # connection outright (confirmed both locally and from Upsun; this
+        # isn't an Upsun egress restriction). The payload is a public,
+        # unauthenticated university directory with no sensitive data, so
+        # the lack of transport encryption here isn't a real risk.
+        url = 'http://universities.hipolabs.com/search'
         if query:
             url = f"{url}?{urlencode(query)}"
 

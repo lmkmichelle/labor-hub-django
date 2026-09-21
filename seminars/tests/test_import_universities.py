@@ -32,13 +32,18 @@ class ImportUniversitiesCommandTests(TestCase):
 
         self.assertTrue(University.objects.filter(name="Test U").exists())
 
-    def test_fetches_over_https(self):
+    def test_fetches_over_http(self):
+        """hipolabs' API only listens on plain HTTP -- port 443 refuses the
+        connection outright (confirmed against the real service, not an
+        artifact of a test mock). Requesting https:// here fails every time,
+        which is exactly the bug that left production's University table
+        stuck at whatever it had been seeded with."""
         cm = _fake_urlopen("[]")
         with patch.object(import_universities, "urlopen", return_value=cm) as mock_urlopen:
             call_command("import_universities", stdout=StringIO())
 
         called_url = mock_urlopen.call_args[0][0]
-        self.assertTrue(called_url.startswith("https://"))
+        self.assertTrue(called_url.startswith("http://"))
 
 
 class _fake_urlopen:
