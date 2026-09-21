@@ -3,7 +3,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from accounts.forms import (
-    MAX_RESEARCH_PAPERS,
     ResearcherApplicationForm,
     StudentApplicationForm,
     UpdateProfileForm,
@@ -114,22 +113,20 @@ class ResearcherApplicationFormTests(TestCase):
             {"network": "CESifo", "url": ""},
         ])
 
-    def test_more_than_max_research_papers_is_rejected(self):
-        files = {
-            "research_papers": [
-                _pdf(f"p{i}.pdf") for i in range(MAX_RESEARCH_PAPERS + 1)
-            ]
-        }
+    def test_both_research_paper_slots_are_optional(self):
+        form = ResearcherApplicationForm(data=base_application_data(), files={})
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_only_first_research_paper_slot_filled_is_accepted(self):
+        files = {"research_paper_1": _pdf("p1.pdf")}
         form = ResearcherApplicationForm(
             data=base_application_data(), files=files)
-        self.assertFalse(form.is_valid())
-        self.assertIn("research_papers", form.errors)
+        self.assertTrue(form.is_valid(), form.errors)
 
-    def test_max_research_papers_is_accepted(self):
+    def test_both_research_paper_slots_filled_is_accepted(self):
         files = {
-            "research_papers": [
-                _pdf(f"p{i}.pdf") for i in range(MAX_RESEARCH_PAPERS)
-            ]
+            "research_paper_1": _pdf("p1.pdf"),
+            "research_paper_2": _pdf("p2.pdf"),
         }
         form = ResearcherApplicationForm(
             data=base_application_data(), files=files)

@@ -82,7 +82,7 @@ class ApplicationViewTests(TestCase):
 
     def test_apply_researcher_post_with_paper_creates_research_paper(self):
         data = application_post_data()
-        data["research_papers"] = SimpleUploadedFile(
+        data["research_paper_1"] = SimpleUploadedFile(
             "paper.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
         response = self.client.post(reverse("apply_researcher"), data)
         self.assertEqual(response.status_code, 302)
@@ -90,25 +90,25 @@ class ApplicationViewTests(TestCase):
         self.assertEqual(
             ResearchPaper.objects.filter(application=application).count(), 1)
 
-    def test_researcher_application_file_input_accepts_multiple_files(self):
-        # Regression: the widget's class name (MultipleFileInput) didn't
-        # match _form_field.html's FileInput/ClearableFileInput check, so the
-        # `multiple` attribute -- and the browser's ability to pick more than
-        # one file -- was silently dropped.
+    def test_researcher_application_renders_two_separate_paper_upload_fields(self):
+        # Regression: this used to be one <input multiple> requiring a
+        # shift/cmd-click to attach a second paper -- now it's two
+        # independently discoverable upload fields, neither `multiple`.
         response = self.client.get(reverse("apply_researcher"))
         content = response.content.decode()
         self.assertRegex(
-            content,
-            r'<input[^>]*name="research_papers"[^>]*multiple[^>]*>')
+            content, r'<input[^>]*name="research_paper_1"[^>]*type="file"[^>]*>')
+        self.assertRegex(
+            content, r'<input[^>]*name="research_paper_2"[^>]*type="file"[^>]*>')
+        self.assertNotIn("multiple", content.split("research_paper_1")[1][:200])
+        self.assertNotIn("multiple", content.split("research_paper_2")[1][:200])
 
     def test_apply_researcher_post_with_two_papers_creates_two_research_papers(self):
         data = application_post_data()
-        data["research_papers"] = [
-            SimpleUploadedFile(
-                "paper1.pdf", b"%PDF-1.4 fake one", content_type="application/pdf"),
-            SimpleUploadedFile(
-                "paper2.pdf", b"%PDF-1.4 fake two", content_type="application/pdf"),
-        ]
+        data["research_paper_1"] = SimpleUploadedFile(
+            "paper1.pdf", b"%PDF-1.4 fake one", content_type="application/pdf")
+        data["research_paper_2"] = SimpleUploadedFile(
+            "paper2.pdf", b"%PDF-1.4 fake two", content_type="application/pdf")
         response = self.client.post(reverse("apply_researcher"), data)
         self.assertEqual(response.status_code, 302)
         application = UserApplication.objects.get(email="applicant@example.com")
