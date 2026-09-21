@@ -90,6 +90,31 @@ class ApplicationViewTests(TestCase):
         self.assertEqual(
             ResearchPaper.objects.filter(application=application).count(), 1)
 
+    def test_researcher_application_file_input_accepts_multiple_files(self):
+        # Regression: the widget's class name (MultipleFileInput) didn't
+        # match _form_field.html's FileInput/ClearableFileInput check, so the
+        # `multiple` attribute -- and the browser's ability to pick more than
+        # one file -- was silently dropped.
+        response = self.client.get(reverse("apply_researcher"))
+        content = response.content.decode()
+        self.assertRegex(
+            content,
+            r'<input[^>]*name="research_papers"[^>]*multiple[^>]*>')
+
+    def test_apply_researcher_post_with_two_papers_creates_two_research_papers(self):
+        data = application_post_data()
+        data["research_papers"] = [
+            SimpleUploadedFile(
+                "paper1.pdf", b"%PDF-1.4 fake one", content_type="application/pdf"),
+            SimpleUploadedFile(
+                "paper2.pdf", b"%PDF-1.4 fake two", content_type="application/pdf"),
+        ]
+        response = self.client.post(reverse("apply_researcher"), data)
+        self.assertEqual(response.status_code, 302)
+        application = UserApplication.objects.get(email="applicant@example.com")
+        self.assertEqual(
+            ResearchPaper.objects.filter(application=application).count(), 2)
+
 
 class LoginViewTests(TestCase):
     def test_login_get(self):

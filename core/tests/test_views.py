@@ -5,13 +5,14 @@ an empty database) plus behavioral coverage of the home context, map, JSON API
 endpoints, account list views, and search.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
+from core.models import City
 from events.models import Event
 from publications.models import Author, Publication
 from seminars.models import Seminar
@@ -79,6 +80,29 @@ class HomeContextTests(TestCase):
         self.assertIn("Upcoming Visitor", seminar_titles)
         paper_titles = [p["title"] for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
+
+
+class HomeEventTimeDisplayTests(TestCase):
+    def test_home_card_does_not_show_a_utc_time_for_a_midnight_local_event(self):
+        # The event form only collects a date, so a saved event is stored as
+        # local midnight -- which timezone.make_aware turns into 04:00 or
+        # 05:00 UTC depending on daylight saving. Raw strftime on that value
+        # used to print the UTC time verbatim instead of localizing it.
+        naive_midnight = datetime.combine(
+            timezone.localdate() + timedelta(days=3), datetime.min.time())
+        Event.objects.create(
+            title="Midnight Event", description="d",
+            date=timezone.make_aware(naive_midnight),
+            location="Ithaca", status="approved",
+        )
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        event = next(
+            e for e in response.context["upcoming_events"]
+            if e["title"] == "Midnight Event")
+        self.assertFalse(event.get("meta"))
+        self.assertNotContains(response, "04:00")
+        self.assertNotContains(response, "05:00")
 
 
 class MapViewTests(TestCase):
@@ -170,6 +194,22 @@ class SearchAccountsTests(TestCase):
         response = self.client.get(reverse("search_accounts"), {"q": "Jane"})
         data = response.json()
         self.assertTrue(any(item["value"] == "Jane Doe" for item in data))
+
+
+class CitiesByCountryTests(TestCase):
+    def test_returns_cities_for_a_valid_country(self):
+        City.objects.create(geoname_id=1, name="Ithaca", country_code="US", population=30000)
+        City.objects.create(geoname_id=2, name="Paris", country_code="FR", population=2000000)
+        response = self.client.get(reverse("cities-by-country"), {"country": "us"})
+        self.assertEqual(response.json(), {"cities": ["Ithaca"]})
+
+    def test_invalid_country_code_returns_empty_list(self):
+        response = self.client.get(reverse("cities-by-country"), {"country": "ZZ"})
+        self.assertEqual(response.json(), {"cities": []})
+
+    def test_missing_country_returns_empty_list(self):
+        response = self.client.get(reverse("cities-by-country"))
+        self.assertEqual(response.json(), {"cities": []})
 
 
 class PublicationsListViewTests(TestCase):
@@ -325,3 +365,10 @@ class ScholarsListViewTests(TestCase):
         content = response.content.decode()
         self.assertIn('id="recommended-keywords-data"', content)
         self.assertIn("interests-pill-input", content)
+
+    def test_default_sort_is_by_last_name(self):
+        zoe = make_user(email="zoe@example.com", first_name="Zoe", last_name="Adams")
+        adam = make_user(email="adam@example.com", first_name="Adam", last_name="Zeta")
+        response = self.client.get(reverse("scholars"))
+        users = list(response.context["users"])
+        self.assertLess(users.index(zoe), users.index(adam))

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest import mock
 
 from django.core import mail
 from django.core.management import call_command
@@ -102,6 +103,34 @@ class SendUserDigestTests(TestCase):
 
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.last_digest_sent_at, self.now)
+
+    @override_settings(DIGEST_FROM_EMAIL="digest@laborhub.cornell.edu")
+    def test_uses_the_dedicated_digest_sender(self):
+        user = make_user()
+        make_publication("Fresh Paper", self.now - timedelta(days=1))
+        send_user_digest(user, now=self.now)
+        self.assertEqual(mail.outbox[0].from_email, "digest@laborhub.cornell.edu")
+
+    def test_sets_list_unsubscribe_header(self):
+        user = make_user()
+        make_publication("Fresh Paper", self.now - timedelta(days=1))
+        send_user_digest(user, now=self.now)
+        headers = mail.outbox[0].extra_headers
+        self.assertIn("List-Unsubscribe", headers)
+        self.assertIn("/accounts/digest/unsubscribe/", headers["List-Unsubscribe"])
+
+    def test_a_relay_failure_does_not_stamp_last_digest_or_raise(self):
+        # Unlike every other send site, this one runs unattended across every
+        # subscriber from cron -- one bad address or a transient relay error
+        # must not raise and abort the remaining sends.
+        user = make_user()
+        make_publication("Fresh Paper", self.now - timedelta(days=1))
+        with mock.patch(
+            "django.core.mail.EmailMultiAlternatives.send", return_value=0
+        ):
+            self.assertFalse(send_user_digest(user, now=self.now))
+        user.profile.refresh_from_db()
+        self.assertIsNone(user.profile.last_digest_sent_at)
 
     def test_skips_when_no_new_content(self):
         user = make_user()

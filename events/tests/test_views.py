@@ -100,6 +100,12 @@ class EventsDetailViewTests(TestCase):
             reverse("event-detail", kwargs={"pk": event.pk}))
         self.assertEqual(response.status_code, 200)
 
+    def test_url_in_description_is_clickable(self):
+        event = make_event(description="Details: https://example.com/apply")
+        response = self.client.get(
+            reverse("event-detail", kwargs={"pk": event.pk}))
+        self.assertContains(response, 'href="https://example.com/apply"')
+
 
 class EventCreateViewTests(TestCase):
     def test_get_requires_login(self):
@@ -119,7 +125,8 @@ class EventCreateViewTests(TestCase):
             "title": "New Event",
             "description": "desc",
             "date": "2025-06-01",
-            "location": "Ithaca",
+            "country_code": "US",
+            "city": "Ithaca",
             "category": "conference",
         })
         self.assertRedirects(response, reverse("events-list"))

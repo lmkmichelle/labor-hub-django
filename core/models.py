@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from core.constants import COUNTRY_CHOICES
+
 
 class ApprovalStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
@@ -81,6 +83,40 @@ class Approvable(models.Model):
         if self.status != ApprovalStatus.PENDING:
             raise ValueError("Only pending items can be rejected")
         self._mark_reviewed(ApprovalStatus.REJECTED, admin_user)
+
+
+class City(models.Model):
+    """A city from the GeoNames ``cities15000`` dataset (population >= 15,000).
+
+    Reference data imported by ``manage.py import_cities`` and used only to
+    suggest options for a free-text city field (see ``Event.city``) -- it is
+    a suggestion source, not a foreign-key constraint, so a venue in a town
+    too small to appear here is still a valid entry.
+    """
+
+    geoname_id = models.PositiveIntegerField(unique=True)
+    name = models.CharField(max_length=200)
+    country_code = models.CharField(max_length=2, choices=COUNTRY_CHOICES)
+    admin1_name = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text="State/province/region, e.g. 'New York'.",
+    )
+    population = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-population', 'name']
+        indexes = [
+            models.Index(fields=['country_code', 'name']),
+        ]
+
+    def __str__(self):
+        return self.display_name
+
+    @property
+    def display_name(self):
+        if self.admin1_name:
+            return f"{self.name}, {self.admin1_name}"
+        return self.name
 
 
 class ContactMessage(models.Model):

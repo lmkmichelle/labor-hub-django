@@ -2,7 +2,10 @@ from django.db import models
 from django.utils import timezone
 
 from accounts.models import CustomUser
+from core.constants import COUNTRY_CHOICES
 from core.models import Approvable
+
+_COUNTRY_NAMES = dict(COUNTRY_CHOICES)
 
 class Event(Approvable):
     CATEGORY_CHOICES = [
@@ -26,7 +29,19 @@ class Event(Approvable):
         blank=True,
         help_text='Link to the application or registration page for this event',
     )
-    location = models.CharField(max_length=255)
+    # location is derived (see save()) from country_code/city/venue for any
+    # event created or edited through the structured picker. It stays its own
+    # column -- rather than becoming a property -- so admin search/sort and
+    # the various card/digest readers that already read event.location keep
+    # working unchanged. A pre-picker event's hand-typed location survives
+    # untouched until someone fills in the structured fields for it.
+    location = models.CharField(max_length=255, blank=True, default='')
+    country_code = models.CharField(max_length=2, choices=COUNTRY_CHOICES, blank=True, default='')
+    city = models.CharField(max_length=255, blank=True, default='')
+    venue = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text="Optional, e.g. a building or conference center name.",
+    )
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     host = models.ForeignKey(
         CustomUser,
@@ -46,3 +61,11 @@ class Event(Approvable):
     @property
     def is_upcoming(self):
         return self.date >= timezone.now()
+
+    def save(self, *args, **kwargs):
+        if self.city or self.country_code:
+            country_name = _COUNTRY_NAMES.get(self.country_code, '')
+            self.location = ", ".join(
+                part for part in (self.venue, self.city, country_name) if part
+            )
+        super().save(*args, **kwargs)

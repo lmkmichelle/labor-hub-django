@@ -12,7 +12,8 @@ def form_data(**overrides):
         "title": "My Event",
         "description": "Some description.",
         "date": "2025-06-01",
-        "location": "Ithaca",
+        "country_code": "US",
+        "city": "Ithaca",
         "category": "conference",
     }
     data.update(overrides)
@@ -71,3 +72,24 @@ class EventFormCategoryAndApplicationTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(
             form.cleaned_data["application_url"], "https://example.org/apply")
+
+
+class EventFormLocationTests(TestCase):
+    def test_city_and_country_are_required(self):
+        form = EventForm(data=form_data(city="", country_code=""))
+        self.assertFalse(form.is_valid())
+        self.assertIn("city", form.errors)
+        self.assertIn("country_code", form.errors)
+
+    def test_saving_composes_location_from_country_city_venue(self):
+        form = EventForm(data=form_data(
+            country_code="US", city="Ithaca", venue="ILR Conference Center"))
+        self.assertTrue(form.is_valid(), form.errors)
+        event = form.save()
+        self.assertEqual(event.location, "ILR Conference Center, Ithaca, United States")
+
+    def test_venue_is_optional(self):
+        form = EventForm(data=form_data(country_code="US", city="Ithaca", venue=""))
+        self.assertTrue(form.is_valid(), form.errors)
+        event = form.save()
+        self.assertEqual(event.location, "Ithaca, United States")

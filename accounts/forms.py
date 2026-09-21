@@ -176,6 +176,7 @@ class BaseApplicationForm(forms.ModelForm):
 class ResearcherApplicationForm(BaseApplicationForm):
     research_papers = MultipleFileField(
         label=f"Upload up to {MAX_RESEARCH_PAPERS} research papers (PDF only)",
+        help_text="Select multiple files at once (e.g. shift/cmd-click) to upload more than one.",
         required=False)
 
     class Meta(BaseApplicationForm.Meta):

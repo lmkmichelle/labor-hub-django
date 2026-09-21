@@ -35,3 +35,28 @@ class EventModelTests(TestCase):
         later = make_event(title="Later", offset_days=10)
         sooner = make_event(title="Sooner", offset_days=2)
         self.assertEqual(list(Event.objects.all()), [sooner, later])
+
+
+class EventLocationCompositionTests(TestCase):
+    def test_save_composes_location_from_structured_fields(self):
+        event = make_event(
+            location="", country_code="US", city="Ithaca", venue="ILR")
+        self.assertEqual(event.location, "ILR, Ithaca, United States")
+
+    def test_save_omits_blank_venue(self):
+        event = make_event(location="", country_code="US", city="Ithaca")
+        self.assertEqual(event.location, "Ithaca, United States")
+
+    def test_recompose_on_a_later_save(self):
+        event = make_event(location="", country_code="US", city="Ithaca")
+        event.city = "New York"
+        event.save()
+        self.assertEqual(event.location, "New York, United States")
+
+    def test_legacy_free_text_location_survives_when_structured_fields_are_blank(self):
+        # A pre-picker event has hand-typed text and no country_code/city --
+        # re-saving it (e.g. an unrelated admin edit) must not wipe it out.
+        event = make_event(location="Somewhere, TBD")
+        event.admin_notes = "reviewed"
+        event.save()
+        self.assertEqual(event.location, "Somewhere, TBD")

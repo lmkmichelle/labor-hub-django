@@ -11,10 +11,12 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
+from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import DeleteView, ListView, TemplateView
 
 from accounts.models import CustomUser
+from core.models import City
 from core.constants import (
     COUNTRY_CHOICES,
     PAPER_COUNTRY_CHOICES,
@@ -99,7 +101,7 @@ def home(request):
         upcoming_events.append({
             'url': f'/events/{event.id}/',
             'title': event.title,
-            'date': event.date.strftime('%b %d'),
+            'date': timezone.localtime(event.date).strftime('%b %d'),
             # No 'subtitle' here: this previously read
             # f'Discussion Series #{event.id}', a leftover from copying the
             # papers dict below -- meaningless (and always-true) for an event.
@@ -109,9 +111,10 @@ def home(request):
                 'text': event.get_category_display()
             },
             'is_example': event.is_example,
-            'meta': {
-                'right': event.date.strftime('%H:%M')
-            }
+            # No 'meta' (right-aligned time): the event form only collects a
+            # date, so every event is stored at local midnight -- showing a
+            # time here was always either noise (00:00) or, before this was
+            # localized, a stray UTC offset like 04:00.
         })
 
     # Get upcoming seminars (next 6)
@@ -416,7 +419,7 @@ class ScholarsListView(ListView):
         if sort == 'newest':
             qs = qs.order_by('-date_joined', 'id')
         else:
-            qs = qs.order_by('first_name', 'last_name', 'id')
+            qs = qs.order_by('last_name', 'first_name', 'id')
 
         return qs.distinct()
 
@@ -462,6 +465,25 @@ def search_accounts(request):
         {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
         for u in users
     ], safe=False)
+
+@require_GET
+@cache_control(max_age=86400)
+def cities_by_country(request):
+    """City suggestions for the event-location picker.
+
+    Unlike ``search_accounts`` in seminars/views.py's university endpoint,
+    there is no live fallback fetch here: the City table is a one-time
+    GeoNames import (see ``import_cities``), not something to hit a
+    third-party API for on every miss.
+    """
+    country_code = (request.GET.get('country') or '').strip().upper()
+    valid_codes = {code for code, _ in COUNTRY_CHOICES}
+    if country_code not in valid_codes:
+        return JsonResponse({'cities': []})
+
+    queryset = City.objects.filter(country_code=country_code)
+    return JsonResponse({'cities': [city.display_name for city in queryset]})
+
 
 @require_GET
 def publications_list(request):
