@@ -24,6 +24,9 @@
                             </svg>
                         </a>
                     {% endif %}
+                    {% if publication.display_number %}
+                        <a href="{% url 'publication_bibtex' pk=publication.pk %}" class="btn-secondary">Cite</a>
+                    {% endif %}
                     {% if user.is_authenticated %}
                         {% for author in publication.authors.all %}
                             {% if author.user == user %}
