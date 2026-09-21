@@ -22,9 +22,26 @@
   /* No block/w-full here (unlike .form-input) -- a full-width form field adds
      it explicitly (partials/_select_field.html, _form_field.html); a compact
      control like a sort dropdown uses this class alone and keeps its natural
-     content-sized width. */
+     content-sized width.
+     appearance-none + a background-image chevron replace the OS-drawn arrow
+     with a themed one (Flowbite's own select examples do the same) -- without
+     this a select reads as plain native styling despite the custom border/bg. */
   .form-select {
-    @apply px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand;
+    @apply px-3 py-2.5 pr-10 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand appearance-none bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.25em 1.25em;
+  }
+  /* Same chevron as .form-select, added by city-picker.js to a text input that
+     drives a suggestion panel -- signals "there's a dropdown here" the way a
+     native select's arrow does, since a plain text input otherwise gives no
+     visual hint that typing opens a list of matches. JS-only (progressive
+     enhancement): without JS the field is just a plain, fully usable input. */
+  .form-input-chevron {
+    @apply pr-10 bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.25em 1.25em;
   }
   /* File upload -- style the native picker button so it fills the field height
      instead of a small button floating inside a tall padded box. The container

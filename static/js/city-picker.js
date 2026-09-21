@@ -36,6 +36,11 @@
       return;
     }
 
+    // A plain text input gives no visual hint that it opens a suggestion
+    // list; add the same chevron a <select> shows, so the field reads as a
+    // dropdown rather than looking like free text with nothing behind it.
+    cityInput.classList.add("form-input-chevron");
+
     var cities = [];
 
     function hide() {
@@ -95,6 +100,12 @@
         })
         .then(function (payload) {
           cities = (payload && payload.cities) || [];
+          // The user may have already focused/typed in the city field while
+          // this fetch was in flight -- show the now-loaded matches instead
+          // of leaving the panel closed until the next keystroke.
+          if (document.activeElement === cityInput) {
+            filterAndShow();
+          }
         })
         .catch(function () {
           // Leave the free-text fallback field as the way through.
