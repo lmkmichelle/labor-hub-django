@@ -79,8 +79,9 @@
 
     {% render_field form.resume label="Upload Resume/CV (PDF only)" %}
 
-    {% if form.research_papers %}
-        {% render_field form.research_papers %}
+    {% if form.research_paper_1 %}
+        {% render_field form.research_paper_1 %}
+        {% render_field form.research_paper_2 %}
     {% endif %}
 
     {% render_field form.email label="Email" placeholder="net-id@school.edu" %}

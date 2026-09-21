@@ -1,11 +1,13 @@
 /**
- * Country-driven city suggestion picker.
+ * Country-driven city suggestion combobox.
  *
- * Fills a <datalist> with the cities of the country chosen in a sibling
- * country <select>, fetched from the cities endpoint. Unlike
- * university-picker.js (which narrows a <select> to an exact match), this
- * fills a <datalist> paired with a free-text <input list="...">, so a venue
- * in a town too small to be in the dataset is still a valid, typeable entry.
+ * Fills a themed suggestion panel (matching base.html's nav account-menu
+ * dropdown, the site's one already-correct Flowbite-styled pattern) with the
+ * cities of the country chosen in a sibling country <select>, fetched from
+ * the cities endpoint. Unlike university-picker.js (which narrows a <select>
+ * to an exact match), the city field stays a free-text <input>, so a venue in
+ * a town too small to be in the dataset is still a valid, typeable entry --
+ * the suggestion panel is an assist, not a constraint.
  *
  * Wiring is by data attributes on a wrapper element, so no template needs to
  * inline any JavaScript:
@@ -14,37 +16,74 @@
  *        data-endpoint="{% url 'cities-by-country' %}"
  *        data-country-field="{{ form.country_code.id_for_label }}"
  *        data-city-field="{{ form.city.id_for_label }}">
+ *     <input ...>
+ *     <div class="city-suggestions hidden ..."><ul></ul></div>
+ *   </div>
  *
  * On a fetch failure the plain text input keeps working with no suggestions,
  * the same graceful-degradation posture as the university picker.
  */
 (function () {
+  var MAX_SUGGESTIONS = 50;
+
   function initPicker(root) {
     var endpoint = root.dataset.endpoint;
     var countrySelect = document.getElementById(root.dataset.countryField);
     var cityInput = document.getElementById(root.dataset.cityField);
-    if (!endpoint || !countrySelect || !cityInput) {
+    var panel = root.querySelector(".city-suggestions");
+    var list = panel ? panel.querySelector("ul") : null;
+    if (!endpoint || !countrySelect || !cityInput || !panel || !list) {
       return;
     }
 
-    var datalist = document.getElementById(cityInput.getAttribute("list"));
-    if (!datalist) {
-      return;
+    var cities = [];
+
+    function hide() {
+      panel.classList.add("hidden");
     }
 
-    function fill(cities) {
-      datalist.innerHTML = "";
-      cities.forEach(function (name) {
-        var option = document.createElement("option");
-        option.value = name;
-        datalist.appendChild(option);
+    function show() {
+      if (list.children.length) {
+        panel.classList.remove("hidden");
+      }
+    }
+
+    function renderMatches(matches) {
+      list.innerHTML = "";
+      matches.slice(0, MAX_SUGGESTIONS).forEach(function (name) {
+        var item = document.createElement("li");
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          "block w-full px-4 py-2 text-left hover:bg-neutral-secondary-medium";
+        button.textContent = name;
+        button.addEventListener("mousedown", function (event) {
+          // mousedown (not click) so this fires before the input's blur hides the panel.
+          event.preventDefault();
+          cityInput.value = name;
+          hide();
+        });
+        item.appendChild(button);
+        list.appendChild(item);
       });
+    }
+
+    function filterAndShow() {
+      var query = cityInput.value.trim().toLowerCase();
+      var matches = query
+        ? cities.filter(function (name) {
+            return name.toLowerCase().indexOf(query) !== -1;
+          })
+        : cities;
+      renderMatches(matches);
+      show();
     }
 
     function load() {
       var country = (countrySelect.value || "").toUpperCase();
+      cities = [];
+      hide();
       if (!country) {
-        fill([]);
         return;
       }
 
@@ -55,15 +94,23 @@
           return response.ok ? response.json() : { cities: [] };
         })
         .then(function (payload) {
-          fill((payload && payload.cities) || []);
+          cities = (payload && payload.cities) || [];
         })
         .catch(function () {
           // Leave the free-text fallback field as the way through.
-          fill([]);
+          cities = [];
         });
     }
 
     countrySelect.addEventListener("change", load);
+    cityInput.addEventListener("focus", filterAndShow);
+    cityInput.addEventListener("input", filterAndShow);
+    cityInput.addEventListener("blur", hide);
+    cityInput.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        hide();
+      }
+    });
     load();
   }
 

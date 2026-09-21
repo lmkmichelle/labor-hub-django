@@ -19,8 +19,12 @@
   .form-input {
     @apply block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs placeholder:text-body focus:ring-brand focus:border-brand;
   }
+  /* No block/w-full here (unlike .form-input) -- a full-width form field adds
+     it explicitly (partials/_select_field.html, _form_field.html); a compact
+     control like a sort dropdown uses this class alone and keeps its natural
+     content-sized width. */
   .form-select {
-    @apply block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand;
+    @apply px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand;
   }
   /* File upload -- style the native picker button so it fills the field height
      instead of a small button floating inside a tall padded box. The container

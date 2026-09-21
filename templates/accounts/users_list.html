@@ -101,7 +101,7 @@
                         <select id="sortSelect"
                                 name="sort"
                                 onchange="this.form.submit()"
-                                class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+                                class="form-select">
                             <option value="" {% if sort == '' %}selected{% endif %}>Sort: Last name (A–Z)</option>
                             <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
                         </select>

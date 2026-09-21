@@ -9,32 +9,10 @@ from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
 
-# Maximum research papers a researcher applicant may attach.
-MAX_RESEARCH_PAPERS = 2
+# The two named research-paper upload fields on ResearcherApplicationForm,
+# in the order they should be saved as ResearchPaper rows.
+RESEARCH_PAPER_FIELDS = ("research_paper_1", "research_paper_2")
 
-
-class MultipleFileInput(forms.ClearableFileInput):
-    allow_multiple_selected = True
-
-    def __init__(self, attrs=None):
-        # The shared _form_field.html partial only emits the ``multiple``
-        # attribute when it is present in widget.attrs, so set it here or the
-        # browser file picker silently allows just one file.
-        attrs = {"multiple": True, **(attrs or {})}
-        super().__init__(attrs)
-
-class MultipleFileField(forms.FileField):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("widget", MultipleFileInput())
-        super().__init__(*args, **kwargs)
-
-    def clean(self, data, initial=None):
-        single_file_clean = super().clean
-        if isinstance(data, (list, tuple)):
-            result = [single_file_clean(d, initial) for d in data]
-        else:
-            result = [single_file_clean(data, initial)]
-        return result
 
 class BaseApplicationForm(forms.ModelForm):
     resume = forms.FileField(
@@ -144,8 +122,9 @@ class BaseApplicationForm(forms.ModelForm):
         if commit:
             application.save()
 
-            # Create research paper entries after the application is saved
-            for paper in self.cleaned_data.get('research_papers', []):
+            # Create a research paper entry for each filled upload slot.
+            for field_name in RESEARCH_PAPER_FIELDS:
+                paper = self.cleaned_data.get(field_name)
                 if paper:
                     ResearchPaper.objects.create(
                         application=application,
@@ -174,21 +153,21 @@ class BaseApplicationForm(forms.ModelForm):
         return email
 
 class ResearcherApplicationForm(BaseApplicationForm):
-    research_papers = MultipleFileField(
-        label=f"Upload up to {MAX_RESEARCH_PAPERS} research papers (PDF only)",
-        help_text="Select multiple files at once (e.g. shift/cmd-click) to upload more than one.",
-        required=False)
+    # Two explicit slots, not one multi-select input -- discoverable without
+    # needing to know a shift/cmd-click trick to attach a second paper.
+    research_paper_1 = forms.FileField(
+        label="Research paper 1 (PDF)",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
+    )
+    research_paper_2 = forms.FileField(
+        label="Research paper 2 (PDF)",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
+    )
 
     class Meta(BaseApplicationForm.Meta):
-        fields = BaseApplicationForm.Meta.fields + ("research_papers",)
-
-    def clean_research_papers(self):
-        papers = [p for p in (self.cleaned_data.get("research_papers") or []) if p]
-        if len(papers) > MAX_RESEARCH_PAPERS:
-            raise forms.ValidationError(
-                f"Please upload at most {MAX_RESEARCH_PAPERS} research papers."
-            )
-        return papers
+        fields = BaseApplicationForm.Meta.fields + RESEARCH_PAPER_FIELDS
 
 class AdvisorChoiceField(forms.ModelChoiceField):
     """Renders advisor options as "Full Name - Position" (presentation only)."""

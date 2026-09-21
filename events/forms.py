@@ -50,7 +50,7 @@ class EventForm(forms.ModelForm):
 
     city = forms.CharField(
         label="City",
-        widget=forms.TextInput(attrs={'list': 'city-options'}),
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
         max_length=255,
         required=True,
         help_text="Pick a country first; start typing for suggestions.",
