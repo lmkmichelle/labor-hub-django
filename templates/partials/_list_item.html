@@ -9,7 +9,7 @@ publications, scholars, seminars, events, profile papers). Inputs:
   badge       optional chip shown top-right
   is_example  truthy to add an "Example" pill alongside the badge/date
   date        optional muted text shown top-right when no badge is given
-  location    optional venue line (rendered with a 📍 marker)
+  location    optional venue line
   image       optional avatar / thumbnail URL
 Renders Flowbite card markup only (no Bootstrap classes) and omits any optional
 slot that is not provided. Callers map their fields to these inputs in-template;
@@ -35,7 +35,7 @@ no view-context changes are required.
     </div>
   </div>
   {% if subtitle %}<p class="mt-1 text-sm text-body">{{ subtitle }}</p>{% endif %}
-  {% if location %}<p class="mt-1 text-sm text-body">📍 {{ location }}</p>{% endif %}
+  {% if location %}<p class="mt-1 text-sm text-body">{{ location }}</p>{% endif %}
   {% if description %}<p class="mt-1 text-sm text-body">{{ description }}</p>{% endif %}
   {% if meta %}
     <div class="mt-2 flex justify-end">

@@ -57,6 +57,12 @@
         </button>
       </li>
       <li role="presentation">
+        <button class="home-tab" id="tab-jobs" type="button" role="tab"
+                data-tabs-target="#panel-jobs" aria-controls="panel-jobs" aria-selected="false">
+          New Jobs <span class="home-tab-count">{{ new_jobs|length }}</span>
+        </button>
+      </li>
+      <li role="presentation">
         <button class="home-tab" id="tab-seminars" type="button" role="tab"
                 data-tabs-target="#panel-seminars" aria-controls="panel-seminars" aria-selected="false">
           Upcoming Long-Distance Visits <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
@@ -91,6 +97,15 @@
         <a href="{% url 'events-list' %}" class="btn-primary">See all events</a>
       </div>
       {% include 'partials/_list_display.html' with items=upcoming_events container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming events to display." %}
+    </div>
+
+    <!-- New Jobs -->
+    <div class="hidden pt-6" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-heading">New Jobs</h2>
+        <a href="{% url 'jobs-list' %}" class="btn-primary">See all jobs</a>
+      </div>
+      {% include 'partials/_list_display.html' with items=new_jobs container_class="grid gap-3 sm:grid-cols-2" empty_message="No new jobs to display." %}
     </div>
 
     <!-- Upcoming Seminars -->

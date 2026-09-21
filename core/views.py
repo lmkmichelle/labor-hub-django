@@ -26,6 +26,7 @@ from core.filters import map_country_terms_to_codes, parse_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
 from events.models import Event
+from jobs.models import Job
 from seminars.models import Seminar
 
 country_name_to_code = {name.lower(): code for code, name in COUNTRY_CHOICES}
@@ -105,7 +106,7 @@ def home(request):
             # No 'subtitle' here: this previously read
             # f'Discussion Series #{event.id}', a leftover from copying the
             # papers dict below -- meaningless (and always-true) for an event.
-            'description': f'📍 {event.location}',
+            'description': event.location,
             'badge': {
                 'class': 'bg-primary',
                 'text': event.get_category_display()
@@ -115,6 +116,26 @@ def home(request):
             # date, so every event is stored at local midnight -- showing a
             # time here was always either noise (00:00) or, before this was
             # localized, a stray UTC offset like 04:00.
+        })
+
+    # Get new jobs (most recently posted, last 6)
+    new_jobs_qs = Job.objects.approved().order_by('-created_at')[:6]
+
+    # Format jobs for _list_display template
+    new_jobs = []
+    for job in new_jobs_qs:
+        category_labels = job.category_labels()
+        new_jobs.append({
+            'url': job.get_absolute_url(),
+            'title': job.title,
+            'date': timezone.localtime(job.created_at).strftime('%b %d'),
+            'subtitle': job.employer or 'Employer not specified',
+            'description': f'Deadline: {job.deadline.strftime("%b %d, %Y")}',
+            'badge': {
+                'class': 'bg-primary',
+                'text': category_labels[0]
+            } if category_labels else None,
+            'is_example': job.is_example,
         })
 
     # Get upcoming seminars (next 6)
@@ -195,6 +216,7 @@ def home(request):
 
     context = {
         'upcoming_events': upcoming_events,
+        'new_jobs': new_jobs,
         'upcoming_seminars': upcoming_seminars,
         'new_scholars': new_scholars,
         'recent_papers': recent_papers,

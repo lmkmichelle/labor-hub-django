@@ -14,6 +14,7 @@ from django.utils import timezone
 from accounts.models import CustomUser
 from core.models import City
 from events.models import Event
+from jobs.models import Job
 from publications.models import Author, Publication
 from seminars.models import Seminar
 
@@ -71,6 +72,11 @@ class HomeContextTests(TestCase):
             title="Recent Paper", abstract="a", status="approved",
         )
         publication.authors.add(Author.objects.create(user=host, name="Host User"))
+        Job.objects.create(
+            title="New Postdoc", description="d", url="https://example.com",
+            deadline=timezone.localdate() + timedelta(days=30),
+            status="approved",
+        )
 
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
@@ -80,6 +86,20 @@ class HomeContextTests(TestCase):
         self.assertIn("Upcoming Visitor", seminar_titles)
         paper_titles = [p["title"] for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
+        job_titles = [j["title"] for j in response.context["new_jobs"]]
+        self.assertIn("New Postdoc", job_titles)
+        self.assertContains(response, "New Jobs")
+
+
+class HomeContentHasNoEmojiTests(TestCase):
+    def test_event_location_on_home_page_has_no_pin_emoji(self):
+        Event.objects.create(
+            title="Conf", description="d",
+            date=timezone.now() + timedelta(days=3),
+            location="Ithaca", status="approved",
+        )
+        response = self.client.get("/")
+        self.assertNotContains(response, "📍")
 
 
 class HomeEventTimeDisplayTests(TestCase):
