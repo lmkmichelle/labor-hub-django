@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load text_filters %}
 {% block title %}
     Profile
 {% endblock title %}
@@ -81,7 +82,7 @@
     <div class="mt-8">
         <div class="w-full">
             <h3>Biography</h3>
-            {{ user_profile.biography|linebreaks }}
+            {{ user_profile.biography|soften_linebreaks|linebreaks }}
             <h3>Long-Distance Visits</h3>
             <div class="not-format">
                 {% include "partials/_visits_list.html" with visits=visits %}

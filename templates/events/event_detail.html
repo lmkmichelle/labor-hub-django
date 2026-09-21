@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load text_filters %}
 {% block title %}{{ event.title }}{% endblock %}
 {% block content %}
 <article class="max-w-none format lg:format-lg">
@@ -28,7 +29,7 @@
     </div>
 
     <h4>Description</h4>
-    {{ event.description|urlize|linebreaks }}
+    {{ event.description|soften_linebreaks|urlize|linebreaks }}
 
     <h4>Location</h4>
     <p>{{ event.location }}</p>

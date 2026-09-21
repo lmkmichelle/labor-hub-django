@@ -69,6 +69,23 @@ class PublicationDetailViewTests(TestCase):
         self.assertIn("<p>First paragraph.</p>", content)
         self.assertIn("<p>Second paragraph.</p>", content)
 
+    def test_hard_wrapped_abstract_is_not_forced_into_narrow_lines(self):
+        """A PDF-pasted abstract with a newline at every ~85-character line
+        break shouldn't render as a <br> at each of those points -- that
+        forces the paragraph to wrap at the source document's line width
+        instead of the reader's actual screen width."""
+        publication = make_publication(
+            status="approved",
+            abstract="This paper exploits\nestablishment mobility as a novel\nsource.")
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        content = response.content.decode()
+        self.assertNotIn("<br", content.split("Abstract</h4>")[1].split("<h4>")[0])
+        self.assertIn(
+            "This paper exploits establishment mobility as a novel source.",
+            content,
+        )
+
     def test_detail_shows_country_label_not_the_raw_code(self):
         publication = make_publication(status="approved", country_code="MULTI")
         response = self.client.get(
@@ -146,9 +163,10 @@ class PublicationBibtexViewTests(TestCase):
 
     def test_cite_link_only_shown_when_numbered(self):
         publication = make_publication(status="approved")
+        cite_url = reverse("publication_bibtex", kwargs={"pk": publication.pk})
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertNotContains(response, ">Cite<")
+        self.assertNotContains(response, cite_url)
 
         admin = CustomUser.objects.create_user(
             email="admin5@example.com", password="pass12345",
@@ -160,7 +178,7 @@ class PublicationBibtexViewTests(TestCase):
         publication.approve(admin)
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertContains(response, ">Cite<")
+        self.assertContains(response, cite_url)
 
 
 class PublicationsListDisplayNumberTests(TestCase):
