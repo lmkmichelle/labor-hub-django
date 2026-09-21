@@ -59,8 +59,7 @@
         var item = document.createElement("li");
         var button = document.createElement("button");
         button.type = "button";
-        button.className =
-          "block w-full px-4 py-2 text-left hover:bg-neutral-secondary-medium";
+        button.className = "dropdown-panel-item";
         button.textContent = name;
         button.addEventListener("mousedown", function (event) {
           // mousedown (not click) so this fires before the input's blur hides the panel.

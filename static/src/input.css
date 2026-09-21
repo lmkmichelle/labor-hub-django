@@ -43,6 +43,75 @@
     background-position: right 0.75rem center;
     background-size: 1.25em 1.25em;
   }
+  /* A floating panel of clickable rows -- the nav account menu, the city
+     suggestion panel, the select-combobox panel, and Tagify's reskinned
+     dropdown (below) all use these two classes so every "opens a themed
+     list" control on the site looks and behaves identically. */
+  .dropdown-panel {
+    @apply rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg;
+  }
+  .dropdown-panel-item {
+    @apply block w-full px-4 py-2 text-left text-sm text-heading hover:bg-neutral-secondary-medium;
+  }
+  /* Tagify (CDN-loaded, static/js/tagify.js) renders its own default theme via
+     tagify.css, a plain, un-@layer'd stylesheet. Per the CSS cascade-layers
+     spec, ANY unlayered author CSS beats ANY layered author CSS for a normal
+     (non-!important) declaration, regardless of selector specificity -- and
+     Tailwind compiles every class in this file into `@layer components`. So
+     no amount of extra classes here can out-rank tagify.css; `!important` is
+     the correct, deliberate tool for this specific fight, not a shortcut.
+     (Verified empirically: a same-property override with higher specificity
+     alone, e.g. `.tagify.form-input{--tags-border-color:...}`, measurably had
+     no effect until `!important` was added.)
+     Its wrapper() template copies the *original* input's className onto the
+     <tags> element it generates, so giving that input `form-input` (see the
+     pill-input templates and _form_field.html) is what lets this rule apply
+     to every Tagify field from one source. */
+  .tagify.form-input {
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    --tags-border-color: var(--color-default-medium) !important;
+    --tags-hover-border-color: var(--color-default-medium) !important;
+    --tags-focus-border-color: var(--color-brand) !important;
+    --tag-bg: var(--color-brand-soft) !important;
+    --tag-hover: var(--color-brand-soft) !important;
+    --tag-text-color: var(--color-heading) !important;
+    --tag-border-radius: var(--radius-base) !important;
+    --tag-remove-btn-color: var(--color-body) !important;
+    --placeholder-color: var(--color-body) !important;
+  }
+  .tagify.form-input.tagify--focus {
+    box-shadow: 0 0 0 2px var(--color-brand) !important;
+  }
+  /* Tagify's suggestion dropdown is appended to <body>, outside .tagify, and
+     colored via :root-level custom properties Tagify itself declares --
+     same unlayered-always-wins problem as above, so !important again.
+     static/js/tagify.js and each inline Tagify init pass
+     `dropdown.classnames: "dropdown-panel"`, which Tagify appends to the
+     OUTER `.tagify__dropdown` element. Tagify splits the dropdown's visible
+     chrome across two nested elements -- a border-top accent on that outer
+     element, and the real border/background/scroll box one level in, on
+     `.tagify__dropdown__wrapper` -- so both need overriding. */
+  .tagify__dropdown.dropdown-panel {
+    border: 0 !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__wrapper {
+    border-radius: var(--radius-base) !important;
+    border: 1px solid var(--color-default-medium) !important;
+    background-color: var(--color-neutral-primary-medium) !important;
+    box-shadow: var(--tw-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)) !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item {
+    background-color: transparent !important;
+    color: var(--color-heading) !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item:hover,
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item--active {
+    background-color: var(--color-neutral-secondary-medium) !important;
+    color: var(--color-heading) !important;
+  }
   /* File upload -- style the native picker button so it fills the field height
      instead of a small button floating inside a tall padded box. The container
      drops its own vertical padding; the ::file-selector-button (Tailwind file:

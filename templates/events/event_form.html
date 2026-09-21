@@ -31,14 +31,19 @@
     {% render_field form.application_url %}
 
     {% render_select form.country_code label="Country" %}
-    {# Country drives the city suggestions; see static/js/city-picker.js #}
+    {# Country drives the city suggestions; see static/js/city-picker.js.
+       class="relative" only -- no overflow/padding/border/flex/grid on this
+       wrapper, or display:none child, ever: .city-suggestions's `top-full`
+       below relies on the render_field wrapper's mb-5 margin collapsing
+       through this element uncontested (see the plan's Part B). Any of
+       those would silently reintroduce a large gap above the panel. #}
     <div data-city-picker
          class="relative"
          data-endpoint="{% url 'cities-by-country' %}"
          data-country-field="{{ form.country_code.id_for_label }}"
          data-city-field="{{ form.city.id_for_label }}">
         {% render_field form.city %}
-        <div class="city-suggestions not-format hidden absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+        <div class="city-suggestions dropdown-panel not-format hidden absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto">
             <ul class="py-1 text-sm text-heading"></ul>
         </div>
     </div>
