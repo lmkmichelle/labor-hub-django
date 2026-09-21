@@ -123,7 +123,7 @@
                         <select id="sortSelect"
                                 name="sort"
                                 onchange="this.form.submit()"
-                                class="rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+                                class="form-select">
                             <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
                             <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
                             <option value="location" {% if sort == 'location' %}selected{% endif %}>Sort: Location</option>
