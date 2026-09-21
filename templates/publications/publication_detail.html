@@ -6,13 +6,13 @@
         <div class="col md-6">
             <div class="flex flex-row w-full justify-between items-center">
                 <p>{{ publication.formatted_date }}</p>
-                <div class="not-format flex items-center gap-2">
+                <div class="not-format flex flex-wrap items-center justify-end gap-2">
                     {% include "partials/_example_badge.html" with show=publication.is_example %}
                     {% if publication.pdf %}
                         <a href="{{ publication.pdf.url }}"
                            download="{{ publication.title }}.pdf"
                            target="_blank"
-                           class="ml-0">
+                           class="p-2 -m-2">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  width="20"
                                  height="20"
