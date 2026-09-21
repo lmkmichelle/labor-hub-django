@@ -41,14 +41,14 @@
                         <h4>Countries</h4>
                         <input type="text"
                                id="countries-pill-input"
-                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               class="form-input"
                                placeholder="Add countries...">
                     </div>
                     <div class="mb-4">
                         <h4>Research Interests</h4>
                         <input type="text"
                                id="interests-pill-input"
-                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               class="form-input"
                                placeholder="Add interests...">
                     </div>
                     <div class="mb-4">
@@ -75,7 +75,7 @@
                                    id="scholar-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                                   class="form-input ps-9"
                                    placeholder="Search by name, position, or email..." />
                         </div>
                         <button type="submit"
@@ -173,7 +173,7 @@
                 var tagify = new Tagify(input, {
                     enforceWhitelist: false,
                     whitelist: countryWhitelist,
-                    dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'] },
+                    dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'], classname: 'dropdown-panel' },
                     templates: {
                         dropdownItem: function (tagData) {
                             return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
@@ -194,11 +194,11 @@
                 if (!input || !hidden) {
                     return;
                 }
-                var settings = { dropdown: { enabled: 0 } };
+                var settings = { dropdown: { enabled: 0, classname: 'dropdown-panel' } };
                 if (whitelist && whitelist.length) {
                     settings.whitelist = whitelist;
                     settings.enforceWhitelist = false;
-                    settings.dropdown = { enabled: 0, closeOnSelect: false, maxItems: whitelist.length };
+                    settings.dropdown = { enabled: 0, closeOnSelect: false, maxItems: whitelist.length, classname: 'dropdown-panel' };
                 }
                 var tagify = new Tagify(input, settings);
                 if (preselected.length) {
