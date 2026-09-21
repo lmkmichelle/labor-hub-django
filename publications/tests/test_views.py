@@ -146,9 +146,10 @@ class PublicationBibtexViewTests(TestCase):
 
     def test_cite_link_only_shown_when_numbered(self):
         publication = make_publication(status="approved")
+        cite_url = reverse("publication_bibtex", kwargs={"pk": publication.pk})
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertNotContains(response, ">Cite<")
+        self.assertNotContains(response, cite_url)
 
         admin = CustomUser.objects.create_user(
             email="admin5@example.com", password="pass12345",
@@ -160,7 +161,7 @@ class PublicationBibtexViewTests(TestCase):
         publication.approve(admin)
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertContains(response, ">Cite<")
+        self.assertContains(response, cite_url)
 
 
 class PublicationsListDisplayNumberTests(TestCase):
