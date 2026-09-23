@@ -46,12 +46,12 @@
 
     {% render_field form.website label="Personal Website (optional)" placeholder="https://" %}
 
-    <div class="mb-5">
-        <span class="block mb-2 text-sm font-medium text-heading">{{ form.other_networks.label }}</span>
+    <div class="form-field not-format">
+        <span class="form-label">{{ form.other_networks.label }}</span>
         {% for checkbox in form.other_networks %}
             <div class="flex items-center mb-1">
                 {{ checkbox.tag }}
-                <label for="{{ checkbox.id_for_label }}" class="ml-2 text-sm font-medium text-heading">{{ checkbox.choice_label }}</label>
+                <label for="{{ checkbox.id_for_label }}" class="form-check-label">{{ checkbox.choice_label }}</label>
             </div>
         {% endfor %}
         {% if form.other_networks.errors %}

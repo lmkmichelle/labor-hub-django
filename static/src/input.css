@@ -44,6 +44,41 @@
     background-position: right 0.75rem center;
     background-size: 1.25em 1.25em;
   }
+  /* Field wrapper/label/help chrome -- single source for the label-then-
+     optional-help-then-control group every form field renders
+     (partials/_form_field.html, _select_field.html) and the standalone
+     checkbox rows on the list-page filter sidebars.
+     .form-field MUST be paired with the literal class `not-format` in the
+     markup (not folded in here) -- every form lives inside a
+     `.format`/`.lg:format-lg` prose container (Flowbite typography), whose
+     `:where(p)` margin rules are emitted in @layer utilities *after* any
+     plain `.mt-0`/`.mb-0` override at the same (0,1,0) specificity, so a
+     utility-only fix silently loses at >=1024px (the lg: breakpoint) even
+     though it appears to work narrower. `not-format` is the one selector
+     those prose rules explicitly exclude via `:not(:where([class~=not-format] *))`,
+     and it must be a real class on the element, since `@apply` copies
+     declarations, not class names. */
+  .form-field {
+    @apply mb-5;
+  }
+  .form-label {
+    @apply block mb-2.5 text-sm font-medium text-heading;
+  }
+  /* For a label immediately followed by .form-help -- deliberately mb-1
+     (4px), not the field-with-no-help mb-2.5 above: tight enough to read as
+     one group with its subtext, not so tight it feels cramped. */
+  .form-label-tight {
+    @apply block mb-1 text-sm font-medium text-heading;
+  }
+  .form-help {
+    @apply mt-0 mb-2 text-sm text-body;
+  }
+  .form-check {
+    @apply w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft;
+  }
+  .form-check-label {
+    @apply select-none ms-1 text-sm font-medium text-heading;
+  }
   /* A floating panel of clickable rows -- the nav account menu, the city
      suggestion panel, the select-combobox panel, and Tagify's reskinned
      dropdown (below) all use these two classes so every "opens a themed
