@@ -1,10 +1,10 @@
-<div class="mb-5">
-    <label for="{{ field.id_for_label }}" class="block {% if help_text %}mb-0.5{% else %}mb-2.5{% endif %} text-sm font-medium text-heading">
+<div class="form-field not-format">
+    <label for="{{ field.id_for_label }}" class="{% if help_text %}form-label-tight{% else %}form-label{% endif %}">
         {{ label }}{% if required %}<span class="text-red-600 ms-0.5" aria-hidden="true">*</span>{% endif %}
     </label>
 
     {% if help_text %}
-        <p class="mt-0 mb-2 text-sm text-gray-500 dark:text-gray-300">{{ help_text }}</p>
+        <p class="form-help">{{ help_text }}</p>
     {% endif %}
 
     {% if widget_name == 'Select' or widget_name == 'SelectMultiple' %}

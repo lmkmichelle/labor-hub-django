@@ -326,3 +326,22 @@ RECOMMENDED_KEYWORDS = [
     "Inequality",
     "Other",
 ]
+
+# What each country calls its top-level administrative subdivision, used to
+# label the picker's admin1 field (core/views.city_search,
+# static/js/location-picker.js). One column (City.admin1_name /
+# Event.admin1_name) holds the value for every country -- these are display
+# labels only, not a schema split. Defaults to "Region" for any country not
+# listed below; most of the EU and many small countries genuinely have no
+# such field in GeoNames and simply never show it (the picker hides an empty
+# admin1_name).
+ADMIN1_LABELS = {
+    "US": "State", "AU": "State", "BR": "State", "IN": "State",
+    "MX": "State", "MY": "State", "NG": "State",
+    "CA": "Province", "CN": "Province", "ZA": "Province", "NL": "Province",
+    "ID": "Province", "AR": "Province",
+    "JP": "Prefecture",
+    "IT": "Region", "CL": "Region", "PE": "Region", "FR": "Region",
+    "ES": "Autonomous Community",
+}
+DEFAULT_ADMIN1_LABEL = "Region"

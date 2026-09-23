@@ -232,6 +232,46 @@ class CitiesByCountryTests(TestCase):
         self.assertEqual(response.json(), {"cities": []})
 
 
+class CitySearchTests(TestCase):
+    def test_short_query_returns_empty(self):
+        City.objects.create(geoname_id=1, name="Lyon", country_code="FR", population=500000)
+        response = self.client.get(reverse("city-search"), {"q": "l"})
+        self.assertEqual(response.json(), {"cities": []})
+
+    def test_prefix_match_ranks_by_population(self):
+        City.objects.create(
+            geoname_id=1, name="New York", country_code="US",
+            admin1_name="New York", population=8000000)
+        City.objects.create(
+            geoname_id=2, name="Newport", country_code="US",
+            admin1_name="Rhode Island", population=25000)
+        response = self.client.get(reverse("city-search"), {"q": "new"})
+        names = [c["name"] for c in response.json()["cities"]]
+        self.assertEqual(names, ["New York", "Newport"])
+
+    def test_infix_match_is_included(self):
+        City.objects.create(
+            geoname_id=1, name="New York", country_code="US",
+            admin1_name="New York", population=8000000)
+        response = self.client.get(reverse("city-search"), {"q": "york"})
+        names = [c["name"] for c in response.json()["cities"]]
+        self.assertIn("New York", names)
+
+    def test_results_capped_at_twelve(self):
+        for i in range(20):
+            City.objects.create(
+                geoname_id=i, name=f"Springfield {i}", country_code="US",
+                population=1000 + i)
+        response = self.client.get(reverse("city-search"), {"q": "springfield"})
+        self.assertEqual(len(response.json()["cities"]), 12)
+
+    def test_city_without_admin1_name_gets_a_two_part_label(self):
+        City.objects.create(geoname_id=1, name="London", country_code="GB", population=9000000)
+        response = self.client.get(reverse("city-search"), {"q": "london"})
+        result = response.json()["cities"][0]
+        self.assertEqual(result["label"], "London, United Kingdom")
+
+
 class PublicationsListViewTests(TestCase):
     def test_only_approved_publications_shown(self):
         approved = Publication.objects.create(

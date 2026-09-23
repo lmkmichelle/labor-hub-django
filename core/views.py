@@ -507,6 +507,58 @@ def cities_by_country(request):
     return JsonResponse({'cities': [city.display_name for city in queryset]})
 
 
+COUNTRY_NAME_BY_CODE = dict(COUNTRY_CHOICES)
+CITY_SEARCH_LIMIT = 12
+
+
+@require_GET
+@cache_control(max_age=3600)
+def city_search(request):
+    """City-first typeahead for the location picker (static/js/location-picker.js).
+
+    Backed entirely by the local GeoNames import (core.models.City) -- no
+    third-party geocoding API, no key, no per-request cost. Ranks a prefix
+    match by population first (the way a user expects "new y" to surface
+    "New York" over a same-prefix small town), then tops up with infix
+    matches so "york" still finds "New York".
+    """
+    query = (request.GET.get('q') or '').strip()
+    if len(query) < 2:
+        return JsonResponse({'cities': []})
+
+    prefix_matches = list(
+        City.objects.filter(name__istartswith=query).order_by('-population')[:CITY_SEARCH_LIMIT]
+    )
+    remaining = CITY_SEARCH_LIMIT - len(prefix_matches)
+    infix_matches = []
+    if remaining > 0:
+        exclude_ids = [c.id for c in prefix_matches]
+        infix_matches = list(
+            City.objects.filter(name__icontains=query)
+            .exclude(id__in=exclude_ids)
+            .order_by('-population')[:remaining]
+        )
+
+    results = []
+    for city in prefix_matches + infix_matches:
+        country_name = COUNTRY_NAME_BY_CODE.get(city.country_code, city.country_code)
+        label = ", ".join(
+            part for part in (city.name, city.admin1_name, country_name) if part
+        )
+        results.append({
+            'name': city.name,
+            'admin1_name': city.admin1_name,
+            'admin1_code': city.admin1_code,
+            'country_code': city.country_code,
+            'country_name': country_name,
+            'latitude': city.latitude,
+            'longitude': city.longitude,
+            'label': label,
+        })
+
+    return JsonResponse({'cities': results})
+
+
 @require_GET
 def publications_list(request):
     publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')

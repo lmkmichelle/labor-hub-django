@@ -23,7 +23,7 @@
             <h4>Countries</h4>
             <input type="text"
                    id="countries-pill-input"
-                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                   class="form-input"
                    placeholder="Add countries...">
           </div>
 
@@ -32,12 +32,12 @@
             {% for value, label in rank_choices %}
               <div class="mb-1">
                 <input id="category-{{ value }}"
-                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                       class="form-check"
                        type="checkbox"
                        name="category"
                        value="{{ value }}"
                        {% if value in selected_categories %}checked{% endif %}>
-                <label class="select-none ms-1 text-sm font-medium text-heading"
+                <label class="form-check-label"
                        for="category-{{ value }}">{{ label }}</label>
               </div>
             {% endfor %}
@@ -45,23 +45,23 @@
 
           <div class="mb-4">
             <div class="mb-3">
-              <label for="deadline_from" class="block mb-2.5 text-sm font-medium text-heading">Deadline From</label>
+              <label for="deadline_from" class="form-label">Deadline From</label>
               <input datepicker
                      type="text"
                      id="deadline_from"
                      name="deadline_from"
                      value="{{ deadline_from }}"
-                     class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body"
+                     class="form-input"
                      placeholder="Select start date">
             </div>
             <div class="mb-3">
-              <label for="deadline_to" class="block mb-2.5 text-sm font-medium text-heading">Deadline To</label>
+              <label for="deadline_to" class="form-label">Deadline To</label>
               <input datepicker
                      type="text"
                      id="deadline_to"
                      name="deadline_to"
                      value="{{ deadline_to }}"
-                     class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body"
+                     class="form-input"
                      placeholder="Select end date">
             </div>
             <div class="flex flex-row justify-between">
@@ -89,7 +89,7 @@
                      id="job-search"
                      name="q"
                      value="{{ query }}"
-                     class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                     class="form-input"
                      placeholder="Search by title or description...">
             </div>
             <button type="submit"
@@ -150,6 +150,7 @@
           closeOnSelect: false,
           maxItems: 10,
           searchKeys: ['value', 'label'],
+          classname: 'dropdown-panel',
         },
         templates: {
           dropdownItem: function(tagData) {

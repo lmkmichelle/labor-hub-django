@@ -21,13 +21,13 @@
                         <h4>Display</h4>
                         <div class="mb-1">
                             <input id="show-archived"
-                                   class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                   class="form-check"
                                    type="checkbox"
                                    name="show_archived"
                                    value="1"
                                    {% if show_archived %}checked{% endif %}
                                    onchange="this.form.submit()">
-                            <label class="select-none ms-1 text-sm font-medium text-heading"
+                            <label class="form-check-label"
                                    for="show-archived">Show Past Visits</label>
                         </div>
                     </div>
@@ -35,7 +35,7 @@
                         <h4>Countries</h4>
                         <input type="text"
                                id="countries-pill-input"
-                               class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                               class="form-input"
                                placeholder="Add countries...">
                     </div>
                     <div class="mb-4">
@@ -43,12 +43,12 @@
                         {% for value, label in visit_type_choices %}
                             <div class="mb-1">
                                 <input id="visit-type-{{ value }}"
-                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                       class="form-check"
                                        type="checkbox"
                                        name="visit_type"
                                        value="{{ value }}"
                                        {% if value in selected_visit_types %}checked{% endif %}>
-                                <label class="select-none ms-1 text-sm font-medium text-heading"
+                                <label class="form-check-label"
                                        for="visit-type-{{ value }}">{{ label }}</label>
                             </div>
                         {% endfor %}
@@ -78,7 +78,7 @@
                                    id="seminar-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                                   class="form-input ps-9"
                                    placeholder="Search by visitor, university, or description..." />
                         </div>
                         <button type="submit"
@@ -151,6 +151,7 @@
                     closeOnSelect: false,
                     maxItems: 10,
                     searchKeys: ['value', 'label'],
+                    classname: 'dropdown-panel',
                 },
                 templates: {
                     dropdownItem: function(tagData) {

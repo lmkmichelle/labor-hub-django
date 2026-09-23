@@ -45,10 +45,10 @@ Submit Paper
 
     {% render_field form.topics_input placeholder="Research topics" help_text="Pick one or more from the list." %}
 
-    <div class="mb-5">
+    <div class="form-field not-format">
         <div class="flex items-center">
             <input type="checkbox" name="{{ form.is_job_market.name }}" id="{{ form.is_job_market.id_for_label }}" {% if form.is_job_market.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
-            <label for="{{ form.is_job_market.id_for_label }}" class="ml-2 text-sm font-medium text-heading">{{ form.is_job_market.label }}</label>
+            <label for="{{ form.is_job_market.id_for_label }}" class="form-check-label">{{ form.is_job_market.label }}</label>
         </div>
         {% if form.is_job_market.errors %}
         <p class="mt-2 text-sm text-red-600">{{ form.is_job_market.errors.0 }}</p>

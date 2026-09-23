@@ -14,13 +14,13 @@
                         {% for value, label in category_choices %}
                             <div class="mb-1">
                                 <input id="category-{{ value }}"
-                                       class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft"
+                                       class="form-check"
                                        type="checkbox"
                                        name="category"
                                        value="{{ value }}"
                                        {% if value in selected_categories %}checked{% endif %}
                                        onchange="this.form.submit()">
-                                <label class="select-none ms-1 text-sm font-medium text-heading"
+                                <label class="form-check-label"
                                        for="category-{{ value }}">{{ label }}</label>
                             </div>
                         {% endfor %}
@@ -28,7 +28,7 @@
                     <div class="mb-4">
                         <div class="mb-3">
                             <label for="start_date"
-                                   class="block mb-2.5 text-sm font-medium text-heading">From</label>
+                                   class="form-label">From</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                     <svg class="w-4 h-4 text-body"
@@ -49,7 +49,7 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="end_date" class="block mb-2.5 text-sm font-medium text-heading">To</label>
+                            <label for="end_date" class="form-label">To</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                     <svg class="w-4 h-4 text-body"
@@ -96,7 +96,7 @@
                                    id="simple-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="block w-full rounded-base border border-default-medium bg-neutral-secondary-medium px-3 ps-9 py-2.5 text-sm text-heading placeholder:text-body focus:border-brand focus:ring-brand"
+                                   class="form-input ps-9"
                                    placeholder="Search events by title, description, or location..." />
                         </div>
                         <button type="submit"

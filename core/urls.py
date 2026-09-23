@@ -27,6 +27,7 @@ urlpatterns = [
     path('publications/', views.publications_list, name='publications'),
     path('api/accounts/search/', views.search_accounts, name='search_accounts'),
     path('api/cities/', views.cities_by_country, name='cities-by-country'),
+    path('api/cities/search/', views.city_search, name='city-search'),
     path('api/map/summary/', views.map_summary, name='map_summary'),
     path('api/map/country/<str:code>/', views.map_country_detail, name='map_country_detail'),
 ]

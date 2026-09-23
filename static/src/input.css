@@ -22,9 +22,131 @@
   /* No block/w-full here (unlike .form-input) -- a full-width form field adds
      it explicitly (partials/_select_field.html, _form_field.html); a compact
      control like a sort dropdown uses this class alone and keeps its natural
-     content-sized width. */
+     content-sized width.
+     appearance-none + a background-image chevron replace the OS-drawn arrow
+     with a themed one (Flowbite's own select examples do the same) -- without
+     this a select reads as plain native styling despite the custom border/bg. */
   .form-select {
-    @apply px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand;
+    @apply px-3 py-2.5 pr-10 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand appearance-none bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.25em 1.25em;
+  }
+  /* Same chevron as .form-select, added by location-picker.js to a text input
+     that drives a suggestion panel -- signals "there's a dropdown here" the
+     way a native select's arrow does, since a plain text input otherwise
+     gives no visual hint that typing opens a list of matches. JS-only
+     (progressive enhancement): without JS the field is just a plain, fully
+     usable input. */
+  .form-input-chevron {
+    @apply pr-10 bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.25em 1.25em;
+  }
+  /* Field wrapper/label/help chrome -- single source for the label-then-
+     optional-help-then-control group every form field renders
+     (partials/_form_field.html, _select_field.html) and the standalone
+     checkbox rows on the list-page filter sidebars.
+     .form-field MUST be paired with the literal class `not-format` in the
+     markup (not folded in here) -- every form lives inside a
+     `.format`/`.lg:format-lg` prose container (Flowbite typography), whose
+     `:where(p)` margin rules are emitted in @layer utilities *after* any
+     plain `.mt-0`/`.mb-0` override at the same (0,1,0) specificity, so a
+     utility-only fix silently loses at >=1024px (the lg: breakpoint) even
+     though it appears to work narrower. `not-format` is the one selector
+     those prose rules explicitly exclude via `:not(:where([class~=not-format] *))`,
+     and it must be a real class on the element, since `@apply` copies
+     declarations, not class names. */
+  .form-field {
+    @apply mb-5;
+  }
+  .form-label {
+    @apply block mb-2.5 text-sm font-medium text-heading;
+  }
+  /* For a label immediately followed by .form-help -- deliberately mb-1
+     (4px), not the field-with-no-help mb-2.5 above: tight enough to read as
+     one group with its subtext, not so tight it feels cramped. */
+  .form-label-tight {
+    @apply block mb-1 text-sm font-medium text-heading;
+  }
+  .form-help {
+    @apply mt-0 mb-2 text-sm text-body;
+  }
+  .form-check {
+    @apply w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft;
+  }
+  .form-check-label {
+    @apply select-none ms-1 text-sm font-medium text-heading;
+  }
+  /* A floating panel of clickable rows -- the nav account menu, the city
+     suggestion panel, the select-combobox panel, and Tagify's reskinned
+     dropdown (below) all use these two classes so every "opens a themed
+     list" control on the site looks and behaves identically. */
+  .dropdown-panel {
+    @apply rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg;
+  }
+  .dropdown-panel-item {
+    @apply block w-full px-4 py-2 text-left text-sm text-heading hover:bg-neutral-secondary-medium;
+  }
+  /* Tagify (CDN-loaded, static/js/tagify.js) renders its own default theme via
+     tagify.css, a plain, un-@layer'd stylesheet. Per the CSS cascade-layers
+     spec, ANY unlayered author CSS beats ANY layered author CSS for a normal
+     (non-!important) declaration, regardless of selector specificity -- and
+     Tailwind compiles every class in this file into `@layer components`. So
+     no amount of extra classes here can out-rank tagify.css; `!important` is
+     the correct, deliberate tool for this specific fight, not a shortcut.
+     (Verified empirically: a same-property override with higher specificity
+     alone, e.g. `.tagify.form-input{--tags-border-color:...}`, measurably had
+     no effect until `!important` was added.)
+     Its wrapper() template copies the *original* input's className onto the
+     <tags> element it generates, so giving that input `form-input` (see the
+     pill-input templates and _form_field.html) is what lets this rule apply
+     to every Tagify field from one source. */
+  .tagify.form-input {
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    --tags-border-color: var(--color-default-medium) !important;
+    --tags-hover-border-color: var(--color-default-medium) !important;
+    --tags-focus-border-color: var(--color-brand) !important;
+    --tag-bg: var(--color-brand-soft) !important;
+    --tag-hover: var(--color-brand-soft) !important;
+    --tag-text-color: var(--color-heading) !important;
+    --tag-border-radius: var(--radius-base) !important;
+    --tag-remove-btn-color: var(--color-body) !important;
+    --placeholder-color: var(--color-body) !important;
+  }
+  .tagify.form-input.tagify--focus {
+    box-shadow: 0 0 0 2px var(--color-brand) !important;
+  }
+  /* Tagify's suggestion dropdown is appended to <body>, outside .tagify, and
+     colored via :root-level custom properties Tagify itself declares --
+     same unlayered-always-wins problem as above, so !important again.
+     static/js/tagify.js and each inline Tagify init pass
+     `dropdown.classnames: "dropdown-panel"`, which Tagify appends to the
+     OUTER `.tagify__dropdown` element. Tagify splits the dropdown's visible
+     chrome across two nested elements -- a border-top accent on that outer
+     element, and the real border/background/scroll box one level in, on
+     `.tagify__dropdown__wrapper` -- so both need overriding. */
+  .tagify__dropdown.dropdown-panel {
+    border: 0 !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__wrapper {
+    border-radius: var(--radius-base) !important;
+    border: 1px solid var(--color-default-medium) !important;
+    background-color: var(--color-neutral-primary-medium) !important;
+    box-shadow: var(--tw-shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)) !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item {
+    background-color: transparent !important;
+    color: var(--color-heading) !important;
+  }
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item:hover,
+  .tagify__dropdown.dropdown-panel .tagify__dropdown__item--active {
+    background-color: var(--color-neutral-secondary-medium) !important;
+    color: var(--color-heading) !important;
   }
   /* File upload -- style the native picker button so it fills the field height
      instead of a small button floating inside a tall padded box. The container
