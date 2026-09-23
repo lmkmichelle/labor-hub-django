@@ -30,23 +30,39 @@
 
     {% render_field form.application_url %}
 
-    {% render_select form.country_code label="Country" %}
     {% comment %}
-    class="relative" only on data-city-picker below -- no overflow/padding/border/
-    flex/grid, ever: the suggestion panel's `top-full` relies on the preceding
-    field's mb-5 margin collapsing through this element uncontested. Any of
-    those would silently reintroduce a large gap above the panel.
+    class="relative" only on data-location-picker below -- no overflow/padding/
+    border/flex/grid, ever: the suggestion panel's `top-full` relies on the
+    preceding field's mb-5 margin collapsing through this element uncontested.
+    Any of those would silently reintroduce a large gap above the panel.
     {% endcomment %}
-    <div data-city-picker
+    <div data-location-picker
          class="relative"
-         data-endpoint="{% url 'cities-by-country' %}"
+         data-endpoint="{% url 'city-search' %}"
+         data-city-field="{{ form.city.id_for_label }}"
          data-country-field="{{ form.country_code.id_for_label }}"
-         data-city-field="{{ form.city.id_for_label }}">
+         data-admin1-field="{{ form.admin1_name.id_for_label }}"
+         data-admin1-code-field="{{ form.admin1_code.id_for_label }}"
+         data-lat-field="{{ form.latitude.id_for_label }}"
+         data-lon-field="{{ form.longitude.id_for_label }}"
+         data-admin1-labels-id="admin1-labels-data"
+         data-default-admin1-label="{{ default_admin1_label|default:'Region' }}">
+        {{ admin1_labels|json_script:"admin1-labels-data" }}
         {% render_field form.city %}
-        <div class="city-suggestions dropdown-panel not-format hidden absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto">
+        <div class="location-suggestions dropdown-panel not-format hidden absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto">
             <ul class="py-1 text-sm text-heading"></ul>
         </div>
     </div>
+
+    {% render_select form.country_code label="Country" %}
+
+    <div data-admin1-field-wrapper>
+        {% render_field form.admin1_name %}
+    </div>
+
+    {{ form.admin1_code }}
+    {{ form.latitude }}
+    {{ form.longitude }}
 
     {% render_field form.venue %}
 
@@ -61,5 +77,5 @@
 
 </form>
  </article>
-<script src="{% static 'js/city-picker.js' %}"></script>
+<script src="{% static 'js/location-picker.js' %}"></script>
 {% endblock %}

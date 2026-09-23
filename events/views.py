@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from datetime import datetime
 
+from core.constants import ADMIN1_LABELS, DEFAULT_ADMIN1_LABEL
 from core.views import OwnerDeleteView
 
 from .models import Event
@@ -102,6 +103,15 @@ class EventCreateView(LoginRequiredMixin, CreateView):
     form_class = EventForm
     template_name = 'events/event_form.html'
     success_url = reverse_lazy('events-list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Drives the State/Province field's label per country in
+        # static/js/location-picker.js; single source of truth is
+        # core.constants.ADMIN1_LABELS.
+        context['admin1_labels'] = ADMIN1_LABELS
+        context['default_admin1_label'] = DEFAULT_ADMIN1_LABEL
+        return context
 
     def form_valid(self, form):
         event = form.save(commit=False)

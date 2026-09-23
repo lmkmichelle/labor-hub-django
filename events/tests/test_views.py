@@ -118,6 +118,15 @@ class EventCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "events/event_form.html")
 
+    def test_no_internal_comment_leaks_into_the_rendered_page(self):
+        # Regression: a multi-line {# ... #} isn't a valid Django comment tag
+        # (it doesn't span newlines) and was rendered as literal page text.
+        self.client.force_login(make_user())
+        response = self.client.get(reverse("event-create"))
+        content = response.content.decode()
+        self.assertNotIn("margin collapsing", content)
+        self.assertNotIn("class=\"relative\" only", content)
+
     def test_post_creates_pending_event_hosted_by_user(self):
         user = make_user()
         self.client.force_login(user)

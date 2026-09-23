@@ -53,8 +53,22 @@ class EventForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'autocomplete': 'off'}),
         max_length=255,
         required=True,
-        help_text="Pick a country first; start typing for suggestions.",
+        help_text=(
+            "Start typing a city; selecting a suggestion fills in Country and "
+            "State/Province. Not listed? Just type it and set Country yourself."
+        ),
     )
+
+    admin1_name = forms.CharField(
+        label="State/Province",
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
+        max_length=200,
+        required=False,
+    )
+
+    admin1_code = forms.CharField(widget=forms.HiddenInput, required=False)
+    latitude = forms.FloatField(widget=forms.HiddenInput, required=False)
+    longitude = forms.FloatField(widget=forms.HiddenInput, required=False)
 
     venue = forms.CharField(
         label="Venue (Optional)",
@@ -73,7 +87,8 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         fields = ['title', 'description', 'date', 'end_date', 'deadline',
-                  'application_url', 'country_code', 'city', 'venue', 'category']
+                  'application_url', 'country_code', 'city', 'admin1_name',
+                  'admin1_code', 'latitude', 'longitude', 'venue', 'category']
 
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Title'}),
