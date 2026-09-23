@@ -39,6 +39,16 @@ class Command(BaseCommand):
                 'the full dataset on every deploy.'
             ),
         )
+        parser.add_argument(
+            '--refresh',
+            action='store_true',
+            help=(
+                'Delete all existing City rows before importing. Needed to '
+                'backfill columns (e.g. latitude/longitude) added after the '
+                'first import, since bulk_create(ignore_conflicts=True) '
+                'silently skips rows that already exist.'
+            ),
+        )
 
     def handle(self, *args, **options):
         country_filter = (options.get('country') or '').strip().upper()
@@ -47,6 +57,10 @@ class Command(BaseCommand):
         if options.get('if_empty') and City.objects.exists():
             self.stdout.write('City table already populated; skipping import.')
             return
+
+        if options.get('refresh'):
+            deleted, _ = City.objects.all().delete()
+            self.stdout.write(f'Deleted {deleted} existing city rows.')
 
         admin1_names = self._fetch_admin1_names()
         rows = self._fetch_city_rows()
@@ -67,6 +81,8 @@ class Command(BaseCommand):
 
             geoname_id = fields[0].strip()
             name = fields[1].strip()
+            latitude_raw = fields[4].strip()
+            longitude_raw = fields[5].strip()
             country_code = fields[8].strip().upper()
             admin1_code = fields[10].strip()
             population_raw = fields[14].strip()
@@ -84,6 +100,12 @@ class Command(BaseCommand):
             except ValueError:
                 population = 0
 
+            try:
+                latitude = float(latitude_raw) if latitude_raw else None
+                longitude = float(longitude_raw) if longitude_raw else None
+            except ValueError:
+                latitude = longitude = None
+
             admin1_name = admin1_names.get(f"{country_code}.{admin1_code}", '')
 
             cities.append(City(
@@ -91,6 +113,9 @@ class Command(BaseCommand):
                 name=name,
                 country_code=country_code,
                 admin1_name=admin1_name,
+                admin1_code=admin1_code,
+                latitude=latitude,
+                longitude=longitude,
                 population=population,
             ))
             processed += 1

@@ -53,6 +53,11 @@ class EventLocationCompositionTests(TestCase):
         event.save()
         self.assertEqual(event.location, "New York, United States")
 
+    def test_save_includes_admin1_name_when_set(self):
+        event = make_event(
+            location="", country_code="US", city="Ithaca", admin1_name="New York")
+        self.assertEqual(event.location, "Ithaca, New York, United States")
+
     def test_legacy_free_text_location_survives_when_structured_fields_are_blank(self):
         # A pre-picker event has hand-typed text and no country_code/city --
         # re-saving it (e.g. an unrelated admin edit) must not wipe it out.

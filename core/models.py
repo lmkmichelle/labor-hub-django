@@ -101,12 +101,26 @@ class City(models.Model):
         max_length=200, blank=True, default='',
         help_text="State/province/region, e.g. 'New York'.",
     )
+    # GeoNames' own admin1 key (e.g. "NY" under country "US"), NOT a reliable
+    # ISO 3166-2 code -- e.g. GeoNames' "11" for the Île-de-France region
+    # under FR is not that region's ISO code "FR-IDF". Kept only to
+    # reconstruct admin1_name from a re-import; never treat it as ISO.
+    admin1_code = models.CharField(max_length=20, blank=True, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     population = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ['-population', 'name']
         indexes = [
             models.Index(fields=['country_code', 'name']),
+            # Country-agnostic prefix/infix search for the city-first picker
+            # (core.views.city_search) -- the index above can't serve a query
+            # that doesn't filter by country_code first.
+            models.Index(fields=['name']),
+            # Bounding-box prefilter for a future "sort by distance" feature;
+            # see the plan's architecture note on nearest-city sorting.
+            models.Index(fields=['latitude', 'longitude']),
         ]
 
     def __str__(self):

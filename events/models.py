@@ -38,6 +38,15 @@ class Event(Approvable):
     location = models.CharField(max_length=255, blank=True, default='')
     country_code = models.CharField(max_length=2, choices=COUNTRY_CHOICES, blank=True, default='')
     city = models.CharField(max_length=255, blank=True, default='')
+    # Filled by static/js/location-picker.js when the city was chosen from a
+    # suggestion; left blank for a hand-typed city not in core.models.City.
+    # Denormalised onto the event itself (not looked up via a join at sort
+    # time) so a future distance sort orders by the row's own coordinates,
+    # not a fuzzy match on the free-text city string.
+    admin1_name = models.CharField(max_length=200, blank=True, default='')
+    admin1_code = models.CharField(max_length=20, blank=True, default='')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     venue = models.CharField(
         max_length=255, blank=True, default='',
         help_text="Optional, e.g. a building or conference center name.",
@@ -66,6 +75,7 @@ class Event(Approvable):
         if self.city or self.country_code:
             country_name = _COUNTRY_NAMES.get(self.country_code, '')
             self.location = ", ".join(
-                part for part in (self.venue, self.city, country_name) if part
+                part for part in (self.venue, self.city, self.admin1_name, country_name)
+                if part
             )
         super().save(*args, **kwargs)
