@@ -249,6 +249,17 @@
       trigger.focus();
     });
 
+    // choose() (this file) and the MutationObserver below (university-picker.js
+    // rebuilding <option>s) already keep the trigger's label in sync with
+    // those two ways the select's value can change. A third way exists:
+    // something else setting `select.value` directly and dispatching `change`
+    // itself -- location-picker.js does exactly this to fill Country after a
+    // city is chosen. Neither of the above catches that (no options are
+    // added/removed, and choose() isn't what set the value), so the trigger
+    // would keep showing the old selection while the real select silently
+    // held the new one. Listening for `change` here covers every case.
+    select.addEventListener("change", updateTrigger);
+
     document.addEventListener("mousedown", function (event) {
       if (!panel.classList.contains("hidden") && !wrapper.contains(event.target)) {
         closePanel();
