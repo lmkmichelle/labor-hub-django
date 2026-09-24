@@ -225,6 +225,13 @@
   .home-tab {
     @apply inline-flex items-center gap-2 whitespace-nowrap border-b-2 p-4 font-medium rounded-t-lg focus:outline-none;
   }
+  /* Announcement type switcher (partials/_announcement_tabs.html). */
+  .announce-tab {
+    @apply inline-flex items-center rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm font-medium text-body no-underline hover:bg-neutral-secondary-medium hover:text-heading;
+  }
+  .announce-tab-active {
+    @apply border-red-700 bg-red-50 text-red-700 hover:bg-red-50 hover:text-red-700;
+  }
   .home-tab-count {
     @apply rounded-full bg-neutral-secondary-medium px-2 py-0.5 text-xs font-semibold text-body;
   }

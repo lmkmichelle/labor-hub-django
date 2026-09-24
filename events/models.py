@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
@@ -66,6 +67,9 @@ class Event(Approvable):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('event-detail', kwargs={'pk': self.pk})
 
     @property
     def is_upcoming(self):

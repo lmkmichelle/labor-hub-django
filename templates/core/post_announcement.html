@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Post an Announcement{% endblock %}
+{% block content %}
+    <article class="format lg:format-lg max-w-none">
+        <h3 class="title">Post an Announcement</h3>
+        <p class="mb-6">What would you like to announce? Each type asks only for the details that fit it. Everything is reviewed by an administrator before it appears.</p>
+        <div class="not-format grid gap-3 sm:grid-cols-2">
+            <div class="card-surface">
+                <h5 class="card-title"><a href="{% url 'job-create' %}" class="card-stretch-link">Job Posting</a></h5>
+                <p class="mt-1 text-sm text-body">An academic position, from pre-doc and RA roles to faculty posts.</p>
+            </div>
+            <div class="card-surface">
+                <h5 class="card-title"><a href="{% url 'event-create' %}" class="card-stretch-link">Event</a></h5>
+                <p class="mt-1 text-sm text-body">A conference, workshop, school, course or retreat.</p>
+            </div>
+            {% if can_post_special_issue %}
+                <div class="card-surface">
+                    <h5 class="card-title"><a href="{% url 'special-issue-create' %}" class="card-stretch-link">Special Issue</a></h5>
+                    <p class="mt-1 text-sm text-body">A journal special issue you are editing, with its call for papers.</p>
+                </div>
+            {% endif %}
+            <div class="card-surface">
+                <h5 class="card-title"><a href="{% url 'seminar-create' %}" class="card-stretch-link">Long-Distance Visit</a></h5>
+                <p class="mt-1 text-sm text-body">A sabbatical or research visit, so colleagues nearby can plan to meet.</p>
+            </div>
+        </div>
+        {% if not can_post_special_issue %}
+            <p class="mt-6 text-sm text-body">Special issues can be posted by fellows.</p>
+        {% endif %}
+    </article>
+{% endblock %}

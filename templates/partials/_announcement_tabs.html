@@ -1,0 +1,14 @@
+{% comment %}
+Type switcher shared by the Announcements feed and the four list pages under
+it, so they read as one section. Input:
+  active   one of: all, job, event, special_issue, visit
+"All" is the combined feed; the others go to that type's own list page (which
+keeps its own sidebar filters).
+{% endcomment %}
+<nav class="not-format mb-6 flex flex-wrap gap-2" aria-label="Announcement types">
+  <a href="{% url 'announcements' %}" class="announce-tab{% if active == 'all' %} announce-tab-active{% endif %}"{% if active == 'all' %} aria-current="page"{% endif %}>All</a>
+  <a href="{% url 'jobs-list' %}" class="announce-tab{% if active == 'job' %} announce-tab-active{% endif %}"{% if active == 'job' %} aria-current="page"{% endif %}>Job Postings</a>
+  <a href="{% url 'events-list' %}" class="announce-tab{% if active == 'event' %} announce-tab-active{% endif %}"{% if active == 'event' %} aria-current="page"{% endif %}>Events</a>
+  <a href="{% url 'special-issues-list' %}" class="announce-tab{% if active == 'special_issue' %} announce-tab-active{% endif %}"{% if active == 'special_issue' %} aria-current="page"{% endif %}>Special Issues</a>
+  <a href="{% url 'seminars-list' %}" class="announce-tab{% if active == 'visit' %} announce-tab-active{% endif %}"{% if active == 'visit' %} aria-current="page"{% endif %}>Long-Distance Visits</a>
+</nav>

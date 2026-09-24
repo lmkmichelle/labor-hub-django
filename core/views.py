@@ -6,6 +6,7 @@ from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -22,6 +23,7 @@ from core.constants import (
     PAPER_COUNTRY_CHOICES,
     PAPER_SPECIAL_COUNTRY_CODES,
 )
+from core.announcements import announcements_queryset, load_announcements
 from core.filters import map_country_terms_to_codes, parse_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
@@ -223,6 +225,24 @@ def home(request):
     }
 
     return render(request, 'core/home.html', context)
+
+
+def announcements(request):
+    """Every recent job, event, special issue and visit in one newest-first feed."""
+    page_obj = Paginator(announcements_queryset(), 10).get_page(request.GET.get('page'))
+    return render(request, 'core/announcements.html', {
+        'page_obj': page_obj,
+        'is_paginated': page_obj.paginator.num_pages > 1,
+        'announcements': load_announcements(page_obj.object_list),
+    })
+
+
+@login_required
+def post_announcement(request):
+    """Pick a category first; each category's own form then asks only its fields."""
+    return render(request, 'core/post_announcement.html', {
+        'can_post_special_issue': request.user.is_researcher(),
+    })
 
 
 def map_view(request):

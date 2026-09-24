@@ -128,6 +128,7 @@ TEMPLATES = [
                 "core.context_processors.recommended_keywords",
                 "core.context_processors.pending_advisee_count",
                 "core.context_processors.pending_paper_ack_count",
+                "core.context_processors.nav_section",
             ],
         },
     },
