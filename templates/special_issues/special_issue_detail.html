@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load text_filters %}
+{% block title %}{{ special_issue.title }}{% endblock %}
+{% block content %}
+<article class="max-w-none format lg:format-lg">
+    <div>
+        <div class="flex flex-row w-full justify-between items-center">
+            <p>Deadline: {{ special_issue.submission_deadline|date:"N j, Y" }}</p>
+            <div class="not-format">{% include "partials/_example_badge.html" with show=special_issue.is_example %}</div>
+        </div>
+        <h3>{{ special_issue.title }}</h3>
+        <p class="not-format mb-4 text-body">{{ special_issue.journal }}</p>
+    </div>
+
+    <h4>Special Issue Editors</h4>
+    <ul>
+        {% for editor in special_issue.editor_entries %}
+            <li>
+                {% if editor.user_id %}
+                    <a href="{% url 'profile' pk=editor.user_id %}">{{ editor.name }}</a>
+                {% else %}
+                    {{ editor.name }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h4>Description</h4>
+    {{ special_issue.description|soften_linebreaks|urlize|linebreaks }}
+
+    <h4>Deadline for Submission</h4>
+    <p>{{ special_issue.submission_deadline|date:"l, N j, Y" }}</p>
+
+    {% if special_issue.call_url %}
+        <div class="not-format mt-4">
+            <a href="{{ special_issue.call_url }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="btn-primary no-underline">
+                Call for Papers
+            </a>
+        </div>
+    {% endif %}
+
+    {% if user.is_authenticated and user == special_issue.posted_by %}
+        <form method="post" action="{% url 'special-issue-delete' pk=special_issue.pk %}"
+              class="not-format mt-6"
+              onsubmit="return confirm('Delete this special issue? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary">Delete special issue</button>
+        </form>
+    {% endif %}
+</article>
+{% endblock content %}

@@ -12,7 +12,7 @@
       Welcome to the Labor Hub! We are a global hub for the labor economics community. Our aim is
       to foster interactions and facilitate the sharing of information between researchers. At the
       Labor Hub, members can post job openings, advertise and learn about
-      upcoming events or workshops, and coordinate research visits to initiate additional
+      upcoming events, workshops or journal special issues, and coordinate research visits to initiate additional
       interactions during a sabbatical or long-distance travel. They can also share new working
       papers. All content is openly accessible.
     </p>
@@ -24,6 +24,10 @@
       <a href="{% url 'scholars' %}"
          class="inline-flex items-center rounded-base border border-white/70 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-red-300">
         Meet scholars
+      </a>
+      <a href="{% url 'map' %}"
+         class="inline-flex items-center rounded-base border border-white/70 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-red-300">
+        World map
       </a>
     </div>
   </div>
@@ -51,21 +55,9 @@
         </button>
       </li>
       <li role="presentation">
-        <button class="home-tab" id="tab-events" type="button" role="tab"
-                data-tabs-target="#panel-events" aria-controls="panel-events" aria-selected="false">
-          Upcoming Events <span class="home-tab-count">{{ upcoming_events|length }}</span>
-        </button>
-      </li>
-      <li role="presentation">
-        <button class="home-tab" id="tab-jobs" type="button" role="tab"
-                data-tabs-target="#panel-jobs" aria-controls="panel-jobs" aria-selected="false">
-          New Jobs <span class="home-tab-count">{{ new_jobs|length }}</span>
-        </button>
-      </li>
-      <li role="presentation">
-        <button class="home-tab" id="tab-seminars" type="button" role="tab"
-                data-tabs-target="#panel-seminars" aria-controls="panel-seminars" aria-selected="false">
-          Upcoming Long-Distance Visits <span class="home-tab-count">{{ upcoming_seminars|length }}</span>
+        <button class="home-tab" id="tab-announcements" type="button" role="tab"
+                data-tabs-target="#panel-announcements" aria-controls="panel-announcements" aria-selected="false">
+          Recent Announcements <span class="home-tab-count">{{ recent_announcements|length }}</span>
         </button>
       </li>
     </ul>
@@ -90,31 +82,13 @@
       {% include 'partials/_list_display.html' with items=recent_papers container_class="grid gap-3 sm:grid-cols-2" empty_message="No recent papers to display." %}
     </div>
 
-    <!-- Upcoming Events -->
-    <div class="hidden pt-6" id="panel-events" role="tabpanel" aria-labelledby="tab-events">
+    <!-- Recent Announcements: jobs, events, special issues and visits together -->
+    <div class="hidden pt-6" id="panel-announcements" role="tabpanel" aria-labelledby="tab-announcements">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">Upcoming Events</h2>
-        <a href="{% url 'events-list' %}" class="btn-primary">See all events</a>
+        <h2 class="text-lg font-semibold text-heading">Recent Announcements</h2>
+        <a href="{% url 'announcements' %}" class="btn-primary">See all announcements</a>
       </div>
-      {% include 'partials/_list_display.html' with items=upcoming_events container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming events to display." %}
-    </div>
-
-    <!-- New Jobs -->
-    <div class="hidden pt-6" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">New Jobs</h2>
-        <a href="{% url 'jobs-list' %}" class="btn-primary">See all jobs</a>
-      </div>
-      {% include 'partials/_list_display.html' with items=new_jobs container_class="grid gap-3 sm:grid-cols-2" empty_message="No new jobs to display." %}
-    </div>
-
-    <!-- Upcoming Seminars -->
-    <div class="hidden pt-6" id="panel-seminars" role="tabpanel" aria-labelledby="tab-seminars">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">Upcoming Long-Distance Visits</h2>
-        <a href="{% url 'seminars-list' %}" class="btn-primary">See all long-distance visits</a>
-      </div>
-      {% include 'partials/_list_display.html' with items=upcoming_seminars container_class="grid gap-3 sm:grid-cols-2" empty_message="No upcoming visits to display." %}
+      {% include 'partials/_list_display.html' with items=recent_announcements container_class="grid gap-3 sm:grid-cols-2" empty_message="No recent announcements to display." %}
     </div>
   </div>
 </section>

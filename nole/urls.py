@@ -33,5 +33,6 @@ urlpatterns = [
     path('seminars/<path:subpath>', RedirectView.as_view(url='/visits/%(subpath)s', query_string=True)),
     path('seminars/', RedirectView.as_view(url='/visits/', query_string=True)),
     path('jobs/', include('jobs.urls')),
+    path('special-issues/', include('special_issues.urls')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

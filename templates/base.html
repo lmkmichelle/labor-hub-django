@@ -69,16 +69,8 @@
                        class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Submit a paper</a>
                   </li>
                   <li>
-                    <a href="{% url 'job-create' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post a Job</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'seminar-create' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post a Visit</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'event-create' %}"
-                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Event</a>
+                    <a href="{% url 'announcement-new' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Post an Announcement</a>
                   </li>
                   {% if user.is_staff %}
                     <li class="mt-2 border-t border-default pt-2 px-2 text-xs font-semibold uppercase tracking-wide text-body" />
@@ -129,42 +121,24 @@
             </div>
             <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
                  id="navbar-cta">
-              {% with request.resolver_match.url_name as url_name %}
                 <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-default rounded-base bg-neutral-secondary-soft md:flex-row md:space-x-6 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-neutral-primary">
                   <li>
-                    <a href="/"
-                       class="nav-link {% if url_name == 'home' %}text-red-700{% endif %}">Home</a>
-                  </li>
-                  <li>
-                    <a href="/publications/"
-                       class="nav-link {% if url_name == 'publications' %}text-red-700{% endif %}">Discussion Papers</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'map' %}"
-                       class="nav-link {% if url_name == 'map' %}text-red-700{% endif %}">World Map</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'events-list' %}"
-                       class="nav-link {% if url_name == 'events-list' %}text-red-700{% endif %}">Events</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'jobs-list' %}"
-                       class="nav-link {% if url_name == 'jobs-list' %}text-red-700{% endif %}">Jobs</a>
-                  </li>
-                  <li>
-                    <a href="{% url 'seminars-list' %}"
-                       class="nav-link whitespace-nowrap {% if url_name == 'seminars-list' %}text-red-700{% endif %}">Long-Distance Visits</a>
-                  </li>
-                  <li>
                     <a href="{% url 'scholars' %}"
-                       class="nav-link {% if url_name == 'scholars' %}text-red-700{% endif %}">Scholars</a>
+                       class="nav-link {% if nav_section == 'scholars' %}text-red-700{% endif %}">Scholars</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'announcements' %}"
+                       class="nav-link {% if nav_section == 'announcements' %}text-red-700{% endif %}">Announcements</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'publications' %}"
+                       class="nav-link whitespace-nowrap {% if nav_section == 'papers' %}text-red-700{% endif %}">Research Papers</a>
                   </li>
                   <li>
                     <a href="{% url 'contact' %}"
-                       class="nav-link whitespace-nowrap {% if url_name == 'contact' %}text-red-700{% endif %}">Contact Us</a>
+                       class="nav-link whitespace-nowrap {% if nav_section == 'contact' %}text-red-700{% endif %}">Contact Us</a>
                   </li>
                 </ul>
-              {% endwith %}
             </div>
           </div>
         </nav>

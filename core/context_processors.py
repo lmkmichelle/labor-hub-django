@@ -51,3 +51,24 @@ def pending_paper_ack_count(request):
             jm_advisor_acknowledged__isnull=True,
         ).count()
     }
+
+
+# Which top-level nav item a URL belongs to, by path prefix. Announcements is
+# an umbrella over four separate apps, so matching on url names would need an
+# ever-growing list; the prefixes are stable.
+_NAV_SECTIONS = (
+    ("announcements", ("/announcements/", "/jobs/", "/events/", "/visits/",
+                       "/seminars/", "/special-issues/")),
+    ("papers", ("/publications/",)),
+    ("scholars", ("/scholars/",)),
+    ("contact", ("/contact/",)),
+)
+
+
+def nav_section(request):
+    """Name the top-level nav section for the current path (or '')."""
+    path = getattr(request, "path", "") or ""
+    for section, prefixes in _NAV_SECTIONS:
+        if path.startswith(prefixes):
+            return {"nav_section": section}
+    return {"nav_section": ""}

@@ -80,15 +80,14 @@ class HomeContextTests(TestCase):
 
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
-        titles = [e["title"] for e in response.context["upcoming_events"]]
-        self.assertIn("Upcoming Conf", titles)
-        seminar_titles = [s["title"] for s in response.context["upcoming_seminars"]]
-        self.assertIn("Upcoming Visitor", seminar_titles)
+        announcements = {a["title"]: a for a in response.context["recent_announcements"]}
+        self.assertEqual(announcements["Upcoming Conf"]["badge"]["text"], "Event")
+        self.assertEqual(announcements["Upcoming Visitor"]["badge"]["text"], "Visit")
+        self.assertEqual(announcements["New Postdoc"]["badge"]["text"], "Job")
         paper_titles = [p["title"] for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
-        job_titles = [j["title"] for j in response.context["new_jobs"]]
-        self.assertIn("New Postdoc", job_titles)
-        self.assertContains(response, "New Jobs")
+        self.assertContains(response, "Recent Announcements")
+        self.assertContains(response, reverse("map"))
 
 
 class HomeContentHasNoEmojiTests(TestCase):
@@ -118,7 +117,7 @@ class HomeEventTimeDisplayTests(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         event = next(
-            e for e in response.context["upcoming_events"]
+            e for e in response.context["recent_announcements"]
             if e["title"] == "Midnight Event")
         self.assertFalse(event.get("meta"))
         self.assertNotContains(response, "04:00")

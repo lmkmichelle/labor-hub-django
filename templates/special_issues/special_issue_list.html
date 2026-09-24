@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Special Issues{% endblock %}
+{% block content %}
+    <article class="format lg:format-lg max-w-none">
+        <h2>Special Issues</h2>
+        {% include "partials/_announcement_tabs.html" with active="special_issue" %}
+        <p class="mb-6">Journals regularly put out calls for papers for special issues, and these can be hard to find. Fellows who are guest-editing a special issue are invited to post it here so it reaches the labor economics community. Every special issue lists at least one fellow as an editor.</p>
+        <div class="flex flex-row w-full gap-6">
+            <div class="flex flex-col w-60">
+                <form method="GET" id="filterForm">
+                    <input type="hidden" name="q" value="{{ query }}">
+                    <input type="hidden" name="sort" value="{{ sort }}">
+                    <div class="mb-4">
+                        <h4>Display</h4>
+                        <div class="mb-1">
+                            <input id="show-closed"
+                                   class="form-check"
+                                   type="checkbox"
+                                   name="show_closed"
+                                   value="1"
+                                   {% if show_closed %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                            <label class="form-check-label" for="show-closed">Show Closed Calls</label>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <a href="{% url 'special-issues-list' %}" class="btn-secondary no-underline">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+            <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
+                <div class="flex w-full min-w-0 items-center gap-3 not-format">
+                    <form method="GET"
+                          id="searchForm"
+                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                        {% if show_closed %}<input type="hidden" name="show_closed" value="1">{% endif %}
+                        <input type="hidden" name="sort" value="{{ sort }}">
+                        <label for="special-issue-search" class="sr-only">Search special issues</label>
+                        <div class="relative flex-1 min-w-0 w-full">
+                            <input type="text"
+                                   id="special-issue-search"
+                                   name="q"
+                                   value="{{ query }}"
+                                   class="form-input ps-9"
+                                   placeholder="Search by title, journal, editor, or description..." />
+                        </div>
+                        <button type="submit"
+                                class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+                            <svg class="w-5 h-5"
+                                 aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="24"
+                                 height="24"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                            </svg>
+                            <span class="sr-only">Search</span>
+                        </button>
+                    </form>
+                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                        {% if show_closed %}<input type="hidden" name="show_closed" value="1">{% endif %}
+                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                        <label for="sortSelect" class="sr-only">Sort by</label>
+                        <select id="sortSelect"
+                                name="sort"
+                                onchange="this.form.submit()"
+                                class="form-select">
+                            <option value="" {% if sort == '' %}selected{% endif %}>Sort: Deadline</option>
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest Added</option>
+                        </select>
+                    </form>
+                    {% if user.is_authenticated and user.is_researcher %}
+                        <a href="{% url 'special-issue-create' %}" class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Special Issue</a>
+                    {% endif %}
+                </div>
+                {% if special_issues %}
+                    <div class="flex flex-col gap-3 w-full not-format">
+                        {% for special_issue in special_issues %}
+                            {% include "partials/cards/_special_issue_card.html" with special_issue=special_issue %}
+                        {% endfor %}
+                    </div>
+                    {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring=filter_querystring %}
+                {% else %}
+                    {% include "partials/_empty_state.html" with text="There are no special issues matching your criteria." %}
+                {% endif %}
+            </div>
+        </div>
+    </article>
+{% endblock %}
