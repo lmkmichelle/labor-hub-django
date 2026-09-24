@@ -39,12 +39,13 @@ from events.models import Event
 from jobs.models import Job
 from publications.models import Author, Publication
 from seminars.models import Seminar
+from special_issues.models import SpecialIssue
 
 EXAMPLE_AUTHOR = "A. Example"
 
 
 class Command(BaseCommand):
-    help = "Create one example job, paper, visit and event (or remove them with --remove)."
+    help = "Create one example job, paper, visit, event and special issue (or remove them with --remove)."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -76,11 +77,12 @@ class Command(BaseCommand):
             self._seed_event(now, owner)
             self._seed_job(today, owner)
             self._seed_visit(today, owner)
+            self._seed_special_issue(today, owner)
 
         self.stdout.write(
             self.style.SUCCESS(
-                "\n4 example items are live: one discussion paper, one event, one "
-                "job and one visit, each badged 'Example'.\n"
+                "\n5 example items are live: one discussion paper, one event, one "
+                "job, one visit and one special issue, each badged 'Example'.\n"
                 "Remove them with:  python manage.py seed_examples --remove"
             )
         )
@@ -184,6 +186,26 @@ class Command(BaseCommand):
         )
         self._report("visit", created)
 
+    def _seed_special_issue(self, today, owner):
+        _, created = SpecialIssue.objects.update_or_create(
+            is_example=True,
+            title="Example: Special Issue on Labor Markets and Technology",
+            defaults={
+                "journal": "Example Journal of Labor Economics",
+                "description": (
+                    "This is an example entry showing what a special issue looks "
+                    "like on Labor Hub. A real entry would describe the theme and "
+                    "link to the call for papers."
+                ),
+                "call_url": "https://example.edu/call-for-papers",
+                "submission_deadline": today + timedelta(days=75),
+                "editors": [{"name": "A. Example", "user_id": None}],
+                "posted_by": owner,
+                "status": "approved",
+            },
+        )
+        self._report("special issue", created)
+
     # -- removal --------------------------------------------------------------
     def _remove(self):
         with transaction.atomic():
@@ -193,6 +215,7 @@ class Command(BaseCommand):
                 ("event", Event),
                 ("job", Job),
                 ("visit", Seminar),
+                ("special issue", SpecialIssue),
             ):
                 queryset = model.objects.filter(is_example=True)
                 # Count first: delete() reports cascaded rows too (the paper's

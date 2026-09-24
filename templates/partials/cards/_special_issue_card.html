@@ -1,0 +1,22 @@
+{% comment %}
+Detailed special issue card. Inputs:
+  special_issue   a SpecialIssue instance
+Used by the Special Issues list page and the Announcements feed.
+{% endcomment %}
+<div class="card-surface w-full">
+  <div class="card-header">
+    <h5 class="card-title"><a href="{{ special_issue.get_absolute_url }}" class="card-stretch-link">{{ special_issue.title }}</a></h5>
+    <div class="card-meta">
+      {% include "partials/_example_badge.html" with show=special_issue.is_example %}
+      <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ special_issue.submission_deadline|date:"N j, Y" }}</p>
+    </div>
+  </div>
+  <p class="mt-1 text-sm text-body">{{ special_issue.journal }}</p>
+  <p class="mt-1 text-sm text-body">{{ special_issue.description|truncatechars:300 }}</p>
+  {% if special_issue.posted_by %}
+    <p class="mt-2 text-sm text-body text-right">
+      Posted by
+      <a href="{% url 'profile' pk=special_issue.posted_by.id %}" class="card-inline-link">{{ special_issue.posted_by.get_full_name|default:special_issue.posted_by.email }}</a>
+    </p>
+  {% endif %}
+</div>

@@ -17,6 +17,7 @@ from events.models import Event
 from jobs.models import Job
 from publications.models import Publication
 from seminars.models import Seminar
+from special_issues.models import SpecialIssue
 
 UNSUBSCRIBE_SALT = "accounts.digests.unsubscribe"
 
@@ -129,6 +130,23 @@ def collect_new_content(since):
                     "meta": ", ".join(visit.country_labels()),
                 }
                 for visit in visits
+            ],
+        })
+
+    special_issues = list(
+        SpecialIssue.objects.approved().filter(created_at__gte=since).order_by("-created_at")
+    )
+    if special_issues:
+        sections.append({
+            "key": "special_issues",
+            "label": "New special issues",
+            "items": [
+                {
+                    "title": issue.title,
+                    "url": absolute_url(issue.get_absolute_url()),
+                    "meta": issue.journal,
+                }
+                for issue in special_issues
             ],
         })
 

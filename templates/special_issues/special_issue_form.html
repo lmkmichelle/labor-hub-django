@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load form_tags %}
+{% load static %}
+
+{% block title %}
+    Post a Special Issue
+{% endblock title %}
+
+{% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"
+          rel="stylesheet"
+          type="text/css" />
+    <article class="format lg:format-lg max-w-none">
+        <h3 class="title">Post a Special Issue</h3>
+        <form method="POST" class="mb-8">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% render_field form.journal %}
+
+            {% render_field form.title %}
+
+            <div class="form-field not-format">
+                <p class="form-label-tight">Editors</p>
+                <p class="form-help">You are listed as the first editor of every special issue you post.</p>
+                <p class="m-0 text-sm text-body">{{ user.get_full_name }} (you)</p>
+            </div>
+
+            {% render_field form.editors_input placeholder="Add other editors" %}
+
+            {% render_field form.description %}
+
+            {% render_field form.call_url %}
+
+            {% render_field form.submission_deadline %}
+
+            <div class="flex gap-3 mb-5">
+                <button type="submit" class="btn-primary">Post Special Issue</button>
+                <a href="{% url 'special-issues-list' %}" class="btn-secondary no-underline">Cancel</a>
+            </div>
+        </form>
+    </article>
+    <script src="{% static 'js/tagify.js' %}"></script>
+{% endblock %}

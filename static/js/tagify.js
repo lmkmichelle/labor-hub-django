@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", async function () {
   const authors_input = document.querySelector("#authors-input");
+  const editors_input = document.querySelector("#editors-input");
   const research_interests_input = document.querySelector("#research-interests-input");
   const topics_input = document.querySelector("#topics-input");
 
@@ -35,6 +36,28 @@ document.addEventListener("DOMContentLoaded", async function () {
         .then(res => res.json())
         .then(data => {
           authors_tag.settings.whitelist = data;
+        });
+    });
+  }
+
+  if (editors_input) {
+    // Same member search as authors; anyone not found is kept as a plain name.
+    const editors_tag = new Tagify(editors_input, {
+      whitelist: [],
+      enforceWhitelist: false,
+      dropdown: {
+        closeOnSelect: false,
+        enabled: 0,
+        maxItems: 10,
+        classname: "dropdown-panel",
+      }
+    });
+
+    editors_tag.on('input', function (e) {
+      fetch(`/api/accounts/search/?q=${encodeURIComponent(e.detail.value)}`)
+        .then(res => res.json())
+        .then(data => {
+          editors_tag.settings.whitelist = data;
         });
     });
   }

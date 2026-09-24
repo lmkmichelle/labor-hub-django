@@ -18,6 +18,7 @@ from events.models import Event
 from jobs.models import Job
 from publications.models import Publication
 from seminars.models import Seminar
+from special_issues.models import SpecialIssue
 
 
 def make_user(email="digest@example.com", frequency=Profile.DigestFrequency.WEEKLY):
@@ -76,6 +77,19 @@ class CollectNewContentTests(TestCase):
 
         keys = {s["key"] for s in collect_new_content(self.since)}
         self.assertEqual(keys, {"events", "jobs", "visits"})
+
+    def test_special_issues_included(self):
+        issue = SpecialIssue.objects.create(
+            journal="J", title="Special", description="d",
+            submission_deadline=self.now.date(), status="approved",
+        )
+        SpecialIssue.objects.filter(pk=issue.pk).update(created_at=self.now - timedelta(days=1))
+        SpecialIssue.objects.create(
+            journal="J", title="Hidden", description="d",
+            submission_deadline=self.now.date(), status="pending",
+        )
+        section = next(s for s in collect_new_content(self.since) if s["key"] == "special_issues")
+        self.assertEqual([i["title"] for i in section["items"]], ["Special"])
 
     def test_empty_when_nothing_new(self):
         make_publication("Old", self.now - timedelta(days=30))
