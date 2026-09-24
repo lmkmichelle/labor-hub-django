@@ -63,10 +63,11 @@ class NavbarContactLinkTests(TestCase):
 
 
 class NavbarPostLinksTests(TestCase):
-    """The logged-in user dropdown offers Post a Job/Visit/Event alongside
-    Submit a paper; anonymous visitors see none of them."""
+    """The logged-in user dropdown offers Post an Announcement (which then
+    asks for the category) alongside Submit a paper; anonymous visitors see
+    neither."""
 
-    post_link_names = ('job-create', 'seminar-create', 'event-create')
+    post_link_names = ('announcement-new', 'submit_paper')
 
     def test_hidden_for_anonymous(self):
         response = self.client.get(reverse('home'))

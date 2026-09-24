@@ -12,10 +12,7 @@ class SpecialIssueForm(forms.ModelForm):
         required=False,
         label='Other Editors (Optional)',
         widget=forms.TextInput(attrs={'id': 'editors-input'}),
-        help_text=(
-            "You are added as an editor automatically. Type a name to find a "
-            "Labor Hub member, or enter any other editor's name."
-        ),
+        help_text="Type a name to find a Labor Hub member, or enter any other editor's name.",
     )
 
     class Meta:
@@ -28,7 +25,7 @@ class SpecialIssueForm(forms.ModelForm):
         labels = {
             'journal': 'Journal',
             'title': 'Title of Special Issue',
-            'description': 'Description (include a link to the call for papers)',
+            'description': 'Description',
             'call_url': 'Call for Papers Link (Optional)',
             'submission_deadline': 'Deadline for Submission',
         }

@@ -20,7 +20,7 @@ class SpecialIssue(Approvable):
     description = models.TextField(
         help_text='Include a link to the call for papers.',
     )
-    call_url = models.URLField(blank=True, help_text='Call for papers link')
+    call_url = models.URLField(blank=True)
     submission_deadline = models.DateField()
     posted_by = models.ForeignKey(
         CustomUser,

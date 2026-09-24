@@ -147,3 +147,27 @@ class NavSectionTests(TestCase):
     def test_other_sections(self):
         self.assertEqual(self.client.get(reverse("publications")).context["nav_section"], "papers")
         self.assertEqual(self.client.get(reverse("scholars")).context["nav_section"], "scholars")
+
+
+class TopNavTests(TestCase):
+    def test_nav_lists_exactly_the_four_sections(self):
+        response = self.client.get("/")
+        nav = response.content.decode().split('id="navbar-cta"')[1].split("</ul>")[0]
+        for label in ("Scholars", "Announcements", "Research Papers", "Contact Us"):
+            self.assertIn(label, nav)
+        for gone in ("World Map", "Discussion Papers", ">Home<", ">Events<", ">Jobs<"):
+            self.assertNotIn(gone, nav)
+        self.assertLess(nav.index("Scholars"), nav.index("Announcements"))
+        self.assertLess(nav.index("Announcements"), nav.index("Research Papers"))
+        self.assertLess(nav.index("Research Papers"), nav.index("Contact Us"))
+
+    def test_user_menu_has_one_post_an_announcement_link(self):
+        user = CustomUser.objects.create_user(
+            email="m@example.com", password="x", first_name="M", last_name="N",
+            role=CustomUser.Role.RESEARCHER, is_active=True,
+        )
+        self.client.force_login(user)
+        html = self.client.get("/").content.decode()
+        self.assertIn(reverse("announcement-new"), html)
+        for old in (">Post a Job<", ">Post a Visit<", ">Post an Event<"):
+            self.assertNotIn(old, html)

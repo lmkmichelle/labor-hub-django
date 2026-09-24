@@ -23,7 +23,11 @@ from core.constants import (
     PAPER_COUNTRY_CHOICES,
     PAPER_SPECIAL_COUNTRY_CODES,
 )
-from core.announcements import announcements_queryset, load_announcements
+from core.announcements import (
+    announcements_queryset,
+    load_announcements,
+    recent_announcement_summaries,
+)
 from core.filters import map_country_terms_to_codes, parse_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
@@ -92,83 +96,6 @@ class SuperuserTemplateView(UserPassesTestMixin, TemplateView):
 
 
 def home(request):
-    # Get upcoming events (next 6)
-    upcoming_events_qs = Event.objects.filter(
-        status='approved',
-        date__gte=timezone.now()
-    ).order_by('date')[:6]
-
-    # Format events for _list_display template
-    upcoming_events = []
-    for event in upcoming_events_qs:
-        upcoming_events.append({
-            'url': f'/events/{event.id}/',
-            'title': event.title,
-            'date': timezone.localtime(event.date).strftime('%b %d'),
-            # No 'subtitle' here: this previously read
-            # f'Discussion Series #{event.id}', a leftover from copying the
-            # papers dict below -- meaningless (and always-true) for an event.
-            'description': event.location,
-            'badge': {
-                'class': 'bg-primary',
-                'text': event.get_category_display()
-            },
-            'is_example': event.is_example,
-            # No 'meta' (right-aligned time): the event form only collects a
-            # date, so every event is stored at local midnight -- showing a
-            # time here was always either noise (00:00) or, before this was
-            # localized, a stray UTC offset like 04:00.
-        })
-
-    # Get new jobs (most recently posted, last 6)
-    new_jobs_qs = Job.objects.approved().order_by('-created_at')[:6]
-
-    # Format jobs for _list_display template
-    new_jobs = []
-    for job in new_jobs_qs:
-        category_labels = job.category_labels()
-        new_jobs.append({
-            'url': job.get_absolute_url(),
-            'title': job.title,
-            'date': timezone.localtime(job.created_at).strftime('%b %d'),
-            'subtitle': job.employer or 'Employer not specified',
-            'description': f'Deadline: {job.deadline.strftime("%b %d, %Y")}',
-            'badge': {
-                'class': 'bg-primary',
-                'text': category_labels[0]
-            } if category_labels else None,
-            'is_example': job.is_example,
-        })
-
-    # Get upcoming seminars (next 6)
-    today = timezone.localdate()
-    upcoming_seminars_qs = Seminar.objects.approved().filter(
-        Q(visit_end__gte=today) |
-        Q(visit_end__isnull=True, visit_start__gte=today)
-    ).order_by('visit_start')[:6]
-
-    # Format seminars for _list_display template
-    upcoming_seminars = []
-    for seminar in upcoming_seminars_qs:
-        country_labels = seminar.country_labels()
-        if seminar.visit_start and seminar.visit_end and seminar.visit_end != seminar.visit_start:
-            seminar_date = f"{seminar.visit_start.strftime('%b %d')} - {seminar.visit_end.strftime('%b %d')}"
-        elif seminar.visit_start:
-            seminar_date = seminar.visit_start.strftime('%b %d')
-        elif seminar.visit_end:
-            seminar_date = seminar.visit_end.strftime('%b %d')
-        else:
-            seminar_date = ''
-        upcoming_seminars.append({
-            'url': f'/seminars/{seminar.id}/',
-            'title': seminar.visitor_name or 'Visiting scholar',
-            'date': seminar_date,
-            'subtitle': f'Visiting {seminar.get_university_display()}',
-            'description': seminar.visitor_affiliation or '',
-            'is_example': seminar.is_example,
-            'meta': {'right': ', '.join(country_labels[:2]) if country_labels else ''}
-        })
-
     # Get new scholars (recently joined, last 6)
     new_scholars_qs = CustomUser.objects.filter(
         is_active=True,
@@ -217,11 +144,9 @@ def home(request):
         })
 
     context = {
-        'upcoming_events': upcoming_events,
-        'new_jobs': new_jobs,
-        'upcoming_seminars': upcoming_seminars,
         'new_scholars': new_scholars,
         'recent_papers': recent_papers,
+        'recent_announcements': recent_announcement_summaries(),
     }
 
     return render(request, 'core/home.html', context)
