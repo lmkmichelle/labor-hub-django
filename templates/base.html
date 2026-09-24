@@ -127,8 +127,41 @@
                        class="nav-link {% if nav_section == 'scholars' %}text-red-700{% endif %}">Scholars</a>
                   </li>
                   <li>
-                    <a href="{% url 'announcements' %}"
-                       class="nav-link {% if nav_section == 'announcements' %}text-red-700{% endif %}">Announcements</a>
+                    <button type="button"
+                            id="announcements-menu-button"
+                            data-dropdown-toggle="announcements-dropdown"
+                            data-dropdown-placement="bottom-start"
+                            class="nav-link inline-flex items-center gap-1 {% if nav_section == 'announcements' %}text-red-700{% endif %}"
+                            aria-haspopup="true">
+                      Announcements
+                      <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div class="dropdown-panel z-50 hidden w-56" id="announcements-dropdown">
+                      <ul class="p-2 text-sm text-body font-medium" aria-labelledby="announcements-menu-button">
+                        <li>
+                          <a href="{% url 'announcements' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">All Announcements</a>
+                        </li>
+                        <li class="mt-2 border-t border-default pt-2">
+                          <a href="{% url 'jobs-list' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Job Postings</a>
+                        </li>
+                        <li>
+                          <a href="{% url 'events-list' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Events</a>
+                        </li>
+                        <li>
+                          <a href="{% url 'special-issues-list' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Special Issues</a>
+                        </li>
+                        <li>
+                          <a href="{% url 'seminars-list' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Long-Distance Visits</a>
+                        </li>
+                      </ul>
+                    </div>
                   </li>
                   <li>
                     <a href="{% url 'publications' %}"

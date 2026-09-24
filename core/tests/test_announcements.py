@@ -150,16 +150,28 @@ class NavSectionTests(TestCase):
 
 
 class TopNavTests(TestCase):
+    def nav_html(self):
+        html = self.client.get("/").content.decode()
+        return html.split('id="navbar-cta"')[1].split("</nav>")[0]
+
     def test_nav_lists_exactly_the_four_sections(self):
-        response = self.client.get("/")
-        nav = response.content.decode().split('id="navbar-cta"')[1].split("</ul>")[0]
+        nav = self.nav_html()
         for label in ("Scholars", "Announcements", "Research Papers", "Contact Us"):
             self.assertIn(label, nav)
-        for gone in ("World Map", "Discussion Papers", ">Home<", ">Events<", ">Jobs<"):
+        for gone in ("World Map", "Discussion Papers", ">Home<"):
             self.assertNotIn(gone, nav)
         self.assertLess(nav.index("Scholars"), nav.index("Announcements"))
         self.assertLess(nav.index("Announcements"), nav.index("Research Papers"))
         self.assertLess(nav.index("Research Papers"), nav.index("Contact Us"))
+
+    def test_announcements_dropdown_links_to_each_type(self):
+        nav = self.nav_html()
+        menu = nav.split('id="announcements-dropdown"')[1].split("</ul>")[0]
+        for name in ("announcements", "jobs-list", "events-list",
+                     "special-issues-list", "seminars-list"):
+            self.assertIn(f'href="{reverse(name)}"', menu)
+        for label in ("Job Postings", "Events", "Special Issues", "Long-Distance Visits"):
+            self.assertIn(label, menu)
 
     def test_user_menu_has_one_post_an_announcement_link(self):
         user = CustomUser.objects.create_user(
