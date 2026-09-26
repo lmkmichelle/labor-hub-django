@@ -8,6 +8,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>{% block title %}Labor Hub{% endblock title %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}" />
     {% compress css %}
       <link rel="stylesheet" href="{% static 'src/output.css' %}" />
       <link rel="stylesheet" href="{% static 'css/base.css' %}" />
@@ -164,8 +165,33 @@
                     </div>
                   </li>
                   <li>
-                    <a href="{% url 'publications' %}"
-                       class="nav-link whitespace-nowrap {% if nav_section == 'papers' %}text-red-700{% endif %}">Research Papers</a>
+                    <button type="button"
+                            id="papers-menu-button"
+                            data-dropdown-toggle="papers-dropdown"
+                            data-dropdown-placement="bottom-start"
+                            class="nav-link whitespace-nowrap inline-flex items-center gap-1 {% if nav_section == 'papers' %}text-red-700{% endif %}"
+                            aria-haspopup="true">
+                      Research Papers
+                      <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div class="dropdown-panel z-50 hidden w-56" id="papers-dropdown">
+                      <ul class="p-2 text-sm text-body font-medium" aria-labelledby="papers-menu-button">
+                        <li>
+                          <a href="{% url 'publications' %}"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">All Research Papers</a>
+                        </li>
+                        <li class="mt-2 border-t border-default pt-2">
+                          <a href="{% url 'publications' %}?type=discussion"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Discussion Papers</a>
+                        </li>
+                        <li>
+                          <a href="{% url 'publications' %}?type=job_market"
+                             class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Job Market Papers</a>
+                        </li>
+                      </ul>
+                    </div>
                   </li>
                   <li>
                     <a href="{% url 'contact' %}"

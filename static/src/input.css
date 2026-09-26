@@ -76,6 +76,9 @@
   .form-check {
     @apply w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft;
   }
+  .form-radio {
+    @apply w-4 h-4 border border-default-medium rounded-full bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft;
+  }
   .form-check-label {
     @apply select-none ms-1 text-sm font-medium text-heading;
   }

@@ -68,9 +68,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       dropdown: {
         enabled: 0,
         closeOnSelect: false,
-        maxItems: 10,
-        classname: "dropdown-panel",
-        scroll
+        maxItems: additional_keywords.length,
+        classname: "dropdown-panel"
       }
     });
   }
@@ -84,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       dropdown: {
         enabled: 0,
         closeOnSelect: false,
-        maxItems: 30,
+        maxItems: additional_keywords.length,
         classname: "dropdown-panel"
       },
       originalInputValueFormat: values =>

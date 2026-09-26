@@ -26,10 +26,21 @@ class SeminarFormTests(TestCase):
         form = SeminarForm(data=valid_data(university=self.university.pk))
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_university_is_required(self):
+    def test_university_or_written_in_name_is_required(self):
         form = SeminarForm(data=valid_data())
         self.assertFalse(form.is_valid())
         self.assertIn("university", form.errors)
+        form = SeminarForm(data=valid_data(university_name="   "))
+        self.assertFalse(form.is_valid())
+        self.assertIn("university", form.errors)
+
+    def test_written_in_institution_is_accepted_and_saved(self):
+        form = SeminarForm(data=valid_data(university_name="  Tiny College  "))
+        self.assertTrue(form.is_valid(), form.errors)
+        instance = form.save(commit=False)
+        self.assertIsNone(instance.university)
+        self.assertEqual(instance.university_name, "Tiny College")
+        self.assertEqual(instance.get_university_display(), "Tiny College")
 
     def test_visit_type_is_required(self):
         data = valid_data(university=self.university.pk)
@@ -44,11 +55,10 @@ class SeminarFormTests(TestCase):
         self.assertNotIn("visitor_email", fields)
         self.assertNotIn("visitor_affiliation", fields)
 
-    def test_university_name_is_no_longer_a_form_field(self):
-        self.assertNotIn("university_name", SeminarForm().fields)
-        # A posted university_name must not leak through onto the instance.
+    def test_listed_university_wins_over_written_in_name(self):
         form = SeminarForm(data=valid_data(
-            university=self.university.pk, university_name="Sneaky University"))
+            university=self.university.pk, university_name="Other U"))
         self.assertTrue(form.is_valid(), form.errors)
         instance = form.save(commit=False)
-        self.assertNotEqual(instance.university_name, "Sneaky University")
+        self.assertEqual(instance.university, self.university)
+        self.assertEqual(instance.university_name, "")

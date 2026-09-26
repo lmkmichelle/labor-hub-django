@@ -360,6 +360,28 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(jm_paper, response.context["publications"])
         self.assertNotIn(regular, response.context["publications"])
 
+    def test_type_filter_and_heading(self):
+        jm = Publication.objects.create(
+            title="Job Market", abstract="a", status="approved", is_job_market=True)
+        dp = Publication.objects.create(
+            title="Regular", abstract="a", status="approved", is_job_market=False)
+        url = reverse("publications")
+
+        response = self.client.get(url, {"type": "job_market"})
+        self.assertIn(jm, response.context["publications"])
+        self.assertNotIn(dp, response.context["publications"])
+        self.assertEqual(response.context["page_heading"], "Job Market Papers")
+
+        response = self.client.get(url, {"type": "discussion"})
+        self.assertIn(dp, response.context["publications"])
+        self.assertNotIn(jm, response.context["publications"])
+        self.assertEqual(response.context["page_heading"], "Discussion Papers")
+
+        response = self.client.get(url)
+        self.assertIn(jm, response.context["publications"])
+        self.assertIn(dp, response.context["publications"])
+        self.assertEqual(response.context["page_heading"], "Research Papers")
+
 
 class ScholarsListViewTests(TestCase):
     def test_scholars_list_shows_all_members(self):

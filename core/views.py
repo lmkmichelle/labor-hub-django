@@ -534,9 +534,19 @@ def publications_list(request):
             topics_query |= Q(topic__icontains=term)
         publications = publications.filter(topics_query)
 
-    job_market = request.GET.get('job_market') == '1'
-    if job_market:
+    paper_type = request.GET.get('type', '')
+    if request.GET.get('job_market') == '1':
+        paper_type = 'job_market'
+    if paper_type == 'discussion':
+        publications = publications.filter(is_job_market=False)
+    elif paper_type == 'job_market':
         publications = publications.filter(is_job_market=True)
+    else:
+        paper_type = ''
+    page_heading = {
+        'discussion': 'Discussion Papers',
+        'job_market': 'Job Market Papers',
+    }.get(paper_type, 'Research Papers')
 
     sort = request.GET.get('sort', 'newest')
     if sort == 'oldest':
@@ -561,8 +571,8 @@ def publications_list(request):
         filter_params['countries'] = selected_countries_serialized
     if selected_topics_serialized:
         filter_params['topics'] = selected_topics_serialized
-    if job_market:
-        filter_params['job_market'] = '1'
+    if paper_type:
+        filter_params['type'] = paper_type
     if sort:
         filter_params['sort'] = sort
 
@@ -577,6 +587,7 @@ def publications_list(request):
         'country_choices': PAPER_COUNTRY_CHOICES,
         'selected_topics': topic_terms,
         'selected_topics_serialized': selected_topics_serialized,
-        'job_market': job_market,
+        'paper_type': paper_type,
+        'page_heading': page_heading,
         'filter_querystring': urlencode(filter_params),
     })

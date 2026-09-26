@@ -16,6 +16,7 @@ class SeminarForm(forms.ModelForm):
         fields = [
             'country_code',
             'university',
+            'university_name',
             'visit_type',
             'visit_start',
             'visit_end',
@@ -28,6 +29,7 @@ class SeminarForm(forms.ModelForm):
         }
         labels = {
             'university': 'University',
+            'university_name': "Institution not listed? Enter it here",
             'visit_type': 'Visit Type',
             'visit_start': 'Visit Start Date',
             'visit_end': 'Visit End Date (Optional)',
@@ -47,10 +49,16 @@ class SeminarForm(forms.ModelForm):
 
         self.fields['description'].required = False
         self.fields['university'].queryset = University.objects.order_by('name')
-        self.fields['university'].required = True
+        # Either the list pick or a written-in name satisfies the form;
+        # clean() enforces that one of them is present.
+        self.fields['university'].required = False
         self.fields['university'].help_text = (
-            "Pick a country first. If your institution isn't listed, let us know "
-            "through the contact form and we'll add it."
+            "Pick a country first, then choose from the list. "
+            "Not there? Write it in below."
+        )
+        self.fields['university_name'].required = False
+        self.fields['university_name'].help_text = (
+            "Only needed if your institution isn't in the list above."
         )
         self.fields['visit_end'].required = False
 
@@ -64,6 +72,12 @@ class SeminarForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        cleaned_data['university_name'] = (cleaned_data.get('university_name') or '').strip()
+        if cleaned_data.get('university'):
+            # The list wins; don't keep a stale write-in alongside it.
+            cleaned_data['university_name'] = ''
+        elif not cleaned_data['university_name']:
+            self.add_error('university', 'Choose a university from the list or write in your institution.')
         country_code = cleaned_data.get('country_code')
         cleaned_data['countries'] = [country_code] if country_code else []
         return cleaned_data

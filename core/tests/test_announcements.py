@@ -158,7 +158,7 @@ class TopNavTests(TestCase):
         nav = self.nav_html()
         for label in ("Scholars", "Announcements", "Research Papers", "Contact Us"):
             self.assertIn(label, nav)
-        for gone in ("World Map", "Discussion Papers", ">Home<"):
+        for gone in ("World Map", ">Home<"):
             self.assertNotIn(gone, nav)
         self.assertLess(nav.index("Scholars"), nav.index("Announcements"))
         self.assertLess(nav.index("Announcements"), nav.index("Research Papers"))
@@ -171,6 +171,15 @@ class TopNavTests(TestCase):
                      "special-issues-list", "seminars-list"):
             self.assertIn(f'href="{reverse(name)}"', menu)
         for label in ("Job Postings", "Events", "Special Issues", "Long-Distance Visits"):
+            self.assertIn(label, menu)
+
+    def test_papers_dropdown_links_to_each_type(self):
+        nav = self.nav_html()
+        menu = nav.split('id="papers-dropdown"')[1].split("</ul>")[0]
+        base = reverse("publications")
+        for href in (base, f"{base}?type=discussion", f"{base}?type=job_market"):
+            self.assertIn(f'href="{href}"', menu)
+        for label in ("All Research Papers", "Discussion Papers", "Job Market Papers"):
             self.assertIn(label, menu)
 
     def test_user_menu_has_one_post_an_announcement_link(self):

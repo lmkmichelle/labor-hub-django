@@ -9,8 +9,8 @@
         <h2>Long-Distance Visits</h2>
         {% include "partials/_announcement_tabs.html" with active="visit" %}
         <p class="mb-6">Here you will find information about research visits, such as a sabbatical, that members have planned, allowing colleagues to see who will be at what institutions in their area and when. It is intended to facilitate additional meetings, seminars, and new collaborations. Members are invited to post their forthcoming visits so that others in the community are aware of their presence.</p>
-        <div class="flex flex-row w-full gap-6">
-            <div class="flex flex-col w-60">
+        <div class="flex flex-col lg:flex-row w-full gap-6">
+            <div class="flex flex-col w-full lg:w-60">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
@@ -63,7 +63,7 @@
                 </form>
             </div>
             <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
-                <div class="flex w-full min-w-0 items-center gap-3 not-format">
+                <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
                     <form method="GET"
                           id="searchForm"
                           class="flex flex-1 min-w-0 w-full items-center gap-2">

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Discussion Papers{% endblock %}
+{% block title %}{{ page_heading }}{% endblock %}
 {% block content %}
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
@@ -8,7 +8,7 @@
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        <h2>Discussion Papers</h2>
+        <h2>{{ page_heading }}</h2>
         <p class="mb-6">This section makes available unpublished working papers contributed by members. Student members who will be on the upcoming job market are encouraged to post to our <span class="font-bold text-red-700">job market paper series</span> so they can introduce their work to the global community. Job market papers require sign-off from a dissertation advisor and are published online as soon as approved.</p>
         <div class="flex flex-col lg:flex-row w-full gap-6">
             <div class="flex flex-col w-full lg:w-60">
@@ -40,14 +40,31 @@
                     <div class="mb-4">
                         <h4>Type</h4>
                         <div class="mb-1">
-                            <input id="job-market"
-                                   class="form-check"
-                                   type="checkbox"
-                                   name="job_market"
-                                   value="1"
-                                   {% if job_market %}checked{% endif %}>
-                            <label class="form-check-label"
-                                   for="job-market">Job market papers only</label>
+                            <input id="type-all"
+                                   class="form-radio"
+                                   type="radio"
+                                   name="type"
+                                   value=""
+                                   {% if not paper_type %}checked{% endif %}>
+                            <label class="form-check-label" for="type-all">All papers</label>
+                        </div>
+                        <div class="mb-1">
+                            <input id="type-discussion"
+                                   class="form-radio"
+                                   type="radio"
+                                   name="type"
+                                   value="discussion"
+                                   {% if paper_type == 'discussion' %}checked{% endif %}>
+                            <label class="form-check-label" for="type-discussion">Discussion papers</label>
+                        </div>
+                        <div class="mb-1">
+                            <input id="type-job-market"
+                                   class="form-radio"
+                                   type="radio"
+                                   name="type"
+                                   value="job_market"
+                                   {% if paper_type == 'job_market' %}checked{% endif %}>
+                            <label class="form-check-label" for="type-job-market">Job market papers</label>
                         </div>
                     </div>
                     <div class="mb-4">
@@ -65,7 +82,7 @@
                           class="flex flex-1 min-w-0 w-full items-center gap-2">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
-                        {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
+                        {% if paper_type %}<input type="hidden" name="type" value="{{ paper_type }}">{% endif %}
                         <input type="hidden" name="sort" value="{{ sort }}">
                         <label for="paper-search" class="sr-only">Search papers</label>
                         <div class="relative flex-1 min-w-0 w-full">
@@ -93,7 +110,7 @@
                     <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
-                        {% if job_market %}<input type="hidden" name="job_market" value="1">{% endif %}
+                        {% if paper_type %}<input type="hidden" name="type" value="{{ paper_type }}">{% endif %}
                         {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
                         <label for="sortSelect" class="sr-only">Sort by</label>
                         <select id="sortSelect"
