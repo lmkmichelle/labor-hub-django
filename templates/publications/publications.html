@@ -10,8 +10,8 @@
     <article class="format lg:format-lg max-w-none">
         <h2>{{ page_heading }}</h2>
         <p class="mb-6">This section makes available unpublished working papers contributed by members. Student members who will be on the upcoming job market are encouraged to post to our <span class="font-bold text-red-700">job market paper series</span> so they can introduce their work to the global community. Job market papers require sign-off from a dissertation advisor and are published online as soon as approved.</p>
-        <div class="flex flex-col lg:flex-row w-full gap-6">
-            <div class="flex flex-col w-full lg:w-60">
+        <div class="list-layout">
+            <div class="list-sidebar">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
@@ -75,11 +75,11 @@
                     </div>
                 </form>
             </div>
-            <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
-                <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+            <div class="list-main">
+                <div class="list-toolbar not-format">
                     <form method="GET"
                           id="searchForm"
-                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                          class="list-search">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
                         {% if paper_type %}<input type="hidden" name="type" value="{{ paper_type }}">{% endif %}
@@ -90,11 +90,11 @@
                                    id="paper-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="form-input ps-9"
+                                   class="form-input"
                                    placeholder="Search by title, author, or abstract..." />
                         </div>
                         <button type="submit"
-                                class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+                                class="btn-search">
                             <svg class="w-5 h-5"
                                  aria-hidden="true"
                                  xmlns="http://www.w3.org/2000/svg"
@@ -107,25 +107,27 @@
                             <span class="sr-only">Search</span>
                         </button>
                     </form>
-                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
-                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
-                        <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
-                        {% if paper_type %}<input type="hidden" name="type" value="{{ paper_type }}">{% endif %}
-                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
-                        <label for="sortSelect" class="sr-only">Sort by</label>
-                        <select id="sortSelect"
-                                name="sort"
-                                onchange="this.form.submit()"
-                                class="form-select">
-                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
-                            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
-                            <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: Title (A–Z)</option>
-                        </select>
-                    </form>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'submit_paper' %}"
-                           class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Paper</a>
-                    {% endif %}
+                    <div class="list-actions">
+                      <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                          <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+                          <input type="hidden" name="topics" value="{{ selected_topics_serialized }}">
+                          {% if paper_type %}<input type="hidden" name="type" value="{{ paper_type }}">{% endif %}
+                          {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                          <label for="sortSelect" class="sr-only">Sort by</label>
+                          <select id="sortSelect"
+                                  name="sort"
+                                  onchange="this.form.submit()"
+                                  class="form-select">
+                              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
+                              <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
+                              <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: Title (A–Z)</option>
+                          </select>
+                      </form>
+                      {% if user.is_authenticated %}
+                          <a href="{% url 'submit_paper' %}"
+                             class="btn-primary shrink-0 whitespace-nowrap no-underline">Post Paper</a>
+                      {% endif %}
+                    </div>
                 </div>
                 <div class="not-format">
                     {% include 'partials/_publications_list.html' with publications=publications empty_text="No discussion papers match your criteria." %}

@@ -9,8 +9,8 @@
     <article class="format lg:format-lg max-w-none">
         <h2>Scholars</h2>
         <p class="mb-6">Browse the members of the Labor Hub community. Search by name, position, or email, and filter by type, country, or research interest to find researchers and students.</p>
-        <div class="flex flex-col lg:flex-row w-full gap-6">
-            <div class="flex flex-col w-full lg:w-60">
+        <div class="list-layout">
+            <div class="list-sidebar">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
@@ -60,11 +60,11 @@
                     </div>
                 </form>
             </div>
-            <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
-                <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+            <div class="list-main">
+                <div class="list-toolbar not-format">
                     <form method="GET"
                           id="searchForm"
-                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                          class="list-search">
                         <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
                         <input type="hidden" name="interests" value="{{ selected_interests_serialized }}">
                         {% for r in selected_roles %}<input type="hidden" name="role" value="{{ r }}">{% endfor %}
@@ -75,11 +75,11 @@
                                    id="scholar-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="form-input ps-9"
+                                   class="form-input"
                                    placeholder="Search by name, position, or email..." />
                         </div>
                         <button type="submit"
-                                class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+                                class="btn-search">
                             <svg class="w-5 h-5"
                                  aria-hidden="true"
                                  xmlns="http://www.w3.org/2000/svg"
@@ -92,20 +92,22 @@
                             <span class="sr-only">Search</span>
                         </button>
                     </form>
-                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
-                        <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
-                        <input type="hidden" name="interests" value="{{ selected_interests_serialized }}">
-                        {% for r in selected_roles %}<input type="hidden" name="role" value="{{ r }}">{% endfor %}
-                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
-                        <label for="sortSelect" class="sr-only">Sort by</label>
-                        <select id="sortSelect"
-                                name="sort"
-                                onchange="this.form.submit()"
-                                class="form-select">
-                            <option value="" {% if sort == '' %}selected{% endif %}>Sort: Last name (A–Z)</option>
-                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
-                        </select>
-                    </form>
+                    <div class="list-actions">
+                      <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                          <input type="hidden" name="countries" value="{{ selected_countries_serialized }}">
+                          <input type="hidden" name="interests" value="{{ selected_interests_serialized }}">
+                          {% for r in selected_roles %}<input type="hidden" name="role" value="{{ r }}">{% endfor %}
+                          {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                          <label for="sortSelect" class="sr-only">Sort by</label>
+                          <select id="sortSelect"
+                                  name="sort"
+                                  onchange="this.form.submit()"
+                                  class="form-select">
+                              <option value="" {% if sort == '' %}selected{% endif %}>Sort: Last name (A–Z)</option>
+                              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
+                          </select>
+                      </form>
+                    </div>
                 </div>
                 {% if users %}
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 not-format">

@@ -169,6 +169,35 @@
     @apply inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 text-body bg-neutral-secondary-medium border border-default-medium rounded-base shadow-xs hover:bg-neutral-tertiary-medium hover:text-heading focus:outline-none focus:ring-4 focus:ring-neutral-tertiary;
   }
 
+  /* List pages (events, jobs, visits, special issues, papers, scholars).
+     One layout so every page stacks the same way on mobile and sits
+     sidebar-left / results-right from lg up. */
+  .list-layout {
+    @apply flex flex-col lg:flex-row w-full gap-6;
+  }
+  .list-sidebar {
+    @apply flex flex-col w-full lg:w-60;
+  }
+  .list-main {
+    @apply flex flex-col flex-1 min-w-0 w-full gap-3;
+  }
+  .list-toolbar {
+    @apply flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3;
+  }
+  .list-search {
+    @apply flex flex-1 min-w-0 w-full items-center gap-2;
+  }
+  /* Sort on the left, Post button on the right (mobile); side by side from md up. */
+  .list-actions {
+    @apply flex items-center justify-between md:justify-start gap-3 shrink-0;
+  }
+  .btn-search {
+    @apply inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600;
+  }
+  .page-intro {
+    @apply mb-6;
+  }
+
   /* List/card container surface (FR-002).
      `relative` anchors the stretched title link below. The card root is a
      <div>, not an <a>, so poster/author links inside it stay independently

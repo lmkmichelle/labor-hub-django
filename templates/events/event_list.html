@@ -5,8 +5,8 @@
         <h2>Upcoming Events</h2>
         {% include "partials/_announcement_tabs.html" with active="event" %}
         <p class="mb-6">Here you will find announcements about upcoming conferences, workshops, or other events organized by members of the community. Events are screened for relevance and are published online as soon as approved.</p>
-        <div class="flex flex-col lg:flex-row w-full gap-6">
-            <div class="flex flex-col w-full lg:w-60">
+        <div class="list-layout">
+            <div class="list-sidebar">
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
@@ -72,20 +72,20 @@
                         </div>
                         <div class="flex flex-row justify-between">
                             <button type="submit"
-                                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">
+                                    class="btn-primary">
                                 Apply Filters
                             </button>
                             <a href="{% url 'events-list' %}"
-                               class="text-body bg-neutral-secondary-medium box-border no-underline border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Clear Filters</a>
+                               class="btn-secondary no-underline">Clear Filters</a>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="flex flex-col flex-1 min-w-0 w-full gap-3">
-                <div class="flex flex-col md:flex-row w-full min-w-0 items-stretch md:items-center gap-3 not-format">
+            <div class="list-main">
+                <div class="list-toolbar not-format">
                     <form method="GET"
                           id="searchForm"
-                          class="flex flex-1 min-w-0 w-full items-center gap-2">
+                          class="list-search">
                         {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
                         {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
                         {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
@@ -97,11 +97,11 @@
                                    id="simple-search"
                                    name="q"
                                    value="{{ query }}"
-                                   class="form-input ps-9"
+                                   class="form-input"
                                    placeholder="Search events by title, description, or location..." />
                         </div>
                         <button type="submit"
-                                class="inline-flex items-center justify-center rounded-base bg-red-700 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-600">
+                                class="btn-search">
                             <svg class="w-5 h-5"
                                  aria-hidden="true"
                                  xmlns="http://www.w3.org/2000/svg"
@@ -115,27 +115,29 @@
                         </button>
                     </form>
                     <!-- Sort control -->
-                    <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
-                        {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
-                        {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
-                        {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
-                        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
-                        <label for="sortSelect" class="sr-only">Sort by</label>
-                        <select id="sortSelect"
-                                name="sort"
-                                onchange="this.form.submit()"
-                                class="form-select">
-                            <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
-                            <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
-                            <option value="location" {% if sort == 'location' %}selected{% endif %}>Sort: Location</option>
-                        </select>
-                    </form>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'event-create' %}"
-                           class="inline-flex shrink-0 items-center whitespace-nowrap no-underline text-white bg-red-700 hover:bg-red-800 border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none">
-                            Post Event
-                        </a>
-                    {% endif %}
+                    <div class="list-actions">
+                      <form method="GET" id="sortForm" class="flex items-center gap-2 shrink-0">
+                          {% for cat in selected_categories %}<input type="hidden" name="category" value="{{ cat }}">{% endfor %}
+                          {% if start_date %}<input type="hidden" name="start_date" value="{{ start_date }}">{% endif %}
+                          {% if end_date %}<input type="hidden" name="end_date" value="{{ end_date }}">{% endif %}
+                          {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                          <label for="sortSelect" class="sr-only">Sort by</label>
+                          <select id="sortSelect"
+                                  name="sort"
+                                  onchange="this.form.submit()"
+                                  class="form-select">
+                              <option value="" {% if sort == '' %}selected{% endif %}>Sort: Date</option>
+                              <option value="deadline" {% if sort == 'deadline' %}selected{% endif %}>Sort: Nearest Deadline</option>
+                              <option value="location" {% if sort == 'location' %}selected{% endif %}>Sort: Location</option>
+                          </select>
+                      </form>
+                      {% if user.is_authenticated %}
+                          <a href="{% url 'event-create' %}"
+                             class="btn-primary shrink-0 whitespace-nowrap no-underline">
+                              Post Event
+                          </a>
+                      {% endif %}
+                    </div>
                 </div>
                 {% if events %}
                     <div class="flex flex-col gap-3 w-full">
