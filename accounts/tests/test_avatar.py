@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
 
@@ -26,6 +27,16 @@ def make_exif_rotated_jpeg(size=(300, 200), orientation=6):
 def make_plain_jpeg(size=(400, 300), color="blue"):
     buffer = BytesIO()
     Image.new("RGB", size, color).save(buffer, format="JPEG")
+    buffer.seek(0)
+    return buffer
+
+
+def make_heic(size=(400, 300), color="green"):
+    """An actual HEIC file -- the default format for iPhone photos, which Pillow
+    can't read/write without accounts.apps.AccountsConfig.ready() having
+    registered the pillow-heif plugin."""
+    buffer = BytesIO()
+    Image.new("RGB", size, color).save(buffer, format="HEIF")
     buffer.seek(0)
     return buffer
 
@@ -97,6 +108,30 @@ class ProcessAvatarCropTests(TestCase):
         result.seek(0)
         out = Image.open(result)
         self.assertEqual(out.size, (200, 200))
+
+    def test_heic_upload_is_processed_like_any_other_format(self):
+        """Regression: a user reported HEIC (the default iPhone photo format)
+        avatars didn't work. Pillow can't read HEIC on its own -- this only
+        passes with the pillow-heif plugin registered (accounts.apps)."""
+        source = make_heic(size=(400, 200))
+        result = process_avatar(source, output_size=(200, 200))
+        result.seek(0)
+        out = Image.open(result)
+        self.assertEqual(out.size, (200, 200))
+        self.assertEqual(out.format, "JPEG")  # still re-encoded to JPEG, as always
+
+
+class UpdateProfileFormHeicTests(TestCase):
+    def test_heic_upload_passes_django_imagefield_validation(self):
+        # Django's ImageField also opens the upload with Pillow to validate it,
+        # independently of process_avatar -- both must be able to read HEIC.
+        upload = SimpleUploadedFile(
+            "photo.heic", make_heic().read(), content_type="image/heic")
+        form = UpdateProfileForm(
+            data={"position": "Professor", "country_code": "US", "department": "Cornell"},
+            files={"avatar": upload},
+        )
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 class AvatarCropFormFieldTests(TestCase):

@@ -42,9 +42,13 @@
                        id="{{ form.avatar.id_for_label }}"
                        name="{{ form.avatar.name }}"
                        type="file"
-                       accept="image/*"
+                       accept="image/*,.heic,.heif"
                        data-avatar-input>
                 {{ form.avatar_crop }}
+
+                <p class="form-help mt-2" data-avatar-unsupported-note hidden>Your browser
+                    can't preview this photo format, but it will still be uploaded and
+                    cropped automatically when you save.</p>
 
                 {% if form.avatar.errors %}
                     <p class="mt-2 text-sm text-red-600">{{ form.avatar.errors.0 }}</p>

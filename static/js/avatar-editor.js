@@ -21,8 +21,23 @@
  * be saved. Cancelling (the X, the Cancel button, a backdrop click, or Escape)
  * discards the pick entirely and clears the file input, so nothing half-edited can
  * end up submitted.
+ *
+ * HEIC/HEIF (the default iPhone photo format): Chrome and Firefox can't decode it
+ * in an <img>, only Safari can -- there's no way around that client-side short of
+ * vendoring a WASM decoder. So on a browser that can't render it, the modal is
+ * skipped and the raw file is submitted as-is; the server (accounts.utils.process_avatar,
+ * with the pillow-heif plugin registered in accounts.apps) decodes it, applies EXIF
+ * rotation and centre-crops it there instead -- the same fallback path already used
+ * when JS is unavailable at all. A visible note (data-avatar-unsupported-note) tells
+ * the user why there's no live preview for that file.
  */
 (function () {
+  var IMAGE_EXTENSION_RE = /\.(heic|heif|jpe?g|png|gif|webp|bmp|tiff?|avif)$/i;
+
+  function looksLikeImage(file) {
+    return file.type.startsWith('image/') || IMAGE_EXTENSION_RE.test(file.name || '');
+  }
+
   function initEditor(root) {
     var stageButton = root.querySelector('[data-avatar-trigger]');
     var fileInput = root.querySelector('[data-avatar-input]');
@@ -30,6 +45,7 @@
     var pageImage = root.querySelector('[data-avatar-image]');
     var modal = root.querySelector('[data-avatar-modal]');
     var modalImage = root.querySelector('[data-avatar-modal-image]');
+    var unsupportedNote = root.querySelector('[data-avatar-unsupported-note]');
     if (!stageButton || !fileInput || !cropField || !pageImage || !modal || !modalImage
         || typeof Cropper === 'undefined') {
       return;
@@ -98,9 +114,14 @@
 
     fileInput.addEventListener('change', function () {
       var file = fileInput.files && fileInput.files[0];
-      if (!file || !file.type.startsWith('image/')) {
+      if (!file || !looksLikeImage(file)) {
         return;
       }
+
+      if (unsupportedNote) {
+        unsupportedNote.hidden = true;
+      }
+      cropField.value = '';
 
       destroyCropper();
       objectUrl = URL.createObjectURL(file);
@@ -115,6 +136,17 @@
           checkOrientation: true,
           background: false,
         });
+      };
+
+      // The browser couldn't decode this file at all (most commonly HEIC/HEIF
+      // outside Safari). Keep the file selected -- it still submits and gets
+      // handled server-side -- but there's nothing to show or crop here.
+      modalImage.onerror = function () {
+        destroyCropper();
+        closeModal();
+        if (unsupportedNote) {
+          unsupportedNote.hidden = false;
+        }
       };
     });
 
