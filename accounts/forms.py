@@ -236,10 +236,16 @@ class UpdateProfileForm(forms.ModelForm):
     # before anyone could save any profile edit at all.
     avatar = forms.ImageField(
         label='Upload a profile picture',
-        help_text='Please ensure that the image contains a clear subject.',
+        help_text='Ensure the image contains a clear subject.',
         widget=forms.FileInput,
         required=False,
     )
+
+    # Written by static/js/avatar-editor.js from Cropper.js's getData() when the
+    # user frames/rotates their picture in the editor. Left blank (and safely
+    # ignored -- see clean_avatar_crop) with JS disabled or when no file was
+    # re-picked, so the no-JS path just gets the old centred crop.
+    avatar_crop = forms.CharField(widget=forms.HiddenInput, required=False)
 
     biography = forms.CharField(
         label='Biography',
@@ -301,6 +307,33 @@ class UpdateProfileForm(forms.ModelForm):
             tagify_value = json.dumps([{"value": v} if isinstance(v, str) else v for v in initial_interests])
             self.fields["research_interests_input"].initial = tagify_value
             self.fields["research_interests_input"].widget.attrs['value'] = tagify_value
+
+    def clean_avatar_crop(self):
+        """Parse the JSON box avatar-editor.js writes into a plain dict, or None if it's
+        blank/malformed -- either way this must never block saving the rest of the form,
+        since it just means accounts.utils.process_avatar falls back to a centred crop."""
+        raw = self.cleaned_data.get('avatar_crop')
+        if not raw:
+            return None
+        try:
+            data = json.loads(raw)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(data, dict):
+            return None
+        try:
+            crop = {
+                'x': float(data.get('x', 0)),
+                'y': float(data.get('y', 0)),
+                'width': float(data.get('width', 0)),
+                'height': float(data.get('height', 0)),
+                'rotate': int(float(data.get('rotate', 0))) // 90 * 90,
+            }
+        except (TypeError, ValueError):
+            return None
+        if crop['width'] <= 0 or crop['height'] <= 0:
+            return None
+        return crop
 
 
 class EmailPreferencesForm(forms.ModelForm):

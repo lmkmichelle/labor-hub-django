@@ -160,6 +160,47 @@
     @apply block w-full cursor-pointer overflow-hidden bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand
       file:ms-0 file:me-3 file:cursor-pointer file:border-0 file:bg-neutral-tertiary-medium file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-heading hover:file:bg-neutral-tertiary;
   }
+  /* Edit Profile's avatar preview (static/js/avatar-editor.js). Square, matching how
+     the picture displays everywhere else on the site (profile page, Scholars grid).
+     The img is absolutely positioned + object-cover so it always fills the box edge
+     to edge -- without this, an image whose pixel size doesn't exactly match the
+     rendered box (any pre-existing non-square avatar, or even subtle rounding) left
+     the box's own background showing through as a visible strip. */
+  .avatar-editor-stage {
+    @apply relative w-full aspect-square overflow-hidden rounded-base border border-default-medium bg-neutral-secondary-medium cursor-pointer;
+  }
+  .avatar-editor-stage img {
+    @apply absolute inset-0 h-full w-full object-cover;
+  }
+  /* The small camera-icon badge overlaid on the preview's corner -- the
+     conventional "change profile photo" affordance, layered on top of the
+     clickable .avatar-editor-stage rather than looking like a file upload. */
+  /* Positive offsets (not negative) -- .avatar-editor-stage has overflow-hidden
+     for the image's object-cover clipping, which would clip the badge too if it
+     sat partly outside the box like a typical negative-offset corner badge. */
+  .avatar-editor-badge {
+    @apply absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-neutral-primary-medium bg-red-700 text-white shadow-xs hover:bg-red-800 pointer-events-none;
+  }
+  /* Cropper.js's live editing stage inside the avatar modal (as opposed to
+     .avatar-editor-stage above, which is just a static preview once cropping
+     moves into the modal). Cropper manages its own canvas sizing once
+     initialised, so this just needs a definite box to fill. */
+  .avatar-modal-stage {
+    @apply w-full aspect-square max-h-[60vh] overflow-hidden rounded-base border border-default-medium bg-neutral-secondary-medium;
+  }
+  /* Icon-only buttons (avatar modal's zoom/rotate controls). Generalised from the
+     mobile nav toggle's button in base.html. */
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-base text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary;
+  }
+  /* A generic modal shell (avatar crop/rotate editor today; reusable if another
+     page ever needs one). Shown/hidden by toggling `hidden` from JS. */
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4;
+  }
+  .modal-panel {
+    @apply w-full max-w-md rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg;
+  }
 
   /* Buttons (FR-006) */
   .btn-primary {

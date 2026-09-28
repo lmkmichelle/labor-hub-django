@@ -169,6 +169,25 @@ class EditProfileViewTests(TestCase):
         self.assertNotContains(response, 'name="digest_frequency"')
         self.assertNotContains(response, 'name="email"')
 
+    def test_avatar_editor_has_no_visible_upload_label_and_modal_controls_are_labelled(self):
+        """Regression: the avatar picker must not read like a generic file-upload
+        widget (no visible "Upload a profile picture" text, no Flowbite file input),
+        and the modal's icon-only zoom/rotate buttons must stay accessible via
+        aria-label even though they carry no visible text."""
+        user = make_active_user()
+        self.client.force_login(user)
+        html = self.client.get(reverse("edit_profile")).content.decode()
+
+        # The label text is still there for screen readers (sr-only), but must no
+        # longer be rendered with the old *visible* label styling.
+        self.assertNotIn('form-label-tight">Upload a profile picture<', html)
+        self.assertIn('sr-only">Upload a profile picture<', html)
+        self.assertNotIn('class="form-file"', html)
+
+        for label in ("Zoom in", "Zoom out", "Rotate left", "Rotate right",
+                      "Change profile picture"):
+            self.assertIn(f'aria-label="{label}"', html)
+
     def test_post_updates_profile_and_crops_avatar(self):
         user = make_active_user()
         self.client.force_login(user)
