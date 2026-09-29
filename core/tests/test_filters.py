@@ -1,7 +1,7 @@
 """Tests for core.filters.parse_pill_terms / map_country_terms_to_codes."""
 from django.test import SimpleTestCase
 
-from core.filters import map_country_terms_to_codes, parse_pill_terms
+from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
 
 
 class ParsePillTermsTests(SimpleTestCase):
@@ -46,6 +46,22 @@ class ParsePillTermsTests(SimpleTestCase):
     def test_deduplicates_case_insensitively(self):
         self.assertEqual(
             parse_pill_terms('["Migration", "migration"]'), ["Migration"])
+
+    def test_empty_json_array_stays_empty_rather_than_falling_back_to_comma_split(self):
+        """Regression: an empty pill input now submits "[]" (see syncHidden()
+        in users_list.html / publications.html), not "". A valid, empty JSON
+        array must not fall through to the comma-split path, which used to
+        return a single bogus "[]" term and silently exclude every result."""
+        self.assertEqual(parse_pill_terms("[]"), [])
+
+
+class SerializePillTermsTests(SimpleTestCase):
+    def test_empty_list_serializes_to_empty_string(self):
+        self.assertEqual(serialize_pill_terms([]), "")
+
+    def test_round_trips_a_comma_containing_term(self):
+        term = "Structural models of health, retirement, and savings"
+        self.assertEqual(parse_pill_terms(serialize_pill_terms([term])), [term])
 
 
 class MapCountryTermsToCodesTests(SimpleTestCase):

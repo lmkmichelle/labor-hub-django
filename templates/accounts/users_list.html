@@ -166,9 +166,12 @@
                 // retirement, and savings"), which a comma-joined hidden
                 // value can't round-trip unambiguously. parse_pill_terms
                 // (core/filters.py) already prefers a JSON array.
-                hidden.value = JSON.stringify(tagify.value.map(function (item) {
+                // An empty pill list is left as '', not '[]' -- '[]' would
+                // still be a truthy, non-empty request param.
+                var values = tagify.value.map(function (item) {
                     return item.value;
-                }));
+                });
+                hidden.value = values.length ? JSON.stringify(values) : '';
             }
 
             function initCountries(inputId, hiddenId, preselected) {
