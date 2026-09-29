@@ -239,7 +239,7 @@ class LaborHubPasswordResetForm(PasswordResetForm):
         message = EmailMultiAlternatives(
             subject, body, from_email, [to_email],
             reply_to=default_reply_to(),
-            headers=cm_headers("Password reset"),
+            headers=cm_headers(),
         )
         if html_email_template_name is not None:
             html_email = loader.render_to_string(html_email_template_name, context)

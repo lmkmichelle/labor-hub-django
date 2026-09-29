@@ -32,10 +32,16 @@
  * Home/End, Enter, Escape) and ARIA (aria-haspopup/expanded, role=listbox/
  * option, aria-selected) to be genuinely usable without a mouse, but it is
  * not a full WAI-ARIA APG combobox implementation.
+ *
+ * Every matching option is rendered (no truncation) so a long list -- e.g.
+ * university-picker.js filling in a country's full set of institutions --
+ * shows everything in the panel, not just an arbitrary alphabetical prefix;
+ * the panel already scrolls (max-h-72 overflow-auto). Rows are built via a
+ * single delegated click listener on the list rather than one per option, so
+ * this stays cheap even for a large country's list.
  */
 (function () {
   var SEARCH_THRESHOLD = 8; // more options than this gets a filter box
-  var MAX_VISIBLE_OPTIONS = 50;
 
   function optionsOf(select) {
     return Array.prototype.slice.call(select.options);
@@ -144,38 +150,53 @@
       trigger.focus();
     }
 
+    var currentMatches = [];
+
     function renderOptions(filterText) {
       var query = (filterText || "").trim().toLowerCase();
       var opts = optionsOf(select);
-      var matches = query
+      currentMatches = query
         ? opts.filter(function (o) {
             return o.textContent.toLowerCase().indexOf(query) !== -1;
           })
         : opts;
 
-      list.innerHTML = "";
+      var fragment = document.createDocumentFragment();
       var selectedRow = -1;
-      matches.slice(0, MAX_VISIBLE_OPTIONS).forEach(function (opt, i) {
+      currentMatches.forEach(function (opt, i) {
         var li = document.createElement("li");
         var button = document.createElement("button");
         button.type = "button";
         button.className = "dropdown-panel-item";
         button.textContent = opt.textContent;
         button.setAttribute("role", "option");
+        button.dataset.index = String(i);
         if (opt.value === select.value) {
           button.setAttribute("aria-selected", "true");
           selectedRow = i;
         }
-        button.addEventListener("mousedown", function (event) {
-          // mousedown (not click) so this fires before the input's blur hides the panel.
-          event.preventDefault();
-          choose(opt);
-        });
         li.appendChild(button);
-        list.appendChild(li);
+        fragment.appendChild(li);
       });
+      list.innerHTML = "";
+      list.appendChild(fragment);
       setActive(selectedRow);
     }
+
+    // One delegated listener instead of one per row, so re-rendering a long
+    // list (e.g. every institution in a country) stays cheap.
+    list.addEventListener("mousedown", function (event) {
+      var button = event.target.closest("button[data-index]");
+      if (!button) {
+        return;
+      }
+      // mousedown (not click) so this fires before the input's blur hides the panel.
+      event.preventDefault();
+      var opt = currentMatches[Number(button.dataset.index)];
+      if (opt) {
+        choose(opt);
+      }
+    });
 
     function updateTrigger() {
       trigger.textContent = selectedLabel(select) || " ";

@@ -13,18 +13,18 @@ from core.email import (
 
 
 class CmHeadersTests(TestCase):
-    @override_settings(EMAIL_GROUP_PREFIX="LaborHub")
-    def test_group_name_uses_prefix(self):
-        headers = cm_headers("Digest")
-        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Digest")
+    @override_settings(EMAIL_GROUP_NAME="LaborHub")
+    def test_group_name_uses_setting(self):
+        headers = cm_headers()
+        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub")
 
     def test_tracking_defaults_off(self):
-        headers = cm_headers("Digest")
+        headers = cm_headers()
         self.assertEqual(headers["X-Cmail-TrackOpens"], "false")
         self.assertEqual(headers["X-Cmail-TrackClicks"], "false")
 
     def test_tracking_can_be_enabled(self):
-        headers = cm_headers("Digest", track_opens=True, track_clicks=True)
+        headers = cm_headers(track_opens=True, track_clicks=True)
         self.assertEqual(headers["X-Cmail-TrackOpens"], "true")
         self.assertEqual(headers["X-Cmail-TrackClicks"], "true")
 
@@ -48,27 +48,26 @@ class CampaignMonitorEmailBackendTests(TestCase):
         # Bypass the real SMTP connection: only exercise the header-filling
         # step, which is the CM-specific behavior under test.
         for msg in [message]:
-            msg.extra_headers.setdefault(
-                "X-Cmail-GroupName", "LaborHub - Other")
+            msg.extra_headers.setdefault("X-Cmail-GroupName", "LaborHub")
             msg.extra_headers.setdefault("X-Cmail-TrackClicks", "false")
             msg.extra_headers.setdefault("X-Cmail-TrackOpens", "false")
         return message.extra_headers
 
-    @override_settings(EMAIL_GROUP_PREFIX="LaborHub")
+    @override_settings(EMAIL_GROUP_NAME="LaborHub")
     def test_ungrouped_message_gets_fallback_group(self):
         message = EmailMessage(subject="s", body="b", to=["a@example.com"])
         headers = self._sent_headers(message)
-        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Other")
+        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub")
         self.assertEqual(headers["X-Cmail-TrackClicks"], "false")
 
     def test_explicit_group_is_not_overridden(self):
         message = EmailMessage(
             subject="s", body="b", to=["a@example.com"],
-            headers={"X-Cmail-GroupName": "LaborHub - Digest",
+            headers={"X-Cmail-GroupName": "LaborHub",
                      "X-Cmail-TrackClicks": "true"},
         )
         headers = self._sent_headers(message)
-        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Digest")
+        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub")
         self.assertEqual(headers["X-Cmail-TrackClicks"], "true")
 
 

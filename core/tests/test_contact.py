@@ -1,13 +1,14 @@
 """Tests for the public contact form: rendering, storage, email, honeypot."""
 
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import ContactMessage
 from core.tests.email_assertions import assert_has_html_alternative_with_logo
 
 
+@override_settings(REPLY_TO_EMAIL="laborhub@cornell.edu")
 class ContactViewTests(TestCase):
     def setUp(self):
         self.url = reverse('contact')
@@ -36,7 +37,7 @@ class ContactViewTests(TestCase):
         self.assertEqual(message.email, 'ada@example.com')
         self.assertFalse(message.handled)
 
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 2)
         sent = mail.outbox[0]
         self.assertIn('Ada Lovelace', sent.subject)
         # The sender name already reads "Labor Hub" -- no redundant prefix.
@@ -44,11 +45,20 @@ class ContactViewTests(TestCase):
         self.assertEqual(sent.reply_to, ['ada@example.com'])
         self.assertIn('broken link', sent.body)
         self.assertEqual(
-            sent.extra_headers.get('X-Cmail-GroupName'), 'LaborHub - Contact form')
+            sent.extra_headers.get('X-Cmail-GroupName'), 'LaborHub')
 
         # Regression: this notification used to be plain-text only.
         html_body = assert_has_html_alternative_with_logo(self, sent)
         self.assertIn('broken link', html_body)
+
+        # The submitter also gets a confirmation, separate from the staff
+        # notification above.
+        confirmation = mail.outbox[1]
+        self.assertEqual(confirmation.to, ['ada@example.com'])
+        self.assertIn('received your message', confirmation.subject.lower())
+        self.assertEqual(confirmation.reply_to, ['laborhub@cornell.edu'])
+        confirmation_html = assert_has_html_alternative_with_logo(self, confirmation)
+        self.assertIn('broken link', confirmation_html)
 
     def test_success_flag_shows_confirmation(self):
         response = self.client.get(self.url, {'sent': '1'})

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
-from core.email import attach_logo, cm_headers
+from core.email import attach_logo, cm_headers, default_reply_to
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Q
@@ -205,7 +205,35 @@ def _send_contact_notification(contact_message):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[contact_message.email],
-        headers=cm_headers("Contact form"),
+        headers=cm_headers(),
+    )
+    message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
+    message.send(fail_silently=True)
+
+
+def _send_contact_confirmation(contact_message):
+    """Confirm receipt to the person who submitted the contact form.
+
+    Sent from ``DEFAULT_FROM_EMAIL`` with ``Reply-To`` set to the shared
+    support mailbox (see ``core.email.default_reply_to``), so a reply-all
+    lands with the team rather than back at this automated address. Fails
+    silently for the same reason as ``_send_contact_notification``.
+    """
+    context = {
+        "contact_message": contact_message,
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    text_body = render_to_string("emails/contact_confirmation.txt", context)
+    html_body = render_to_string("emails/contact_confirmation.html", context)
+
+    message = EmailMultiAlternatives(
+        subject="We received your message",
+        body=text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[contact_message.email],
+        reply_to=default_reply_to(),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
@@ -221,6 +249,7 @@ def contact(request):
             if not form.is_spam():
                 message = form.save()
                 _send_contact_notification(message)
+                _send_contact_confirmation(message)
             # Redirect either way (PRG) so refreshes don't resubmit and bots
             # that trip the honeypot get an indistinguishable success page.
             return redirect(f"{reverse('contact')}?sent=1")

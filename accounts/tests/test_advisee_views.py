@@ -160,7 +160,7 @@ class ApplicationNotificationEmailTests(TestCase):
         self.assertTrue(staff_mails[0].subject.startswith("[Action Required]"))
         self.assertEqual(
             staff_mails[0].extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Staff alerts")
+            "LaborHub")
         # Regression: this notification used to be plain-text only.
         assert_has_html_alternative_with_logo(self, staff_mails[0])
 
@@ -180,5 +180,5 @@ class ApplicationNotificationEmailTests(TestCase):
         self.assertTrue(advisor_mails[0].subject.startswith("[Action Required]"))
         self.assertEqual(
             advisor_mails[0].extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Advisor requests")
+            "LaborHub")
         assert_has_html_alternative_with_logo(self, advisor_mails[0])

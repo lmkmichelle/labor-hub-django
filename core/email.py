@@ -22,15 +22,17 @@ TRACK_CLICKS_HEADER = "X-Cmail-TrackClicks"
 LOGO_CID = "labor_hub_logo"
 
 
-def cm_headers(group, track_opens=False, track_clicks=False):
-    """Headers that file a message under ``group`` in CM's reporting.
+def cm_headers(track_opens=False, track_clicks=False):
+    """Headers filing a message under the single Labor Hub group in CM's
+    reporting (``settings.EMAIL_GROUP_NAME`` -- every outgoing email uses the
+    same group, per admin request, rather than one group per email type).
 
     ``track_clicks`` defaults off: CM rewrites every link to a tracking
     redirect, which is undesirable for links like a password reset. Only the
     digest turns tracking on.
     """
     return {
-        GROUP_HEADER: "{} - {}".format(settings.EMAIL_GROUP_PREFIX, group),
+        GROUP_HEADER: settings.EMAIL_GROUP_NAME,
         TRACK_OPENS_HEADER: "true" if track_opens else "false",
         TRACK_CLICKS_HEADER: "true" if track_clicks else "false",
     }
@@ -83,9 +85,7 @@ class CampaignMonitorEmailBackend(SMTPEmailBackend):
 
     def send_messages(self, email_messages):
         for message in email_messages:
-            message.extra_headers.setdefault(
-                GROUP_HEADER, "{} - Other".format(settings.EMAIL_GROUP_PREFIX)
-            )
+            message.extra_headers.setdefault(GROUP_HEADER, settings.EMAIL_GROUP_NAME)
             message.extra_headers.setdefault(TRACK_CLICKS_HEADER, "false")
             message.extra_headers.setdefault(TRACK_OPENS_HEADER, "false")
         return super().send_messages(email_messages)

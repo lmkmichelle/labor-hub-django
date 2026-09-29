@@ -246,9 +246,10 @@ CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", DEFAULT_FROM_EMAIL)
 # (e.g. laborhub@cornell.edu), not a person. Empty means no Reply-To header.
 REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL", "")
 
-# Prefix for the Campaign Monitor reporting group assigned to every outgoing
-# email (see core.email.cm_headers) -- harmless on any non-CM SMTP server.
-EMAIL_GROUP_PREFIX = os.environ.get("EMAIL_GROUP_PREFIX", "LaborHub")
+# Campaign Monitor reporting group assigned to every outgoing email (see
+# core.email.cm_headers) -- a single group for all of Labor Hub's mail, per
+# admin request. Harmless on any non-CM SMTP server.
+EMAIL_GROUP_NAME = os.environ.get("EMAIL_GROUP_NAME", "LaborHub")
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)

@@ -47,7 +47,7 @@ def send_paper_advisor_ack_email(publication, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[advisor.email],
         reply_to=[submitter.email] if submitter and submitter.email else None,
-        headers=cm_headers("Advisor requests"),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)

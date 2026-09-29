@@ -6,22 +6,34 @@ reviewing the HTML design before a change goes anywhere near ``main``/prod.
     python manage.py send_test_emails --to you@cornell.edu
     python manage.py send_test_emails --to you@cornell.edu --only approved,digest
 
+Or, to review the HTML without sending anything anywhere (no SMTP
+credentials needed, nothing leaves the machine):
+
+    python manage.py send_test_emails --preview
+    open /tmp/labor-hub-email-previews/index.html
+
 Every send here goes through the real ``send_*_email``/form/view code this
 app actually uses in production -- nothing is re-implemented -- so what
-lands in the inbox is exactly what a real user would receive. Some email
-types need a real, saved database row to work at all (the staff alert reads
-its recipients from the DB; the digest reads real approved content; the
-password reset looks up a real active user). If ``--to`` isn't an existing
-account, a throwaway one is created for the send and deleted again in a
-``finally`` block. If ``--to`` *is* an existing account (e.g. your own dev
-superuser), that real account is reused as-is instead -- never created,
-never deleted, and any field this command needs to change temporarily
-(digest subscription) is restored afterward.
+lands in the inbox (or the preview file) is exactly what a real user would
+receive. Some email types need a real, saved database row to work at all
+(the staff alert reads its recipients from the DB; the digest reads real
+approved content; the password reset looks up a real active user). If
+``--to`` isn't an existing account, a throwaway one is created for the send
+and deleted again in a ``finally`` block. If ``--to`` *is* an existing
+account (e.g. your own dev superuser), that real account is reused as-is
+instead -- never created, never deleted, and any field this command needs
+to change temporarily (digest subscription) is restored afterward.
 """
+import base64
+import os
+import tempfile
+
 from django.conf import settings
+from django.core import mail
 from django.core.management.base import BaseCommand, CommandError
 from django.test import override_settings
 from django.utils import timezone
+from django.utils.html import escape
 
 from accounts.digests import send_user_digest
 from accounts.emails import (
@@ -32,15 +44,20 @@ from accounts.emails import (
 )
 from accounts.forms import LaborHubPasswordResetForm
 from accounts.models import CustomUser, UserApplication
+from core.email import LOGO_CID
 from core.models import ContactMessage
-from core.views import _send_contact_notification
+from core.views import _send_contact_confirmation, _send_contact_notification
 from publications.emails import send_paper_advisor_ack_email
 from publications.models import Publication
 
 ALL_KEYS = [
     "approved", "rejected", "staff_alert", "advisor_review",
-    "paper_advisor_ack", "digest", "contact", "password_reset",
+    "paper_advisor_ack", "digest", "contact", "contact_confirmation",
+    "password_reset",
 ]
+
+PREVIEW_DEFAULT_TO = "preview@example.com"
+PREVIEW_DEFAULT_DIR = os.path.join(tempfile.gettempdir(), "labor-hub-email-previews")
 
 
 class Command(BaseCommand):
@@ -48,13 +65,26 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--to", required=True, help="Address every test email is sent to.")
+            "--to", default=None,
+            help="Address every test email is sent to. Defaults to "
+                 f"{PREVIEW_DEFAULT_TO} when --preview is used.")
         parser.add_argument(
             "--only", default="",
             help="Comma-separated subset of: " + ", ".join(ALL_KEYS))
+        parser.add_argument(
+            "--preview", action="store_true",
+            help="Render each email to a local HTML file instead of sending "
+                 "it anywhere -- no SMTP backend/credentials needed.")
+        parser.add_argument(
+            "--out", default=PREVIEW_DEFAULT_DIR,
+            help=f"Directory to write previews into (--preview only). "
+                 f"Default: {PREVIEW_DEFAULT_DIR}")
 
     def handle(self, *args, **options):
-        to = options["to"]
+        preview = options["preview"]
+        to = options["to"] or (PREVIEW_DEFAULT_TO if preview else None)
+        if not to:
+            raise CommandError("--to is required unless --preview is used.")
         requested = [k.strip() for k in options["only"].split(",") if k.strip()]
         keys = requested or ALL_KEYS
         unknown = sorted(set(keys) - set(ALL_KEYS))
@@ -64,10 +94,85 @@ class Command(BaseCommand):
                 f"Choices are: {', '.join(ALL_KEYS)}"
             )
 
+        if preview:
+            self._preview(keys, to, options["out"])
+            return
+
         for key in keys:
             self.stdout.write(f"Sending '{key}' to {to} ...")
             getattr(self, f"_send_{key}")(to)
             self.stdout.write(self.style.SUCCESS(f"  sent '{key}'"))
+
+    def _preview(self, keys, to, out_dir):
+        """Render each requested email's HTML alternative to a local file,
+        using the locmem backend so nothing is actually sent -- the exact
+        send code path still runs (fixture rows, subjects, headers), only
+        the transport is swapped. The inline CID logo is inlined further,
+        as a base64 data URI, so the file renders correctly with no mail
+        client and no static file server involved -- just opening it in a
+        browser.
+        """
+        os.makedirs(out_dir, exist_ok=True)
+        index_rows = []
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+        ):
+            for key in keys:
+                mail.outbox = []
+                self.stdout.write(f"Rendering '{key}' ...")
+                getattr(self, f"_send_{key}")(to)
+                if not mail.outbox:
+                    self.stdout.write(self.style.WARNING(
+                        f"  '{key}': nothing was sent, skipping"))
+                    continue
+                for i, message in enumerate(mail.outbox):
+                    suffix = "" if len(mail.outbox) == 1 else f"_{i}"
+                    filename = f"{key}{suffix}.html"
+                    html = self._inline_preview_html(message)
+                    with open(os.path.join(out_dir, filename), "w") as f:
+                        f.write(html)
+                    index_rows.append((filename, message.subject))
+                    self.stdout.write(self.style.SUCCESS(f"  wrote {filename}"))
+            # The locmem backend is only used to capture each message in
+            # memory long enough to render it to a file -- nothing was
+            # actually sent, so leave no trace in mail.outbox for a caller
+            # (e.g. a test) that runs this in preview mode.
+            mail.outbox = []
+
+        index_path = os.path.join(out_dir, "index.html")
+        with open(index_path, "w") as f:
+            f.write(self._index_html(index_rows))
+        self.stdout.write(self.style.SUCCESS(f"\nOpen {index_path}"))
+
+    def _inline_preview_html(self, message):
+        html = next(
+            (content for content, mimetype in getattr(message, "alternatives", [])
+             if mimetype == "text/html"),
+            None,
+        )
+        if html is None:
+            # Plain-text-only message: still produce something viewable.
+            return f"<pre>{escape(message.body)}</pre>"
+        for attachment in message.attachments:
+            if attachment.get("Content-ID") == f"<{LOGO_CID}>":
+                data = attachment.get_payload(decode=True)
+                content_type = attachment.get_content_type() or "image/png"
+                data_uri = f"data:{content_type};base64,{base64.b64encode(data).decode()}"
+                html = html.replace(f"cid:{LOGO_CID}", data_uri)
+                break
+        return html
+
+    def _index_html(self, rows):
+        items = "\n".join(
+            f'<li><a href="{filename}">{escape(filename)}</a> &mdash; {escape(subject)}</li>'
+            for filename, subject in rows
+        )
+        return (
+            "<!doctype html><html><head><meta charset=\"utf-8\">"
+            "<title>Labor Hub email previews</title></head><body>"
+            f"<h1>Labor Hub email previews</h1><ul>{items}</ul>"
+            "</body></html>"
+        )
 
     def _get_or_reuse_user(self, to, **create_fields):
         """A real account matching ``to`` is reused untouched; only when
@@ -178,6 +283,14 @@ class Command(BaseCommand):
         )
         with override_settings(CONTACT_EMAIL=to):
             _send_contact_notification(message)
+
+    def _send_contact_confirmation(self, to):
+        message = ContactMessage(
+            name="Preview Sender", email=to,
+            message="This is a preview of the contact form confirmation email.",
+            created_at=timezone.now(),
+        )
+        _send_contact_confirmation(message)
 
     def _send_password_reset(self, to):
         # Django's PasswordResetForm only emails an address with a real,

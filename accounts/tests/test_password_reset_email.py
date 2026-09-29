@@ -36,7 +36,7 @@ class PasswordResetEmailTests(TestCase):
         message = mail.outbox[0]
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Password reset")
+            "LaborHub")
         self.assertEqual(message.reply_to, ["laborhub@cornell.edu"])
 
     def test_unknown_email_sends_nothing(self):

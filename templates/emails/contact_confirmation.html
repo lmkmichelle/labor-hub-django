@@ -1,0 +1,18 @@
+{% extends "emails/_layout.html" %}
+{% block title %}We received your message{% endblock %}
+{% block content %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 16px; font-size:16px;">Hi {{ contact_message.name }},</p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    Thanks for reaching out to Labor Hub. We've received your message and
+    the team will get back to you soon.
+  </p>
+  <p style="margin:0 0 8px; font-size:13px; color:#6b7280;">For your records, here's what you sent:</p>
+  <div style="padding:16px; background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; font-size:15px; color:#374151; white-space:pre-wrap;">{{ contact_message.message }}</div>
+  <!-- djlint:on -->
+{% endblock %}
+{% block footer %}
+  <!-- djlint:off -->
+  <p style="margin:0;">This is an automated confirmation. Replies go to the Labor Hub team.</p>
+  <!-- djlint:on -->
+{% endblock %}

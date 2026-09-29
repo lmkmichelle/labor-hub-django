@@ -173,7 +173,7 @@ class PaperAdvisorEmailTests(TestCase):
                       message.body)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Advisor requests")
+            "LaborHub")
         assert_has_html_alternative_with_logo(self, message)
 
     def test_non_job_market_submission_sends_nothing(self):

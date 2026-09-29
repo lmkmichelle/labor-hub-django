@@ -1,0 +1,8 @@
+Hi {{ contact_message.name }},
+
+Thanks for reaching out to Labor Hub. We've received your message and the
+team will get back to you soon.
+
+For your records, here's what you sent:
+
+{{ contact_message.message }}

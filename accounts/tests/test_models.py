@@ -218,7 +218,7 @@ class UserApplicationTests(TestCase):
         assert_has_html_alternative_with_logo(self, message)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Application decision")
+            "LaborHub")
 
     def test_reject_sends_notification_email(self):
         admin = make_user(email="admin2@example.com", role=CustomUser.Role.ADMIN)
@@ -232,7 +232,7 @@ class UserApplicationTests(TestCase):
         assert_has_html_alternative_with_logo(self, message)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
-            "LaborHub - Application decision")
+            "LaborHub")
 
     def test_reject_sets_status(self):
         admin = make_user(email="admin@example.com", role=CustomUser.Role.ADMIN)

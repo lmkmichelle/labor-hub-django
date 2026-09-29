@@ -139,7 +139,7 @@ class SendUserDigestTests(TestCase):
         make_publication("Fresh Paper", self.now - timedelta(days=1))
         send_user_digest(user, now=self.now)
         headers = mail.outbox[0].extra_headers
-        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Digest")
+        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub")
         self.assertEqual(headers["X-Cmail-TrackOpens"], "true")
 
     def test_a_relay_failure_does_not_stamp_last_digest_or_raise(self):

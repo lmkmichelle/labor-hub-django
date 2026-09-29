@@ -202,7 +202,7 @@ def send_user_digest(user, now=None, connection=None):
         return False
 
     subject, text_body, html_body, unsubscribe_url = build_digest_email(user, sections)
-    headers = cm_headers("Digest", track_opens=True)
+    headers = cm_headers(track_opens=True)
     headers["List-Unsubscribe"] = f"<{unsubscribe_url}>"
     message = EmailMultiAlternatives(
         subject, text_body, from_email=settings.DIGEST_FROM_EMAIL, to=[user.email],

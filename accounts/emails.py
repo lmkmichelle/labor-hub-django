@@ -40,7 +40,7 @@ def send_application_approved_email(user, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email],
         reply_to=default_reply_to(),
-        headers=cm_headers("Application decision"),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
@@ -68,7 +68,7 @@ def send_application_rejected_email(application, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[application.email],
         reply_to=default_reply_to(),
-        headers=cm_headers("Application decision"),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
@@ -112,7 +112,7 @@ def send_application_submitted_email(application, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[application.email],
-        headers=cm_headers("Staff alerts"),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
@@ -152,7 +152,7 @@ def send_advisor_review_email(application, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[advisor.email],
         reply_to=[application.email],
-        headers=cm_headers("Advisor requests"),
+        headers=cm_headers(),
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
