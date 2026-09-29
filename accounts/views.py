@@ -1,10 +1,7 @@
 import json
-from io import BytesIO
-from PIL import Image
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, When
@@ -21,6 +18,7 @@ from events.models import Event
 from jobs.models import Job
 from seminars.models import Seminar
 from publications.models import Publication
+from accounts.utils import process_avatar
 from publications.utils import handle_keywords
 from .digests import read_unsubscribe_token
 from .emails import send_advisor_review_email, send_application_submitted_email
@@ -162,7 +160,8 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             profile = profile_form.save(commit=False)
 
             if 'avatar' in request.FILES:
-                profile.avatar = self._crop(request.FILES['avatar'])
+                profile.avatar = process_avatar(
+                    request.FILES['avatar'], crop=profile_form.cleaned_data.get('avatar_crop'))
             raw_interests = self.request.POST.get('research_interests_input') or '[]'
             profile.research_interests = handle_keywords(raw_interests)
 
@@ -171,42 +170,6 @@ class EditProfileView(LoginRequiredMixin, UpdateView):
             return redirect("profile")
 
         return self.render_to_response(self.get_context_data(form=profile_form))
-
-    def _crop(self, image_file, output_size=(218, 300)):
-        with Image.open(image_file) as img:
-            img = img.convert("RGB")
-
-            target_ratio = output_size[0] / output_size[1]
-            img_ratio = img.width / img.height
-
-            if img_ratio > target_ratio:
-                new_height = output_size[1]
-                new_width = int(new_height * img_ratio)
-            else:
-                new_width = output_size[0]
-                new_height = int(new_width / img_ratio)
-
-            img = img.resize((new_width, new_height), Image.LANCZOS)
-
-            left = (new_width - output_size[0]) // 2
-            top = (new_height - output_size[1]) // 2
-            right = left + output_size[0]
-            bottom = top + output_size[1]
-            img = img.crop((left, top, right, bottom))
-
-            buffer = BytesIO()
-            img.save(buffer, format="JPEG")
-            buffer.seek(0)
-
-            return InMemoryUploadedFile(
-                buffer,
-                field_name='avatar',
-                name='avatar.jpg',
-                content_type='image/jpeg',
-                size=buffer.tell(),
-                charset=None
-            )
-
 
 class SettingsView(LoginRequiredMixin, View):
     template_name = "accounts/settings.html"
