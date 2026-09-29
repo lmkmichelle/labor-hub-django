@@ -121,7 +121,9 @@
                               <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
                               <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
                               <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: Title (A–Z)</option>
-                              <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Sort: Most downloaded</option>
+                              {% if user.is_staff %}
+                                  <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Sort: Most downloaded</option>
+                              {% endif %}
                           </select>
                       </form>
                       {% if user.is_authenticated %}

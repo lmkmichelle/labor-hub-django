@@ -563,7 +563,11 @@ def publications_list(request):
         publications = publications.order_by('applied_at', 'id')
     elif sort == 'title':
         publications = publications.order_by(Lower('title'), 'id')
-    elif sort == 'downloads':
+    elif sort == 'downloads' and request.user.is_staff:
+        # Download counts are internal-use only (admin accounts) -- see the
+        # download-count span and this sort option in publications.html,
+        # both gated the same way. A non-admin passing ?sort=downloads by
+        # hand falls through to the default below rather than exposing it.
         publications = publications.order_by('-download_count', '-applied_at', '-id')
     else:
         sort = 'newest'

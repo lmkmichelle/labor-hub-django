@@ -254,12 +254,26 @@ class PublicationDownloadViewTests(TestCase):
             reverse("publication_download", kwargs={"pk": publication.pk}))
         self.assertEqual(response.status_code, 404)
 
-    def test_detail_page_shows_the_download_count(self):
+    def test_detail_page_shows_the_download_count_to_staff(self):
+        """Download counts are internal-use only -- see the .download-count
+        span in publication_detail.html and the equivalent sort-option gate
+        in publications.html."""
+        staff = make_user(email="staff-detail@example.com")
+        staff.is_staff = True
+        staff.save()
+        publication = self._paper_with_pdf(status="approved")
+        publication.record_download()
+        self.client.force_login(staff)
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        self.assertContains(response, "1 download")
+
+    def test_detail_page_hides_the_download_count_from_a_non_staff_visitor(self):
         publication = self._paper_with_pdf(status="approved")
         publication.record_download()
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertContains(response, "1 download")
+        self.assertNotContains(response, "1 download")
 
 
 class PublicationsListDisplayNumberTests(TestCase):

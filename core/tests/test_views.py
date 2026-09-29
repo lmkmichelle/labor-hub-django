@@ -405,14 +405,32 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(dp, response.context["publications"])
         self.assertEqual(response.context["page_heading"], "Research Papers")
 
-    def test_sort_by_most_downloaded(self):
+    def test_sort_by_most_downloaded_is_staff_only(self):
+        """Download counts are internal-use only -- see the download-count
+        span and this sort option in publication_detail.html/publications.html,
+        both gated the same way as this server-side check."""
         popular = Publication.objects.create(
             title="Popular", abstract="a", status="approved", download_count=10)
         obscure = Publication.objects.create(
             title="Obscure", abstract="a", status="approved", download_count=1)
+
+        staff = make_user(email="staff-sort@example.com")
+        staff.is_staff = True
+        staff.save()
+        self.client.force_login(staff)
         response = self.client.get(reverse("publications"), {"sort": "downloads"})
         publications = list(response.context["publications"])
         self.assertLess(publications.index(popular), publications.index(obscure))
+        self.assertContains(response, "Most downloaded")
+
+    def test_sort_by_most_downloaded_is_ignored_for_a_non_staff_request(self):
+        Publication.objects.create(
+            title="Popular", abstract="a", status="approved", download_count=10)
+        Publication.objects.create(
+            title="Obscure", abstract="a", status="approved", download_count=1)
+        response = self.client.get(reverse("publications"), {"sort": "downloads"})
+        self.assertEqual(response.context["sort"], "newest")
+        self.assertNotContains(response, "Most downloaded")
 
 
 class ScholarsListViewTests(TestCase):
