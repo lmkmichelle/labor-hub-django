@@ -1,52 +1,25 @@
 /**
- * Lets a Tagify instance's tags be reordered by dragging, using plain HTML5
- * drag-and-drop (no Tagify DragSort plugin/extra dependency -- see the
- * paper-fixes plan). After each drop, Tagify's own updateValueByDOMTags()
- * re-derives tagify.value (and so the hidden input's JSON) from the DOM
- * order, which is what publications.utils.set_ordered_authors then persists.
+ * Lets a Tagify instance's tags be reordered by dragging, with an animated
+ * slide as tags swap places. Tagify itself has no built-in drag-sort; this
+ * uses its author's companion library, vendored at static/js/dragsort.js
+ * (see static/js/README.md) -- the documented pairing
+ * (https://github.com/yairEO/tagify#drag--sort), and a straight upgrade over
+ * an earlier hand-rolled native-HTML5-drag version, which had no way to
+ * animate a sibling sliding over (DOM reordering on `dragover` is instant)
+ * short of a hand-built FLIP-animation layer.
  */
-function makeTagifyDraggable(tagify) {
-  let draggedTag = null;
-
-  function applyDraggable() {
-    tagify.DOM.scope.querySelectorAll(".tagify__tag").forEach(function (tag) {
-      tag.setAttribute("draggable", "true");
-    });
-  }
-
-  tagify.DOM.scope.addEventListener("dragstart", function (e) {
-    const tag = e.target.closest(".tagify__tag");
-    if (!tag) {
-      return;
-    }
-    draggedTag = tag;
-    e.dataTransfer.effectAllowed = "move";
+function makeTagifySortable(tagify) {
+  new DragSort(tagify.DOM.scope, {
+    selector: '.' + tagify.settings.classNames.tag,
+    callbacks: {
+      // Tagify's own value array doesn't track drag reorders on its own;
+      // this rebuilds it (and so the hidden input's JSON) from the new DOM
+      // order, which is what publications.utils.set_ordered_authors persists.
+      dragEnd: function () {
+        tagify.updateValueByDOMTags();
+      },
+    },
   });
-
-  tagify.DOM.scope.addEventListener("dragover", function (e) {
-    const target = e.target.closest(".tagify__tag");
-    if (!draggedTag || !target || target === draggedTag) {
-      return;
-    }
-    e.preventDefault();
-    const rect = target.getBoundingClientRect();
-    const before = e.clientX < rect.left + rect.width / 2;
-    target.parentNode.insertBefore(draggedTag, before ? target : target.nextSibling);
-  });
-
-  tagify.DOM.scope.addEventListener("drop", function (e) {
-    e.preventDefault();
-  });
-
-  tagify.DOM.scope.addEventListener("dragend", function () {
-    if (draggedTag) {
-      tagify.updateValueByDOMTags();
-      draggedTag = null;
-    }
-  });
-
-  applyDraggable();
-  tagify.on("add", applyDraggable);
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -90,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
 
-    makeTagifyDraggable(authors_tag);
+    makeTagifySortable(authors_tag);
   }
 
   if (editors_input) {

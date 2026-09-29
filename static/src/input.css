@@ -123,9 +123,10 @@
     box-shadow: 0 0 0 2px var(--color-brand) !important;
   }
   /* The Authors field's draggable="true" tags (static/js/tagify.js,
-     makeTagifyDraggable) -- without this, a mousedown-drag on a tag's text
-     starts a native text selection instead of an HTML5 drag, so the drag
-     never fires at all. Same unlayered-tagify.css-wins problem as above. */
+     makeTagifySortable, via the vendored DragSort library) -- without this,
+     a mousedown-drag on a tag's text starts a native text selection instead
+     of the drag, so it never fires at all. Same unlayered-tagify.css-wins
+     problem as above. */
   .tagify__tag[draggable="true"] {
     cursor: grab !important;
     user-select: none !important;
