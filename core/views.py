@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 
-from core.email import cm_headers
+from core.email import attach_logo, cm_headers
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Q
@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -191,20 +192,24 @@ def _send_contact_notification(contact_message):
     ]
     if not recipients:
         return
-    body = (
-        f"Name: {contact_message.name}\n"
-        f"Email: {contact_message.email}\n"
-        f"Submitted: {contact_message.created_at:%Y-%m-%d %H:%M}\n\n"
-        f"{contact_message.message}\n"
-    )
-    EmailMessage(
-        subject=f"[Labor Hub] Contact form: {contact_message.name}",
-        body=body,
+    context = {
+        "contact_message": contact_message,
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    text_body = render_to_string("emails/contact_notification.txt", context)
+    html_body = render_to_string("emails/contact_notification.html", context)
+
+    message = EmailMultiAlternatives(
+        subject=f"Contact form: {contact_message.name}",
+        body=text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[contact_message.email],
         headers=cm_headers("Contact form"),
-    ).send(fail_silently=True)
+    )
+    message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
+    message.send(fail_silently=True)
 
 
 @require_http_methods(["GET", "POST"])

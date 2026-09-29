@@ -7,9 +7,11 @@ from django.contrib.auth.views import (
     PasswordResetConfirmView,
     PasswordResetCompleteView
 )
+from django.conf import settings
 from django.urls import path
 from django.views.generic import TemplateView
 
+from .forms import LaborHubPasswordResetForm
 from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSubmittedView, ResearcherApplicationView, \
     StudentApplicationView, SettingsView, digest_unsubscribe, AdviseeApplicationsView, advisee_approve, advisee_reject
 
@@ -33,10 +35,12 @@ urlpatterns = [
     path('accounts/password-change/', PasswordChangeView.as_view(template_name='registration/password_change.html'), name='password_change'),
     path('accounts/password-change/done/', PasswordChangeDoneView.as_view(template_name='registration/password_change_done.html'), name='password_change_done'),
     path('accounts/password-reset/', PasswordResetView.as_view(
+        form_class=LaborHubPasswordResetForm,
         template_name='registration/password_reset.html',
         email_template_name='registration/password_reset_email.txt',
         subject_template_name='registration/password_reset_subject.txt',
         html_email_template_name='registration/password_reset_email.html',
+        extra_email_context={'site_url': settings.SITE_URL.rstrip('/')},
     ), name='password_reset'),
     path('accounts/password-reset/done/', PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
     path('accounts/password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),

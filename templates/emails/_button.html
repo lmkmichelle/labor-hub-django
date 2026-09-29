@@ -1,0 +1,14 @@
+{% comment %}
+CTA button matching the site's .btn-primary (static/src/input.css):
+Tailwind red-700 background, white text, --radius-base (12px) corners.
+Included with a "url" and a "label" context variable.
+{% endcomment %}
+<!-- djlint:off -->
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+  <tr>
+    <td style="border-radius:12px; background-color:#b91c1c;">
+      <a href="{{ url }}" style="display:inline-block; padding:10px 20px; color:#ffffff; font-size:15px; font-weight:500; text-decoration:none; border-radius:12px;">{{ label }}</a>
+    </td>
+  </tr>
+</table>
+<!-- djlint:on -->

@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from core.email import cm_headers, default_reply_to
+from core.email import attach_logo, cm_headers, default_reply_to
 from events.models import Event
 from jobs.models import Job
 from publications.models import Publication
@@ -173,7 +173,7 @@ def build_digest_email(user, sections):
         "manage_url": absolute_url(reverse("edit_profile")),
         "unsubscribe_url": unsubscribe_url,
     }
-    subject = "Labor Hub: {} new update{}".format(total, "" if total == 1 else "s")
+    subject = "Labor Hub digest: {} new update{}".format(total, "" if total == 1 else "s")
     text_body = render_to_string("emails/digest.txt", context)
     html_body = render_to_string("emails/digest.html", context)
     return subject, text_body, html_body, unsubscribe_url
@@ -209,6 +209,7 @@ def send_user_digest(user, now=None, connection=None):
         reply_to=default_reply_to(), headers=headers, connection=connection,
     )
     message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
     # Unlike every other send site in this codebase, this one runs unattended
     # from cron across every subscriber in one pass -- fail_silently keeps one
     # bad address or a transient relay error from aborting the remaining

@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import CustomUser
+from core.tests.email_assertions import assert_has_html_alternative_with_logo
 from publications.models import Author, Publication
 
 
@@ -167,11 +168,13 @@ class PaperAdvisorEmailTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
         self.assertEqual(message.to, [advisor.email])
+        self.assertTrue(message.subject.startswith("[Action Required]"))
         self.assertIn("https://laborhub.test" + reverse("advised_papers"),
                       message.body)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
             "LaborHub - Advisor requests")
+        assert_has_html_alternative_with_logo(self, message)
 
     def test_non_job_market_submission_sends_nothing(self):
         submitter = CustomUser.objects.create_user(

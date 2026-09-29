@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 
 from accounts.models import CustomUser, Profile, ResearchPaper, UserApplication
+from core.tests.email_assertions import assert_has_html_alternative_with_logo
 
 User = get_user_model()
 
@@ -214,9 +215,7 @@ class UserApplicationTests(TestCase):
         self.assertEqual(message.to, ["newbie@example.com"])
         self.assertIn("approved", message.subject.lower())
         self.assertIn("http://testserver/accounts/login/", message.body)
-        self.assertTrue(
-            any(mimetype == "text/html" for _content, mimetype in message.alternatives)
-        )
+        assert_has_html_alternative_with_logo(self, message)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
             "LaborHub - Application decision")
@@ -230,9 +229,7 @@ class UserApplicationTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
         self.assertEqual(message.to, ["rejected@example.com"])
-        self.assertTrue(
-            any(mimetype == "text/html" for _content, mimetype in message.alternatives)
-        )
+        assert_has_html_alternative_with_logo(self, message)
         self.assertEqual(
             message.extra_headers.get("X-Cmail-GroupName"),
             "LaborHub - Application decision")

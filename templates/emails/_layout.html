@@ -1,0 +1,58 @@
+{% comment %}
+Shared base for every outgoing HTML email -- header (logo + wordmark),
+white card, footer. Inline styles throughout: email clients don't reliably
+support <style> blocks or CSS custom properties, so hex values are repeated
+here rather than referencing input.css's tokens. Colors/radius/button styling
+are pinned to the site's actual palette (Tailwind red-700/red-800,
+--radius-base) so mail reads as an extension of the site rather than a
+generic template -- see core/email.py::attach_logo for the logo itself, sent
+as an inline (Content-ID) attachment, never a remote URL.
+
+A concrete email extends "emails/_layout.html" and overrides the "title",
+"content", and (optionally -- there's a default) "footer" blocks.
+
+Note: Django's {# #} comment tag does not support multi-line content (it
+leaks through literally if it spans a newline) -- {% comment %} is used here
+for exactly that reason; keep any future multi-line note in this file the
+same way.
+{% endcomment %}
+<!-- djlint:off -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Labor Hub{% endblock %}</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+            <tr>
+              <td style="padding:20px 28px; border-bottom:1px solid #e5e7eb;">
+                <a href="{{ site_url }}" style="text-decoration:none;">
+                  <img src="cid:labor_hub_logo" alt="ILR School" width="64" height="64" style="height:64px; width:64px; vertical-align:middle; border:0;" />
+                  <span style="vertical-align:middle; margin-left:3px; font-size:24px; font-weight:bold; color:#111827;">The Labor <span style="color:#b91c1c;">Hub</span></span>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px;">
+                {% block content %}{% endblock %}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px; background-color:#f9fafb; font-size:12px; color:#6b7280; border-top:1px solid #e5e7eb;">
+                {% block footer %}
+                  <p style="margin:0;">Labor Hub, hosted by the ILR School at Cornell University.</p>
+                {% endblock %}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+<!-- djlint:on -->

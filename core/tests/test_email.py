@@ -1,9 +1,15 @@
 """Tests for the Campaign Monitor SMTP integration (core.email)."""
+from unittest.mock import patch
 
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.test import TestCase, override_settings
 
-from core.email import CampaignMonitorEmailBackend, cm_headers, default_reply_to
+from core.email import (
+    CampaignMonitorEmailBackend,
+    attach_logo,
+    cm_headers,
+    default_reply_to,
+)
 
 
 class CmHeadersTests(TestCase):
@@ -64,3 +70,29 @@ class CampaignMonitorEmailBackendTests(TestCase):
         headers = self._sent_headers(message)
         self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Digest")
         self.assertEqual(headers["X-Cmail-TrackClicks"], "true")
+
+
+class AttachLogoTests(TestCase):
+    def test_attaches_inline_image_to_a_multipart_message(self):
+        message = EmailMultiAlternatives(subject="s", body="b", to=["a@example.com"])
+        message.attach_alternative("<p>hi</p>", "text/html")
+        attach_logo(message)
+
+        self.assertEqual(message.mixed_subtype, "related")
+        self.assertEqual(len(message.attachments), 1)
+        logo = message.attachments[0]
+        self.assertEqual(logo.get("Content-ID"), "<labor_hub_logo>")
+        self.assertEqual(logo.get("Content-Disposition"),
+                          'inline; filename="logo_small.png"')
+
+    def test_is_a_no_op_for_a_plain_text_only_message(self):
+        message = EmailMessage(subject="s", body="b", to=["a@example.com"])
+        attach_logo(message)
+        self.assertEqual(message.attachments, [])
+
+    def test_is_a_no_op_if_the_logo_file_cannot_be_found(self):
+        message = EmailMultiAlternatives(subject="s", body="b", to=["a@example.com"])
+        message.attach_alternative("<p>hi</p>", "text/html")
+        with patch("core.email.find_static", return_value=None):
+            attach_logo(message)
+        self.assertEqual(message.attachments, [])

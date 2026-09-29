@@ -4,6 +4,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import CustomUser, UserApplication
+from core.tests.email_assertions import assert_has_html_alternative_with_logo
 
 
 def make_researcher(email="advisor@example.com"):
@@ -156,9 +157,12 @@ class ApplicationNotificationEmailTests(TestCase):
         staff_mails = [m for m in mail.outbox if "staff@example.com" in m.to]
         self.assertEqual(len(staff_mails), 1)
         self.assertIn("application", staff_mails[0].subject.lower())
+        self.assertTrue(staff_mails[0].subject.startswith("[Action Required]"))
         self.assertEqual(
             staff_mails[0].extra_headers.get("X-Cmail-GroupName"),
             "LaborHub - Staff alerts")
+        # Regression: this notification used to be plain-text only.
+        assert_has_html_alternative_with_logo(self, staff_mails[0])
 
     def test_advisor_notified_on_student_submission(self):
         advisor = make_researcher()
@@ -173,6 +177,8 @@ class ApplicationNotificationEmailTests(TestCase):
         advisor_mails = [m for m in mail.outbox if advisor.email in m.to]
         self.assertEqual(len(advisor_mails), 1)
         self.assertIn("advisor", advisor_mails[0].subject.lower())
+        self.assertTrue(advisor_mails[0].subject.startswith("[Action Required]"))
         self.assertEqual(
             advisor_mails[0].extra_headers.get("X-Cmail-GroupName"),
             "LaborHub - Advisor requests")
+        assert_has_html_alternative_with_logo(self, advisor_mails[0])

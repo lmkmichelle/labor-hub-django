@@ -6,11 +6,11 @@ submission-time notifications: one to every staff member, and one to the
 advisor a student named on their application.
 """
 from django.conf import settings
-from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from core.email import cm_headers, default_reply_to
+from core.email import attach_logo, cm_headers, default_reply_to
 
 
 def _absolute_url(path):
@@ -43,6 +43,7 @@ def send_application_approved_email(user, fail_silently=True):
         headers=cm_headers("Application decision"),
     )
     message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
     message.send(fail_silently=fail_silently)
 
 
@@ -70,6 +71,7 @@ def send_application_rejected_email(application, fail_silently=True):
         headers=cm_headers("Application decision"),
     )
     message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
     message.send(fail_silently=fail_silently)
 
 
@@ -94,23 +96,27 @@ def send_application_submitted_email(application, fail_silently=True):
     review_url = _absolute_url(
         reverse("admin:accounts_userapplication_change", args=[application.pk])
     )
-    body = (
-        f"A new {role_label} application is awaiting review.\n\n"
-        f"Name: {application.first_name} {application.last_name}\n"
-        f"Email: {application.email}\n"
-        f"Role: {role_label}\n"
-        f"Submitted: {application.applied_at:%Y-%m-%d %H:%M}\n\n"
-        f"Review it: {review_url}\n"
-    )
-    EmailMessage(
-        subject=f"[Labor Hub] New {role_label} application: "
+    context = {
+        "application": application,
+        "role_label": role_label,
+        "review_url": review_url,
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    text_body = render_to_string("emails/application_submitted.txt", context)
+    html_body = render_to_string("emails/application_submitted.html", context)
+
+    message = EmailMultiAlternatives(
+        subject=f"[Action Required] New {role_label} application: "
         f"{application.first_name} {application.last_name}",
-        body=body,
+        body=text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[application.email],
         headers=cm_headers("Staff alerts"),
-    ).send(fail_silently=fail_silently)
+    )
+    message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
+    message.send(fail_silently=fail_silently)
 
 
 def send_advisor_review_email(application, fail_silently=True):
@@ -134,7 +140,7 @@ def send_advisor_review_email(application, fail_silently=True):
         "site_url": settings.SITE_URL.rstrip("/"),
     }
     subject = (
-        f"A student listed you as their advisor on Labor Hub: "
+        f"[Action Required] A student listed you as their advisor: "
         f"{application.first_name} {application.last_name}"
     )
     text_body = render_to_string("emails/advisor_review.txt", context)
@@ -149,4 +155,5 @@ def send_advisor_review_email(application, fail_silently=True):
         headers=cm_headers("Advisor requests"),
     )
     message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
     message.send(fail_silently=fail_silently)

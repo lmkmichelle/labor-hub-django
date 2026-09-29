@@ -1,0 +1,22 @@
+{% extends "emails/_layout.html" %}
+{% block title %}Contact form: {{ contact_message.name }}{% endblock %}
+{% block content %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 16px; font-size:16px;">New message from the contact form.</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px; font-size:15px; color:#374151;">
+    <tr>
+      <td style="padding:4px 0; width:100px; color:#6b7280;">Name</td>
+      <td style="padding:4px 0;"><strong>{{ contact_message.name }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding:4px 0; color:#6b7280;">Email</td>
+      <td style="padding:4px 0;">{{ contact_message.email }}</td>
+    </tr>
+    <tr>
+      <td style="padding:4px 0; color:#6b7280;">Submitted</td>
+      <td style="padding:4px 0;">{{ contact_message.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+  </table>
+  <div style="padding:16px; background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; font-size:15px; color:#374151; white-space:pre-wrap;">{{ contact_message.message }}</div>
+  <!-- djlint:on -->
+{% endblock %}

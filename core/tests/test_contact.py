@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from core.models import ContactMessage
+from core.tests.email_assertions import assert_has_html_alternative_with_logo
 
 
 class ContactViewTests(TestCase):
@@ -38,10 +39,16 @@ class ContactViewTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         sent = mail.outbox[0]
         self.assertIn('Ada Lovelace', sent.subject)
+        # The sender name already reads "Labor Hub" -- no redundant prefix.
+        self.assertNotIn('[Labor Hub]', sent.subject)
         self.assertEqual(sent.reply_to, ['ada@example.com'])
         self.assertIn('broken link', sent.body)
         self.assertEqual(
             sent.extra_headers.get('X-Cmail-GroupName'), 'LaborHub - Contact form')
+
+        # Regression: this notification used to be plain-text only.
+        html_body = assert_has_html_alternative_with_logo(self, sent)
+        self.assertIn('broken link', html_body)
 
     def test_success_flag_shows_confirmation(self):
         response = self.client.get(self.url, {'sent': '1'})

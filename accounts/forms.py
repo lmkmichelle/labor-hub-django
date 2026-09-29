@@ -1,13 +1,19 @@
 import json
+import logging
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth.hashers import make_password
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
 
 from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES
+from core.email import attach_logo, cm_headers, default_reply_to
 from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
+
+logger = logging.getLogger(__name__)
 
 # The two named research-paper upload fields on ResearcherApplicationForm,
 # in the order they should be saved as ResearchPaper rows.
@@ -216,6 +222,35 @@ class CustomLoginForm(AuthenticationForm):
     class Meta:
         model = CustomUser
         fields = ("username", "password")
+
+
+class LaborHubPasswordResetForm(PasswordResetForm):
+    """Adds the CM grouping/reply-to headers and the inline logo to the
+    password-reset email -- Django's own ``send_mail`` builds the message
+    itself, so there's no other hook to reuse ``core.email.attach_logo`` from.
+    Otherwise identical to ``PasswordResetForm.send_mail``."""
+
+    def send_mail(self, subject_template_name, email_template_name, context,
+                  from_email, to_email, html_email_template_name=None):
+        subject = loader.render_to_string(subject_template_name, context)
+        subject = "".join(subject.splitlines())
+        body = loader.render_to_string(email_template_name, context)
+
+        message = EmailMultiAlternatives(
+            subject, body, from_email, [to_email],
+            reply_to=default_reply_to(),
+            headers=cm_headers("Password reset"),
+        )
+        if html_email_template_name is not None:
+            html_email = loader.render_to_string(html_email_template_name, context)
+            message.attach_alternative(html_email, "text/html")
+        attach_logo(message)
+        try:
+            message.send()
+        except Exception:
+            logger.exception(
+                "Failed to send password reset email to %s", context["user"].pk
+            )
 
 
 class UpdateUserForm(forms.ModelForm):

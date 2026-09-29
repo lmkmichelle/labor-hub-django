@@ -8,7 +8,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from core.email import cm_headers
+from core.email import attach_logo, cm_headers
 
 
 def _absolute_url(path):
@@ -35,7 +35,8 @@ def send_paper_advisor_ack_email(publication, fail_silently=True):
         "site_url": settings.SITE_URL.rstrip("/"),
     }
     subject = (
-        f"You were listed as the advisor on a job market paper: {publication.title}"
+        f"[Action Required] You were listed as the advisor on a job market "
+        f"paper: {publication.title}"
     )
     text_body = render_to_string("emails/paper_advisor_ack.txt", context)
     html_body = render_to_string("emails/paper_advisor_ack.html", context)
@@ -49,4 +50,5 @@ def send_paper_advisor_ack_email(publication, fail_silently=True):
         headers=cm_headers("Advisor requests"),
     )
     message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
     message.send(fail_silently=fail_silently)

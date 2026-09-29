@@ -1,0 +1,8 @@
+A new {{ role_label }} application is awaiting review.
+
+Name: {{ application.first_name }} {{ application.last_name }}
+Email: {{ application.email }}
+Role: {{ role_label }}
+Submitted: {{ application.applied_at|date:"Y-m-d H:i" }}
+
+Review it: {{ review_url }}

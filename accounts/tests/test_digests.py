@@ -13,6 +13,7 @@ from accounts.digests import (
     read_unsubscribe_token,
     send_user_digest,
 )
+from core.tests.email_assertions import assert_has_html_alternative_with_logo
 from accounts.models import CustomUser, Profile
 from events.models import Event
 from jobs.models import Job
@@ -112,7 +113,7 @@ class SendUserDigestTests(TestCase):
         self.assertIn("1 new update", message.subject)
         self.assertIn("Fresh Paper", message.body)
         self.assertIn("/accounts/digest/unsubscribe/", message.body)
-        html_body = message.alternatives[0][0]
+        html_body = assert_has_html_alternative_with_logo(self, message)
         self.assertIn("Fresh Paper", html_body)
 
         user.profile.refresh_from_db()

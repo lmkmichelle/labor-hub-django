@@ -7,12 +7,19 @@ sends" / "Advanced HTML email header options". These headers are inert on any
 other SMTP server (the Upsun relay, Gmail, locmem in tests), so nothing here
 is CM-specific enough to break local dev or the test suite.
 """
+from email.mime.image import MIMEImage
+
 from django.conf import settings
+from django.contrib.staticfiles.finders import find as find_static
+from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.smtp import EmailBackend as SMTPEmailBackend
 
 GROUP_HEADER = "X-Cmail-GroupName"
 TRACK_OPENS_HEADER = "X-Cmail-TrackOpens"
 TRACK_CLICKS_HEADER = "X-Cmail-TrackClicks"
+
+# Referenced from every email template as src="cid:labor_hub_logo".
+LOGO_CID = "labor_hub_logo"
 
 
 def cm_headers(group, track_opens=False, track_clicks=False):
@@ -32,6 +39,37 @@ def cm_headers(group, track_opens=False, track_clicks=False):
 def default_reply_to():
     """The shared support mailbox (an EGA), or ``None`` until one is configured."""
     return [settings.REPLY_TO_EMAIL] if settings.REPLY_TO_EMAIL else None
+
+
+def attach_logo(message):
+    """Attach the site logo as an inline image every HTML email can show via
+    ``<img src="cid:labor_hub_logo">``.
+
+    Deliberately not a remote ``<img src="https://.../logo.png">``: most mail
+    clients block remote images until the recipient explicitly allows them, so
+    a link-only logo would render broken far more often than not -- which is
+    exactly the "looks like a scam" impression a legitimate-looking email is
+    trying to avoid. An inline (Content-ID) attachment always renders, with no
+    round trip back to the site, and works the same in a local test send as
+    in production regardless of whether the recipient can even reach the
+    site's own URL.
+
+    A no-op for a plain ``EmailMessage`` (nothing to attach an inline image
+    to without an HTML part) and if the logo file can't be found, so a
+    missing/misconfigured static file degrades to "no logo", never a broken
+    send.
+    """
+    if not isinstance(message, EmailMultiAlternatives):
+        return
+    logo_path = find_static("images/logo_small.png")
+    if not logo_path:
+        return
+    with open(logo_path, "rb") as logo_file:
+        image = MIMEImage(logo_file.read())
+    image.add_header("Content-ID", f"<{LOGO_CID}>")
+    image.add_header("Content-Disposition", "inline", filename="logo_small.png")
+    message.mixed_subtype = "related"
+    message.attach(image)
 
 
 class CampaignMonitorEmailBackend(SMTPEmailBackend):
