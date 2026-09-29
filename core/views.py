@@ -30,7 +30,7 @@ from core.announcements import (
     load_announcements,
     recent_announcement_summaries,
 )
-from core.filters import map_country_terms_to_codes, parse_pill_terms
+from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
 from events.models import Event
@@ -118,13 +118,13 @@ def home(request):
     # Get recent approved papers (last 6)
     recent_papers_qs = Publication.objects.filter(
         status='approved'
-    ).prefetch_related('authors__user').order_by('-applied_at')[:6]
+    ).prefetch_related('author_links__author__user').order_by('-applied_at')[:6]
 
     # Format papers for _list_display template
     recent_papers = []
     for paper in recent_papers_qs:
         authors = []
-        for author in paper.authors.all():
+        for author in paper.ordered_authors:
             if author.user:
                 authors.append(author.user.get_full_name())
             else:
@@ -298,7 +298,7 @@ def map_country_detail(request, code):
 
     papers_qs = (
         Publication.objects.filter(status="approved", country_code__iexact=code)
-        .prefetch_related("authors__user")
+        .prefetch_related("author_links__author__user")
         .order_by("-applied_at")
     )
     papers_total = papers_qs.count()
@@ -306,7 +306,7 @@ def map_country_detail(request, code):
     for paper in papers_qs[:MAP_PANEL_LIMIT]:
         author_names = [
             author.user.get_full_name() if author.user else author.name
-            for author in paper.authors.all()
+            for author in paper.ordered_authors
         ]
         papers.append({
             "title": paper.title,
@@ -406,7 +406,7 @@ class ScholarsListView(ListView):
         context['selected_countries_serialized'] = ','.join(selected_countries)
         context['country_choices'] = COUNTRY_CHOICES
         context['selected_interests'] = interest_terms
-        context['selected_interests_serialized'] = ','.join(interest_terms)
+        context['selected_interests_serialized'] = serialize_pill_terms(interest_terms)
         context['role_choices'] = [
             (CustomUser.Role.STUDENT.value, 'Students'),
             (CustomUser.Role.RESEARCHER.value, 'Researchers'),
@@ -509,7 +509,9 @@ def city_search(request):
 
 @require_GET
 def publications_list(request):
-    publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')
+    publications = Publication.objects.filter(
+        status='approved'
+    ).prefetch_related('author_links__author__user')
 
     query = request.GET.get('q', '').strip()
     if query:
@@ -556,6 +558,8 @@ def publications_list(request):
         publications = publications.order_by('applied_at', 'id')
     elif sort == 'title':
         publications = publications.order_by(Lower('title'), 'id')
+    elif sort == 'downloads':
+        publications = publications.order_by('-download_count', '-applied_at', '-id')
     else:
         sort = 'newest'
         publications = publications.order_by('-applied_at', '-id')
@@ -565,7 +569,7 @@ def publications_list(request):
     page_obj = paginator.get_page(page_number)
 
     selected_countries_serialized = ','.join(selected_countries)
-    selected_topics_serialized = ','.join(topic_terms)
+    selected_topics_serialized = serialize_pill_terms(topic_terms)
 
     filter_params = {}
     if query:

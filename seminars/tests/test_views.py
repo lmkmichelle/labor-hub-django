@@ -250,13 +250,18 @@ class UniversitiesByCountryTests(TestCase):
         names = [uni["name"] for uni in response.json()["universities"]]
         self.assertIn("Cornell", names)
 
-    def test_live_fallback_fetches_over_https(self):
-        with patch("seminars.views.urlopen") as mock_urlopen:
+    def test_live_fallback_fetches_over_http(self):
+        """Regression: this fallback used to hardcode https://, which
+        hipolabs' API always refuses (see seminars/hipolabs.py) -- so the
+        fallback silently never worked. It now goes through the same shared
+        helper the import command uses, which fetches over http://."""
+        with patch("seminars.hipolabs.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = OSError("blocked")
-            self.client.get(reverse("seminar-universities"), {"country": "US"})
+            response = self.client.get(reverse("seminar-universities"), {"country": "US"})
 
         called_url = mock_urlopen.call_args[0][0]
-        self.assertTrue(called_url.startswith("https://"))
+        self.assertTrue(called_url.startswith("http://"))
+        self.assertEqual(response.json(), {"universities": []})
 
 
 class SeminarDeleteViewTests(TestCase):

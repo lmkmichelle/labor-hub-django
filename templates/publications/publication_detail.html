@@ -25,9 +25,8 @@
                         </a>
                     {% endif %}
                     {% if publication.pdf %}
-                        <a href="{{ publication.pdf.url }}"
-                           download="{{ publication.title }}.pdf"
-                           target="_blank"
+                        <a href="{% url 'publication_download' pk=publication.pk %}"
+                           rel="nofollow"
                            class="p-2 -m-2">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  width="20"
@@ -39,9 +38,10 @@
                                 <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
                             </svg>
                         </a>
+                        <span class="download-count">{{ publication.download_count }} download{{ publication.download_count|pluralize }}</span>
                     {% endif %}
                     {% if user.is_authenticated %}
-                        {% for author in publication.authors.all %}
+                        {% for author in publication.ordered_authors %}
                             {% if author.user == user %}
                                 <a href="{% url 'edit_publication' pk=publication.pk %}"
                                    class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Paper</a>
@@ -54,7 +54,7 @@
                 <h3>{{ publication.title }}</h3>
             </div>
             <div class="not-format mb-4">
-                {% for author in publication.authors.all %}
+                {% for author in publication.ordered_authors %}
                     {% if author.user %}
                         <a class="text-red-700 underline"
                            href="{% url 'profile' pk=author.user.id %}">{{ author.user.get_full_name }}</a>

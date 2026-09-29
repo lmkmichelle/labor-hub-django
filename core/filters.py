@@ -21,10 +21,12 @@ def parse_pill_terms(raw_value):
         return []
 
     parsed_terms = []
+    valid_json_list = False
     if raw_value.startswith("["):
         try:
             parsed = json.loads(raw_value)
             if isinstance(parsed, list):
+                valid_json_list = True
                 for item in parsed:
                     if isinstance(item, dict):
                         value = str(item.get("value", "")).strip()
@@ -35,7 +37,11 @@ def parse_pill_terms(raw_value):
         except (TypeError, ValueError, json.JSONDecodeError):
             parsed_terms = []
 
-    if not parsed_terms:
+    # A syntactically valid JSON array -- even an empty one, "[]" -- is
+    # authoritative and must not fall through to the comma split below, or an
+    # empty pill input (submitted as "[]" by the pill inputs' syncHidden())
+    # would be comma-split into a single bogus "[]" search term.
+    if not parsed_terms and not valid_json_list:
         parsed_terms = [part.strip() for part in raw_value.split(",") if part.strip()]
 
     deduped_terms = []
@@ -46,6 +52,20 @@ def parse_pill_terms(raw_value):
             seen.add(lowered)
             deduped_terms.append(term)
     return deduped_terms
+
+
+def serialize_pill_terms(terms):
+    """Round-trip counterpart to ``parse_pill_terms``.
+
+    Used to re-encode already-parsed terms back into a hidden-field/query-param
+    value, e.g. for the sort and pagination links on a filtered list page. A
+    plain comma-join can't round-trip a term that itself contains a comma
+    (e.g. the keyword "Structural models of health, retirement, and savings"),
+    so this always emits JSON once there's at least one term, matching what
+    ``parse_pill_terms`` prefers to read. An empty list serializes to ``''``,
+    not ``'[]'``, so the resulting query param is empty rather than truthy.
+    """
+    return json.dumps(list(terms)) if terms else ""
 
 
 def map_country_terms_to_codes(terms, choices=COUNTRY_CHOICES):

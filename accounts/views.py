@@ -96,7 +96,7 @@ class ProfileView(View):
             Publication.objects.filter(authors__user=profile_user),
             request,
             profile_user,
-        ).distinct().prefetch_related("authors__user")
+        ).distinct().prefetch_related("author_links__author__user")
 
         # Visits the member posted. ``posted_by`` is the only link from a visit
         # back to a member, and the submission form labels the visitor fields

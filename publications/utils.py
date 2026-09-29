@@ -1,7 +1,7 @@
 import json
 
 from accounts.models import CustomUser
-from .models import Author
+from .models import Author, PublicationAuthor
 
 def handle_authors(raw_input):
     authors = []
@@ -45,6 +45,29 @@ def handle_authors(raw_input):
     return authors
 
 
+def set_ordered_authors(publication, authors):
+    """Replace ``publication``'s authors with ``authors``, in that exact
+    order (Publication.ordered_authors / PublicationAuthor.position).
+
+    Used instead of the plain M2M ``publication.authors.set(...)``, which
+    has no concept of order. A name appearing twice (e.g. the same author
+    picked twice in the Tagify field) keeps only its first position, since
+    (publication, author) is unique.
+    """
+    deduped = []
+    seen_ids = set()
+    for author in authors:
+        if author.pk not in seen_ids:
+            seen_ids.add(author.pk)
+            deduped.append(author)
+
+    publication.author_links.all().delete()
+    PublicationAuthor.objects.bulk_create([
+        PublicationAuthor(publication=publication, author=author, position=position)
+        for position, author in enumerate(deduped)
+    ])
+
+
 def handle_keywords(raw_input):
     """Normalise a Tagify value into a flat list of strings.
 
@@ -84,7 +107,7 @@ def process_publication_form(request, form):
     publication.save()
 
     raw_authors = request.POST.get('authors_input', '[]')
-    publication.authors.set(handle_authors(raw_authors))
+    set_ordered_authors(publication, handle_authors(raw_authors))
 
     # Idempotent and a no-op unless the paper is already numbered and has an
     # upload, so it's simplest (and safest against a missed edge case) to
@@ -94,3 +117,23 @@ def process_publication_form(request, form):
     publication.rebuild_covered_pdf()
 
     return publication
+
+
+def count_download(request, publication):
+    """Record one download of `publication`, at most once per session.
+
+    Only approved papers are counted -- an author repeatedly opening their
+    own still-pending upload to check it shouldn't inflate the number. The
+    already-counted pks live in the session so a page refresh, or clicking
+    the download link twice, doesn't add a second count; a different
+    visitor (a different session) does add their own.
+    """
+    if publication.status != 'approved':
+        return
+    counted = request.session.setdefault('counted_downloads', [])
+    if publication.pk in counted:
+        return
+    publication.record_download()
+    counted.append(publication.pk)
+    request.session['counted_downloads'] = counted
+    request.session.modified = True

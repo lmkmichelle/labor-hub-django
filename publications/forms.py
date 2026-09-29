@@ -65,7 +65,7 @@ class PublicationForm(forms.ModelForm):
                 )
             if self.instance.authors.exists():
                 initial_authors = [
-                    {"value": str(author)} for author in self.instance.authors.all()
+                    {"value": str(author)} for author in self.instance.ordered_authors
                 ]
                 self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
 

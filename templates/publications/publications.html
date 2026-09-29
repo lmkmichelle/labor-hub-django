@@ -121,6 +121,7 @@
                               <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
                               <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
                               <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: Title (A–Z)</option>
+                              <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Sort: Most downloaded</option>
                           </select>
                       </form>
                       {% if user.is_authenticated %}
@@ -153,9 +154,17 @@
             ];
 
             function syncHidden(tagify, hidden) {
-                hidden.value = tagify.value.map(function (item) {
+                // JSON, not a comma-join: some recommended keywords contain
+                // commas themselves (e.g. "Structural models of health,
+                // retirement, and savings"), which a comma-joined hidden
+                // value can't round-trip unambiguously. parse_pill_terms
+                // (core/filters.py) already prefers a JSON array.
+                // An empty pill list is left as '', not '[]' -- '[]' would
+                // still be a truthy, non-empty request param.
+                var values = tagify.value.map(function (item) {
                     return item.value;
-                }).join(',');
+                });
+                hidden.value = values.length ? JSON.stringify(values) : '';
             }
 
             function initCountries(inputId, hiddenId, preselected) {
@@ -188,7 +197,7 @@
                 if (!input || !hidden) {
                     return;
                 }
-                var settings = { dropdown: { enabled: 0, classname: 'dropdown-panel' } };
+                var settings = { dropdown: { enabled: 0, classname: 'dropdown-panel' }, delimiters: null };
                 if (whitelist && whitelist.length) {
                     settings.whitelist = whitelist;
                     settings.enforceWhitelist = false;

@@ -38,6 +38,7 @@ from accounts.models import CustomUser
 from events.models import Event
 from jobs.models import Job
 from publications.models import Author, Publication
+from publications.utils import set_ordered_authors
 from seminars.models import Seminar
 from special_issues.models import SpecialIssue
 
@@ -118,7 +119,7 @@ class Command(BaseCommand):
             },
         )
         author, _ = Author.objects.get_or_create(user=None, name=EXAMPLE_AUTHOR)
-        publication.authors.set([author])
+        set_ordered_authors(publication, [author])
         self._report("discussion paper", created)
 
     def _seed_event(self, now, owner):

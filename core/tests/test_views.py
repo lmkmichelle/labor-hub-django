@@ -331,6 +331,29 @@ class PublicationsListViewTests(TestCase):
         response = self.client.get(reverse("publications"))
         self.assertIn("recommended_keywords", response.context)
 
+    def test_empty_topics_pill_does_not_exclude_every_paper(self):
+        """Regression: an empty pill input now submits topics=[] (see
+        syncHidden() in publications.html); this must behave like no filter
+        at all, not like a bogus "[]" search term that matches nothing."""
+        paper = Publication.objects.create(
+            title="Wages", abstract="a", status="approved", topic=["Minimum wages"],
+        )
+        response = self.client.get(reverse("publications"), {"topics": "[]"})
+        self.assertIn(paper, response.context["publications"])
+
+    def test_comma_containing_topic_survives_a_sort_round_trip(self):
+        """The hidden topics field is re-serialized into the sort/pagination
+        forms' hidden inputs on every page render; a keyword containing a
+        comma must not get split into separate terms by that round trip."""
+        term = "Structural models of health, retirement, and savings"
+        Publication.objects.create(
+            title="Health", abstract="a", status="approved", topic=[term],
+        )
+        response = self.client.get(
+            reverse("publications"), {"topics": f'["{term}"]', "sort": "title"})
+        self.assertEqual(response.context["selected_topics"], [term])
+        self.assertIn(term, response.context["selected_topics_serialized"])
+
     def test_card_links_member_authors_but_not_external_ones(self):
         member = make_user(email="authormember@example.com")
         paper = Publication.objects.create(
@@ -381,6 +404,15 @@ class PublicationsListViewTests(TestCase):
         self.assertIn(jm, response.context["publications"])
         self.assertIn(dp, response.context["publications"])
         self.assertEqual(response.context["page_heading"], "Research Papers")
+
+    def test_sort_by_most_downloaded(self):
+        popular = Publication.objects.create(
+            title="Popular", abstract="a", status="approved", download_count=10)
+        obscure = Publication.objects.create(
+            title="Obscure", abstract="a", status="approved", download_count=1)
+        response = self.client.get(reverse("publications"), {"sort": "downloads"})
+        publications = list(response.context["publications"])
+        self.assertLess(publications.index(popular), publications.index(obscure))
 
 
 class ScholarsListViewTests(TestCase):
@@ -453,3 +485,21 @@ class ScholarsListViewTests(TestCase):
         response = self.client.get(reverse("scholars"))
         users = list(response.context["users"])
         self.assertLess(users.index(zoe), users.index(adam))
+
+    def test_empty_interests_pill_does_not_exclude_every_scholar(self):
+        """Regression: an empty pill input now submits interests=[] (see
+        syncHidden() in users_list.html); this must behave like no filter at
+        all, not like a bogus "[]" search term that matches nothing."""
+        user = make_user(email="econ@example.com")
+        response = self.client.get(reverse("scholars"), {"interests": "[]"})
+        self.assertIn(user, response.context["users"])
+
+    def test_comma_containing_interest_survives_a_sort_round_trip(self):
+        term = "Structural models of health, retirement, and savings"
+        match = make_user(email="econ@example.com")
+        match.profile.research_interests = [term]
+        match.profile.save()
+        response = self.client.get(
+            reverse("scholars"), {"interests": f'["{term}"]', "sort": "newest"})
+        self.assertEqual(response.context["selected_interests"], [term])
+        self.assertIn(term, response.context["selected_interests_serialized"])

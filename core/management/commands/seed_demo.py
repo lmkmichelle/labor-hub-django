@@ -35,6 +35,7 @@ from accounts.models import CustomUser, Profile
 from events.models import Event
 from jobs.models import Job
 from publications.models import Author, Publication
+from publications.utils import set_ordered_authors
 from seminars.models import Seminar, University
 
 # All demo users share this e-mail domain so ``--reset`` can find and remove
@@ -352,7 +353,7 @@ class Command(BaseCommand):
                     "status": "approved",
                 },
             )
-            pub.authors.set([self._author_for(k, users) for k in author_keys])
+            set_ordered_authors(pub, [self._author_for(k, users) for k in author_keys])
             created += int(was_created)
         self.stdout.write(f"Publications: {created} created, {len(PUBLICATIONS) - created} updated.")
 

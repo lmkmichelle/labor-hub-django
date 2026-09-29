@@ -59,7 +59,7 @@ def build_bibtex(publication, url):
     """The full ``.bib`` file contents, as a string. Callers must only call
     this once ``publication.display_number`` is set."""
     authors = " and ".join(
-        format_author_name(author) for author in publication.authors.all()
+        format_author_name(author) for author in publication.ordered_authors
     )
     applied = timezone.localtime(publication.applied_at)
 

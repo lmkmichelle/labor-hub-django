@@ -1,3 +1,106 @@
+/**
+ * Adds "move up" / "move down" buttons to each of a Tagify instance's tags,
+ * so its tags can be reordered deterministically. Used on every tag field
+ * where the saved order matters: paper authors
+ * (publications/utils.py::set_ordered_authors, Publication.ordered_authors),
+ * special-issue editors (SpecialIssue.editors, already documented as an
+ * "ordered JSON list" -- this is what actually lets it be reordered now),
+ * a profile's research interests, and a paper's research topics -- the
+ * latter two are plain JSONField lists (Profile.research_interests,
+ * Publication.topic) that already preserve whatever order Tagify submits
+ * them in, so reordering them client-side needed no server-side change at
+ * all.
+ *
+ * This replaces two rounds of drag-based reordering (DragSort, then
+ * Sortable.js), both abandoned:
+ *  - DragSort (Tagify's own documented drag-sort pairing) hit an unresolved
+ *    upstream bug, "Glitchy sorting animation on macOS"
+ *    (https://github.com/yaireo/dragsort/issues/5): native HTML5 drag's
+ *    dragover firing is unreliable on macOS.
+ *  - Sortable.js's forceFallback mode fixed that, but its FLIP-style
+ *    animation fought the transition Tagify's own (unlayered, always-wins --
+ *    see the .tagify.form-input comment in input.css) CSS sets on
+ *    `.tagify__tag`, a documented class of conflict
+ *    (https://github.com/SortableJS/Sortable/issues/1751): the reorder
+ *    snapped instead of animating.
+ *
+ * Buttons sidestep the whole cross-library CSS fight (no drag library, no
+ * animation to fight over) and are the standard accessible pattern for this
+ * anyway -- WCAG 2.2 SC 2.5.7 (Dragging Movements) requires any drag
+ * interaction to have a single-pointer, non-drag alternative like this one.
+ */
+function addTagReorderButtons(tagify) {
+  function moveTag(tagElm, direction) {
+    const sibling = direction === 'up'
+      ? tagElm.previousElementSibling
+      : tagElm.nextElementSibling;
+    if (!sibling || !sibling.classList.contains(tagify.settings.classNames.tag)) {
+      return;
+    }
+    if (direction === 'up') {
+      tagElm.parentNode.insertBefore(tagElm, sibling);
+    } else {
+      tagElm.parentNode.insertBefore(sibling, tagElm);
+    }
+    tagify.updateValueByDOMTags();
+    refreshButtonStates();
+  }
+
+  function refreshButtonStates() {
+    const tags = tagify.DOM.scope.querySelectorAll('.' + tagify.settings.classNames.tag);
+    tags.forEach(function (tagElm, index) {
+      const upBtn = tagElm.querySelector('[data-reorder="up"]');
+      const downBtn = tagElm.querySelector('[data-reorder="down"]');
+      if (upBtn) {
+        upBtn.disabled = index === 0;
+      }
+      if (downBtn) {
+        downBtn.disabled = index === tags.length - 1;
+      }
+    });
+  }
+
+  function attachButtons() {
+    tagify.DOM.scope
+      .querySelectorAll('.' + tagify.settings.classNames.tag)
+      .forEach(function (tagElm) {
+        if (tagElm.querySelector('.tag-reorder-buttons')) {
+          return; // already has buttons
+        }
+        const group = document.createElement('span');
+        group.className = 'tag-reorder-buttons';
+
+        ['up', 'down'].forEach(function (direction) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tag-reorder-btn';
+          btn.dataset.reorder = direction;
+          btn.setAttribute('aria-label',
+            'Move ' + (tagElm.textContent || 'this item').trim() +
+            (direction === 'up' ? ' earlier' : ' later'));
+          btn.textContent = direction === 'up' ? '↑' : '↓';
+          // Both to stop Tagify's own click handling on the tag (which can
+          // open its edit-in-place mode) and to keep the click from being
+          // treated as a tag removal/selection.
+          btn.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            moveTag(tagElm, direction);
+          });
+          group.appendChild(btn);
+        });
+
+        tagElm.appendChild(group);
+      });
+    refreshButtonStates();
+  }
+
+  attachButtons();
+  tagify.on('add', attachButtons);
+  tagify.on('remove', refreshButtonStates);
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
   const authors_input = document.querySelector("#authors-input");
   const editors_input = document.querySelector("#editors-input");
@@ -38,6 +141,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           authors_tag.settings.whitelist = data;
         });
     });
+
+    addTagReorderButtons(authors_tag);
   }
 
   if (editors_input) {
@@ -60,11 +165,18 @@ document.addEventListener("DOMContentLoaded", async function () {
           editors_tag.settings.whitelist = data;
         });
     });
+
+    addTagReorderButtons(editors_tag);
   }
 
   if (research_interests_input) {
-    new Tagify(research_interests_input, {
+    const research_interests_tag = new Tagify(research_interests_input, {
       whitelist: additional_keywords,
+      // Some recommended keywords contain commas (e.g. "Structural models of
+      // health, retirement, and savings") -- the default "," delimiter would
+      // split typing/pasting one of those into several tags. Enter and
+      // picking a dropdown item still add a tag.
+      delimiters: null,
       dropdown: {
         enabled: 0,
         closeOnSelect: false,
@@ -72,14 +184,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         classname: "dropdown-panel"
       }
     });
+
+    addTagReorderButtons(research_interests_tag);
   }
 
   if (topics_input) {
     // Closed list: only the recommended vocabulary, no free entry. The server
     // (PublicationForm.clean_topics_input) re-checks this.
-    new Tagify(topics_input, {
+    const topics_tag = new Tagify(topics_input, {
       whitelist: additional_keywords,
       enforceWhitelist: true,
+      delimiters: null,
       dropdown: {
         enabled: 0,
         closeOnSelect: false,
@@ -89,5 +204,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       originalInputValueFormat: values =>
         JSON.stringify(values.map(v => ({value: v.value}))),
     });
+
+    addTagReorderButtons(topics_tag);
   }
 });

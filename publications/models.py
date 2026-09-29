@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import JSONField, Max
+from django.db.models import F, JSONField, Max
 from django.utils.text import slugify
 
 from accounts.models import CustomUser
@@ -20,9 +20,31 @@ class Author(models.Model):
     class Meta:
         unique_together = [('user', 'name')]
 
+
+class PublicationAuthor(models.Model):
+    """Through model for Publication.authors, adding author order.
+
+    Reuses the M2M table Django's plain ManyToManyField already created
+    (``db_table``), so switching to ``through=`` here is schema-compatible --
+    see publications/migrations/0023_publicationauthor_alter_publication_authors.py,
+    which only adds the ``position`` column and backfills it.
+    """
+    publication = models.ForeignKey(
+        'Publication', on_delete=models.CASCADE, related_name='author_links')
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'publications_publication_authors'
+        ordering = ['position']
+        unique_together = [('publication', 'author')]
+
+
 class Publication(Approvable):
     title = models.CharField(max_length=200)
-    authors = models.ManyToManyField(Author, related_name='publications')
+    authors = models.ManyToManyField(
+        Author, related_name='publications', through=PublicationAuthor,
+    )
     abstract = models.TextField()
     country_code = models.CharField(
         max_length=16,
@@ -80,8 +102,21 @@ class Publication(Approvable):
     jm_advisor_acknowledged = models.BooleanField(null=True, blank=True)
     jm_advisor_responded_at = models.DateTimeField(null=True, blank=True)
 
+    # Incremented by record_download() (publications/utils.py) -- once per
+    # session per paper, and only for an approved paper -- so it reflects
+    # public interest rather than an author repeatedly previewing their own
+    # pending upload. Not user-editable; see PublicationAdmin.readonly_fields.
+    download_count = models.PositiveIntegerField(default=0, editable=False)
+
     def __str__(self):
         return self.title
+
+    @property
+    def ordered_authors(self):
+        """Authors in the order set on submission/edit (drag-and-drop in the
+        Authors field), instead of `authors.all()`'s undefined M2M order.
+        Prefetch with 'author_links__author__user' to avoid N+1."""
+        return [link.author for link in self.author_links.all()]
 
     def formatted_date(self):
         """The paper's public date is when it was submitted."""
@@ -127,6 +162,16 @@ class Publication(Approvable):
             setattr(self, field, (current_max or 0) + 1)
             self.save(update_fields=[field])
 
+    def record_download(self):
+        """Bump download_count by one, atomically, without a read-modify-write
+        race between two concurrent downloads. Updates the DB row directly
+        rather than ``self.download_count += 1; self.save()``, and refreshes
+        ``self`` so a caller that renders the count right after (there isn't
+        one today, but a redirect-back page might) sees the new value."""
+        Publication.objects.filter(pk=self.pk).update(
+            download_count=F('download_count') + 1)
+        self.refresh_from_db(fields=['download_count'])
+
     def rebuild_covered_pdf(self, save=True):
         """(Re)build the public `pdf` as pdf_original with a fresh cover
         page prepended. Always reads from pdf_original, never from pdf --
@@ -142,15 +187,32 @@ class Publication(Approvable):
         # Local import: registering the cover fonts (and finding the vendored
         # static assets) at every model-module import would be wasted work
         # for the vast majority of requests that never approve a paper.
+        from reportlab.lib.colors import black
+
         from .covers import build_covered_pdf
 
-        author_names = [str(author) for author in self.authors.all()]
+        author_names = [str(author) for author in self.ordered_authors]
         with self.pdf_original.open('rb') as f:
             original_bytes = f.read()
-        covered = build_covered_pdf(
-            original_bytes, self.display_number, self.title, author_names,
-        )
-        filename = f"DP{self.display_number}-{slugify(self.title)[:60]}.pdf"
+
+        # A job-market paper reuses the exact same backdrop/layout -- only the
+        # overlay differs: black instead of Carnelian text, the "Job Market
+        # Paper Series" label with its own (un-prefixed) number, and an
+        # "Advisor: <name>" line whenever one is named on the paper. See
+        # Jason's clarification in the paper-fixes plan.
+        if self.is_job_market:
+            covered = build_covered_pdf(
+                original_bytes, self.job_market_paper_number, self.title,
+                author_names, series_label='Job Market Paper Series',
+                advisor=self.jm_advisor.get_full_name() if self.jm_advisor else None,
+                text_color=black,
+            )
+            filename = f"JMP{self.job_market_paper_number}-{slugify(self.title)[:60]}.pdf"
+        else:
+            covered = build_covered_pdf(
+                original_bytes, self.display_number, self.title, author_names,
+            )
+            filename = f"DP{self.display_number}-{slugify(self.title)[:60]}.pdf"
         self.pdf.save(filename, ContentFile(covered), save=save)
 
     def approve(self, admin_user=None):
