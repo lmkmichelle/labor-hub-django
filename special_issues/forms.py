@@ -12,8 +12,7 @@ class SpecialIssueForm(forms.ModelForm):
         required=False,
         label='Other Editors (Optional)',
         widget=forms.TextInput(attrs={'id': 'editors-input'}),
-        help_text="Type a name to find a Labor Hub member, or enter any other editor's name. "
-                   "Use the arrows on a name to reorder the list.",
+        help_text="Type a name to find a Labor Hub member, or enter any other editor's name.",
     )
 
     class Meta:

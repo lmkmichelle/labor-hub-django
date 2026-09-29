@@ -291,7 +291,6 @@ class UpdateProfileForm(forms.ModelForm):
 
     research_interests_input = forms.CharField(
         label='Research Interests',
-        help_text='Use the arrows on an interest to reorder the list.',
         widget=forms.TextInput(attrs={"id": "research-interests-input"}),
         required=False,
     )

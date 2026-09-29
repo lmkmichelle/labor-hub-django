@@ -124,8 +124,9 @@ class PublicationDetailViewTests(TestCase):
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
         content = response.content.decode()
+        download_url = reverse("publication_download", kwargs={"pk": publication.pk})
         self.assertLess(
-            content.index(publication.pdf.url), content.index("Edit Paper"),
+            content.index(download_url), content.index("Edit Paper"),
             "the download link should render before the Edit Paper button",
         )
 
@@ -134,7 +135,8 @@ class PublicationDetailViewTests(TestCase):
         publication.pdf.save("paper.pdf", ContentFile(b"%PDF-1.4 test"), save=True)
         response = self.client.get(
             reverse("publication_detail", kwargs={"pk": publication.pk}))
-        self.assertContains(response, publication.pdf.url)
+        self.assertContains(
+            response, reverse("publication_download", kwargs={"pk": publication.pk}))
         self.assertNotContains(response, "Edit Paper")
 
 
@@ -196,6 +198,70 @@ class PublicationBibtexViewTests(TestCase):
         self.assertContains(response, cite_url)
 
 
+class PublicationDownloadViewTests(TestCase):
+    def _paper_with_pdf(self, **overrides):
+        publication = make_publication(**overrides)
+        publication.pdf.save("paper.pdf", ContentFile(b"%PDF-1.4 test"), save=True)
+        return publication
+
+    def test_downloading_an_approved_paper_serves_the_pdf_and_counts_it(self):
+        publication = self._paper_with_pdf(status="approved")
+        response = self.client.get(
+            reverse("publication_download", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("attachment", response["Content-Disposition"])
+        publication.refresh_from_db()
+        self.assertEqual(publication.download_count, 1)
+
+    def test_a_second_download_in_the_same_session_does_not_add_another(self):
+        publication = self._paper_with_pdf(status="approved")
+        url = reverse("publication_download", kwargs={"pk": publication.pk})
+        self.client.get(url)
+        self.client.get(url)
+        publication.refresh_from_db()
+        self.assertEqual(publication.download_count, 1)
+
+    def test_a_different_session_adds_its_own_count(self):
+        from django.test import Client
+
+        publication = self._paper_with_pdf(status="approved")
+        url = reverse("publication_download", kwargs={"pk": publication.pk})
+        self.client.get(url)
+        Client().get(url)
+        publication.refresh_from_db()
+        self.assertEqual(publication.download_count, 2)
+
+    def test_downloading_a_pending_paper_as_its_author_works_but_is_not_counted(self):
+        user = make_user()
+        publication = self._paper_with_pdf(status="pending")
+        publication.authors.add(Author.objects.create(user=user, name="Jane Doe"))
+        self.client.force_login(user)
+        response = self.client.get(
+            reverse("publication_download", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 200)
+        publication.refresh_from_db()
+        self.assertEqual(publication.download_count, 0)
+
+    def test_pending_paper_hidden_from_a_stranger(self):
+        publication = self._paper_with_pdf(status="pending")
+        response = self.client.get(
+            reverse("publication_download", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_paper_with_no_pdf_404s(self):
+        publication = make_publication(status="approved")
+        response = self.client.get(
+            reverse("publication_download", kwargs={"pk": publication.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_page_shows_the_download_count(self):
+        publication = self._paper_with_pdf(status="approved")
+        publication.record_download()
+        response = self.client.get(
+            reverse("publication_detail", kwargs={"pk": publication.pk}))
+        self.assertContains(response, "1 download")
+
+
 class PublicationsListDisplayNumberTests(TestCase):
     """The list-page card shows a job-market paper's own "J" number, not the
     regular series (item 16's separate counter)."""
@@ -244,24 +310,15 @@ class PublicationCreateViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "publications/publication_form.html")
 
-    def test_authors_field_documents_the_reorder_buttons_not_drag(self):
+    def test_authors_field_does_not_reference_a_drag_library(self):
         """Regression: two rounds of drag-based author reordering (DragSort,
         then Sortable.js) were both abandoned for real animation bugs -- see
         static/js/tagify.js::addTagReorderButtons. Neither vendored drag
-        library should be referenced any more, and the help text should
-        describe the buttons that replaced them."""
+        library should be referenced any more."""
         self.client.force_login(self.user)
         response = self.client.get(reverse("submit_paper"))
-        self.assertContains(response, "Use the arrows on a name to reorder")
         self.assertNotContains(response, "sortable.min.js")
         self.assertNotContains(response, "dragsort")
-
-    def test_topics_field_also_documents_the_reorder_buttons(self):
-        """addTagReorderButtons is wired to every tag field where order is
-        preserved, not just Authors -- Research Topic(s) is one of them."""
-        self.client.force_login(self.user)
-        response = self.client.get(reverse("submit_paper"))
-        self.assertContains(response, "Use the arrows on a topic to reorder")
 
     def test_post_creates_publication_and_records_the_submitter(self):
         self.client.force_login(self.user)

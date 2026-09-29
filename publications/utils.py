@@ -117,3 +117,23 @@ def process_publication_form(request, form):
     publication.rebuild_covered_pdf()
 
     return publication
+
+
+def count_download(request, publication):
+    """Record one download of `publication`, at most once per session.
+
+    Only approved papers are counted -- an author repeatedly opening their
+    own still-pending upload to check it shouldn't inflate the number. The
+    already-counted pks live in the session so a page refresh, or clicking
+    the download link twice, doesn't add a second count; a different
+    visitor (a different session) does add their own.
+    """
+    if publication.status != 'approved':
+        return
+    counted = request.session.setdefault('counted_downloads', [])
+    if publication.pk in counted:
+        return
+    publication.record_download()
+    counted.append(publication.pk)
+    request.session['counted_downloads'] = counted
+    request.session.modified = True

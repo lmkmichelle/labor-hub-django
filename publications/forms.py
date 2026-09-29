@@ -18,14 +18,12 @@ class PublicationForm(forms.ModelForm):
     authors_input = forms.CharField(
         required=True,
         label='Authors',
-        help_text='Use the arrows on a name to reorder the author list.',
         widget=forms.TextInput(attrs={'id': 'authors-input'}),
     )
 
     topics_input = forms.CharField(
         required=True,
         label='Research Topic(s)',
-        help_text='Use the arrows on a topic to reorder the list.',
         widget=forms.TextInput(attrs={'id': 'topics-input'}),
     )
 

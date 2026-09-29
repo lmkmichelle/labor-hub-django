@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, IntegerField, When
-from django.http import Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -14,7 +14,7 @@ from publications.citations import build_bibtex
 from publications.emails import send_paper_advisor_ack_email
 from publications.forms import PublicationForm
 from publications.models import Publication
-from .utils import process_publication_form
+from .utils import count_download, process_publication_form
 
 
 def _get_visible_publication(pk, user):
@@ -153,6 +153,26 @@ def paper_ack_confirm(request, pk):
 @require_POST
 def paper_ack_decline(request, pk):
     return _record_response(request, pk, False)
+
+
+@require_GET
+def publication_download(request, pk):
+    """Serve a paper's PDF and record the download (see count_download()).
+
+    Served from here rather than linking straight to `pdf.url` so the
+    saved filename matches publication_bibtex's naming and so the count can
+    be recorded on the same request -- a plain media-file link would give
+    neither."""
+    publication = _get_visible_publication(pk, request.user)
+    if not publication.pdf:
+        raise Http404("This publication has no PDF yet.")
+
+    count_download(request, publication)
+
+    number = publication.display_number or publication.pk
+    filename = f"DP{number}-{slugify(publication.title)[:60]}.pdf"
+    return FileResponse(
+        publication.pdf.open('rb'), as_attachment=True, filename=filename)
 
 
 @require_GET

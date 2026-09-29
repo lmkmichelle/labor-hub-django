@@ -28,7 +28,7 @@ from core.announcements import (
     load_announcements,
     recent_announcement_summaries,
 )
-from core.filters import map_country_terms_to_codes, parse_pill_terms
+from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
 from core.forms import ContactForm
 from publications.models import Publication
 from events.models import Event
@@ -403,7 +403,7 @@ class ScholarsListView(ListView):
         context['selected_countries_serialized'] = ','.join(selected_countries)
         context['country_choices'] = COUNTRY_CHOICES
         context['selected_interests'] = interest_terms
-        context['selected_interests_serialized'] = ','.join(interest_terms)
+        context['selected_interests_serialized'] = serialize_pill_terms(interest_terms)
         context['role_choices'] = [
             (CustomUser.Role.STUDENT.value, 'Students'),
             (CustomUser.Role.RESEARCHER.value, 'Researchers'),
@@ -555,6 +555,8 @@ def publications_list(request):
         publications = publications.order_by('applied_at', 'id')
     elif sort == 'title':
         publications = publications.order_by(Lower('title'), 'id')
+    elif sort == 'downloads':
+        publications = publications.order_by('-download_count', '-applied_at', '-id')
     else:
         sort = 'newest'
         publications = publications.order_by('-applied_at', '-id')
@@ -564,7 +566,7 @@ def publications_list(request):
     page_obj = paginator.get_page(page_number)
 
     selected_countries_serialized = ','.join(selected_countries)
-    selected_topics_serialized = ','.join(topic_terms)
+    selected_topics_serialized = serialize_pill_terms(topic_terms)
 
     filter_params = {}
     if query:

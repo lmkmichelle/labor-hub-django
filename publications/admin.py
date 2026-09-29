@@ -21,11 +21,13 @@ class AuthorAdmin(admin.ModelAdmin):
 class PublicationAdmin(ApprovableAdmin):
     inlines = [AuthorInline]
     list_display = ['title', 'number_display', 'applied_at', 'country_code',
-                    'is_job_market', 'jm_advisor', 'jm_advisor_acknowledged']
+                    'is_job_market', 'jm_advisor', 'jm_advisor_acknowledged',
+                    'download_count']
     search_fields = ['title', 'abstract']
     list_filter = ['applied_at', 'is_job_market', 'jm_advisor_acknowledged']
     readonly_fields = ['applied_at', 'submitted_by', 'jm_advisor_responded_at',
-                       'discussion_paper_number', 'job_market_paper_number', 'pdf_original']
+                       'discussion_paper_number', 'job_market_paper_number',
+                       'pdf_original', 'download_count']
     autocomplete_fields = ['jm_advisor']
     actions = ApprovableAdmin.actions + ('regenerate_cover',)
 
@@ -33,7 +35,8 @@ class PublicationAdmin(ApprovableAdmin):
         ('Publication Info', {
             'fields': ('title', 'abstract', 'country_code',
                        'topic', 'is_job_market', 'discussion_paper_number',
-                       'job_market_paper_number', 'pdf_original', 'pdf', 'submitted_by')
+                       'job_market_paper_number', 'pdf_original', 'pdf', 'submitted_by',
+                       'download_count')
         }),
         ('Job market advisor', {
             'fields': ('jm_advisor', 'jm_advisor_acknowledged',

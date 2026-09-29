@@ -147,6 +147,17 @@ class PublicationModelTests(TestCase):
         with self.assertRaises(ValueError):
             publication.reject(admin)
 
+    def test_download_count_defaults_to_zero(self):
+        self.assertEqual(make_publication().download_count, 0)
+
+    def test_record_download_increments_by_one(self):
+        publication = make_publication()
+        publication.record_download()
+        publication.record_download()
+        self.assertEqual(publication.download_count, 2)
+        publication.refresh_from_db()
+        self.assertEqual(publication.download_count, 2)
+
 
 class DiscussionPaperNumberTests(TestCase):
     def test_approving_assigns_sequential_numbers(self):

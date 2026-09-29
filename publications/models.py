@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import JSONField, Max
+from django.db.models import F, JSONField, Max
 from django.utils.text import slugify
 
 from accounts.models import CustomUser
@@ -102,6 +102,12 @@ class Publication(Approvable):
     jm_advisor_acknowledged = models.BooleanField(null=True, blank=True)
     jm_advisor_responded_at = models.DateTimeField(null=True, blank=True)
 
+    # Incremented by record_download() (publications/utils.py) -- once per
+    # session per paper, and only for an approved paper -- so it reflects
+    # public interest rather than an author repeatedly previewing their own
+    # pending upload. Not user-editable; see PublicationAdmin.readonly_fields.
+    download_count = models.PositiveIntegerField(default=0, editable=False)
+
     def __str__(self):
         return self.title
 
@@ -155,6 +161,16 @@ class Publication(Approvable):
             )
             setattr(self, field, (current_max or 0) + 1)
             self.save(update_fields=[field])
+
+    def record_download(self):
+        """Bump download_count by one, atomically, without a read-modify-write
+        race between two concurrent downloads. Updates the DB row directly
+        rather than ``self.download_count += 1; self.save()``, and refreshes
+        ``self`` so a caller that renders the count right after (there isn't
+        one today, but a redirect-back page might) sees the new value."""
+        Publication.objects.filter(pk=self.pk).update(
+            download_count=F('download_count') + 1)
+        self.refresh_from_db(fields=['download_count'])
 
     def rebuild_covered_pdf(self, save=True):
         """(Re)build the public `pdf` as pdf_original with a fresh cover
