@@ -1,8 +1,15 @@
 /**
  * Adds "move up" / "move down" buttons to each of a Tagify instance's tags,
- * so the author order can be reordered deterministically -- see
- * publications/utils.py::set_ordered_authors and Publication.ordered_authors
- * for how that order is persisted and displayed.
+ * so its tags can be reordered deterministically. Used on every tag field
+ * where the saved order matters: paper authors
+ * (publications/utils.py::set_ordered_authors, Publication.ordered_authors),
+ * special-issue editors (SpecialIssue.editors, already documented as an
+ * "ordered JSON list" -- this is what actually lets it be reordered now),
+ * a profile's research interests, and a paper's research topics -- the
+ * latter two are plain JSONField lists (Profile.research_interests,
+ * Publication.topic) that already preserve whatever order Tagify submits
+ * them in, so reordering them client-side needed no server-side change at
+ * all.
  *
  * This replaces two rounds of drag-based reordering (DragSort, then
  * Sortable.js), both abandoned:
@@ -22,7 +29,7 @@
  * anyway -- WCAG 2.2 SC 2.5.7 (Dragging Movements) requires any drag
  * interaction to have a single-pointer, non-drag alternative like this one.
  */
-function addAuthorReorderButtons(tagify) {
+function addTagReorderButtons(tagify) {
   function moveTag(tagElm, direction) {
     const sibling = direction === 'up'
       ? tagElm.previousElementSibling
@@ -69,8 +76,7 @@ function addAuthorReorderButtons(tagify) {
           btn.className = 'tag-reorder-btn';
           btn.dataset.reorder = direction;
           btn.setAttribute('aria-label',
-            (direction === 'up' ? 'Move ' : 'Move ') +
-            (tagElm.textContent || 'author').trim() +
+            'Move ' + (tagElm.textContent || 'this item').trim() +
             (direction === 'up' ? ' earlier' : ' later'));
           btn.textContent = direction === 'up' ? '↑' : '↓';
           // Both to stop Tagify's own click handling on the tag (which can
@@ -136,7 +142,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
 
-    addAuthorReorderButtons(authors_tag);
+    addTagReorderButtons(authors_tag);
   }
 
   if (editors_input) {
@@ -159,10 +165,12 @@ document.addEventListener("DOMContentLoaded", async function () {
           editors_tag.settings.whitelist = data;
         });
     });
+
+    addTagReorderButtons(editors_tag);
   }
 
   if (research_interests_input) {
-    new Tagify(research_interests_input, {
+    const research_interests_tag = new Tagify(research_interests_input, {
       whitelist: additional_keywords,
       // Some recommended keywords contain commas (e.g. "Structural models of
       // health, retirement, and savings") -- the default "," delimiter would
@@ -176,12 +184,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         classname: "dropdown-panel"
       }
     });
+
+    addTagReorderButtons(research_interests_tag);
   }
 
   if (topics_input) {
     // Closed list: only the recommended vocabulary, no free entry. The server
     // (PublicationForm.clean_topics_input) re-checks this.
-    new Tagify(topics_input, {
+    const topics_tag = new Tagify(topics_input, {
       whitelist: additional_keywords,
       enforceWhitelist: true,
       delimiters: null,
@@ -194,5 +204,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       originalInputValueFormat: values =>
         JSON.stringify(values.map(v => ({value: v.value}))),
     });
+
+    addTagReorderButtons(topics_tag);
   }
 });

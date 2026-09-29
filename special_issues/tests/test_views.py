@@ -47,6 +47,14 @@ class SpecialIssueCreateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Fay Fellow (you)")
 
+    def test_editors_field_documents_the_reorder_buttons(self):
+        """Editors is an explicitly ordered field (SpecialIssue.editors'
+        docstring) -- static/js/tagify.js::addTagReorderButtons is what
+        actually lets it be reordered; the help text should say so."""
+        self.client.force_login(make_fellow())
+        response = self.client.get(self.url)
+        self.assertContains(response, "Use the arrows on a name to reorder")
+
     def test_fellow_posts_pending_issue_with_self_as_first_editor(self):
         fellow = make_fellow()
         other = make_fellow(email="other@example.com", first="Olive", last="Other")

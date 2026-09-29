@@ -169,6 +169,14 @@ class EditProfileViewTests(TestCase):
         self.assertNotContains(response, 'name="digest_frequency"')
         self.assertNotContains(response, 'name="email"')
 
+    def test_research_interests_field_documents_the_reorder_buttons(self):
+        """addTagReorderButtons (static/js/tagify.js) is wired to Research
+        Interests too, not just the paper-submission Authors field."""
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.get(reverse("edit_profile"))
+        self.assertContains(response, "Use the arrows on an interest to reorder")
+
     def test_avatar_editor_has_no_visible_upload_label_and_modal_controls_are_labelled(self):
         """Regression: the avatar picker must not read like a generic file-upload
         widget (no visible "Upload a profile picture" text, no Flowbite file input),

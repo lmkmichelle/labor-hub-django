@@ -25,6 +25,7 @@ class PublicationForm(forms.ModelForm):
     topics_input = forms.CharField(
         required=True,
         label='Research Topic(s)',
+        help_text='Use the arrows on a topic to reorder the list.',
         widget=forms.TextInput(attrs={'id': 'topics-input'}),
     )
 

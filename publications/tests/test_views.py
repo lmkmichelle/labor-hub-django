@@ -247,7 +247,7 @@ class PublicationCreateViewTests(TestCase):
     def test_authors_field_documents_the_reorder_buttons_not_drag(self):
         """Regression: two rounds of drag-based author reordering (DragSort,
         then Sortable.js) were both abandoned for real animation bugs -- see
-        static/js/tagify.js::addAuthorReorderButtons. Neither vendored drag
+        static/js/tagify.js::addTagReorderButtons. Neither vendored drag
         library should be referenced any more, and the help text should
         describe the buttons that replaced them."""
         self.client.force_login(self.user)
@@ -255,6 +255,13 @@ class PublicationCreateViewTests(TestCase):
         self.assertContains(response, "Use the arrows on a name to reorder")
         self.assertNotContains(response, "sortable.min.js")
         self.assertNotContains(response, "dragsort")
+
+    def test_topics_field_also_documents_the_reorder_buttons(self):
+        """addTagReorderButtons is wired to every tag field where order is
+        preserved, not just Authors -- Research Topic(s) is one of them."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("submit_paper"))
+        self.assertContains(response, "Use the arrows on a topic to reorder")
 
     def test_post_creates_publication_and_records_the_submitter(self):
         self.client.force_login(self.user)
