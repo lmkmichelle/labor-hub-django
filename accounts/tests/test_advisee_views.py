@@ -156,6 +156,9 @@ class ApplicationNotificationEmailTests(TestCase):
         staff_mails = [m for m in mail.outbox if "staff@example.com" in m.to]
         self.assertEqual(len(staff_mails), 1)
         self.assertIn("application", staff_mails[0].subject.lower())
+        self.assertEqual(
+            staff_mails[0].extra_headers.get("X-Cmail-GroupName"),
+            "LaborHub - Staff alerts")
 
     def test_advisor_notified_on_student_submission(self):
         advisor = make_researcher()
@@ -170,3 +173,6 @@ class ApplicationNotificationEmailTests(TestCase):
         advisor_mails = [m for m in mail.outbox if advisor.email in m.to]
         self.assertEqual(len(advisor_mails), 1)
         self.assertIn("advisor", advisor_mails[0].subject.lower())
+        self.assertEqual(
+            advisor_mails[0].extra_headers.get("X-Cmail-GroupName"),
+            "LaborHub - Advisor requests")

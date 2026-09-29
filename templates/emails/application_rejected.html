@@ -1,0 +1,44 @@
+{# Email template: inline styles are required for email-client compatibility, and it is a standalone document (no site <title>). Linting is disabled for this file. #}
+<!-- djlint:off -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>An update on your Labor Hub application</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:8px; overflow:hidden;">
+            <tr>
+              <td style="background-color:#b91c1c; padding:20px 28px;">
+                <a href="{{ site_url }}" style="color:#ffffff; font-size:20px; font-weight:bold; text-decoration:none;">Labor Hub</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px;">
+                <p style="margin:0 0 16px; font-size:16px;">Hi {{ application.first_name|default:application.email }},</p>
+                <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+                  Thank you for your interest in Labor Hub. After review, we're
+                  not able to approve your application at this time.
+                </p>
+                <p style="margin:0; font-size:15px; color:#374151;">
+                  If you have questions about this decision, you're welcome to
+                  reach out to us.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px; background-color:#f9fafb; font-size:12px; color:#6b7280;">
+                <p style="margin:0;">The Labor Hub team</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+<!-- djlint:on -->

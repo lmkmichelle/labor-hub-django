@@ -241,6 +241,15 @@ SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 # that should receive site inquiries.
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", DEFAULT_FROM_EMAIL)
 
+# Reply-To on automated mail that has no more specific reply address (see
+# core.email.default_reply_to) -- meant to be a shared inbox such as an EGA
+# (e.g. laborhub@cornell.edu), not a person. Empty means no Reply-To header.
+REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL", "")
+
+# Prefix for the Campaign Monitor reporting group assigned to every outgoing
+# email (see core.email.cm_headers) -- harmless on any non-CM SMTP server.
+EMAIL_GROUP_PREFIX = os.environ.get("EMAIL_GROUP_PREFIX", "LaborHub")
+
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 

@@ -217,12 +217,25 @@ class UserApplicationTests(TestCase):
         self.assertTrue(
             any(mimetype == "text/html" for _content, mimetype in message.alternatives)
         )
+        self.assertEqual(
+            message.extra_headers.get("X-Cmail-GroupName"),
+            "LaborHub - Application decision")
 
-    def test_reject_does_not_send_email(self):
+    def test_reject_sends_notification_email(self):
         admin = make_user(email="admin2@example.com", role=CustomUser.Role.ADMIN)
-        app = make_application()
+        app = make_application(email="rejected@example.com")
+
         app.reject(admin)
-        self.assertEqual(len(mail.outbox), 0)
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ["rejected@example.com"])
+        self.assertTrue(
+            any(mimetype == "text/html" for _content, mimetype in message.alternatives)
+        )
+        self.assertEqual(
+            message.extra_headers.get("X-Cmail-GroupName"),
+            "LaborHub - Application decision")
 
     def test_reject_sets_status(self):
         admin = make_user(email="admin@example.com", role=CustomUser.Role.ADMIN)

@@ -133,6 +133,14 @@ class SendUserDigestTests(TestCase):
         self.assertIn("List-Unsubscribe", headers)
         self.assertIn("/accounts/digest/unsubscribe/", headers["List-Unsubscribe"])
 
+    def test_sets_campaign_monitor_group_and_opens_tracking(self):
+        user = make_user()
+        make_publication("Fresh Paper", self.now - timedelta(days=1))
+        send_user_digest(user, now=self.now)
+        headers = mail.outbox[0].extra_headers
+        self.assertEqual(headers["X-Cmail-GroupName"], "LaborHub - Digest")
+        self.assertEqual(headers["X-Cmail-TrackOpens"], "true")
+
     def test_a_relay_failure_does_not_stamp_last_digest_or_raise(self):
         # Unlike every other send site, this one runs unattended across every
         # subscriber from cron -- one bad address or a transient relay error
@@ -195,6 +203,22 @@ class SendDigestsCommandTests(TestCase):
         self.assertIsNone(
             CustomUser.objects.get(email="weekly@example.com").profile.last_digest_sent_at
         )
+
+    def test_reuses_a_single_connection_across_the_cohort(self):
+        # One open()/close() per run, not per recipient -- avoids a fresh
+        # SMTP login (and CM auth) for every subscriber.
+        make_user("weekly1@example.com", Profile.DigestFrequency.WEEKLY)
+        make_user("weekly2@example.com", Profile.DigestFrequency.WEEKLY)
+
+        with mock.patch(
+            "accounts.management.commands.send_digests.get_connection"
+        ) as get_connection:
+            connection = get_connection.return_value
+            call_command("send_digests", "--frequency", "weekly")
+
+        get_connection.assert_called_once()
+        connection.open.assert_called_once()
+        connection.close.assert_called_once()
 
 
 class UnsubscribeTests(TestCase):

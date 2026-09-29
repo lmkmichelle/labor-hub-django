@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.core.mail import EmailMessage
+
+from core.email import cm_headers
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count, Q
@@ -201,6 +203,7 @@ def _send_contact_notification(contact_message):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[contact_message.email],
+        headers=cm_headers("Contact form"),
     ).send(fail_silently=True)
 
 

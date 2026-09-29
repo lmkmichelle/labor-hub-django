@@ -8,6 +8,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+from core.email import cm_headers
+
 
 def _absolute_url(path):
     return "{}{}".format(settings.SITE_URL.rstrip("/"), path)
@@ -44,6 +46,7 @@ def send_paper_advisor_ack_email(publication, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[advisor.email],
         reply_to=[submitter.email] if submitter and submitter.email else None,
+        headers=cm_headers("Advisor requests"),
     )
     message.attach_alternative(html_body, "text/html")
     message.send(fail_silently=fail_silently)

@@ -8,6 +8,7 @@ the two ``crons`` entries in ``.upsun/config.yaml`` (specs are UTC)::
     # 1st of the month 12:00 UTC - monthly digests
     0 12 1 * *  python manage.py send_digests --frequency monthly
 """
+from django.core.mail import get_connection
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -43,30 +44,38 @@ class Command(BaseCommand):
 
         sent = 0
         skipped = 0
-        for user in users:
-            if dry_run:
-                since = user.profile.last_digest_sent_at or default_since(
-                    frequency, now
-                )
-                count = sum(
-                    len(section["items"])
-                    for section in collect_new_content(since)
-                )
-                if count:
-                    self.stdout.write(
-                        "[dry-run] would send {} update(s) to {}".format(
-                            count, user.email
-                        )
+        # One SMTP connection (one login) for the whole cohort, rather than
+        # reconnecting -- and re-authenticating with Campaign Monitor -- per
+        # recipient. open() is a no-op for the dry-run/console backends.
+        connection = get_connection()
+        connection.open()
+        try:
+            for user in users:
+                if dry_run:
+                    since = user.profile.last_digest_sent_at or default_since(
+                        frequency, now
                     )
+                    count = sum(
+                        len(section["items"])
+                        for section in collect_new_content(since)
+                    )
+                    if count:
+                        self.stdout.write(
+                            "[dry-run] would send {} update(s) to {}".format(
+                                count, user.email
+                            )
+                        )
+                        sent += 1
+                    else:
+                        skipped += 1
+                    continue
+
+                if send_user_digest(user, now=now, connection=connection):
                     sent += 1
                 else:
                     skipped += 1
-                continue
-
-            if send_user_digest(user, now=now):
-                sent += 1
-            else:
-                skipped += 1
+        finally:
+            connection.close()
 
         self.stdout.write(
             self.style.SUCCESS(

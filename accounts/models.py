@@ -279,6 +279,9 @@ class UserApplication(models.Model):
         self.reviewed_by = admin_user
         self.save()
 
+        from accounts.emails import send_application_rejected_email
+        send_application_rejected_email(self)
+
 class ResearchPaper(models.Model):
     application = models.ForeignKey(
         UserApplication,

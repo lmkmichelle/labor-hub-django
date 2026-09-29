@@ -1,0 +1,9 @@
+Hi {{ application.first_name|default:application.email }},
+
+Thank you for your interest in Labor Hub. After review, we're not able to approve your application at this time.
+
+If you have questions about this decision, you're welcome to reach out to us.
+
+--
+The Labor Hub team
+{{ site_url }}

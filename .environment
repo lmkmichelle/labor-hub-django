@@ -26,22 +26,41 @@ export CSRF_TRUSTED_ORIGINS="$APP_PRIMARY_URL"
 export SITE_URL="$APP_PRIMARY_URL"
 
 # --- Outgoing mail --------------------------------------------------------
-# Upsun runs a per-region SMTP relay and injects its address as
-# PLATFORM_SMTP_HOST on every environment that has SMTP enabled (production
-# does; a preview branch may not). Point Django at it when it is present, and
-# otherwise leave the console backend in place so an environment without mail
-# still boots instead of raising on every send.
+# Two possible transports, tried in this order:
 #
-# The relay listens on plain port 25 inside the platform network and takes no
-# credentials, so nothing secret is introduced here.
+# 1. ILR IT's Campaign Monitor (CM) account, used for classic transactional
+#    email over SMTP, sending as an ilr.mail.cornell.edu address that is
+#    already configured to pass SPF/DKIM/DMARC -- unlike sending as any
+#    @cornell.edu address ourselves (see the DMARC note below). Enabled by
+#    setting EMAIL_HOST_PASSWORD as an Upsun project variable (marked
+#    sensitive) to the CM SMTP token Aaron/ILR IT issues; the token is used
+#    as both username and password, per CM's SMTP docs. core.email adds the
+#    CM reporting-group/tracking headers on top of this backend.
 #
-# NOTE ON THE SENDER ADDRESS: cornell.edu publishes DMARC "p=reject" with no
-# "sp=" tag, which per RFC 7489 extends that reject policy to every subdomain.
-# Mail sent through this relay with any @cornell.edu From (laborhub.ilr.
-# cornell.edu included) fails DMARC and is rejected outright, so the default
-# sender below deliberately uses the platform domain (which publishes no DMARC
-# policy) until ILR IT authorises a real Cornell sender.
-if [ -n "$PLATFORM_SMTP_HOST" ]; then
+# 2. Upsun's own per-region SMTP relay, injected as PLATFORM_SMTP_HOST on any
+#    environment that has SMTP enabled (production does; a preview branch may
+#    not). Plain port 25 inside the platform network, no credentials needed.
+#    This is the fallback until the CM token above is set, and stays in place
+#    for preview branches that don't have it.
+#
+# If neither is configured, the console backend (Django's built-in default)
+# stays in place so an environment without mail still boots instead of
+# raising on every send.
+#
+# NOTE ON THE SENDER ADDRESS (transport 2 only): cornell.edu publishes DMARC
+# "p=reject" with no "sp=" tag, which per RFC 7489 extends that reject policy
+# to every subdomain. Mail sent through the Upsun relay with any @cornell.edu
+# From (laborhub.ilr.cornell.edu included) fails DMARC and is rejected
+# outright, so the default sender below deliberately uses the platform domain
+# (which publishes no DMARC policy) until sending through CM (transport 1,
+# which is DMARC-safe) is configured.
+if [ -n "$EMAIL_HOST_PASSWORD" ]; then
+    export EMAIL_BACKEND="core.email.CampaignMonitorEmailBackend"
+    export EMAIL_HOST="smtp.api.createsend.com"
+    export EMAIL_PORT="587"
+    export EMAIL_USE_TLS="True"
+    export EMAIL_HOST_USER="$EMAIL_HOST_PASSWORD"
+elif [ -n "$PLATFORM_SMTP_HOST" ]; then
     export EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
     export EMAIL_HOST="$PLATFORM_SMTP_HOST"
     export EMAIL_PORT="25"

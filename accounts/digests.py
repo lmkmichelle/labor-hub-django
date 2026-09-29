@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from core.email import cm_headers, default_reply_to
 from events.models import Event
 from jobs.models import Job
 from publications.models import Publication
@@ -178,11 +179,14 @@ def build_digest_email(user, sections):
     return subject, text_body, html_body, unsubscribe_url
 
 
-def send_user_digest(user, now=None):
+def send_user_digest(user, now=None, connection=None):
     """Send ``user`` a digest of content since their last one.
 
     Returns ``True`` when an email was sent, ``False`` when skipped because
-    the digest is disabled or there was nothing new.
+    the digest is disabled or there was nothing new. ``connection`` lets
+    ``send_digests`` reuse a single SMTP connection across the whole cohort
+    instead of reconnecting (and re-authenticating with Campaign Monitor) for
+    every subscriber.
     """
     now = now or timezone.now()
     profile = user.profile
@@ -198,9 +202,11 @@ def send_user_digest(user, now=None):
         return False
 
     subject, text_body, html_body, unsubscribe_url = build_digest_email(user, sections)
+    headers = cm_headers("Digest", track_opens=True)
+    headers["List-Unsubscribe"] = f"<{unsubscribe_url}>"
     message = EmailMultiAlternatives(
         subject, text_body, from_email=settings.DIGEST_FROM_EMAIL, to=[user.email],
-        headers={"List-Unsubscribe": f"<{unsubscribe_url}>"},
+        reply_to=default_reply_to(), headers=headers, connection=connection,
     )
     message.attach_alternative(html_body, "text/html")
     # Unlike every other send site in this codebase, this one runs unattended

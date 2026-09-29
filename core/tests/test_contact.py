@@ -40,6 +40,8 @@ class ContactViewTests(TestCase):
         self.assertIn('Ada Lovelace', sent.subject)
         self.assertEqual(sent.reply_to, ['ada@example.com'])
         self.assertIn('broken link', sent.body)
+        self.assertEqual(
+            sent.extra_headers.get('X-Cmail-GroupName'), 'LaborHub - Contact form')
 
     def test_success_flag_shows_confirmation(self):
         response = self.client.get(self.url, {'sent': '1'})

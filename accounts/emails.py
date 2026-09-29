@@ -1,14 +1,16 @@
 """Transactional emails for the accounts app.
 
-The "your application was approved" notification sent when an admin approves a
-:class:`~accounts.models.UserApplication`, plus the two submission-time
-notifications: one to every staff member, and one to the advisor a student
-named on their application.
+The "your application was approved"/"was not accepted" notifications sent when
+an admin decides a :class:`~accounts.models.UserApplication`, plus the two
+submission-time notifications: one to every staff member, and one to the
+advisor a student named on their application.
 """
 from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
+
+from core.email import cm_headers, default_reply_to
 
 
 def _absolute_url(path):
@@ -37,6 +39,35 @@ def send_application_approved_email(user, fail_silently=True):
         text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email],
+        reply_to=default_reply_to(),
+        headers=cm_headers("Application decision"),
+    )
+    message.attach_alternative(html_body, "text/html")
+    message.send(fail_silently=fail_silently)
+
+
+def send_application_rejected_email(application, fail_silently=True):
+    """Email an applicant that their application was not accepted.
+
+    Mirrors ``send_application_approved_email``: plain-text + HTML, no reason
+    given (none is currently recorded), and fails silently so a mail outage
+    can't disrupt the review flow -- the decision is already saved.
+    """
+    context = {
+        "application": application,
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    subject = "An update on your Labor Hub application"
+    text_body = render_to_string("emails/application_rejected.txt", context)
+    html_body = render_to_string("emails/application_rejected.html", context)
+
+    message = EmailMultiAlternatives(
+        subject,
+        text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[application.email],
+        reply_to=default_reply_to(),
+        headers=cm_headers("Application decision"),
     )
     message.attach_alternative(html_body, "text/html")
     message.send(fail_silently=fail_silently)
@@ -78,6 +109,7 @@ def send_application_submitted_email(application, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
         reply_to=[application.email],
+        headers=cm_headers("Staff alerts"),
     ).send(fail_silently=fail_silently)
 
 
@@ -114,6 +146,7 @@ def send_advisor_review_email(application, fail_silently=True):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[advisor.email],
         reply_to=[application.email],
+        headers=cm_headers("Advisor requests"),
     )
     message.attach_alternative(html_body, "text/html")
     message.send(fail_silently=fail_silently)

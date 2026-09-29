@@ -169,6 +169,9 @@ class PaperAdvisorEmailTests(TestCase):
         self.assertEqual(message.to, [advisor.email])
         self.assertIn("https://laborhub.test" + reverse("advised_papers"),
                       message.body)
+        self.assertEqual(
+            message.extra_headers.get("X-Cmail-GroupName"),
+            "LaborHub - Advisor requests")
 
     def test_non_job_market_submission_sends_nothing(self):
         submitter = CustomUser.objects.create_user(
