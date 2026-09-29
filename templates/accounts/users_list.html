@@ -161,9 +161,14 @@
             ];
 
             function syncHidden(tagify, hidden) {
-                hidden.value = tagify.value.map(function (item) {
+                // JSON, not a comma-join: some recommended keywords contain
+                // commas themselves (e.g. "Structural models of health,
+                // retirement, and savings"), which a comma-joined hidden
+                // value can't round-trip unambiguously. parse_pill_terms
+                // (core/filters.py) already prefers a JSON array.
+                hidden.value = JSON.stringify(tagify.value.map(function (item) {
                     return item.value;
-                }).join(',');
+                }));
             }
 
             function initCountries(inputId, hiddenId, preselected) {
@@ -196,7 +201,7 @@
                 if (!input || !hidden) {
                     return;
                 }
-                var settings = { dropdown: { enabled: 0, classname: 'dropdown-panel' } };
+                var settings = { dropdown: { enabled: 0, classname: 'dropdown-panel' }, delimiters: null };
                 if (whitelist && whitelist.length) {
                     settings.whitelist = whitelist;
                     settings.enforceWhitelist = false;

@@ -116,13 +116,13 @@ def home(request):
     # Get recent approved papers (last 6)
     recent_papers_qs = Publication.objects.filter(
         status='approved'
-    ).prefetch_related('authors__user').order_by('-applied_at')[:6]
+    ).prefetch_related('author_links__author__user').order_by('-applied_at')[:6]
 
     # Format papers for _list_display template
     recent_papers = []
     for paper in recent_papers_qs:
         authors = []
-        for author in paper.authors.all():
+        for author in paper.ordered_authors:
             if author.user:
                 authors.append(author.user.get_full_name())
             else:
@@ -295,7 +295,7 @@ def map_country_detail(request, code):
 
     papers_qs = (
         Publication.objects.filter(status="approved", country_code__iexact=code)
-        .prefetch_related("authors__user")
+        .prefetch_related("author_links__author__user")
         .order_by("-applied_at")
     )
     papers_total = papers_qs.count()
@@ -303,7 +303,7 @@ def map_country_detail(request, code):
     for paper in papers_qs[:MAP_PANEL_LIMIT]:
         author_names = [
             author.user.get_full_name() if author.user else author.name
-            for author in paper.authors.all()
+            for author in paper.ordered_authors
         ]
         papers.append({
             "title": paper.title,
@@ -506,7 +506,9 @@ def city_search(request):
 
 @require_GET
 def publications_list(request):
-    publications = Publication.objects.filter(status='approved').prefetch_related('authors__user')
+    publications = Publication.objects.filter(
+        status='approved'
+    ).prefetch_related('author_links__author__user')
 
     query = request.GET.get('q', '').strip()
     if query:

@@ -107,7 +107,7 @@ class AdvisedPapersView(LoginRequiredMixin, ListView):
             Publication.objects.filter(
                 jm_advisor=self.request.user, is_job_market=True)
             .select_related('submitted_by')
-            .prefetch_related('authors__user')
+            .prefetch_related('author_links__author__user')
             .annotate(
                 _pending_first=Case(
                     When(jm_advisor_acknowledged__isnull=True, then=0),

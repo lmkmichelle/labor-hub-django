@@ -2,12 +2,14 @@ from django.contrib import admin
 
 from core.admin import ApprovableAdmin
 
-from .models import Author, Publication
+from .models import Author, Publication, PublicationAuthor
 
 
 class AuthorInline(admin.TabularInline):
-    model = Publication.authors.through
+    model = PublicationAuthor
     extra = 1
+    fields = ['author', 'position']
+    ordering = ['position']
     autocomplete_fields = ['author']
 
 
@@ -29,7 +31,7 @@ class PublicationAdmin(ApprovableAdmin):
 
     fieldsets = (
         ('Publication Info', {
-            'fields': ('title', 'authors', 'abstract', 'country_code',
+            'fields': ('title', 'abstract', 'country_code',
                        'topic', 'is_job_market', 'discussion_paper_number',
                        'job_market_paper_number', 'pdf_original', 'pdf', 'submitted_by')
         }),

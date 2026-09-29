@@ -73,6 +73,13 @@ NUMBER_X = 0.07 * PAGE_WIDTH
 NUMBER_Y = 0.84 * PAGE_HEIGHT  # a plain baseline, per \makebox.
 NUMBER_FONT_SIZE = 17.28  # \Large.
 
+# The job-market-paper "Advisor: <name>" line, directly beneath the number
+# line, in the same column. \large at the 12pt document class -- one size
+# down from the number line's \Large -- with a leading-sized gap above it.
+ADVISOR_X = NUMBER_X
+ADVISOR_Y = NUMBER_Y - 22
+ADVISOR_FONT_SIZE = 14.4
+
 
 def format_authors(names):
     """Join author names the way the .tex's ``\\paperauthors`` sample does.
@@ -111,14 +118,22 @@ def _draw_centered_block(c, text, x, y_center, width, style_kwargs, base_size, m
         size -= 1
 
 
-def render_cover_page(number, title, authors):
+def render_cover_page(number, title, authors, *, series_label='Discussion Paper',
+                       advisor=None, text_color=CARNELIAN):
     """Render a single-page PDF: the vendored backdrop plus the paper's
     number, title, and authors overlaid in the .tex's positions/styles.
 
     ``number`` is the display label already formatted by the caller --
     a plain integer-like value ("5") for the regular series, or "J3" for a
     job-market paper's own series (see Publication.display_number) -- and is
-    interpolated into "Discussion Paper No. {number}" as-is.
+    interpolated into "{series_label} No. {number}" as-is.
+
+    A job-market paper reuses this exact same backdrop and layout -- there is
+    no separate JMP template -- only the overlay differs, via the keyword
+    arguments: ``series_label='Job Market Paper Series'``,
+    ``text_color=black`` for the title/authors (instead of Carnelian), and
+    ``advisor`` to add an "Advisor: <name>" line beneath the number whenever
+    one is named on the paper (omitted when ``None``).
 
     Returns the page as bytes.
     """
@@ -127,18 +142,23 @@ def render_cover_page(number, title, authors):
 
     _draw_centered_block(
         c, title.upper(), TITLE_X, TITLE_Y_CENTER, TITLE_WIDTH,
-        {'fontName': FONT_BOLD, 'textColor': CARNELIAN},
+        {'fontName': FONT_BOLD, 'textColor': text_color},
         TITLE_FONT_SIZE, TITLE_MIN_FONT_SIZE,
     )
     _draw_centered_block(
         c, format_authors(authors), AUTHORS_X, AUTHORS_Y_CENTER, AUTHORS_WIDTH,
-        {'fontName': FONT_BOLD, 'textColor': CARNELIAN},
+        {'fontName': FONT_BOLD, 'textColor': text_color},
         AUTHORS_FONT_SIZE, AUTHORS_MIN_FONT_SIZE,
     )
 
     c.setFont(FONT_REGULAR, NUMBER_FONT_SIZE)
     c.setFillColor(black)
-    c.drawString(NUMBER_X, NUMBER_Y, f'Discussion Paper No. {number}')
+    c.drawString(NUMBER_X, NUMBER_Y, f'{series_label} No. {number}')
+
+    if advisor:
+        c.setFont(FONT_REGULAR, ADVISOR_FONT_SIZE)
+        c.setFillColor(black)
+        c.drawString(ADVISOR_X, ADVISOR_Y, f'Advisor: {advisor}')
 
     c.showPage()
     c.save()
@@ -156,14 +176,19 @@ def render_cover_page(number, title, authors):
     return output.getvalue()
 
 
-def build_covered_pdf(original_bytes, number, title, authors):
+def build_covered_pdf(original_bytes, number, title, authors, *,
+                       series_label='Discussion Paper', advisor=None, text_color=CARNELIAN):
     """Prepend a generated cover page to ``original_bytes`` (the author's
     uploaded PDF). Returns the combined PDF as bytes.
 
     Mirrors the .tex's \\hypersetup block by stamping the same fields into
-    the combined PDF's document info dictionary.
+    the combined PDF's document info dictionary. Keyword arguments are the
+    same JMP-overlay options as render_cover_page.
     """
-    cover_bytes = render_cover_page(number, title, authors)
+    cover_bytes = render_cover_page(
+        number, title, authors, series_label=series_label,
+        advisor=advisor, text_color=text_color,
+    )
 
     merger = PdfMerger()
     merger.append(io.BytesIO(cover_bytes))
@@ -171,7 +196,7 @@ def build_covered_pdf(original_bytes, number, title, authors):
     merger.add_metadata({
         '/Title': title,
         '/Author': format_authors(authors),
-        '/Subject': f'Discussion Paper No. {number}',
+        '/Subject': f'{series_label} No. {number}',
         '/Keywords': 'discussion paper',
     })
 

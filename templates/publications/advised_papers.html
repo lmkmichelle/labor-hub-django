@@ -29,7 +29,7 @@
                             <div>
                                 <h3 class="card-title">{{ paper.title }}</h3>
                                 <p class="mt-1 text-sm text-body">
-                                    {% for author in paper.authors.all %}{{ author }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                    {% for author in paper.ordered_authors %}{{ author }}{% if not forloop.last %}, {% endif %}{% endfor %}
                                     {% if paper.submitted_by %}· submitted by {{ paper.submitted_by.get_full_name }}{% endif %}
                                 </p>
                             </div>

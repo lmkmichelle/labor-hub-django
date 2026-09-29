@@ -18,6 +18,7 @@ class PublicationForm(forms.ModelForm):
     authors_input = forms.CharField(
         required=True,
         label='Authors',
+        help_text='Drag a name to reorder the author list.',
         widget=forms.TextInput(attrs={'id': 'authors-input'}),
     )
 
@@ -65,7 +66,7 @@ class PublicationForm(forms.ModelForm):
                 )
             if self.instance.authors.exists():
                 initial_authors = [
-                    {"value": str(author)} for author in self.instance.authors.all()
+                    {"value": str(author)} for author in self.instance.ordered_authors
                 ]
                 self.fields["authors_input"].widget.attrs['value'] = json.dumps(initial_authors)
 
