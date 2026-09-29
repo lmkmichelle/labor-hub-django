@@ -66,6 +66,7 @@ def collect_new_content(since):
 
     publications = list(
         Publication.objects.filter(status="approved", applied_at__gte=since)
+        .prefetch_related("author_links__author__user")
         .order_by("-applied_at")
     )
     if publications:
@@ -79,6 +80,8 @@ def collect_new_content(since):
                         reverse("publication_detail", kwargs={"pk": pub.pk})
                     ),
                     "meta": pub.get_country_code_display() if pub.country_code else "",
+                    "authors": ", ".join(str(author) for author in pub.ordered_authors),
+                    "abstract": pub.abstract,
                 }
                 for pub in publications
             ],

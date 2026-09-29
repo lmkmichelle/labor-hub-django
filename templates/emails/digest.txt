@@ -4,7 +4,9 @@ Here's what's recently been added to Labor Hub ({{ total }} update{{ total|plura
 {% for section in sections %}
 {{ section.label }}
 {% for item in section.items %}  - {{ item.title }}{% if item.meta %} ({{ item.meta }}){% endif %}
-    {{ item.url }}
+{% if item.authors %}    {{ item.authors }}
+{% endif %}{% if item.abstract %}    {{ item.abstract|truncatewords:40 }}
+{% endif %}    {{ item.url }}
 {% endfor %}{% endfor %}
 --
 Manage your email preferences: {{ manage_url }}

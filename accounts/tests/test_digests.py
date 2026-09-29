@@ -17,7 +17,7 @@ from core.tests.email_assertions import assert_has_html_alternative_with_logo
 from accounts.models import CustomUser, Profile
 from events.models import Event
 from jobs.models import Job
-from publications.models import Publication
+from publications.models import Author, Publication
 from seminars.models import Seminar
 from special_issues.models import SpecialIssue
 
@@ -32,9 +32,9 @@ def make_user(email="digest@example.com", frequency=Profile.DigestFrequency.WEEK
     return user
 
 
-def make_publication(title, applied_at, status="approved", country_code="US"):
+def make_publication(title, applied_at, status="approved", country_code="US", abstract="a"):
     pub = Publication.objects.create(
-        title=title, abstract="a",
+        title=title, abstract=abstract,
         status=status, country_code=country_code,
     )
     Publication.objects.filter(pk=pub.pk).update(applied_at=applied_at)
@@ -96,6 +96,34 @@ class CollectNewContentTests(TestCase):
         make_publication("Old", self.now - timedelta(days=30))
         self.assertEqual(collect_new_content(self.since), [])
 
+    def test_publication_items_include_abstract_and_authors_in_order(self):
+        pub = make_publication(
+            "Recent", self.now - timedelta(days=1),
+            abstract="This paper studies something important.",
+        )
+        pub.authors.add(Author.objects.create(name="Zelda Zed"))
+        pub.authors.add(Author.objects.create(name="Amy Abe"))
+
+        pub_section = next(
+            s for s in collect_new_content(self.since) if s["key"] == "publications")
+        item = pub_section["items"][0]
+        self.assertEqual(item["abstract"], "This paper studies something important.")
+        # PublicationAuthor.position preserves submission order, not name order.
+        self.assertEqual(item["authors"], "Zelda Zed, Amy Abe")
+
+    def test_publications_section_precedes_events(self):
+        make_publication("Recent Paper", self.now - timedelta(days=1))
+        event = Event.objects.create(
+            title="Conf", description="d", date=self.now, location="NYC",
+            status="approved",
+        )
+        Event.objects.filter(pk=event.pk).update(created_at=self.now - timedelta(days=1))
+
+        keys = [s["key"] for s in collect_new_content(self.since)]
+        self.assertLess(
+            keys.index("publications"), keys.index("events"),
+            "Events should be listed below publications in the digest.")
+
 
 @override_settings(SITE_URL="http://testserver")
 class SendUserDigestTests(TestCase):
@@ -104,7 +132,11 @@ class SendUserDigestTests(TestCase):
 
     def test_sends_and_stamps_last_digest(self):
         user = make_user()
-        make_publication("Fresh Paper", self.now - timedelta(days=1))
+        pub = make_publication(
+            "Fresh Paper", self.now - timedelta(days=1),
+            abstract="An abstract about labor economics.",
+        )
+        pub.authors.add(Author.objects.create(name="Jane Doe"))
 
         self.assertTrue(send_user_digest(user, now=self.now))
         self.assertEqual(len(mail.outbox), 1)
@@ -112,9 +144,13 @@ class SendUserDigestTests(TestCase):
         message = mail.outbox[0]
         self.assertIn("1 new update", message.subject)
         self.assertIn("Fresh Paper", message.body)
+        self.assertIn("Jane Doe", message.body)
+        self.assertIn("An abstract about labor economics.", message.body)
         self.assertIn("/accounts/digest/unsubscribe/", message.body)
         html_body = assert_has_html_alternative_with_logo(self, message)
         self.assertIn("Fresh Paper", html_body)
+        self.assertIn("Jane Doe", html_body)
+        self.assertIn("An abstract about labor economics.", html_body)
 
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.last_digest_sent_at, self.now)
