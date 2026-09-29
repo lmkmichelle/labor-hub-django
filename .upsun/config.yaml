@@ -30,10 +30,14 @@ applications:
         set -eux
         python manage.py collectstatic --noinput
         python manage.py migrate
-        # Populate the affiliation picker's University table on the first deploy.
-        # --if-empty makes later deploys a no-op; `|| true` keeps a Hipolabs
-        # outage from failing the deploy (the picker falls back to a live fetch).
-        python manage.py import_universities --if-empty || true
+        # Re-sync the affiliation picker's University table on every deploy.
+        # The import is a single bulk create/update inside one transaction,
+        # so it's cheap and idempotent -- and re-running it also repairs a
+        # table an earlier, interrupted deploy only partially populated,
+        # rather than leaving it stuck (see import_universities). `|| true`
+        # keeps a Hipolabs outage from failing the deploy; the picker falls
+        # back to a live per-country fetch in that case.
+        python manage.py import_universities || true
         # Same idea for the event-location city picker's City table.
         python manage.py import_cities --if-empty || true
 

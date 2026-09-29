@@ -1,9 +1,7 @@
-import json
-from urllib.parse import urlencode
-from urllib.request import urlopen
-
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
+from seminars.hipolabs import fetch_universities
 from seminars.models import University
 
 
@@ -32,8 +30,10 @@ class Command(BaseCommand):
             action='store_true',
             help=(
                 'Skip the import when the University table already has rows. '
-                'Lets the Upsun deploy hook run this once without re-fetching '
-                'the full list on every deploy.'
+                'Deprecated: every deploy now re-syncs regardless, so a table '
+                'that was only partially populated by an interrupted earlier '
+                'run repairs itself on the next deploy instead of staying '
+                'stuck. Kept only for anyone still passing it by hand.'
             ),
         )
 
@@ -46,49 +46,38 @@ class Command(BaseCommand):
             self.stdout.write('University table already populated; skipping import.')
             return
 
-        query = {}
-        if country:
-            query['country'] = country
-
-        # hipolabs' API only listens on plain HTTP -- port 443 refuses the
-        # connection outright (confirmed both locally and from Upsun; this
-        # isn't an Upsun egress restriction). The payload is a public,
-        # unauthenticated university directory with no sensitive data, so
-        # the lack of transport encryption here isn't a real risk.
-        url = 'http://universities.hipolabs.com/search'
-        if query:
-            url = f"{url}?{urlencode(query)}"
-
         try:
-            with urlopen(url, timeout=30) as response:
-                payload = response.read().decode('utf-8')
+            rows = fetch_universities(country)
         except Exception as exc:
             raise CommandError(f'Failed to fetch universities: {exc}') from exc
 
-        try:
-            rows = json.loads(payload)
-        except json.JSONDecodeError as exc:
-            raise CommandError(f'Failed to parse universities payload: {exc}') from exc
+        if limit:
+            rows = rows[:limit]
 
-        if not isinstance(rows, list):
-            raise CommandError('Unexpected universities API response format.')
+        # Load what's on file for this source in one query, keyed the same
+        # way update_or_create used to look rows up, so the whole import can
+        # become one bulk_create + one bulk_update inside a single
+        # transaction: either every row lands, or (on any failure partway
+        # through, e.g. the deploy container being recycled) none do, rather
+        # than leaving the table's earlier partial state to strand a country
+        # part-way through the alphabet forever.
+        existing_by_key = {
+            (uni.source, uni.external_id): uni
+            for uni in University.objects.filter(source=source)
+        }
 
-        created = 0
-        updated = 0
+        to_create = []
+        to_update = []
+        seen_keys = set()
         processed = 0
 
         for row in rows:
-            if limit and processed >= limit:
-                break
-            if not isinstance(row, dict):
-                continue
-
             name = (row.get('name') or '').strip()
-            country_name = (row.get('country') or '').strip()
-            alpha_two = (row.get('alpha_two_code') or '').strip().upper()
-
             if not name:
                 continue
+
+            country_name = (row.get('country') or '').strip()
+            alpha_two = (row.get('alpha_two_code') or '').strip().upper()
 
             websites = row.get('web_pages') or []
             website = ''
@@ -102,28 +91,36 @@ class Command(BaseCommand):
             if not external_id:
                 external_id = f"{name.lower()}::{country_name.lower()}"
 
-            defaults = {
-                'name': name,
-                'country_code': alpha_two,
-                'website': website,
-            }
-
-            university, was_created = University.objects.update_or_create(
-                source=source,
-                external_id=external_id,
-                defaults=defaults,
-            )
-
-            if was_created:
-                created += 1
-            else:
-                updated += 1
-
+            key = (source, external_id)
+            if key in seen_keys:
+                # The upstream feed occasionally repeats a row; keep the
+                # first (bulk_update can't target the same row twice).
+                continue
+            seen_keys.add(key)
             processed += 1
+
+            existing = existing_by_key.get(key)
+            if existing is None:
+                to_create.append(University(
+                    source=source, external_id=external_id,
+                    name=name, country_code=alpha_two, website=website,
+                ))
+            else:
+                existing.name = name
+                existing.country_code = alpha_two
+                existing.website = website
+                to_update.append(existing)
+
+        with transaction.atomic():
+            if to_create:
+                University.objects.bulk_create(to_create)
+            if to_update:
+                University.objects.bulk_update(
+                    to_update, ['name', 'country_code', 'website'])
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'University import finished: processed={processed}, created={created}, updated={updated}.'
+                f'University import finished: processed={processed}, '
+                f'created={len(to_create)}, updated={len(to_update)}.'
             )
         )
-

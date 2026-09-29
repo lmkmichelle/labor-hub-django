@@ -1,6 +1,4 @@
-import json
 from urllib.parse import urlencode
-from urllib.request import urlopen
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -15,6 +13,7 @@ from core.constants import COUNTRY_CHOICES
 from core.views import OwnerDeleteView
 
 from seminars.forms import SeminarForm
+from seminars.hipolabs import fetch_universities
 from seminars.models import Seminar, University
 
 
@@ -219,22 +218,11 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
 def _fetch_universities_for_country(country_name):
     if not country_name:
         return []
-
-    url = f"https://universities.hipolabs.com/search?{urlencode({'country': country_name})}"
     try:
-        with urlopen(url, timeout=20) as response:
-            payload = response.read().decode('utf-8')
+        return fetch_universities(country_name, timeout=20)
     except Exception:
+        # Leave the free-text fallback field as the way through.
         return []
-
-    try:
-        rows = json.loads(payload)
-    except (TypeError, ValueError, json.JSONDecodeError):
-        return []
-
-    if not isinstance(rows, list):
-        return []
-    return [row for row in rows if isinstance(row, dict)]
 
 
 @require_GET
