@@ -18,7 +18,7 @@ class PublicationForm(forms.ModelForm):
     authors_input = forms.CharField(
         required=True,
         label='Authors',
-        help_text='Drag a name to reorder the author list.',
+        help_text='Use the arrows on a name to reorder the author list.',
         widget=forms.TextInput(attrs={'id': 'authors-input'}),
     )
 

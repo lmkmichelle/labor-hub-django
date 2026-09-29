@@ -75,8 +75,8 @@ class OrderedAuthorsTests(TestCase):
         set_ordered_authors(publication, [author_b, author_a])
         self.assertEqual(publication.ordered_authors, [author_b, author_a])
 
-        # Editing to a new order (e.g. via the drag-and-drop authors field)
-        # persists the new order, not the original one.
+        # Editing to a new order (e.g. via the authors field's move up/down
+        # buttons) persists the new order, not the original one.
         set_ordered_authors(publication, [author_a, author_b])
         self.assertEqual(publication.ordered_authors, [author_a, author_b])
 

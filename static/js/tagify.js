@@ -1,40 +1,98 @@
 /**
- * Lets a Tagify instance's tags be reordered by dragging, with an animated
- * slide as tags swap places. Tagify itself has no built-in drag-sort.
+ * Adds "move up" / "move down" buttons to each of a Tagify instance's tags,
+ * so the author order can be reordered deterministically -- see
+ * publications/utils.py::set_ordered_authors and Publication.ordered_authors
+ * for how that order is persisted and displayed.
  *
- * Tagify's own documented pairing is its author's small companion library,
- * DragSort (https://github.com/yairEO/tagify#drag--sort) -- tried first, but
- * dropped after it turned out to hit a known, unresolved upstream bug
- * (https://github.com/yairEO/dragsort/issues/5, "Glitchy sorting animation
- * on macOS"): native HTML5 drag-and-drop's `dragover` firing is notoriously
- * unreliable on macOS, especially over gaps between elements, which is also
- * why it took dragging far outside the field to register at all.
+ * This replaces two rounds of drag-based reordering (DragSort, then
+ * Sortable.js), both abandoned:
+ *  - DragSort (Tagify's own documented drag-sort pairing) hit an unresolved
+ *    upstream bug, "Glitchy sorting animation on macOS"
+ *    (https://github.com/yaireo/dragsort/issues/5): native HTML5 drag's
+ *    dragover firing is unreliable on macOS.
+ *  - Sortable.js's forceFallback mode fixed that, but its FLIP-style
+ *    animation fought the transition Tagify's own (unlayered, always-wins --
+ *    see the .tagify.form-input comment in input.css) CSS sets on
+ *    `.tagify__tag`, a documented class of conflict
+ *    (https://github.com/SortableJS/Sortable/issues/1751): the reorder
+ *    snapped instead of animating.
  *
- * Sortable.js (vendored at static/js/sortable.min.js -- see
- * static/js/README.md) sidesteps that whole class of bug via its
- * `forceFallback` option, which makes it track the drag with pointer events
- * instead of relying on native HTML5 DnD -- the documented fix for exactly
- * this "feel more consistent between Desktop, Mobile and old Browsers" case.
+ * Buttons sidestep the whole cross-library CSS fight (no drag library, no
+ * animation to fight over) and are the standard accessible pattern for this
+ * anyway -- WCAG 2.2 SC 2.5.7 (Dragging Movements) requires any drag
+ * interaction to have a single-pointer, non-drag alternative like this one.
  */
-function makeTagifySortable(tagify) {
-  // Marks the field so input.css can target its tags with user-select: none
-  // (see the .tagify--sortable rule there) without affecting every other
-  // Tagify field on the site.
-  tagify.DOM.scope.classList.add('tagify--sortable');
+function addAuthorReorderButtons(tagify) {
+  function moveTag(tagElm, direction) {
+    const sibling = direction === 'up'
+      ? tagElm.previousElementSibling
+      : tagElm.nextElementSibling;
+    if (!sibling || !sibling.classList.contains(tagify.settings.classNames.tag)) {
+      return;
+    }
+    if (direction === 'up') {
+      tagElm.parentNode.insertBefore(tagElm, sibling);
+    } else {
+      tagElm.parentNode.insertBefore(sibling, tagElm);
+    }
+    tagify.updateValueByDOMTags();
+    refreshButtonStates();
+  }
 
-  Sortable.create(tagify.DOM.scope, {
-    // Only tag pills are draggable -- not Tagify's own growing text input,
-    // which is also a direct child of the same scope element.
-    draggable: '.' + tagify.settings.classNames.tag,
-    forceFallback: true,
-    animation: 150,
-    // Tagify's own value array doesn't track drag reorders on its own;
-    // this rebuilds it (and so the hidden input's JSON) from the new DOM
-    // order, which is what publications.utils.set_ordered_authors persists.
-    onEnd: function () {
-      tagify.updateValueByDOMTags();
-    },
-  });
+  function refreshButtonStates() {
+    const tags = tagify.DOM.scope.querySelectorAll('.' + tagify.settings.classNames.tag);
+    tags.forEach(function (tagElm, index) {
+      const upBtn = tagElm.querySelector('[data-reorder="up"]');
+      const downBtn = tagElm.querySelector('[data-reorder="down"]');
+      if (upBtn) {
+        upBtn.disabled = index === 0;
+      }
+      if (downBtn) {
+        downBtn.disabled = index === tags.length - 1;
+      }
+    });
+  }
+
+  function attachButtons() {
+    tagify.DOM.scope
+      .querySelectorAll('.' + tagify.settings.classNames.tag)
+      .forEach(function (tagElm) {
+        if (tagElm.querySelector('.tag-reorder-buttons')) {
+          return; // already has buttons
+        }
+        const group = document.createElement('span');
+        group.className = 'tag-reorder-buttons';
+
+        ['up', 'down'].forEach(function (direction) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tag-reorder-btn';
+          btn.dataset.reorder = direction;
+          btn.setAttribute('aria-label',
+            (direction === 'up' ? 'Move ' : 'Move ') +
+            (tagElm.textContent || 'author').trim() +
+            (direction === 'up' ? ' earlier' : ' later'));
+          btn.textContent = direction === 'up' ? '↑' : '↓';
+          // Both to stop Tagify's own click handling on the tag (which can
+          // open its edit-in-place mode) and to keep the click from being
+          // treated as a tag removal/selection.
+          btn.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            moveTag(tagElm, direction);
+          });
+          group.appendChild(btn);
+        });
+
+        tagElm.appendChild(group);
+      });
+    refreshButtonStates();
+  }
+
+  attachButtons();
+  tagify.on('add', attachButtons);
+  tagify.on('remove', refreshButtonStates);
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -78,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
 
-    makeTagifySortable(authors_tag);
+    addAuthorReorderButtons(authors_tag);
   }
 
   if (editors_input) {

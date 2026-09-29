@@ -122,15 +122,18 @@
   .tagify.form-input.tagify--focus {
     box-shadow: 0 0 0 2px var(--color-brand) !important;
   }
-  /* The Authors field's tags (static/js/tagify.js, makeTagifySortable, via
-     the vendored Sortable.js) -- without this, a mousedown-drag on a tag's
-     text starts a native text selection instead of the drag, so it never
-     fires at all. Scoped to .tagify--sortable (a class only that field
-     gets) rather than every .tagify__tag site-wide. Same
-     unlayered-tagify.css-wins problem as above. */
-  .tagify--sortable .tagify__tag {
-    cursor: grab !important;
-    user-select: none !important;
+  /* Move up/down buttons injected into each Authors-field tag (see
+     static/js/tagify.js::addAuthorReorderButtons -- replaced two rounds of
+     drag-based reordering; see that function's comment for why). Small and
+     inline, unlike .btn-icon's 36px square, since these sit inside a pill
+     alongside Tagify's own remove (x) button. `!important` isn't needed
+     here (unlike the .tagify.form-input rules above) because these are our
+     own elements, not ones tagify.css already has opinions about. */
+  .tag-reorder-buttons {
+    @apply inline-flex items-center gap-0.5 ml-1;
+  }
+  .tag-reorder-btn {
+    @apply inline-flex items-center justify-center w-4 h-4 text-xs leading-none rounded-sm text-body hover:bg-neutral-secondary-medium hover:text-heading disabled:opacity-30 disabled:pointer-events-none;
   }
   /* Tagify's suggestion dropdown is appended to <body>, outside .tagify, and
      colored via :root-level custom properties Tagify itself declares --
