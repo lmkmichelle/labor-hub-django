@@ -122,12 +122,13 @@
   .tagify.form-input.tagify--focus {
     box-shadow: 0 0 0 2px var(--color-brand) !important;
   }
-  /* The Authors field's draggable="true" tags (static/js/tagify.js,
-     makeTagifySortable, via the vendored DragSort library) -- without this,
-     a mousedown-drag on a tag's text starts a native text selection instead
-     of the drag, so it never fires at all. Same unlayered-tagify.css-wins
-     problem as above. */
-  .tagify__tag[draggable="true"] {
+  /* The Authors field's tags (static/js/tagify.js, makeTagifySortable, via
+     the vendored Sortable.js) -- without this, a mousedown-drag on a tag's
+     text starts a native text selection instead of the drag, so it never
+     fires at all. Scoped to .tagify--sortable (a class only that field
+     gets) rather than every .tagify__tag site-wide. Same
+     unlayered-tagify.css-wins problem as above. */
+  .tagify--sortable .tagify__tag {
     cursor: grab !important;
     user-select: none !important;
   }

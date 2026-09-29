@@ -1,23 +1,38 @@
 /**
  * Lets a Tagify instance's tags be reordered by dragging, with an animated
- * slide as tags swap places. Tagify itself has no built-in drag-sort; this
- * uses its author's companion library, vendored at static/js/dragsort.js
- * (see static/js/README.md) -- the documented pairing
- * (https://github.com/yairEO/tagify#drag--sort), and a straight upgrade over
- * an earlier hand-rolled native-HTML5-drag version, which had no way to
- * animate a sibling sliding over (DOM reordering on `dragover` is instant)
- * short of a hand-built FLIP-animation layer.
+ * slide as tags swap places. Tagify itself has no built-in drag-sort.
+ *
+ * Tagify's own documented pairing is its author's small companion library,
+ * DragSort (https://github.com/yairEO/tagify#drag--sort) -- tried first, but
+ * dropped after it turned out to hit a known, unresolved upstream bug
+ * (https://github.com/yairEO/dragsort/issues/5, "Glitchy sorting animation
+ * on macOS"): native HTML5 drag-and-drop's `dragover` firing is notoriously
+ * unreliable on macOS, especially over gaps between elements, which is also
+ * why it took dragging far outside the field to register at all.
+ *
+ * Sortable.js (vendored at static/js/sortable.min.js -- see
+ * static/js/README.md) sidesteps that whole class of bug via its
+ * `forceFallback` option, which makes it track the drag with pointer events
+ * instead of relying on native HTML5 DnD -- the documented fix for exactly
+ * this "feel more consistent between Desktop, Mobile and old Browsers" case.
  */
 function makeTagifySortable(tagify) {
-  new DragSort(tagify.DOM.scope, {
-    selector: '.' + tagify.settings.classNames.tag,
-    callbacks: {
-      // Tagify's own value array doesn't track drag reorders on its own;
-      // this rebuilds it (and so the hidden input's JSON) from the new DOM
-      // order, which is what publications.utils.set_ordered_authors persists.
-      dragEnd: function () {
-        tagify.updateValueByDOMTags();
-      },
+  // Marks the field so input.css can target its tags with user-select: none
+  // (see the .tagify--sortable rule there) without affecting every other
+  // Tagify field on the site.
+  tagify.DOM.scope.classList.add('tagify--sortable');
+
+  Sortable.create(tagify.DOM.scope, {
+    // Only tag pills are draggable -- not Tagify's own growing text input,
+    // which is also a direct child of the same scope element.
+    draggable: '.' + tagify.settings.classNames.tag,
+    forceFallback: true,
+    animation: 150,
+    // Tagify's own value array doesn't track drag reorders on its own;
+    // this rebuilds it (and so the hidden input's JSON) from the new DOM
+    // order, which is what publications.utils.set_ordered_authors persists.
+    onEnd: function () {
+      tagify.updateValueByDOMTags();
     },
   });
 }
