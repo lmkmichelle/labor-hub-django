@@ -49,6 +49,9 @@
                             {% if application.website %}
                                 <a href="{{ application.website }}" class="text-red-700 hover:underline">Website</a>
                             {% endif %}
+                            {% if application.cv_url %}
+                                <a href="{{ application.cv_url }}" class="text-red-700 hover:underline">CV (link)</a>
+                            {% endif %}
                             {% if application.resume %}
                                 <a href="{{ application.resume.url }}" class="text-red-700 hover:underline">Resume / CV</a>
                             {% endif %}

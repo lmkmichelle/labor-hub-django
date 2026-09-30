@@ -77,7 +77,9 @@
         {% render_field form.network_url_iza placeholder="https://" %}
     </div>
 
-    {% render_field form.resume label="Upload Resume/CV (PDF only)" %}
+    {% render_field form.cv_url label="Link to your CV (optional)" placeholder="https://" %}
+
+    {% render_field form.resume label="Or upload your resume/CV (PDF only)" %}
 
     {% if form.research_paper_1 %}
         {% render_field form.research_paper_1 %}

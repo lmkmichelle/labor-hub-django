@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import JSONField
 from django.utils import timezone
@@ -119,6 +120,26 @@ class Profile(models.Model):
     biography = models.TextField(blank=True)
     research_interests = JSONField(default=list, blank=True)
 
+    # A CV as a link is preferred -- many scholars keep one actively
+    # maintained CV online rather than a PDF that goes stale the moment it's
+    # uploaded -- but a PDF upload is still supported for anyone who doesn't
+    # have one. See cv_link() for which one actually gets shown.
+    cv_url = models.URLField(blank=True, help_text="Link to your CV, if you keep one online.")
+    cv_file = models.FileField(
+        upload_to='cvs/', blank=True, null=True,
+        validators=[FileExtensionValidator(['pdf'])],
+        help_text="Or upload a CV as a PDF.",
+    )
+
+    def cv_link(self):
+        """The URL to show/link for this person's CV: the maintained link if
+        they set one, else the uploaded PDF, else nothing."""
+        if self.cv_url:
+            return self.cv_url
+        if self.cv_file:
+            return self.cv_file.url
+        return ""
+
     class DigestFrequency(models.TextChoices):
         OFF = 'off', 'Off'
         WEEKLY = 'weekly', 'Weekly'
@@ -196,6 +217,10 @@ class UserApplication(models.Model):
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )
+    # Preferred over resume when set -- see Profile.cv_url/cv_link(). Both are
+    # carried over to the new member's profile on approve().
+    cv_url = models.URLField(
+        blank=True, help_text="Link to your CV, if you keep one online (optional).")
     advisor = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -255,6 +280,9 @@ class UserApplication(models.Model):
         user.profile.university_name = self.university_name
         user.profile.country_code = self.country_code
         user.profile.website = self.website
+        user.profile.cv_url = self.cv_url
+        if self.resume:
+            user.profile.cv_file = self.resume
         user.profile.save()
 
         self.status = self.Status.APPROVED

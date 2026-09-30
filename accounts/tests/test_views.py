@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -182,7 +183,13 @@ class EditProfileViewTests(TestCase):
         # longer be rendered with the old *visible* label styling.
         self.assertNotIn('form-label-tight">Upload a profile picture<', html)
         self.assertIn('sr-only">Upload a profile picture<', html)
-        self.assertNotIn('class="form-file"', html)
+        # The avatar <input> itself uses the sr-only custom-widget styling, not
+        # the generic render_field file input (other file fields on this page,
+        # e.g. the CV upload, legitimately do use "form-file").
+        avatar_input = re.search(r'<input[^>]*\bname="avatar"[^>]*>', html)
+        self.assertIsNotNone(avatar_input)
+        self.assertIn('class="sr-only"', avatar_input.group())
+        self.assertNotIn('form-file', avatar_input.group())
 
         for label in ("Zoom in", "Zoom out", "Rotate left", "Rotate right",
                       "Change profile picture"):
@@ -205,6 +212,65 @@ class EditProfileViewTests(TestCase):
         self.assertEqual(user.profile.position, "Professor")
         self.assertEqual(user.profile.research_interests, ["Economics"])
         self.assertTrue(user.profile.avatar)
+
+    def test_post_saves_cv_url_and_it_shows_on_the_public_profile(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.post(reverse("edit_profile"), {
+            "position": "Professor",
+            "country_code": "US",
+            "department": "Cornell",
+            "website": "https://example.com",
+            "cv_url": "https://example.org/my-cv",
+            "biography": "A short biography.",
+            "research_interests_input": '[{"value":"Economics"}]',
+            "avatar": make_image_file(),
+        })
+        self.assertRedirects(response, reverse("profile"))
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.cv_url, "https://example.org/my-cv")
+
+        self.client.logout()
+        profile_response = self.client.get(
+            reverse("profile", kwargs={"pk": user.pk}))
+        self.assertContains(profile_response, "https://example.org/my-cv")
+
+    def test_post_uploads_cv_file_when_no_url_given(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        cv = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
+        response = self.client.post(reverse("edit_profile"), {
+            "position": "Professor",
+            "country_code": "US",
+            "department": "Cornell",
+            "website": "https://example.com",
+            "biography": "A short biography.",
+            "research_interests_input": '[{"value":"Economics"}]',
+            "avatar": make_image_file(),
+            "cv_file": cv,
+        })
+        self.assertRedirects(response, reverse("profile"))
+        user.profile.refresh_from_db()
+        self.assertTrue(user.profile.cv_file)
+        self.assertEqual(user.profile.cv_link(), user.profile.cv_file.url)
+
+    def test_post_rejects_a_non_pdf_cv_upload(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        bad_file = SimpleUploadedFile("cv.docx", b"not a pdf", content_type="application/msword")
+        response = self.client.post(reverse("edit_profile"), {
+            "position": "Professor",
+            "country_code": "US",
+            "department": "Cornell",
+            "website": "https://example.com",
+            "biography": "A short biography.",
+            "research_interests_input": '[{"value":"Economics"}]',
+            "avatar": make_image_file(),
+            "cv_file": bad_file,
+        })
+        self.assertEqual(response.status_code, 200)
+        user.profile.refresh_from_db()
+        self.assertFalse(user.profile.cv_file)
 
     def test_post_without_digest_frequency_defaults_off(self):
         user = make_active_user()

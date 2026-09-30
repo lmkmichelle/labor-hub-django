@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 
@@ -121,6 +122,23 @@ class ProfileModelTests(TestCase):
             user.profile.research_interest_list(), ["Economics", "Policy"]
         )
 
+    def test_cv_link_is_empty_when_neither_is_set(self):
+        user = make_user()
+        self.assertEqual(user.profile.cv_link(), "")
+
+    def test_cv_link_prefers_the_url_over_an_uploaded_file(self):
+        user = make_user()
+        user.profile.cv_url = "https://example.org/my-cv"
+        user.profile.cv_file = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 fake")
+        user.profile.save()
+        self.assertEqual(user.profile.cv_link(), "https://example.org/my-cv")
+
+    def test_cv_link_falls_back_to_the_uploaded_file(self):
+        user = make_user()
+        user.profile.cv_file = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 fake")
+        user.profile.save()
+        self.assertEqual(user.profile.cv_link(), user.profile.cv_file.url)
+
 
 def make_application(email="applicant@example.com", role=CustomUser.Role.RESEARCHER,
                      status=UserApplication.Status.PENDING, **extra):
@@ -189,6 +207,25 @@ class UserApplicationTests(TestCase):
                                website="https://example.org/me")
         user = app.approve()
         self.assertEqual(user.profile.website, "https://example.org/me")
+
+    def test_approve_copies_cv_url_to_profile(self):
+        app = make_application(email="cvlink@example.com",
+                               cv_url="https://example.org/my-cv")
+        user = app.approve()
+        self.assertEqual(user.profile.cv_url, "https://example.org/my-cv")
+
+    def test_approve_copies_uploaded_resume_to_profile_cv_file(self):
+        app = make_application(email="cvfile@example.com")
+        app.resume = SimpleUploadedFile("resume.pdf", b"%PDF-1.4 fake")
+        app.save()
+        user = app.approve()
+        self.assertTrue(user.profile.cv_file)
+        self.assertEqual(user.profile.cv_link(), user.profile.cv_file.url)
+
+    def test_approve_without_a_resume_leaves_cv_file_empty(self):
+        app = make_application(email="nocv@example.com")
+        user = app.approve()
+        self.assertFalse(user.profile.cv_file)
 
     def test_approve_does_not_carry_other_networks_to_profile(self):
         app = make_application(

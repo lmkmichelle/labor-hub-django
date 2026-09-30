@@ -76,6 +76,19 @@ class ResearcherApplicationFormTests(TestCase):
         application = form.save()
         self.assertEqual(application.website, "https://example.org/me")
 
+    def test_optional_cv_url_is_saved(self):
+        form = ResearcherApplicationForm(
+            data=base_application_data(cv_url="https://example.org/my-cv"))
+        self.assertTrue(form.is_valid(), form.errors)
+        application = form.save()
+        self.assertEqual(application.cv_url, "https://example.org/my-cv")
+
+    def test_invalid_cv_url_is_rejected(self):
+        form = ResearcherApplicationForm(
+            data=base_application_data(cv_url="not-a-url"))
+        self.assertFalse(form.is_valid())
+        self.assertIn("cv_url", form.errors)
+
     def test_other_networks_default_to_empty(self):
         form = ResearcherApplicationForm(data=base_application_data())
         self.assertTrue(form.is_valid(), form.errors)

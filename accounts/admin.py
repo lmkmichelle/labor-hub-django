@@ -89,7 +89,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Application Info', {
             'fields': ('email', 'first_name', 'last_name', 'role', 'position', 'department', 'university', 'university_name',
-                       'country_code', 'website', 'other_networks', 'motivation', 'advisor')
+                       'country_code', 'website', 'cv_url', 'other_networks', 'motivation', 'advisor')
         }),
         ('Review', {
             'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
