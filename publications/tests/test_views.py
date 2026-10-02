@@ -276,6 +276,12 @@ class PublicationDownloadViewTests(TestCase):
         self.assertNotContains(response, "1 download")
 
 
+class PublicationsListMapLinkTests(TestCase):
+    def test_publications_list_links_to_world_map_with_papers_metric(self):
+        response = self.client.get(reverse("publications"))
+        self.assertContains(response, reverse("map") + "?metric=papers")
+
+
 class PublicationsListDisplayNumberTests(TestCase):
     """The list-page card shows a job-market paper's own "J" number, not the
     regular series (item 16's separate counter)."""

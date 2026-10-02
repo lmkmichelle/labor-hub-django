@@ -72,7 +72,8 @@
         <button type="submit" class="btn-primary">
             Submit
         </button>
-        <a href="/events/" class="btn-secondary">Cancel</a>
+        <a href="{% if object %}{% url 'event-detail' pk=object.pk %}{% else %}{% url 'events-list' %}{% endif %}"
+           class="btn-secondary">Cancel</a>
     </div>
 
 </form>

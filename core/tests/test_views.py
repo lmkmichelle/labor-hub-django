@@ -130,6 +130,16 @@ class MapViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/map.html")
 
+    def test_map_labels_papers_generically_not_just_discussion(self):
+        """The map counts every approved paper, job market included, so its
+        own toggle/copy must not say "discussion papers" specifically (the
+        site nav's unrelated "Discussion Papers" link is out of scope)."""
+        response = self.client.get(reverse("map"))
+        content = response.content.decode()
+        self.assertIn('class="map-toggle">Research Papers</button>', content)
+        self.assertNotIn('class="map-toggle">Discussion Papers</button>', content)
+        self.assertNotIn("discussion papers", content)
+
 
 class MapSummaryApiTests(TestCase):
     def test_summary_counts_scholars_and_papers(self):
@@ -204,7 +214,7 @@ class MapCountryDetailTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn("No scholars are based here yet.", content)
-        self.assertIn("No discussion papers are based here yet.", content)
+        self.assertIn("No research papers are based here yet.", content)
 
 
 class SearchAccountsTests(TestCase):
@@ -434,6 +444,10 @@ class PublicationsListViewTests(TestCase):
 
 
 class ScholarsListViewTests(TestCase):
+    def test_scholars_list_links_to_world_map(self):
+        response = self.client.get(reverse("scholars"))
+        self.assertContains(response, reverse("map"))
+
     def test_scholars_list_shows_all_members(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
         student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)

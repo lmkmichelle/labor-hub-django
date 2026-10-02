@@ -9,10 +9,9 @@
             <p>{{ event.date|date:"N j, Y" }}</p>
             <div class="not-format">
                 {% include "partials/_example_badge.html" with show=event.is_example %}
-                {% comment %} {% if user.is_authenticated and user == event.host %}
-                    <a href="{% url 'edit_event' pk=event.pk %}"
-                       class="text-white bg-red-700 hover:bg-red-800 box-border border border-transparent focus:ring-4 focus:ring-red-600 shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none inline-block">Edit Event</a>
-                {% endif %} {% endcomment %}
+                {% if user.is_authenticated and user == event.host %}
+                    <a href="{% url 'event-edit' pk=event.pk %}" class="btn-primary">Edit event</a>
+                {% endif %}
             </div>
         </div>
         <div class="flex flex-row gap-2 items-center w-full overflow-auto">
@@ -23,7 +22,7 @@
         </div>
         {% if event.host %}
             <div class="not-format mb-4">
-                Hosted by <a class="text-red-700 underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
+                Posted by <a class="text-red-700 underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
             </div>
         {% endif %}
     </div>

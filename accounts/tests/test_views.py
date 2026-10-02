@@ -1,12 +1,15 @@
 import re
+from datetime import timedelta
 from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from PIL import Image
 
 from accounts.models import CustomUser, ResearchPaper, UserApplication
+from events.models import Event
 
 
 def make_active_user(email="user@example.com", password="pass12345",
@@ -153,6 +156,29 @@ class ProfileViewTests(TestCase):
         response = self.client.get(reverse("profile"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["profile_user"], user)
+
+    def test_owner_sees_edit_link_for_their_event(self):
+        user = make_active_user()
+        event = Event.objects.create(
+            title="My Event", description="desc",
+            date=timezone.now() + timedelta(days=1),
+            location="Ithaca", status="approved", host=user,
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+        self.assertContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
+
+    def test_visitor_does_not_see_edit_link_for_someone_elses_event(self):
+        user = make_active_user()
+        visitor = make_active_user(email="visitor@example.com")
+        event = Event.objects.create(
+            title="Their Event", description="desc",
+            date=timezone.now() + timedelta(days=1),
+            location="Ithaca", status="approved", host=user,
+        )
+        self.client.force_login(visitor)
+        response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+        self.assertNotContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
 
 
 class EditProfileViewTests(TestCase):

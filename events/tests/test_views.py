@@ -106,6 +106,31 @@ class EventsDetailViewTests(TestCase):
             reverse("event-detail", kwargs={"pk": event.pk}))
         self.assertContains(response, 'href="https://example.com/apply"')
 
+    def test_host_is_described_as_posted_by_not_hosted_by(self):
+        host = make_user(email="poster@example.com")
+        event = make_event(host=host)
+        response = self.client.get(
+            reverse("event-detail", kwargs={"pk": event.pk}))
+        self.assertContains(response, "Posted by")
+        self.assertNotContains(response, "Hosted by")
+
+    def test_host_sees_edit_link(self):
+        host = make_user(email="poster2@example.com")
+        event = make_event(host=host)
+        self.client.force_login(host)
+        response = self.client.get(
+            reverse("event-detail", kwargs={"pk": event.pk}))
+        self.assertContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
+
+    def test_non_host_does_not_see_edit_link(self):
+        host = make_user(email="poster3@example.com")
+        visitor = make_user(email="visitor@example.com")
+        event = make_event(host=host)
+        self.client.force_login(visitor)
+        response = self.client.get(
+            reverse("event-detail", kwargs={"pk": event.pk}))
+        self.assertNotContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
+
 
 class EventCreateViewTests(TestCase):
     def test_get_requires_login(self):
@@ -142,6 +167,66 @@ class EventCreateViewTests(TestCase):
         event = Event.objects.get(title="New Event")
         self.assertEqual(event.host, user)
         self.assertEqual(event.status, "pending")
+
+
+class EventUpdateViewTests(TestCase):
+    def setUp(self):
+        self.host = make_user(email="editor@example.com")
+        self.other = make_user(email="noteditor@example.com")
+        self.event = make_event(host=self.host, title="Original Title")
+
+    def _post_data(self, **overrides):
+        data = {
+            "title": "Updated Title",
+            "description": "updated desc",
+            "date": "2025-06-01",
+            "country_code": "US",
+            "city": "Ithaca",
+            "category": "conference",
+        }
+        data.update(overrides)
+        return data
+
+    def test_anonymous_is_redirected_to_login(self):
+        response = self.client.get(reverse("event-edit", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    def test_non_host_gets_404(self):
+        self.client.force_login(self.other)
+        response = self.client.get(reverse("event-edit", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_host_can_get_edit_form(self):
+        self.client.force_login(self.host)
+        response = self.client.get(reverse("event-edit", args=[self.event.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "events/event_form.html")
+
+    def test_host_can_update_event(self):
+        self.client.force_login(self.host)
+        response = self.client.post(
+            reverse("event-edit", args=[self.event.pk]), self._post_data())
+        self.assertRedirects(
+            response, reverse("event-detail", kwargs={"pk": self.event.pk}))
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.title, "Updated Title")
+
+    def test_editing_an_approved_event_keeps_it_approved(self):
+        self.event.status = "approved"
+        self.event.save()
+        self.client.force_login(self.host)
+        self.client.post(reverse("event-edit", args=[self.event.pk]), self._post_data())
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.status, "approved")
+
+    def test_editing_a_pending_event_stays_pending(self):
+        self.event.status = "pending"
+        self.event.save()
+        self.client.force_login(self.host)
+        self.client.post(reverse("event-edit", args=[self.event.pk]), self._post_data())
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.status, "pending")
 
 
 class EventDeleteViewTests(TestCase):

@@ -4,7 +4,7 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.db.models import Q
 from django.db.models.functions import Lower
 from datetime import datetime
@@ -98,20 +98,23 @@ class EventsDetailView(DetailView):
 
         raise Http404("This event is not available.")
 
-class EventCreateView(LoginRequiredMixin, CreateView):
+class LocationPickerContextMixin:
+    """Drives the State/Province field's label per country in
+    static/js/location-picker.js; single source of truth is
+    core.constants.ADMIN1_LABELS. Shared by the create and edit views."""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin1_labels'] = ADMIN1_LABELS
+        context['default_admin1_label'] = DEFAULT_ADMIN1_LABEL
+        return context
+
+
+class EventCreateView(LoginRequiredMixin, LocationPickerContextMixin, CreateView):
     model = Event
     form_class = EventForm
     template_name = 'events/event_form.html'
     success_url = reverse_lazy('events-list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Drives the State/Province field's label per country in
-        # static/js/location-picker.js; single source of truth is
-        # core.constants.ADMIN1_LABELS.
-        context['admin1_labels'] = ADMIN1_LABELS
-        context['default_admin1_label'] = DEFAULT_ADMIN1_LABEL
-        return context
 
     def form_valid(self, form):
         event = form.save(commit=False)
@@ -120,6 +123,26 @@ class EventCreateView(LoginRequiredMixin, CreateView):
         event.save()
         messages.success(self.request, 'Event submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
+
+
+class EventUpdateView(LoginRequiredMixin, LocationPickerContextMixin, UpdateView):
+    """Lets a host edit their own event. Status/host are left untouched, so an
+    already-approved event stays visible -- it doesn't go back to pending,
+    the same way an approved publication edit stays approved."""
+    model = Event
+    form_class = EventForm
+    template_name = 'events/event_form.html'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(host=self.request.user)
+
+    def get_success_url(self):
+        return reverse_lazy('event-detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Event updated successfully.')
+        return response
 
 
 class EventDeleteView(OwnerDeleteView):

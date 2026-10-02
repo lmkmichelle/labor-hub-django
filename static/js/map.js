@@ -21,7 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const detailUrlTemplate = app.dataset.detailUrl;
   const defaultPanelHtml = panel.innerHTML;
 
-  let currentMetric = "scholars"; // "scholars" | "papers" — drives map colouring
+  // A linked-in metric (e.g. "?metric=papers" from the Scholars/Papers pages)
+  // picks which toggle is active on load; otherwise default to scholars.
+  const requestedMetric = new URLSearchParams(window.location.search).get("metric");
+  let currentMetric = requestedMetric === "papers" ? "papers" : "scholars"; // drives map colouring
   let summary = {}; // { CODE: { scholars: n, papers: n } }
   let selectedCode = null;
 
