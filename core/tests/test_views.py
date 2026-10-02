@@ -461,6 +461,31 @@ class ScholarsListViewTests(TestCase):
         self.assertNotContains(response, scholar.profile.avatar.url)
         self.assertNotContains(response, "default-avatar.png")
 
+    def test_scholars_render_as_full_width_rows_not_a_grid(self):
+        make_user(email="row@example.com")
+        response = self.client.get(reverse("scholars"))
+        self.assertTemplateUsed(response, "partials/cards/_scholar_card.html")
+        self.assertNotContains(response, "xl:grid-cols-3")
+
+    def test_scholar_row_shows_the_same_details_as_before(self):
+        student = make_user(email="stu@example.com", first_name="Sally",
+                            role=CustomUser.Role.STUDENT)
+        student.profile.position = "PhD Candidate"
+        student.profile.university_name = "Example University"
+        student.profile.research_interests = ["Migration"]
+        student.profile.save()
+
+        response = self.client.get(reverse("scholars"))
+        self.assertContains(response, "Sally")
+        self.assertContains(response, "Student")
+        self.assertContains(response, "PhD Candidate · Example University")
+        self.assertContains(response, "Migration")
+        self.assertContains(response, f'href="{reverse("profile", kwargs={"pk": student.pk})}"')
+
+    def test_no_matches_shows_empty_state(self):
+        response = self.client.get(reverse("scholars"), {"q": "nobody-matches-this"})
+        self.assertContains(response, "No scholars match your criteria.")
+
     def test_scholars_list_shows_all_members(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
         student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)

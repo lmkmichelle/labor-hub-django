@@ -1,0 +1,19 @@
+{% comment %}
+Scholar row for the Scholars list page. Inputs:
+  item   a CustomUser (named "item" because _list_display.html passes it so)
+Full-width horizontal card, same shape as _job_board_card.html.
+{% endcomment %}
+<div class="card-surface w-full">
+  <div class="card-header">
+    <h5 class="card-title"><a href="{% url 'profile' pk=item.id %}" class="card-stretch-link">{{ item.first_name }} {{ item.last_name }}</a></h5>
+    {% if item.is_student %}
+      <div class="card-meta">
+        <span class="pill-accent">Student</span>
+      </div>
+    {% endif %}
+  </div>
+  <p class="mt-1 text-sm text-body">
+    {{ item.profile.position|default:"Position not specified" }}{% if item.profile.get_university_display %} · {{ item.profile.get_university_display }}{% endif %}
+  </p>
+  {% include "partials/cards/_pill_row.html" with labels=item.profile.research_interest_list limit=":3" %}
+</div>
