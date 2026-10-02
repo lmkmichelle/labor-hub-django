@@ -153,6 +153,19 @@ class Profile(models.Model):
     )
     last_digest_sent_at = models.DateTimeField(null=True, blank=True)
 
+    # Weekly alerts for a specific interest, separate from the general digest
+    # above. Alerts are considered "on" whenever either list is non-empty --
+    # there's no separate enable flag -- see accounts.alerts.send_user_alerts.
+    alert_topics = JSONField(
+        default=list, blank=True,
+        help_text="Get a weekly email when a new paper on one of these topics is posted.",
+    )
+    alert_countries = JSONField(
+        default=list, blank=True,
+        help_text="Get a weekly email when a new visit to one of these countries is posted.",
+    )
+    last_alert_sent_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return self.user.email
 
@@ -276,8 +289,18 @@ class UserApplication(models.Model):
         user.save()
         user.profile.position = self.position
         user.profile.department = self.department
-        user.profile.university = self.university
-        user.profile.university_name = self.university_name
+        university = self.university
+        university_name = self.university_name
+        if not university and university_name and self.country_code:
+            # Local import: seminars already imports accounts, so importing
+            # University at module level here would be circular.
+            from seminars.models import University
+            promoted = University.from_write_in(university_name, self.country_code)
+            if promoted:
+                university = promoted
+                university_name = ''
+        user.profile.university = university
+        user.profile.university_name = university_name
         user.profile.country_code = self.country_code
         user.profile.website = self.website
         user.profile.cv_url = self.cv_url

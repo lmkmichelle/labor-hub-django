@@ -1,0 +1,41 @@
+{% extends "emails/_layout.html" %}
+{% block title %}Labor Hub alerts{% endblock %}
+{% block content %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 16px; font-size:16px;">Hi {{ user.first_name|default:user.email }},</p>
+  <p style="margin:0 0 24px; font-size:15px; color:#374151;">
+    Here's what matches the topics and countries you've subscribed to
+    ({{ total }} new match{{ total|pluralize:"es" }}).
+  </p>
+
+  {% for section in sections %}
+    <h2 style="margin:24px 0 8px; font-size:16px; color:#111827; border-bottom:1px solid #e5e7eb; padding-bottom:6px;">
+      {{ section.label }}
+    </h2>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      {% for item in section.items %}
+        <tr>
+          <td style="padding:8px 0; border-bottom:1px solid #f3f4f6;">
+            <a href="{{ item.url }}" style="color:#b91c1c; font-size:15px; font-weight:bold; text-decoration:none;">{{ item.title }}</a>
+            {% if item.authors %}<br /><span style="font-size:13px; color:#374151;">{{ item.authors }}</span>{% endif %}
+            {% if item.meta %}<br /><span style="font-size:13px; color:#6b7280;">{{ item.meta }}</span>{% endif %}
+            {% if item.abstract %}<p style="margin:6px 0 0; font-size:13px; color:#6b7280;">{{ item.abstract|truncatewords:40 }}</p>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endfor %}
+  <!-- djlint:on -->
+{% endblock %}
+{% block footer %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 6px;">
+    You're receiving this because you subscribed to topic/country alerts on Labor Hub.
+  </p>
+  <p style="margin:0;">
+    <a href="{{ manage_url }}" style="color:#6b7280; text-decoration:underline;">Manage preferences</a>
+    &nbsp;&middot;&nbsp;
+    <a href="{{ unsubscribe_url }}" style="color:#6b7280; text-decoration:underline;">Unsubscribe</a>
+  </p>
+  <!-- djlint:on -->
+{% endblock %}

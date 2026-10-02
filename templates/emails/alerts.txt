@@ -1,0 +1,13 @@
+Hi {{ user.first_name|default:user.email }},
+
+Here's what matches the topics and countries you've subscribed to ({{ total }} new match{{ total|pluralize:"es" }}):
+{% for section in sections %}
+{{ section.label }}
+{% for item in section.items %}  - {{ item.title }}{% if item.meta %} ({{ item.meta }}){% endif %}
+{% if item.authors %}    {{ item.authors }}
+{% endif %}{% if item.abstract %}    {{ item.abstract|truncatewords:40 }}
+{% endif %}    {{ item.url }}
+{% endfor %}{% endfor %}
+--
+Manage your email preferences: {{ manage_url }}
+Unsubscribe from alert emails: {{ unsubscribe_url }}

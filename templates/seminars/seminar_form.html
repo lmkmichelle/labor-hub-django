@@ -28,10 +28,11 @@
                  data-endpoint="{% url 'seminar-universities' %}"
                  data-country-field="{{ form.country_code.id_for_label }}"
                  data-university-field="{{ form.university.id_for_label }}"
+                 data-university-name-field="{{ form.university_name.id_for_label }}"
                  data-placeholder="Choose a university">
                 {% render_select form.university %}
+                {% render_field form.university_name %}
             </div>
-            {% render_field form.university_name %}
 
             {% render_select form.visit_type %}
 

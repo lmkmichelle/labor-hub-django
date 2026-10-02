@@ -7,8 +7,9 @@ from django.contrib.auth.hashers import make_password
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 
-from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES
+from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES, RECOMMENDED_KEYWORDS
 from core.email import attach_logo, cm_headers, default_reply_to
+from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
 from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
@@ -408,3 +409,41 @@ class EmailPreferencesForm(forms.ModelForm):
 
     def clean_digest_frequency(self):
         return self.cleaned_data.get('digest_frequency') or Profile.DigestFrequency.OFF
+
+
+class AlertPreferencesForm(forms.ModelForm):
+    """Settings-page form for the weekly topic/country alert email.
+
+    alert_countries is a Tagify pill input submitting the same JSON-array-or-
+    comma-string shape the list-page country filters use, so it's parsed the
+    same way (core.filters.parse_pill_terms + map_country_terms_to_codes),
+    accepting either a country name or an ISO code.
+    """
+    alert_topics = forms.MultipleChoiceField(
+        choices=[(kw, kw) for kw in RECOMMENDED_KEYWORDS],
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'w-4 h-4 text-brand bg-gray-100 border-gray-300 '
+                     'rounded focus:ring-brand focus:ring-2',
+        }),
+        label='Email me about new papers on these topics',
+    )
+    alert_countries = forms.CharField(
+        required=False,
+        label='Email me about new visits to these countries',
+        widget=forms.TextInput(attrs={"id": "alert-countries-input"}),
+    )
+
+    class Meta:
+        model = Profile
+        fields = ['alert_topics', 'alert_countries']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['alert_countries'].initial = serialize_pill_terms(
+                self.instance.alert_countries)
+
+    def clean_alert_countries(self):
+        raw = self.cleaned_data.get('alert_countries', '')
+        return map_country_terms_to_codes(parse_pill_terms(raw))

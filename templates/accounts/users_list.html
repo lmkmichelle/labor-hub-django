@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block content %}
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
@@ -118,9 +117,6 @@
                             <a class="card-surface max-w-full no-underline"
                                href="{% url 'profile' pk=scholar.id %}">
                                 <div class="flex flex-col gap-1 items-center">
-                                    <img class="w-24 h-24 rounded-full object-cover"
-                                         src="{% if scholar.profile.avatar %}{{ scholar.profile.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
-                                         alt="{{ scholar.first_name }} {{ scholar.last_name }}" />
                                     <h5 class="mb-0.5 text-xl font-semibold tracking-tight text-heading">{{ scholar.first_name }} {{ scholar.last_name }}</h5>
                                     {% if scholar.is_student %}
                                         <span class="pill-accent mb-1">Student</span>

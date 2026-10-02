@@ -7,6 +7,33 @@ from django.urls import reverse
 from seminars.models import COUNTRY_MAP, Seminar, University
 
 
+class UniversityFromWriteInTests(TestCase):
+    def test_creates_a_write_in_university(self):
+        university = University.from_write_in("Obscure College", "US")
+        self.assertEqual(university.name, "Obscure College")
+        self.assertEqual(university.country_code, "US")
+        self.assertEqual(university.source, "write-in")
+
+    def test_reuses_an_existing_name_case_insensitively(self):
+        existing = University.objects.create(
+            name="Existing College", country_code="US", source="import")
+        university = University.from_write_in("existing college", "US")
+        self.assertEqual(university.pk, existing.pk)
+        self.assertEqual(University.objects.filter(name__iexact="existing college").count(), 1)
+
+    def test_same_name_different_country_is_a_different_university(self):
+        University.from_write_in("Shared Name", "US")
+        university = University.from_write_in("Shared Name", "CA")
+        self.assertEqual(university.country_code, "CA")
+        self.assertEqual(University.objects.filter(name="Shared Name").count(), 2)
+
+    def test_returns_none_without_a_name(self):
+        self.assertIsNone(University.from_write_in("", "US"))
+
+    def test_returns_none_without_a_country(self):
+        self.assertIsNone(University.from_write_in("Some College", ""))
+
+
 class SeminarModelTests(TestCase):
     def test_str_includes_visitor_university_and_start(self):
         seminar = Seminar.objects.create(

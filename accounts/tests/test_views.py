@@ -366,6 +366,48 @@ class SettingsViewTests(TestCase):
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.digest_frequency, "off")
 
+    def test_post_save_alerts_persists_topics_and_countries(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        response = self.client.post(reverse("settings"), {
+            "save_alerts": "1",
+            "alert_topics": ["Labor Supply", "Migration"],
+            "alert_countries": "Germany",
+        })
+        self.assertRedirects(response, reverse("settings") + "?saved=alerts")
+        user.profile.refresh_from_db()
+        self.assertEqual(
+            set(user.profile.alert_topics), {"Labor Supply", "Migration"})
+        self.assertEqual(user.profile.alert_countries, ["DE"])
+
+    def test_post_save_alerts_accepts_a_country_code_directly(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        self.client.post(reverse("settings"), {
+            "save_alerts": "1",
+            "alert_countries": "DE",
+        })
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.alert_countries, ["DE"])
+
+    def test_post_save_alerts_with_nothing_clears_both_lists(self):
+        # The settings page always submits alert_countries (it's a hidden
+        # field fed by Tagify, present even when empty) and omits
+        # alert_topics entirely when no checkbox is ticked -- so a real
+        # "clear everything" submission looks like this, not like leaving
+        # both keys out of the POST body.
+        user = make_active_user()
+        user.profile.alert_topics = ["Labor Supply"]
+        user.profile.alert_countries = ["DE"]
+        user.profile.save()
+        self.client.force_login(user)
+        self.client.post(reverse("settings"), {
+            "save_alerts": "1", "alert_countries": "",
+        })
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.alert_topics, [])
+        self.assertEqual(user.profile.alert_countries, [])
+
 
 class AdminLinkNavTests(TestCase):
     def test_admin_link_hidden_for_regular_user(self):

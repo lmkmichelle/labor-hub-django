@@ -20,10 +20,11 @@ from seminars.models import Seminar
 from publications.models import Publication
 from accounts.utils import process_avatar
 from publications.utils import handle_keywords
+from .alerts import read_unsubscribe_token as read_alert_unsubscribe_token
 from .digests import read_unsubscribe_token
 from .emails import send_advisor_review_email, send_application_submitted_email
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
-    StudentApplicationForm, EmailPreferencesForm
+    StudentApplicationForm, EmailPreferencesForm, AlertPreferencesForm
 from .models import CustomUser, Profile, UserApplication
 
 
@@ -177,12 +178,15 @@ class SettingsView(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, self.template_name, self._context(request))
 
-    def _context(self, request, user_form=None, email_prefs_form=None):
+    def _context(self, request, user_form=None, email_prefs_form=None, alert_prefs_form=None):
         return {
             "user_form": user_form if user_form is not None
             else UpdateUserForm(instance=request.user),
             "email_prefs_form": email_prefs_form if email_prefs_form is not None
             else EmailPreferencesForm(instance=request.user.profile),
+            "alert_prefs_form": alert_prefs_form if alert_prefs_form is not None
+            else AlertPreferencesForm(instance=request.user.profile),
+            "country_choices": COUNTRY_CHOICES,
             "saved": request.GET.get("saved"),
         }
 
@@ -203,6 +207,15 @@ class SettingsView(LoginRequiredMixin, View):
                 return redirect(f"{reverse('settings')}?saved=notifications")
             return render(request, self.template_name,
                           self._context(request, email_prefs_form=email_prefs_form))
+
+        if "save_alerts" in request.POST:
+            alert_prefs_form = AlertPreferencesForm(
+                request.POST, instance=request.user.profile)
+            if alert_prefs_form.is_valid():
+                alert_prefs_form.save()
+                return redirect(f"{reverse('settings')}?saved=alerts")
+            return render(request, self.template_name,
+                          self._context(request, alert_prefs_form=alert_prefs_form))
 
         return redirect("settings")
 
@@ -297,3 +310,27 @@ def digest_unsubscribe(request, token):
         return render(request, "accounts/digest_unsubscribe.html", {"success": True})
 
     return render(request, "accounts/digest_unsubscribe.html", {"success": False})
+
+
+@require_GET
+def alerts_unsubscribe(request, token):
+    """One-click unsubscribe link from alert emails (signed token).
+
+    Separate from digest_unsubscribe: it reads a token signed with
+    accounts.alerts's own salt and clears alert_topics/alert_countries
+    rather than digest_frequency, so each unsubscribe link only turns off
+    the kind of email it came from.
+    """
+    uid = read_alert_unsubscribe_token(token)
+    profile = None
+    if uid is not None:
+        profile = Profile.objects.filter(user_id=uid).first()
+
+    if profile is not None:
+        if profile.alert_topics or profile.alert_countries:
+            profile.alert_topics = []
+            profile.alert_countries = []
+            profile.save(update_fields=["alert_topics", "alert_countries"])
+        return render(request, "accounts/alerts_unsubscribe.html", {"success": True})
+
+    return render(request, "accounts/alerts_unsubscribe.html", {"success": False})

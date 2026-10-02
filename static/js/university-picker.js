@@ -12,11 +12,13 @@
  *   <div data-university-picker
  *        data-endpoint="{% url 'seminar-universities' %}"
  *        data-country-field="{{ form.country_code.id_for_label }}"
- *        data-university-field="{{ form.university.id_for_label }}">
+ *        data-university-field="{{ form.university.id_for_label }}"
+ *        data-university-name-field="{{ form.university_name.id_for_label }}">
  *
- * The university field is hidden until a country is picked, because the
- * endpoint needs a country code and an unfiltered list would be thousands of
- * rows long.
+ * The university field (and, when data-university-name-field is given, the
+ * write-in fallback text field beside it) is hidden until a country is
+ * picked, because the endpoint needs a country code and an unfiltered list
+ * would be thousands of rows long.
  */
 (function () {
   function initPicker(root) {
@@ -27,9 +29,17 @@
       return;
     }
 
-    // .mb-5 is the wrapper emitted by partials/_form_field.html and
+    // .form-field is the wrapper emitted by partials/_form_field.html and
     // _select_field.html; hiding it hides the label along with the control.
-    var wrapper = universitySelect.closest(".mb-5");
+    // select-combobox.js builds its combobox markup inside that same
+    // wrapper, so hiding it also hides the combobox.
+    var wrapper = universitySelect.closest(".form-field");
+    var universityNameField = root.dataset.universityNameField
+      ? document.getElementById(root.dataset.universityNameField)
+      : null;
+    var universityNameWrapper = universityNameField
+      ? universityNameField.closest(".form-field")
+      : null;
     var placeholderText =
       root.dataset.placeholder || "Choose your institution";
     // Preserve an already-saved selection across the first refill, so editing a
@@ -39,6 +49,9 @@
     function setVisible(show) {
       if (wrapper) {
         wrapper.classList.toggle("hidden", !show);
+      }
+      if (universityNameWrapper) {
+        universityNameWrapper.classList.toggle("hidden", !show);
       }
     }
 

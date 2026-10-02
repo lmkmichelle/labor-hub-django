@@ -29,6 +29,30 @@ class University(models.Model):
             return f"{self.name} ({COUNTRY_MAP.get(self.country_code, self.country_code)})"
         return self.name
 
+    @classmethod
+    def from_write_in(cls, name, country_code):
+        """Turn a typed-in institution into a picklist option.
+
+        Reuses an existing row with the same name (case-insensitive) in that
+        country if one exists, so the same write-in from two different
+        applicants doesn't create duplicates; otherwise creates one tagged
+        ``source="write-in"`` so it's easy to find and tidy up in the admin.
+        Returns ``None`` when there isn't enough to go on (no name or no
+        country), leaving the caller's existing free-text field untouched.
+        """
+        name = (name or '').strip()
+        country_code = (country_code or '').strip().upper()
+        if not name or not country_code:
+            return None
+
+        existing = cls.objects.filter(
+            country_code=country_code, name__iexact=name).first()
+        if existing:
+            return existing
+
+        return cls.objects.create(
+            name=name, country_code=country_code, source='write-in')
+
 
 class Seminar(Approvable):
     class VisitType(models.TextChoices):

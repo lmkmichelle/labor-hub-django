@@ -68,6 +68,13 @@ applications:
         spec: "0 12 1 * *"
         commands:
           start: "python manage.py send_digests --frequency monthly"
+      # Topic/country alerts (accounts/management/commands/send_alerts.py),
+      # one cohort, run weekly on Fridays so the week's approved content is
+      # in by the time it goes out.
+      alerts-weekly:
+        spec: "0 12 * * 5"
+        commands:
+          start: "python manage.py send_alerts"
 
     web:
       commands:

@@ -85,3 +85,24 @@ class SmokeTests(PlaywrightSmokeTestCase):
         # the paper created above for the United States.
         page.locator("#toggle-papers").click()
         expect(panel.get_by_text("E2E Map Paper")).to_be_visible()
+
+    def test_institution_field_hidden_until_country_is_picked(self):
+        """Regression: static/js/university-picker.js hid `.closest(".mb-5")`,
+        a wrapper class the form partials stopped using, so the Affiliation
+        select (and its write-in text fallback) never actually hid. Both
+        must start hidden and only appear after a country is selected."""
+        page = self.page
+        page.goto(self.url("apply_researcher"), wait_until="domcontentloaded")
+
+        university_field = page.locator("#id_university").locator(
+            "xpath=ancestor::div[contains(@class, 'form-field')]")
+        university_name_field = page.locator("#id_university_name").locator(
+            "xpath=ancestor::div[contains(@class, 'form-field')]")
+
+        expect(university_field).to_be_hidden()
+        expect(university_name_field).to_be_hidden()
+
+        page.select_option("#id_country_code", "US")
+
+        expect(university_field).to_be_visible()
+        expect(university_name_field).to_be_visible()

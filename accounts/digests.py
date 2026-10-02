@@ -56,6 +56,28 @@ def default_since(frequency, now=None):
     return now - window
 
 
+def publication_item(pub):
+    """Item dict for one approved publication. Shared with accounts.alerts,
+    which filters the same approved-publication queryset by topic."""
+    return {
+        "title": pub.title,
+        "url": absolute_url(reverse("publication_detail", kwargs={"pk": pub.pk})),
+        "meta": pub.get_country_code_display() if pub.country_code else "",
+        "authors": ", ".join(str(author) for author in pub.ordered_authors),
+        "abstract": pub.abstract,
+    }
+
+
+def visit_item(visit):
+    """Item dict for one approved visit. Shared with accounts.alerts, which
+    filters the same approved-visit queryset by country."""
+    return {
+        "title": str(visit),
+        "url": absolute_url(visit.get_absolute_url()),
+        "meta": ", ".join(visit.country_labels()),
+    }
+
+
 def collect_new_content(since):
     """Return the non-empty digest sections for content added after ``since``.
 
@@ -73,18 +95,7 @@ def collect_new_content(since):
         sections.append({
             "key": "publications",
             "label": "New discussion papers",
-            "items": [
-                {
-                    "title": pub.title,
-                    "url": absolute_url(
-                        reverse("publication_detail", kwargs={"pk": pub.pk})
-                    ),
-                    "meta": pub.get_country_code_display() if pub.country_code else "",
-                    "authors": ", ".join(str(author) for author in pub.ordered_authors),
-                    "abstract": pub.abstract,
-                }
-                for pub in publications
-            ],
+            "items": [publication_item(pub) for pub in publications],
         })
 
     events = list(
@@ -127,14 +138,7 @@ def collect_new_content(since):
         sections.append({
             "key": "visits",
             "label": "New visits",
-            "items": [
-                {
-                    "title": str(visit),
-                    "url": absolute_url(visit.get_absolute_url()),
-                    "meta": ", ".join(visit.country_labels()),
-                }
-                for visit in visits
-            ],
+            "items": [visit_item(visit) for visit in visits],
         })
 
     special_issues = list(

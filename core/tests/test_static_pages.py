@@ -21,6 +21,12 @@ class StaticPageTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
 
+class AboutPageContentTests(TestCase):
+    def test_mentions_special_issues(self):
+        response = self.client.get(reverse('about'))
+        self.assertContains(response, 'Special Issues')
+
+
 class FooterLinkTests(TestCase):
     def test_common_links_present_for_anonymous(self):
         response = self.client.get(reverse('home'))

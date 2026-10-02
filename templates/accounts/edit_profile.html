@@ -120,10 +120,11 @@
         <div data-university-picker
              data-endpoint="{% url 'seminar-universities' %}"
              data-country-field="{{ form.country_code.id_for_label }}"
-             data-university-field="{{ form.university.id_for_label }}">
+             data-university-field="{{ form.university.id_for_label }}"
+             data-university-name-field="{{ form.university_name.id_for_label }}">
             {% render_select form.university %}
+            {% render_field form.university_name %}
         </div>
-        {% render_field form.university_name %}
         {% render_field form.website %}
         {% render_field form.cv_url %}
         {% render_field form.cv_file %}

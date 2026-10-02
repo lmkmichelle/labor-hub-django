@@ -47,4 +47,94 @@
       <button type="submit" name="save_notifications" class="btn-primary mt-2">Save preferences</button>
     </form>
   </section>
+
+  <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
+    <h3 class="text-lg font-semibold text-heading mb-1">Alerts</h3>
+    <p class="text-sm text-body mb-4">Get a weekly email when something you care about is posted -- a
+      new paper on a topic, or a new visit to a country. Leave both empty to turn alerts off.</p>
+    <form method="post" class="mb-0">
+      {% csrf_token %}
+      {% if alert_prefs_form.non_field_errors %}
+        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
+             role="alert">{{ alert_prefs_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="form-field not-format">
+        <span class="form-label">{{ alert_prefs_form.alert_topics.label }}</span>
+        {% for checkbox in alert_prefs_form.alert_topics %}
+          <div class="flex items-center mb-1">
+            {{ checkbox.tag }}
+            <label for="{{ checkbox.id_for_label }}" class="form-check-label">{{ checkbox.choice_label }}</label>
+          </div>
+        {% endfor %}
+        {% if alert_prefs_form.alert_topics.errors %}
+          <p class="mt-2 text-sm text-red-600">{{ alert_prefs_form.alert_topics.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-field not-format">
+        <label for="{{ alert_prefs_form.alert_countries.id_for_label }}" class="form-label">
+          {{ alert_prefs_form.alert_countries.label }}
+        </label>
+        <input type="text" id="alert-countries-pill-input" class="form-input" placeholder="Add countries...">
+        <input type="hidden" name="{{ alert_prefs_form.alert_countries.name }}"
+               id="alert-countries-hidden" value="{{ alert_prefs_form.alert_countries.value|default:'' }}">
+        {% if alert_prefs_form.alert_countries.errors %}
+          <p class="mt-2 text-sm text-red-600">{{ alert_prefs_form.alert_countries.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit" name="save_alerts" class="btn-primary mt-2">Save alerts</button>
+    </form>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+  <script>
+    (function () {
+      var countryWhitelist = [
+        {% for value, label in country_choices %}
+          { value: '{{ value }}', label: '{{ label|escapejs }}' },
+        {% endfor %}
+      ];
+
+      var input = document.getElementById('alert-countries-pill-input');
+      var hidden = document.getElementById('alert-countries-hidden');
+      if (!input || !hidden) {
+        return;
+      }
+
+      var preselected = [];
+      try {
+        var raw = JSON.parse(hidden.value || '[]');
+        preselected = raw.map(function (code) {
+          var match = countryWhitelist.find(function (c) { return c.value === code; });
+          return match || { value: code, label: code };
+        });
+      } catch (e) {
+        preselected = [];
+      }
+
+      var tagify = new Tagify(input, {
+        enforceWhitelist: false,
+        whitelist: countryWhitelist,
+        dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'], classname: 'dropdown-panel' },
+        templates: {
+          dropdownItem: function (tagData) {
+            return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
+              '<strong>' + tagData.label + '</strong> <span>(' + tagData.value + ')</span></div>';
+          }
+        }
+      });
+      if (preselected.length) {
+        tagify.addTags(preselected);
+      }
+
+      function syncHidden() {
+        var values = tagify.value.map(function (item) { return item.value; });
+        hidden.value = values.length ? JSON.stringify(values) : '';
+      }
+      tagify.on('change', syncHidden);
+    })();
+  </script>
 {% endblock content %}

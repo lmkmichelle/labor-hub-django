@@ -227,6 +227,53 @@ class UserApplicationTests(TestCase):
         user = app.approve()
         self.assertFalse(user.profile.cv_file)
 
+    def test_approve_promotes_a_write_in_institution(self):
+        from seminars.models import University
+
+        app = make_application(
+            email="writein@example.com", university_name="Obscure College")
+        user = app.approve()
+
+        self.assertEqual(user.profile.university_name, "")
+        self.assertIsNotNone(user.profile.university)
+        self.assertEqual(user.profile.university.name, "Obscure College")
+        self.assertEqual(user.profile.university.country_code, "US")
+        self.assertEqual(user.profile.university.source, "write-in")
+        self.assertEqual(University.objects.filter(name="Obscure College").count(), 1)
+
+    def test_approve_reuses_an_existing_institution_case_insensitively(self):
+        from seminars.models import University
+
+        existing = University.objects.create(
+            name="Existing College", country_code="US", source="import")
+        app = make_application(
+            email="writein2@example.com", university_name="existing college")
+        user = app.approve()
+
+        self.assertEqual(user.profile.university, existing)
+        self.assertEqual(University.objects.filter(name__iexact="existing college").count(), 1)
+
+    def test_approve_with_a_write_in_but_no_country_leaves_it_as_free_text(self):
+        app = make_application(
+            email="writein3@example.com", university_name="No Country U")
+        app.country_code = ""
+        app.save()
+        user = app.approve()
+        self.assertIsNone(user.profile.university)
+        self.assertEqual(user.profile.university_name, "No Country U")
+
+    def test_approve_prefers_a_picked_university_over_the_write_in_text(self):
+        from seminars.models import University
+
+        picked = University.objects.create(
+            name="Picked U", country_code="US", source="import")
+        app = make_application(
+            email="writein4@example.com", university=picked,
+            university_name="Ignored Text")
+        user = app.approve()
+        self.assertEqual(user.profile.university, picked)
+        self.assertEqual(user.profile.university_name, "Ignored Text")
+
     def test_approve_does_not_carry_other_networks_to_profile(self):
         app = make_application(
             email="networked@example.com",

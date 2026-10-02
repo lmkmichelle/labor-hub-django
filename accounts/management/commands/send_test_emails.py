@@ -35,6 +35,7 @@ from django.test import override_settings
 from django.utils import timezone
 from django.utils.html import escape
 
+from accounts.alerts import send_user_alerts
 from accounts.digests import send_user_digest
 from accounts.emails import (
     send_advisor_review_email,
@@ -49,12 +50,18 @@ from core.models import ContactMessage
 from core.views import _send_contact_confirmation, _send_contact_notification
 from publications.emails import send_paper_advisor_ack_email
 from publications.models import Publication
+from seminars.models import Seminar
 
 ALL_KEYS = [
     "approved", "rejected", "staff_alert", "advisor_review",
-    "paper_advisor_ack", "digest", "contact", "contact_confirmation",
+    "paper_advisor_ack", "digest", "alerts", "contact", "contact_confirmation",
     "password_reset",
 ]
+
+# Matches core.constants.RECOMMENDED_KEYWORDS[0] -- any entry works, this is
+# just a fixed one so the preview publication's topic has something to match.
+PREVIEW_ALERT_TOPIC = "Education and Human Capital"
+PREVIEW_ALERT_COUNTRY = "US"
 
 PREVIEW_DEFAULT_TO = "preview@example.com"
 PREVIEW_DEFAULT_DIR = os.path.join(tempfile.gettempdir(), "labor-hub-email-previews")
@@ -271,6 +278,46 @@ class Command(BaseCommand):
             else:
                 user.profile.digest_frequency = original_frequency
                 user.profile.last_digest_sent_at = original_last_sent
+                user.profile.save()
+
+    def _send_alerts(self, to):
+        # Mirrors _send_digest: collect_alert_matches queries real approved
+        # rows, and send_user_alerts needs a saved user subscribed to the
+        # topic/country the preview rows below match.
+        user, created = self._get_or_reuse_user(to)
+        original_topics = user.profile.alert_topics
+        original_countries = user.profile.alert_countries
+        original_last_sent = user.profile.last_alert_sent_at
+        user.profile.alert_topics = [PREVIEW_ALERT_TOPIC]
+        user.profile.alert_countries = [PREVIEW_ALERT_COUNTRY]
+        user.profile.last_alert_sent_at = None
+        user.profile.save()
+        publication = Publication.objects.create(
+            title="A Preview Discussion Paper",
+            abstract="A preview row for send_test_emails; deleted immediately after.",
+            status="approved",
+            topic=[PREVIEW_ALERT_TOPIC],
+        )
+        visit = Seminar.objects.create(
+            visitor_name="Preview Visitor",
+            university_name="Preview University",
+            status="approved",
+            countries=[PREVIEW_ALERT_COUNTRY],
+        )
+        try:
+            sent = send_user_alerts(user, now=timezone.now())
+            if not sent:
+                self.stdout.write(self.style.WARNING(
+                    "  alerts: send_user_alerts reported nothing to send"))
+        finally:
+            publication.delete()
+            visit.delete()
+            if created:
+                user.delete()
+            else:
+                user.profile.alert_topics = original_topics
+                user.profile.alert_countries = original_countries
+                user.profile.last_alert_sent_at = original_last_sent
                 user.profile.save()
 
     def _send_contact(self, to):

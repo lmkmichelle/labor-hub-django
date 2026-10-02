@@ -3,7 +3,7 @@ from django import forms
 from core.admin import ApprovableAdmin
 from core.constants import COUNTRY_CHOICES
 
-from seminars.models import Seminar
+from seminars.models import Seminar, University
 
 
 class SeminarAdminForm(forms.ModelForm):
@@ -59,8 +59,18 @@ class SeminarAdmin(ApprovableAdmin):
     get_university_name.short_description = 'University'
 
 
-# University is reference data (populated by import_universities and picked
-# from a dropdown on the public forms) rather than something admins moderate
-# or edit by hand, so it is deliberately not registered here.
+# University is mostly reference data (populated by import_universities and
+# picked from a dropdown on the public forms), but an applicant typing in an
+# institution we don't have (University.from_write_in, called from
+# UserApplication.approve()) also creates one with source="write-in" -- this
+# registration lets admins find and tidy those (rename, merge, delete) rather
+# than editing by hand some other way.
+@admin.register(University)
+class UniversityAdmin(admin.ModelAdmin):
+    list_display = ('name', 'country_code', 'source')
+    list_filter = ('source', 'country_code')
+    search_fields = ('name',)
+
+
 admin.site.register(Seminar, SeminarAdmin)
 

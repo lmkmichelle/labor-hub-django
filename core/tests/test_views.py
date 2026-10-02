@@ -448,6 +448,19 @@ class ScholarsListViewTests(TestCase):
         response = self.client.get(reverse("scholars"))
         self.assertContains(response, reverse("map"))
 
+    def test_scholars_list_shows_no_photos(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        scholar = make_user(email="withphoto@example.com")
+        scholar.profile.avatar = SimpleUploadedFile(
+            "avatar.png", b"fake-image-bytes", content_type="image/png")
+        scholar.profile.save()
+
+        response = self.client.get(reverse("scholars"))
+        self.assertContains(response, scholar.first_name)
+        self.assertNotContains(response, scholar.profile.avatar.url)
+        self.assertNotContains(response, "default-avatar.png")
+
     def test_scholars_list_shows_all_members(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
         student = make_user(email="s@example.com", role=CustomUser.Role.STUDENT)
