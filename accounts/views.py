@@ -12,7 +12,7 @@ from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, UpdateView, ListView
 
-from core.constants import COUNTRY_CHOICES
+from core.constants import COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
 from core.models import ApprovalStatus
 from events.models import Event
 from jobs.models import Job
@@ -186,7 +186,11 @@ class SettingsView(LoginRequiredMixin, View):
             else EmailPreferencesForm(instance=request.user.profile),
             "alert_prefs_form": alert_prefs_form if alert_prefs_form is not None
             else AlertPreferencesForm(instance=request.user.profile),
-            "country_choices": COUNTRY_CHOICES,
+            # Whitelists for the two Tagify pill inputs in the Alerts section.
+            "alert_topic_choices": RECOMMENDED_KEYWORDS,
+            "alert_country_choices": [
+                {"value": code, "label": label} for code, label in COUNTRY_CHOICES
+            ],
             "saved": request.GET.get("saved"),
         }
 

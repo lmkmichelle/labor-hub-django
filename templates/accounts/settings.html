@@ -60,22 +60,17 @@
       {% endif %}
 
       <div class="form-field not-format">
-        <span class="form-label">{{ alert_prefs_form.alert_topics.label }}</span>
-        {% for checkbox in alert_prefs_form.alert_topics %}
-          <div class="flex items-center mb-1">
-            {{ checkbox.tag }}
-            <label for="{{ checkbox.id_for_label }}" class="form-check-label">{{ checkbox.choice_label }}</label>
-          </div>
-        {% endfor %}
+        <label for="alert-topics-pill-input" class="form-label">{{ alert_prefs_form.alert_topics.label }}</label>
+        <input type="text" id="alert-topics-pill-input" class="form-input" placeholder="Add topics...">
+        <input type="hidden" name="{{ alert_prefs_form.alert_topics.name }}"
+               id="alert-topics-hidden" value="{{ alert_prefs_form.alert_topics.value|default:'' }}">
         {% if alert_prefs_form.alert_topics.errors %}
           <p class="mt-2 text-sm text-red-600">{{ alert_prefs_form.alert_topics.errors.0 }}</p>
         {% endif %}
       </div>
 
       <div class="form-field not-format">
-        <label for="{{ alert_prefs_form.alert_countries.id_for_label }}" class="form-label">
-          {{ alert_prefs_form.alert_countries.label }}
-        </label>
+        <label for="alert-countries-pill-input" class="form-label">{{ alert_prefs_form.alert_countries.label }}</label>
         <input type="text" id="alert-countries-pill-input" class="form-input" placeholder="Add countries...">
         <input type="hidden" name="{{ alert_prefs_form.alert_countries.name }}"
                id="alert-countries-hidden" value="{{ alert_prefs_form.alert_countries.value|default:'' }}">
@@ -88,36 +83,68 @@
     </form>
   </section>
 
+  {{ alert_topic_choices|json_script:"alert-topic-choices" }}
+  {{ alert_country_choices|json_script:"alert-country-choices" }}
   <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
   <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
   <script>
     (function () {
-      var countryWhitelist = [
-        {% for value, label in country_choices %}
-          { value: '{{ value }}', label: '{{ label|escapejs }}' },
-        {% endfor %}
-      ];
-
-      var input = document.getElementById('alert-countries-pill-input');
-      var hidden = document.getElementById('alert-countries-hidden');
-      if (!input || !hidden) {
+      if (typeof Tagify === 'undefined') {
         return;
       }
 
-      var preselected = [];
-      try {
-        var raw = JSON.parse(hidden.value || '[]');
-        preselected = raw.map(function (code) {
-          var match = countryWhitelist.find(function (c) { return c.value === code; });
-          return match || { value: code, label: code };
-        });
-      } catch (e) {
-        preselected = [];
+      function readJson(id) {
+        try {
+          return JSON.parse(document.getElementById(id).textContent);
+        } catch (e) {
+          return [];
+        }
       }
 
-      var tagify = new Tagify(input, {
-        enforceWhitelist: false,
+      // Both pill inputs write a JSON array of their tag values into a hidden
+      // field the form always submits (even when empty), which
+      // AlertPreferencesForm parses with core.filters.parse_pill_terms.
+      function initPills(inputId, hiddenId, whitelist, tagifySettings) {
+        var input = document.getElementById(inputId);
+        var hidden = document.getElementById(hiddenId);
+        if (!input || !hidden) {
+          return;
+        }
+        var saved = [];
+        try {
+          saved = JSON.parse(hidden.value || '[]');
+        } catch (e) {
+          saved = [];
+        }
+        var tagify = new Tagify(input, tagifySettings);
+        tagify.addTags(saved.map(function (value) {
+          var match = whitelist.find(function (item) { return item.value === value; });
+          return match || { value: value };
+        }));
+        function syncHidden() {
+          var values = tagify.value.map(function (item) { return item.value; });
+          hidden.value = values.length ? JSON.stringify(values) : '';
+        }
+        tagify.on('change', syncHidden);
+        syncHidden();
+      }
+
+      var topicWhitelist = readJson('alert-topic-choices').map(function (kw) {
+        return { value: kw };
+      });
+      initPills('alert-topics-pill-input', 'alert-topics-hidden', topicWhitelist, {
+        enforceWhitelist: true,
+        whitelist: topicWhitelist,
+        dropdown: { enabled: 0, closeOnSelect: false, maxItems: topicWhitelist.length, classname: 'dropdown-panel' },
+        delimiters: null
+      });
+
+      var countryWhitelist = readJson('alert-country-choices');
+      initPills('alert-countries-pill-input', 'alert-countries-hidden', countryWhitelist, {
+        enforceWhitelist: true,
         whitelist: countryWhitelist,
+        // Pills show the country name; the hidden field still stores the code.
+        tagTextProp: 'label',
         dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'], classname: 'dropdown-panel' },
         templates: {
           dropdownItem: function (tagData) {
@@ -126,15 +153,6 @@
           }
         }
       });
-      if (preselected.length) {
-        tagify.addTags(preselected);
-      }
-
-      function syncHidden() {
-        var values = tagify.value.map(function (item) { return item.value; });
-        hidden.value = values.length ? JSON.stringify(values) : '';
-      }
-      tagify.on('change', syncHidden);
     })();
   </script>
 {% endblock content %}

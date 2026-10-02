@@ -371,13 +371,12 @@ class SettingsViewTests(TestCase):
         self.client.force_login(user)
         response = self.client.post(reverse("settings"), {
             "save_alerts": "1",
-            "alert_topics": ["Labor Supply", "Migration"],
+            "alert_topics": '["Labor Supply", "Migration"]',
             "alert_countries": "Germany",
         })
         self.assertRedirects(response, reverse("settings") + "?saved=alerts")
         user.profile.refresh_from_db()
-        self.assertEqual(
-            set(user.profile.alert_topics), {"Labor Supply", "Migration"})
+        self.assertEqual(user.profile.alert_topics, ["Labor Supply", "Migration"])
         self.assertEqual(user.profile.alert_countries, ["DE"])
 
     def test_post_save_alerts_accepts_a_country_code_directly(self):
@@ -391,22 +390,54 @@ class SettingsViewTests(TestCase):
         self.assertEqual(user.profile.alert_countries, ["DE"])
 
     def test_post_save_alerts_with_nothing_clears_both_lists(self):
-        # The settings page always submits alert_countries (it's a hidden
-        # field fed by Tagify, present even when empty) and omits
-        # alert_topics entirely when no checkbox is ticked -- so a real
-        # "clear everything" submission looks like this, not like leaving
-        # both keys out of the POST body.
+        # The settings page always submits both hidden fields fed by the
+        # Tagify pill inputs, even when empty -- so a real "clear everything"
+        # submission looks like this, not like leaving both keys out.
         user = make_active_user()
         user.profile.alert_topics = ["Labor Supply"]
         user.profile.alert_countries = ["DE"]
         user.profile.save()
         self.client.force_login(user)
         self.client.post(reverse("settings"), {
-            "save_alerts": "1", "alert_countries": "",
+            "save_alerts": "1", "alert_topics": "", "alert_countries": "",
         })
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.alert_topics, [])
         self.assertEqual(user.profile.alert_countries, [])
+
+
+    def test_post_save_alerts_keeps_only_known_topics_in_canonical_spelling(self):
+        user = make_active_user()
+        self.client.force_login(user)
+        self.client.post(reverse("settings"), {
+            "save_alerts": "1",
+            "alert_topics": '["labor supply", "Not A Real Topic"]',
+            "alert_countries": "",
+        })
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.alert_topics, ["Labor Supply"])
+
+    def test_alerts_section_uses_pill_inputs_not_checkboxes(self):
+        user = make_active_user()
+        user.profile.alert_topics = ["Migration"]
+        user.profile.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse("settings"))
+        self.assertContains(response, 'id="alert-topics-pill-input"')
+        self.assertContains(response, 'id="alert-topic-choices"')
+        self.assertNotContains(response, 'type="checkbox"')
+        # Regression: saved alerts must pre-fill as JSON the pill inputs can
+        # parse -- a ModelForm's instance-derived initial rendered the
+        # Python list "['Migration']", which the page couldn't read back.
+        self.assertContains(response, "[&quot;Migration&quot;]")
+
+    def test_saved_countries_prefill_as_json(self):
+        user = make_active_user()
+        user.profile.alert_countries = ["DE"]
+        user.profile.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse("settings"))
+        self.assertContains(response, 'id="alert-countries-hidden" value="[&quot;DE&quot;]"')
 
 
 class AdminLinkNavTests(TestCase):

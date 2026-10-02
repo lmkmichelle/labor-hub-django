@@ -414,19 +414,16 @@ class EmailPreferencesForm(forms.ModelForm):
 class AlertPreferencesForm(forms.ModelForm):
     """Settings-page form for the weekly topic/country alert email.
 
-    alert_countries is a Tagify pill input submitting the same JSON-array-or-
-    comma-string shape the list-page country filters use, so it's parsed the
-    same way (core.filters.parse_pill_terms + map_country_terms_to_codes),
-    accepting either a country name or an ISO code.
+    Both fields are Tagify pill inputs submitting the same JSON-array-or-
+    comma-string shape the list-page filters use, so they're parsed the same
+    way (core.filters.parse_pill_terms). Countries accept a name or an ISO
+    code (map_country_terms_to_codes); topics are limited to
+    RECOMMENDED_KEYWORDS.
     """
-    alert_topics = forms.MultipleChoiceField(
-        choices=[(kw, kw) for kw in RECOMMENDED_KEYWORDS],
+    alert_topics = forms.CharField(
         required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'w-4 h-4 text-brand bg-gray-100 border-gray-300 '
-                     'rounded focus:ring-brand focus:ring-2',
-        }),
         label='Email me about new papers on these topics',
+        widget=forms.TextInput(attrs={"id": "alert-topics-input"}),
     )
     alert_countries = forms.CharField(
         required=False,
@@ -440,9 +437,27 @@ class AlertPreferencesForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Overwrite the instance-derived initial values (Python lists, which
+        # would render as "['DE']") with the JSON the pill inputs read back.
+        # Setting field.initial isn't enough: a ModelForm's self.initial,
+        # built from the instance, takes precedence over it.
         if self.instance and self.instance.pk:
-            self.fields['alert_countries'].initial = serialize_pill_terms(
+            self.initial['alert_topics'] = serialize_pill_terms(
+                self.instance.alert_topics)
+            self.initial['alert_countries'] = serialize_pill_terms(
                 self.instance.alert_countries)
+
+    def clean_alert_topics(self):
+        """Keep only recognised topics, stored in their canonical spelling, so
+        alert matching against Publication.topic stays exact."""
+        canonical = {kw.lower(): kw for kw in RECOMMENDED_KEYWORDS}
+        raw = self.cleaned_data.get('alert_topics', '')
+        topics = []
+        for term in parse_pill_terms(raw):
+            keyword = canonical.get(term.strip().lower())
+            if keyword and keyword not in topics:
+                topics.append(keyword)
+        return topics
 
     def clean_alert_countries(self):
         raw = self.cleaned_data.get('alert_countries', '')
