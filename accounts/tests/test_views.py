@@ -180,6 +180,16 @@ class ProfileViewTests(TestCase):
         response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
         self.assertNotContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
 
+    def test_profile_does_not_show_the_cv_link(self):
+        # CVs are collected for applications and edit-profile, but are not
+        # displayed on the public profile.
+        user = make_active_user()
+        user.profile.cv_url = "https://example.org/my-cv"
+        user.profile.save()
+        response = self.client.get(reverse("profile", kwargs={"pk": user.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "https://example.org/my-cv")
+
 
 class EditProfileViewTests(TestCase):
     def test_get_requires_login(self):
@@ -239,7 +249,7 @@ class EditProfileViewTests(TestCase):
         self.assertEqual(user.profile.research_interests, ["Economics"])
         self.assertTrue(user.profile.avatar)
 
-    def test_post_saves_cv_url_and_it_shows_on_the_public_profile(self):
+    def test_post_saves_cv_url_without_showing_it_on_the_public_profile(self):
         user = make_active_user()
         self.client.force_login(user)
         response = self.client.post(reverse("edit_profile"), {
@@ -259,7 +269,7 @@ class EditProfileViewTests(TestCase):
         self.client.logout()
         profile_response = self.client.get(
             reverse("profile", kwargs={"pk": user.pk}))
-        self.assertContains(profile_response, "https://example.org/my-cv")
+        self.assertNotContains(profile_response, "https://example.org/my-cv")
 
     def test_post_uploads_cv_file_when_no_url_given(self):
         user = make_active_user()
