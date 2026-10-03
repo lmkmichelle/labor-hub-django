@@ -273,7 +273,7 @@ class UpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['avatar', 'position', 'department', 'university', 'university_name',
-                  'country_code', 'website', 'cv_url', 'cv_file', 'biography']
+                  'country_code', 'website', 'biography']
 
     # These mirror Profile's blank=True fields. Declaring them required here
     # made a picture, a website and at least one research interest mandatory
@@ -330,20 +330,6 @@ class UpdateProfileForm(forms.ModelForm):
     website = forms.URLField(
         label='Personal Website',
         widget=forms.URLInput(),
-        required=False,
-    )
-
-    cv_url = forms.URLField(
-        label='CV link',
-        help_text="If you keep an up-to-date CV online, link it here -- it's shown on your "
-                  "profile instead of an uploaded file, if both are set.",
-        widget=forms.URLInput(),
-        required=False,
-    )
-
-    cv_file = forms.FileField(
-        label='Or upload your CV (PDF)',
-        widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
         required=False,
     )
 

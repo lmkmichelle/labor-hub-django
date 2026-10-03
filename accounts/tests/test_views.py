@@ -181,8 +181,8 @@ class ProfileViewTests(TestCase):
         self.assertNotContains(response, reverse("event-edit", kwargs={"pk": event.pk}))
 
     def test_profile_does_not_show_the_cv_link(self):
-        # CVs are collected for applications and edit-profile, but are not
-        # displayed on the public profile.
+        # CVs are collected on applications but not displayed on the public
+        # profile.
         user = make_active_user()
         user.profile.cv_url = "https://example.org/my-cv"
         user.profile.save()
@@ -249,64 +249,29 @@ class EditProfileViewTests(TestCase):
         self.assertEqual(user.profile.research_interests, ["Economics"])
         self.assertTrue(user.profile.avatar)
 
-    def test_post_saves_cv_url_without_showing_it_on_the_public_profile(self):
+    def test_edit_form_has_no_cv_fields_and_keeps_an_existing_cv(self):
+        # CVs are collected on applications only; editing a profile neither
+        # offers them nor wipes one carried over from an approved application.
         user = make_active_user()
+        user.profile.cv_url = "https://example.org/my-cv"
+        user.profile.save()
         self.client.force_login(user)
+        page = self.client.get(reverse("edit_profile"))
+        self.assertNotContains(page, "cv_url")
+        self.assertNotContains(page, "cv_file")
         response = self.client.post(reverse("edit_profile"), {
             "position": "Professor",
             "country_code": "US",
             "department": "Cornell",
             "website": "https://example.com",
-            "cv_url": "https://example.org/my-cv",
             "biography": "A short biography.",
             "research_interests_input": '[{"value":"Economics"}]',
             "avatar": make_image_file(),
+            "cv_url": "https://example.org/other",
         })
         self.assertRedirects(response, reverse("profile"))
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.cv_url, "https://example.org/my-cv")
-
-        self.client.logout()
-        profile_response = self.client.get(
-            reverse("profile", kwargs={"pk": user.pk}))
-        self.assertNotContains(profile_response, "https://example.org/my-cv")
-
-    def test_post_uploads_cv_file_when_no_url_given(self):
-        user = make_active_user()
-        self.client.force_login(user)
-        cv = SimpleUploadedFile("cv.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
-        response = self.client.post(reverse("edit_profile"), {
-            "position": "Professor",
-            "country_code": "US",
-            "department": "Cornell",
-            "website": "https://example.com",
-            "biography": "A short biography.",
-            "research_interests_input": '[{"value":"Economics"}]',
-            "avatar": make_image_file(),
-            "cv_file": cv,
-        })
-        self.assertRedirects(response, reverse("profile"))
-        user.profile.refresh_from_db()
-        self.assertTrue(user.profile.cv_file)
-        self.assertEqual(user.profile.cv_link(), user.profile.cv_file.url)
-
-    def test_post_rejects_a_non_pdf_cv_upload(self):
-        user = make_active_user()
-        self.client.force_login(user)
-        bad_file = SimpleUploadedFile("cv.docx", b"not a pdf", content_type="application/msword")
-        response = self.client.post(reverse("edit_profile"), {
-            "position": "Professor",
-            "country_code": "US",
-            "department": "Cornell",
-            "website": "https://example.com",
-            "biography": "A short biography.",
-            "research_interests_input": '[{"value":"Economics"}]',
-            "avatar": make_image_file(),
-            "cv_file": bad_file,
-        })
-        self.assertEqual(response.status_code, 200)
-        user.profile.refresh_from_db()
-        self.assertFalse(user.profile.cv_file)
 
     def test_post_without_digest_frequency_defaults_off(self):
         user = make_active_user()
