@@ -98,6 +98,24 @@ class CollectAlertMatchesTests(TestCase):
         self.assertEqual(len(titles), 1)
         self.assertIn("Matches", titles[0])
 
+    def test_item_submitted_before_since_but_approved_after_is_included(self):
+        profile = make_user(topics=["Labor Supply"], countries=["DE"]).profile
+        pub = make_publication(
+            "Late", self.now - timedelta(days=5), topic=["Labor Supply"])
+        visit = make_visit("Late visit", self.now - timedelta(days=5), countries=["DE"])
+        Publication.objects.filter(pk=pub.pk).update(reviewed_at=self.now - timedelta(days=1))
+        Seminar.objects.filter(pk=visit.pk).update(reviewed_at=self.now - timedelta(days=1))
+
+        keys = {s["key"] for s in collect_alert_matches(profile, self.since)}
+        self.assertEqual(keys, {"publications", "visits"})
+
+    def test_item_approved_before_since_is_not_repeated(self):
+        profile = make_user(topics=["Labor Supply"]).profile
+        pub = make_publication(
+            "Seen", self.now - timedelta(days=1), topic=["Labor Supply"])
+        Publication.objects.filter(pk=pub.pk).update(reviewed_at=self.now - timedelta(days=5))
+        self.assertEqual(collect_alert_matches(profile, self.since), [])
+
     def test_visits_before_since_are_excluded(self):
         profile = make_user(countries=["DE"]).profile
         make_visit("Old", self.now - timedelta(days=10), countries=["DE"])

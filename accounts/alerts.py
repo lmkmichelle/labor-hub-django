@@ -13,6 +13,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core import signing
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -54,6 +55,18 @@ def default_since(now=None):
     return now - ALERT_WINDOW
 
 
+def _posted_since(since, submitted_field):
+    """Rows that went public since ``since``.
+
+    Keyed on approval time, not submission time: an item submitted just before
+    a send but approved just after would otherwise fall between two windows and
+    never be alerted. Rows approved without ``reviewed_at`` (e.g. via the admin
+    Status dropdown) fall back to the submission date.
+    """
+    return Q(reviewed_at__gte=since) | Q(
+        reviewed_at__isnull=True, **{f"{submitted_field}__gte": since})
+
+
 def collect_alert_matches(profile, since):
     """Return the non-empty alert sections for ``profile`` since ``since``.
 
@@ -67,7 +80,8 @@ def collect_alert_matches(profile, since):
         topics = set(profile.alert_topics)
         publications = [
             pub for pub in (
-                Publication.objects.filter(status="approved", applied_at__gte=since)
+                Publication.objects.filter(status="approved")
+                .filter(_posted_since(since, "applied_at"))
                 .prefetch_related("author_links__author__user")
                 .order_by("-applied_at")
             )
@@ -84,7 +98,7 @@ def collect_alert_matches(profile, since):
         countries = set(profile.alert_countries)
         visits = [
             visit for visit in (
-                Seminar.objects.approved().filter(created_at__gte=since)
+                Seminar.objects.approved().filter(_posted_since(since, "created_at"))
                 .select_related("university")
                 .order_by("-created_at")
             )
