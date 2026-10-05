@@ -6,6 +6,9 @@
         <a href="{% url 'about' %}" class="hover:text-red-700">About</a>
       </li>
       <li>
+        <a href="{% url 'faq' %}" class="hover:text-red-700">FAQ</a>
+      </li>
+      <li>
         <a href="{% url 'contact' %}" class="hover:text-red-700">Contact</a>
       </li>
       {% if user.is_authenticated %}

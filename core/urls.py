@@ -11,6 +11,7 @@ urlpatterns = [
     path('map/', views.map_view, name='map'),
     path('contact/', views.contact, name='contact'),
     path('about/', TemplateView.as_view(template_name='core/about.html'), name='about'),
+    path('faq/', TemplateView.as_view(template_name='core/faq.html'), name='faq'),
     path('privacy/', TemplateView.as_view(template_name='core/privacy.html'), name='privacy'),
     path('accessibility/', TemplateView.as_view(template_name='core/accessibility.html'), name='accessibility'),
     path('scholars/', ScholarsListView.as_view(), name='scholars'),

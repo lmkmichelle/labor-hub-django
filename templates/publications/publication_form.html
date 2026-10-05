@@ -23,6 +23,7 @@ Submit Paper
     Submit a paper
     {% endif %}
 </h3>
+<p class="mb-5 text-sm text-body">Papers are reviewed before they are published. See the <a href="{% url 'faq' %}#papers">FAQ</a> for timing and revisions.</p>
 
 <form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
