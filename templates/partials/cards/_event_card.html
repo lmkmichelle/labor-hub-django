@@ -13,7 +13,7 @@ Used by the Events list page.
     </div>
   </div>
   {% if event.deadline %}
-    <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y, P" }}</p>
+    <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y" }}</p>
   {% endif %}
   {% if event.host %}
     <p class="mt-2 text-sm text-body text-right">

@@ -42,7 +42,7 @@
 
     {% if event.deadline %}
         <h4>Application Deadline</h4>
-        <p>{{ event.deadline|date:"N j, Y, g:i A" }} ({{ event.deadline|date:"T" }})</p>
+        <p>{{ event.deadline|date:"N j, Y" }}</p>
     {% endif %}
 
     {% if event.application_url %}
