@@ -102,7 +102,12 @@ class SmokeTests(PlaywrightSmokeTestCase):
         expect(university_field).to_be_hidden()
         expect(university_name_field).to_be_hidden()
 
-        page.select_option("#id_country_code", "US")
+        # Picking a country makes the picker fetch that country's universities.
+        # Wait for the response so no request is still in flight when the test
+        # ends: it would hold a lock on the shared in-memory SQLite database and
+        # break the *next* test's teardown (a different test failed each run).
+        with page.expect_response("**/visits/universities/**"):
+            page.select_option("#id_country_code", "US")
 
         expect(university_field).to_be_visible()
         expect(university_name_field).to_be_visible()
