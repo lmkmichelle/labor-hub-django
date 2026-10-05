@@ -87,6 +87,10 @@
                     {% endif %}
                   {% endif %}
                   <li class="mt-2 border-t border-default pt-2">
+                    <a href="{% url 'faq' %}"
+                       class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Help &amp; FAQ</a>
+                  </li>
+                  <li>
                     <form action="{% url 'logout' %}" method="post">
                       {% csrf_token %}
                       <button class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:cursor-pointer hover:text-heading rounded"

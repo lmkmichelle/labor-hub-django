@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h2 class="title">Frequently asked questions</h2>
+    <p>
+      Commonly asked questions about the platform. Can't find your answer?
+      <a href="{% url 'contact' %}">Get in touch</a>.
+    </p>
+
+    <h3 id="applications">Applications and accounts</h3>
+    <details class="faq-item">
+      <summary class="faq-question">How long does it take for an application to be processed?</summary>
+      <p class="faq-answer">
+        Every application is read by an administrator, usually within 1–2 days.
+        If you are approved you will receive an email with a link to sign in, using
+        the password you chose when you applied. Applicants who are not approved are
+        not emailed, so if you haven't heard anything after 2 days,
+        <a href="{% url 'contact' %}">contact us</a>.
+      </p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-question">I'm a student. How do I eventually get a fellow (researcher) profile?</summary>
+      <p class="faq-answer">
+        There is no automatic upgrade. Once you move into a faculty or postdoctoral
+        role, <a href="{% url 'contact' %}">contact us</a> and an administrator will
+        change your membership type. Your profile, papers and posts stay as they are.
+      </p>
+    </details>
+
+    <h3 id="papers">Discussion papers</h3>
+    <details class="faq-item">
+      <summary class="faq-question">How long does it take for a paper to be processed?</summary>
+      <p class="faq-answer">
+        A submitted paper is held until an administrator approves it, usually within
+        1–2 days. Once approved it is published, assigned the next discussion paper
+        number, and given the Labor Hub cover page automatically.
+      </p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-question">Can I revise a discussion paper after it has been processed?</summary>
+      <p class="faq-answer">
+        Yes. Open your paper and click Edit. Changes, including a new PDF, appear
+        right away, and the paper keeps its discussion paper number.
+      </p>
+    </details>
+
+    <h3 id="announcements">Announcements: events, jobs and visits</h3>
+    <details class="faq-item">
+      <summary class="faq-question">How long does it take for an announcement to be displayed?</summary>
+      <p class="faq-answer">
+        Workshops, conferences, jobs and long-distance visits are all reviewed by
+        an administrator before they appear, usually within 1–2 days. They go live
+        as soon as they are approved.
+      </p>
+    </details>
+  </article>
+{% endblock content %}

@@ -13,6 +13,7 @@ class StaticPageTests(TestCase):
             ('about', 'core/about.html'),
             ('privacy', 'core/privacy.html'),
             ('accessibility', 'core/accessibility.html'),
+            ('faq', 'core/faq.html'),
         ]
         for name, template in cases:
             with self.subTest(page=name):
@@ -30,7 +31,7 @@ class AboutPageContentTests(TestCase):
 class FooterLinkTests(TestCase):
     def test_common_links_present_for_anonymous(self):
         response = self.client.get(reverse('home'))
-        for name in ('about', 'contact', 'privacy', 'accessibility'):
+        for name in ('about', 'faq', 'contact', 'privacy', 'accessibility'):
             self.assertContains(response, f'href="{reverse(name)}"')
         # Anonymous visitors see "Sign in", not "Submit a paper".
         self.assertContains(response, f'href="{reverse("login")}"')
@@ -90,3 +91,18 @@ class NavbarPostLinksTests(TestCase):
         response = self.client.get(reverse('home'))
         for name in self.post_link_names:
             self.assertContains(response, f'href="{reverse(name)}"')
+
+
+class FaqPageTests(TestCase):
+    def test_public_with_section_anchors(self):
+        response = self.client.get(reverse('faq'))
+        self.assertEqual(response.status_code, 200)
+        for anchor in ('applications', 'papers', 'announcements'):
+            self.assertContains(response, f'id="{anchor}"')
+
+    def test_linked_from_the_user_menu(self):
+        user = CustomUser.objects.create_user(
+            email='faq@example.com', password='faq-test-pw', first_name='Faq', last_name='User',
+            role=CustomUser.Role.RESEARCHER, is_active=True)
+        self.client.force_login(user)
+        self.assertContains(self.client.get(reverse('home')), f'href="{reverse("faq")}"', count=2)
