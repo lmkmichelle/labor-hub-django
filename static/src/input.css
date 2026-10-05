@@ -331,9 +331,33 @@
     @apply border-b border-default py-3;
   }
   .faq-question {
-    @apply cursor-pointer font-medium text-heading hover:text-red-700;
+    @apply flex items-center justify-between gap-4 cursor-pointer list-none font-medium text-heading hover:text-red-700;
+  }
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+  /* Chevron drawn from two borders so it inherits the text colour and
+     rotates open; replaces the browser's default triangle marker. */
+  .faq-question::after {
+    content: "";
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 150ms;
+  }
+  .faq-item[open] > .faq-question::after {
+    transform: rotate(-135deg);
   }
   .faq-answer {
     @apply mt-2 text-body;
+  }
+
+  /* Plain hyperlinks inside prose pages use the carnelian red theme.
+     Only class-less anchors: buttons and cards carry their own classes. */
+  .format a:where(:not([class])) {
+    @apply text-red-700 underline hover:text-red-800;
   }
 }
