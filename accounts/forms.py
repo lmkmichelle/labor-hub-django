@@ -10,6 +10,7 @@ from django.template import loader
 from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES, RECOMMENDED_KEYWORDS
 from core.email import attach_logo, cm_headers, default_reply_to
 from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
+from seminars.forms import UniversityChoiceField, narrow_university_field
 from seminars.models import University
 
 from .models import Profile, CustomUser, UserApplication, ResearchPaper
@@ -62,7 +63,7 @@ class BaseApplicationForm(forms.ModelForm):
         required=False,
     )
 
-    university = forms.ModelChoiceField(
+    university = UniversityChoiceField(
         queryset=University.objects.none(),
         required=False,
         label='Affiliation',
@@ -105,9 +106,9 @@ class BaseApplicationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Same reasoning as UpdateProfileForm: accept any university on POST
-        # while the rendered <select> is narrowed by country via JS.
-        self.fields['university'].queryset = University.objects.order_by('name')
+        # Validate against every university but render only the saved one;
+        # JS refills the list per country (see UniversityChoiceField).
+        narrow_university_field(self)
 
         # One URL field per network, shown by JS only when its box is ticked.
         for code, _label in OTHER_NETWORK_CHOICES:
@@ -302,7 +303,7 @@ class UpdateProfileForm(forms.ModelForm):
         widget=forms.TextInput()
     )
 
-    university = forms.ModelChoiceField(
+    university = UniversityChoiceField(
         queryset=University.objects.none(),
         required=False,
         label='Affiliation',
@@ -341,10 +342,9 @@ class UpdateProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Populate the affiliation choices from the whole table so a POSTed
-        # university validates, while the rendered <select> starts narrow and is
-        # refilled by JS once a country is chosen.
-        self.fields['university'].queryset = University.objects.order_by('name')
+        # Validate against every university but render only the saved one;
+        # JS refills the list per country (see UniversityChoiceField).
+        narrow_university_field(self)
 
         if self.instance and self.instance.research_interests:
             initial_interests = self.instance.research_interests

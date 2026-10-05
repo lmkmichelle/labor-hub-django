@@ -82,6 +82,8 @@ class UserApplicationAdmin(admin.ModelAdmin):
     ]
 
     list_filter = ['status', 'role', 'applied_at']
+    # 10k universities: a search box, not a 10k-option <select>.
+    autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'other_networks']
     ordering = ['-applied_at']

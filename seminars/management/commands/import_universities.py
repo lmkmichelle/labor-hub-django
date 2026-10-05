@@ -30,10 +30,9 @@ class Command(BaseCommand):
             action='store_true',
             help=(
                 'Skip the import when the University table already has rows. '
-                'Deprecated: every deploy now re-syncs regardless, so a table '
-                'that was only partially populated by an interrupted earlier '
-                'run repairs itself on the next deploy instead of staying '
-                'stuck. Kept only for anyone still passing it by hand.'
+                'Used by the deploy hook so only the first deploy seeds the '
+                'table; the import is atomic, so a table is never left '
+                'half-populated.'
             ),
         )
 
