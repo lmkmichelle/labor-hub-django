@@ -51,7 +51,7 @@
   <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
     <h3 class="text-lg font-semibold text-heading mb-1">Alerts</h3>
     <p class="text-sm text-body mb-4">Get a weekly email when something you care about is posted -- a
-      new paper on a topic, or a new visit to a country. Leave both empty to turn alerts off.</p>
+      new paper on a topic, or a new visit to a country or a specific institution. Leave all empty to turn alerts off.</p>
     <form method="post" class="mb-0">
       {% csrf_token %}
       {% if alert_prefs_form.non_field_errors %}
@@ -79,12 +79,25 @@
         {% endif %}
       </div>
 
+      <div class="form-field not-format">
+        <label for="alert-universities-pill-input" class="form-label">{{ alert_prefs_form.alert_universities.label }}</label>
+        <input type="text" id="alert-universities-pill-input" class="form-input"
+               placeholder="Search for an institution..."
+               data-search-url="{% url 'university-search' %}">
+        <input type="hidden" name="{{ alert_prefs_form.alert_universities.name }}"
+               id="alert-universities-hidden" value="{{ alert_prefs_form.alert_universities.value|default:'' }}">
+        {% if alert_prefs_form.alert_universities.errors %}
+          <p class="mt-2 text-sm text-red-600">{{ alert_prefs_form.alert_universities.errors.0 }}</p>
+        {% endif %}
+      </div>
+
       <button type="submit" name="save_alerts" class="btn-primary mt-2">Save alerts</button>
     </form>
   </section>
 
   {{ alert_topic_choices|json_script:"alert-topic-choices" }}
   {{ alert_country_choices|json_script:"alert-country-choices" }}
+  {{ alert_university_choices|json_script:"alert-university-choices" }}
   <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
   <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
   <script>
@@ -127,6 +140,7 @@
         }
         tagify.on('change', syncHidden);
         syncHidden();
+        return tagify;
       }
 
       var topicWhitelist = readJson('alert-topic-choices').map(function (kw) {
@@ -138,6 +152,39 @@
         dropdown: { enabled: 0, closeOnSelect: false, maxItems: topicWhitelist.length, classname: 'dropdown-panel' },
         delimiters: null
       });
+
+      // Institutions are searched on demand: the table has ~10k rows, so only
+      // the saved ones are preloaded and suggestions come from the endpoint.
+      var universityInput = document.getElementById('alert-universities-pill-input');
+      var universitySaved = readJson('alert-university-choices');
+      var universityTagify = initPills('alert-universities-pill-input', 'alert-universities-hidden', universitySaved, {
+        enforceWhitelist: true,
+        whitelist: universitySaved,
+        tagTextProp: 'label',
+        dropdown: { enabled: 2, closeOnSelect: true, maxItems: 20, searchKeys: ['label'], classname: 'dropdown-panel' }
+      });
+      if (universityTagify && universityInput) {
+        var searchTimer = null;
+        var searchController = null;
+        universityTagify.on('input', function (e) {
+          var query = (e.detail.value || '').trim();
+          clearTimeout(searchTimer);
+          if (query.length < 2) { return; }
+          searchTimer = setTimeout(function () {
+            if (searchController) { searchController.abort(); }
+            searchController = new AbortController();
+            universityTagify.loading(true);
+            fetch(universityInput.dataset.searchUrl + '?q=' + encodeURIComponent(query),
+                  { signal: searchController.signal })
+              .then(function (response) { return response.json(); })
+              .then(function (data) {
+                universityTagify.whitelist = data.universities || [];
+                universityTagify.loading(false).dropdown.show(query);
+              })
+              .catch(function () { universityTagify.loading(false); });
+          }, 250);
+        });
+      }
 
       var countryWhitelist = readJson('alert-country-choices');
       initPills('alert-countries-pill-input', 'alert-countries-hidden', countryWhitelist, {

@@ -1,7 +1,7 @@
 """Email alert helpers.
 
-A member can subscribe to specific paper topics and visit countries in
-Settings (Profile.alert_topics / alert_countries). Once a week,
+A member can subscribe to specific paper topics, visit countries and visit institutions
+in Settings (Profile.alert_topics / alert_countries / alert_universities). Once a week,
 send_alerts.py emails each subscriber the approved papers and visits posted
 since their last alert that match what they picked. This mirrors
 accounts.digests closely -- same since/last-sent pattern, same unsubscribe
@@ -94,8 +94,9 @@ def collect_alert_matches(profile, since):
                 "items": [publication_item(pub) for pub in publications],
             })
 
-    if profile.alert_countries:
+    if profile.alert_countries or profile.alert_universities:
         countries = set(profile.alert_countries)
+        university_ids = set(profile.alert_universities)
         visits = [
             visit for visit in (
                 Seminar.objects.approved().filter(_posted_since(since, "created_at"))
@@ -103,11 +104,12 @@ def collect_alert_matches(profile, since):
                 .order_by("-created_at")
             )
             if countries.intersection(visit.countries or [])
+            or visit.university_id in university_ids
         ]
         if visits:
             sections.append({
                 "key": "visits",
-                "label": "New visits matching your countries",
+                "label": "New visits matching your alerts",
                 "items": [visit_item(visit) for visit in visits],
             })
 
@@ -144,14 +146,14 @@ def send_user_alerts(user, now=None, connection=None):
     """Send ``user`` an alert email for matches since their last one.
 
     Returns ``True`` when an email was sent, ``False`` when skipped because
-    no topics/countries are set or there were no matches. ``connection`` lets
+    no topics/countries/institutions are set or there were no matches. ``connection`` lets
     send_alerts reuse a single SMTP connection across the whole cohort,
     exactly like send_digests does.
     """
     now = now or timezone.now()
     profile = user.profile
 
-    if not profile.alert_topics and not profile.alert_countries:
+    if not (profile.alert_topics or profile.alert_countries or profile.alert_universities):
         return False
 
     since = profile.last_alert_sent_at or default_since(now)

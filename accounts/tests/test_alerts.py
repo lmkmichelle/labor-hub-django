@@ -16,16 +16,17 @@ from accounts.alerts import (
 from core.tests.email_assertions import assert_has_html_alternative_with_logo
 from accounts.models import CustomUser, Profile
 from publications.models import Publication
-from seminars.models import Seminar
+from seminars.models import Seminar, University
 
 
-def make_user(email="alerts@example.com", topics=None, countries=None):
+def make_user(email="alerts@example.com", topics=None, countries=None, universities=None):
     user = CustomUser.objects.create_user(
         email=email, password="pass12345", first_name="Al", last_name="Erts",
         is_active=True,
     )
     user.profile.alert_topics = topics or []
     user.profile.alert_countries = countries or []
+    user.profile.alert_universities = universities or []
     user.profile.save()
     return user
 
@@ -37,10 +38,10 @@ def make_publication(title, applied_at, status="approved", topic=None):
     return pub
 
 
-def make_visit(title, created_at, status="approved", countries=None):
+def make_visit(title, created_at, status="approved", countries=None, university=None):
     visit = Seminar.objects.create(
         visitor_name=title, university_name="Some University",
-        status=status, countries=countries or [],
+        status=status, countries=countries or [], university=university,
     )
     Seminar.objects.filter(pk=visit.pk).update(created_at=created_at)
     visit.refresh_from_db()
@@ -281,3 +282,65 @@ class AlertsUnsubscribeTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["success"])
+
+
+class InstitutionAlertTests(TestCase):
+    def setUp(self):
+        self.now = timezone.now()
+        self.since = self.now - timedelta(days=3)
+        self.lse = University.objects.create(name="LSE", country_code="GB")
+        self.other = University.objects.create(name="Other U", country_code="FR")
+
+    def _titles(self, profile):
+        sections = collect_alert_matches(profile, self.since)
+        return [i["title"] for s in sections if s["key"] == "visits" for i in s["items"]]
+
+    def test_institution_only_subscriber_gets_that_institutions_visits(self):
+        profile = make_user(universities=[self.lse.pk]).profile
+        make_visit("At LSE", self.now - timedelta(days=1), university=self.lse)
+        make_visit("At Other", self.now - timedelta(days=1), university=self.other)
+        self.assertEqual(len(self._titles(profile)), 1)
+
+    def test_country_and_institution_overlap_lists_the_visit_once(self):
+        profile = make_user(countries=["GB"], universities=[self.lse.pk]).profile
+        make_visit("At LSE", self.now - timedelta(days=1),
+                   countries=["GB"], university=self.lse)
+        self.assertEqual(len(self._titles(profile)), 1)
+
+    def test_send_user_alerts_runs_for_institution_only_subscribers(self):
+        user = make_user(universities=[self.lse.pk])
+        make_visit("At LSE", self.now - timedelta(days=1), university=self.lse)
+        self.assertTrue(send_user_alerts(user, now=self.now))
+        self.assertEqual(len(mail.outbox), 1)
+
+
+class AlertUniversitiesFormTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.client.force_login(self.user)
+        self.lse = University.objects.create(name="LSE", country_code="GB")
+
+    def test_saves_valid_ids_and_drops_unknown_and_duplicates(self):
+        self.client.post(reverse("settings"), {
+            "save_alerts": "1",
+            "alert_universities": f'["{self.lse.pk}", "{self.lse.pk}", "99999", "abc"]',
+        })
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.alert_universities, [self.lse.pk])
+
+    def test_settings_page_preloads_only_saved_institutions(self):
+        University.objects.bulk_create(
+            University(name=f"Filler {i}", country_code="US") for i in range(30))
+        self.user.profile.alert_universities = [self.lse.pk]
+        self.user.profile.save()
+        response = self.client.get(reverse("settings"))
+        self.assertContains(response, "LSE, United Kingdom")
+        self.assertNotContains(response, "Filler 1")
+
+    def test_unsubscribe_clears_institutions_too(self):
+        self.user.profile.alert_universities = [self.lse.pk]
+        self.user.profile.save()
+        self.client.get(reverse(
+            "alerts_unsubscribe", args=[make_unsubscribe_token(self.user)]))
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.alert_universities, [])

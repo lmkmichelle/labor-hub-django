@@ -6,12 +6,14 @@ from seminars.views import (
     SeminarDetailView,
     SeminarsListView,
     universities_by_country,
+    university_search,
 )
 
 urlpatterns = [
     path('', SeminarsListView.as_view(), name='seminars-list'),
     path('create/', SeminarCreateView.as_view(), name='seminar-create'),
     path('universities/', universities_by_country, name='seminar-universities'),
+    path('universities/search/', university_search, name='university-search'),
     path('<int:pk>/', SeminarDetailView.as_view(), name='seminar-detail'),
     path('<int:pk>/delete/', SeminarDeleteView.as_view(), name='visit-delete'),
 ]

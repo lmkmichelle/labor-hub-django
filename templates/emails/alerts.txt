@@ -1,6 +1,6 @@
 Hi {{ user.first_name|default:user.email }},
 
-Here's what matches the topics and countries you've subscribed to ({{ total }} new match{{ total|pluralize:"es" }}):
+Here's what matches the topics, countries and institutions you've subscribed to ({{ total }} new match{{ total|pluralize:"es" }}):
 {% for section in sections %}
 {{ section.label }}
 {% for item in section.items %}  - {{ item.title }}{% if item.meta %} ({{ item.meta }}){% endif %}

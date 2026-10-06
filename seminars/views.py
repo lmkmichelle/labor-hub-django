@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import Http404, JsonResponse
@@ -14,7 +15,7 @@ from core.views import OwnerDeleteView
 
 from seminars.forms import SeminarForm
 from seminars.hipolabs import fetch_universities
-from seminars.models import Seminar, University
+from seminars.models import Seminar, University, university_label
 
 
 COUNTRY_MAP = dict(COUNTRY_CHOICES)
@@ -262,6 +263,36 @@ def universities_by_country(request):
 
     data = [{'id': uni.id, 'name': uni.name} for uni in queryset]
     return JsonResponse({'universities': data})
+
+
+UNIVERSITY_SEARCH_LIMIT = 20
+
+
+@login_required
+@require_GET
+def university_search(request):
+    """Typeahead for the institution alert pills in Settings.
+
+    Capped, never the full table: rendering all ~10k universities at once is
+    what crashed workers (see UniversityChoiceField). Prefix matches rank
+    first, then infix, like core.views.city_search.
+    """
+    query = (request.GET.get('q') or '').strip()
+    if len(query) < 2:
+        return JsonResponse({'universities': []})
+
+    named = University.objects.exclude(name__isnull=True).exclude(name='')
+    matches = list(named.filter(name__istartswith=query).order_by('name')[:UNIVERSITY_SEARCH_LIMIT])
+    remaining = UNIVERSITY_SEARCH_LIMIT - len(matches)
+    if remaining > 0:
+        matches += list(
+            named.filter(name__icontains=query)
+            .exclude(id__in=[u.id for u in matches])
+            .order_by('name')[:remaining]
+        )
+    return JsonResponse({'universities': [
+        {'value': str(u.id), 'label': university_label(u)} for u in matches
+    ]})
 
 
 

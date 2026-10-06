@@ -54,6 +54,12 @@ class University(models.Model):
             name=name, country_code=country_code, source='write-in')
 
 
+def university_label(university):
+    """"Name, Country" -- what the alert pills and search results display."""
+    country = COUNTRY_MAP.get(university.country_code, university.country_code or '')
+    return f"{university.name}, {country}" if country else university.name
+
+
 class Seminar(Approvable):
     class VisitType(models.TextChoices):
         OPEN = 'open', 'Open to extending'
@@ -113,6 +119,20 @@ class Seminar(Approvable):
         if self.university_name:
             return self.university_name
         return 'University TBA'
+
+    def approve(self, admin_user=None):
+        """Approve, and promote a typed-in institution to a picklist row.
+
+        Done here rather than at submission so a rejected/spam visit never
+        adds a University. Without a link, per-institution alerts could not
+        match the visit. Needs a country, taken from the first one listed.
+        """
+        if not self.university_id and self.university_name and self.countries:
+            self.university = University.from_write_in(
+                self.university_name, self.countries[0])
+            if self.university:
+                self.university_name = ''
+        super().approve(admin_user)
 
     def clean(self):
         super().clean()

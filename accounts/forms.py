@@ -352,6 +352,21 @@ class UpdateProfileForm(forms.ModelForm):
             self.fields["research_interests_input"].initial = tagify_value
             self.fields["research_interests_input"].widget.attrs['value'] = tagify_value
 
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        # Turn a typed-in institution into a picklist row (same as application
+        # approval) so it can be chosen by others and used for visit alerts.
+        if not profile.university_id and profile.university_name:
+            promoted = University.from_write_in(
+                profile.university_name, profile.country_code)
+            if promoted:
+                profile.university = promoted
+                profile.university_name = ''
+        if commit:
+            profile.save()
+            self.save_m2m()
+        return profile
+
     def clean_avatar_crop(self):
         """Parse the JSON box avatar-editor.js writes into a plain dict, or None if it's
         blank/malformed -- either way this must never block saving the rest of the form,
@@ -417,9 +432,15 @@ class AlertPreferencesForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"id": "alert-countries-input"}),
     )
 
+    alert_universities = forms.CharField(
+        required=False,
+        label='Email me about new visits to these institutions',
+        widget=forms.TextInput(attrs={"id": "alert-universities-input"}),
+    )
+
     class Meta:
         model = Profile
-        fields = ['alert_topics', 'alert_countries']
+        fields = ['alert_topics', 'alert_countries', 'alert_universities']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -432,6 +453,8 @@ class AlertPreferencesForm(forms.ModelForm):
                 self.instance.alert_topics)
             self.initial['alert_countries'] = serialize_pill_terms(
                 self.instance.alert_countries)
+            self.initial['alert_universities'] = serialize_pill_terms(
+                [str(pk) for pk in self.instance.alert_universities])
 
     def clean_alert_topics(self):
         """Keep only recognised topics, stored in their canonical spelling, so
@@ -448,3 +471,16 @@ class AlertPreferencesForm(forms.ModelForm):
     def clean_alert_countries(self):
         raw = self.cleaned_data.get('alert_countries', '')
         return map_country_terms_to_codes(parse_pill_terms(raw))
+
+    def clean_alert_universities(self):
+        """Keep only ids of universities that exist, de-duplicated, in order."""
+        wanted = []
+        for term in parse_pill_terms(self.cleaned_data.get('alert_universities', '')):
+            try:
+                pk = int(term)
+            except (TypeError, ValueError):
+                continue
+            if pk not in wanted:
+                wanted.append(pk)
+        existing = set(University.objects.filter(pk__in=wanted).values_list('pk', flat=True))
+        return [pk for pk in wanted if pk in existing]

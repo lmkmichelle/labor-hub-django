@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from accounts.models import CustomUser
-from seminars.models import University
+from seminars.models import Seminar, University
 
 
 def make_user(email, university_name="", country_code="US"):
@@ -71,3 +71,25 @@ class PromoteWriteInInstitutionsCommandTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.profile.university, picked)
         self.assertEqual(user.profile.university_name, "Irrelevant")
+
+
+class PromoteWriteInVisitsTests(TestCase):
+    def _visit(self):
+        return Seminar.objects.create(
+            visitor_name="V", university_name="Visit College", countries=["DE"],
+            status="approved")
+
+    def test_dry_run_leaves_visits_alone(self):
+        visit = self._visit()
+        call_command("promote_write_in_institutions", stdout=StringIO())
+        visit.refresh_from_db()
+        self.assertIsNone(visit.university)
+        self.assertEqual(visit.university_name, "Visit College")
+
+    def test_apply_links_visits_to_a_university(self):
+        visit = self._visit()
+        call_command("promote_write_in_institutions", "--apply", stdout=StringIO())
+        visit.refresh_from_db()
+        self.assertEqual(visit.university.name, "Visit College")
+        self.assertEqual(visit.university.country_code, "DE")
+        self.assertEqual(visit.university_name, "")

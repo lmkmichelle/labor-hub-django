@@ -16,7 +16,7 @@ from core.constants import COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
 from core.models import ApprovalStatus
 from events.models import Event
 from jobs.models import Job
-from seminars.models import Seminar
+from seminars.models import Seminar, University, university_label
 from publications.models import Publication
 from accounts.utils import process_avatar
 from publications.utils import handle_keywords
@@ -191,6 +191,13 @@ class SettingsView(LoginRequiredMixin, View):
             "alert_country_choices": [
                 {"value": code, "label": label} for code, label in COUNTRY_CHOICES
             ],
+            # Only the already-saved institutions; the rest are searched on
+            # demand (seminars:university-search) -- never the full table.
+            "alert_university_choices": [
+                {"value": str(u.pk), "label": university_label(u)}
+                for u in University.objects.filter(
+                    pk__in=request.user.profile.alert_universities)
+            ],
             "saved": request.GET.get("saved"),
         }
 
@@ -321,7 +328,7 @@ def alerts_unsubscribe(request, token):
     """One-click unsubscribe link from alert emails (signed token).
 
     Separate from digest_unsubscribe: it reads a token signed with
-    accounts.alerts's own salt and clears alert_topics/alert_countries
+    accounts.alerts's own salt and clears the alert lists
     rather than digest_frequency, so each unsubscribe link only turns off
     the kind of email it came from.
     """
@@ -331,10 +338,12 @@ def alerts_unsubscribe(request, token):
         profile = Profile.objects.filter(user_id=uid).first()
 
     if profile is not None:
-        if profile.alert_topics or profile.alert_countries:
+        if profile.alert_topics or profile.alert_countries or profile.alert_universities:
             profile.alert_topics = []
             profile.alert_countries = []
-            profile.save(update_fields=["alert_topics", "alert_countries"])
+            profile.alert_universities = []
+            profile.save(update_fields=[
+                "alert_topics", "alert_countries", "alert_universities"])
         return render(request, "accounts/alerts_unsubscribe.html", {"success": True})
 
     return render(request, "accounts/alerts_unsubscribe.html", {"success": False})
