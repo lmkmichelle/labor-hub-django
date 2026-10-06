@@ -208,6 +208,21 @@ class EditProfileViewTests(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.department, "Economics")
 
+    def test_typed_institution_is_promoted_to_a_university(self):
+        self._post(university_name="Tiny Local College")
+        profile = self.user.profile
+        profile.refresh_from_db()
+        self.assertEqual(profile.university.name, "Tiny Local College")
+        self.assertEqual(profile.university.source, "write-in")
+        self.assertEqual(profile.university_name, "")
+
+    def test_typed_institution_reuses_an_existing_university(self):
+        existing = University.objects.create(name="Tiny Local College", country_code="US")
+        self._post(university_name="tiny local college")
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.university, existing)
+        self.assertEqual(University.objects.filter(name__iexact="tiny local college").count(), 1)
+
     def test_blank_research_interests_does_not_crash(self):
         """handle_keywords used to raise JSONDecodeError on an empty string."""
         response = self._post(research_interests_input="")

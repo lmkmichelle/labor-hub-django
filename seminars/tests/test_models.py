@@ -104,3 +104,70 @@ class SeminarModelTests(TestCase):
         self.assertEqual(seminar.status, "approved")
         with self.assertRaises(ValueError):
             seminar.reject()
+
+
+class SeminarApprovePromotesWriteInTests(TestCase):
+    def _pending(self, **fields):
+        return Seminar.objects.create(
+            visitor_name="V", status="pending", countries=["DE"], **fields)
+
+    def test_approving_a_write_in_visit_creates_the_university(self):
+        visit = self._pending(university_name="Brand New Institute")
+        visit.approve()
+        visit.refresh_from_db()
+        self.assertEqual(visit.university.name, "Brand New Institute")
+        self.assertEqual(visit.university.country_code, "DE")
+        self.assertEqual(visit.university_name, "")
+
+    def test_a_pending_visit_does_not_create_a_university(self):
+        self._pending(university_name="Not Yet Institute")
+        self.assertFalse(University.objects.filter(name="Not Yet Institute").exists())
+
+    def test_a_picked_university_is_left_alone(self):
+        university = University.objects.create(name="Picked U", country_code="DE")
+        visit = self._pending(university=university, university_name="ignored")
+        visit.approve()
+        visit.refresh_from_db()
+        self.assertEqual(visit.university, university)
+        self.assertEqual(University.objects.count(), 1)
+
+    def test_no_country_means_no_promotion(self):
+        visit = Seminar.objects.create(
+            visitor_name="V", status="pending", university_name="Nowhere U")
+        visit.approve()
+        visit.refresh_from_db()
+        self.assertIsNone(visit.university)
+        self.assertEqual(visit.university_name, "Nowhere U")
+
+
+class UniversitySearchTests(TestCase):
+    def setUp(self):
+        from accounts.models import CustomUser
+        self.user = CustomUser.objects.create_user(
+            email="s@example.com", password="pass12345", is_active=True)
+        self.client.force_login(self.user)
+
+    def _search(self, q):
+        return self.client.get(reverse("university-search"), {"q": q}).json()["universities"]
+
+    def test_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("university-search"), {"q": "harv"})
+        self.assertEqual(response.status_code, 302)
+
+    def test_short_query_returns_nothing(self):
+        University.objects.create(name="Harvard University", country_code="US")
+        self.assertEqual(self._search("h"), [])
+
+    def test_prefix_matches_come_before_infix(self):
+        University.objects.create(name="Old Harvard Institute", country_code="US")
+        University.objects.create(name="Harvard University", country_code="US")
+        results = self._search("harv")
+        self.assertEqual(
+            [r["label"] for r in results],
+            ["Harvard University, United States", "Old Harvard Institute, United States"])
+
+    def test_results_are_capped(self):
+        University.objects.bulk_create(
+            University(name=f"Test University {i}", country_code="US") for i in range(40))
+        self.assertEqual(len(self._search("test univ")), 20)

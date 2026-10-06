@@ -4,7 +4,7 @@
   <!-- djlint:off -->
   <p style="margin:0 0 16px; font-size:16px;">Hi {{ user.first_name|default:user.email }},</p>
   <p style="margin:0 0 24px; font-size:15px; color:#374151;">
-    Here's what matches the topics and countries you've subscribed to
+    Here's what matches the topics, countries and institutions you've subscribed to
     ({{ total }} new match{{ total|pluralize:"es" }}).
   </p>
 
@@ -30,7 +30,7 @@
 {% block footer %}
   <!-- djlint:off -->
   <p style="margin:0 0 6px;">
-    You're receiving this because you subscribed to topic/country alerts on Labor Hub.
+    You're receiving this because you subscribed to topic, country and institution alerts on Labor Hub.
   </p>
   <p style="margin:0;">
     <a href="{{ manage_url }}" style="color:#6b7280; text-decoration:underline;">Manage preferences</a>

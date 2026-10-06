@@ -164,6 +164,11 @@ class Profile(models.Model):
         default=list, blank=True,
         help_text="Get a weekly email when a new visit to one of these countries is posted.",
     )
+    # University ids (not names), so a renamed institution keeps matching.
+    alert_universities = JSONField(
+        default=list, blank=True,
+        help_text="Get a weekly email when a new visit to one of these institutions is posted.",
+    )
     last_alert_sent_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
