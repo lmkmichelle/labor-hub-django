@@ -85,13 +85,15 @@ class UserApplicationAdmin(admin.ModelAdmin):
     # 10k universities: a search box, not a 10k-option <select>.
     autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
-    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'other_networks']
+    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'other_networks',
+                       'returning_account_note']
     ordering = ['-applied_at']
 
     fieldsets = (
         ('Application Info', {
             'fields': ('email', 'first_name', 'last_name', 'role', 'position', 'department', 'university', 'university_name',
-                       'country_code', 'website', 'cv_url', 'other_networks', 'motivation', 'advisor')
+                       'country_code', 'website', 'cv_url', 'other_networks', 'motivation', 'advisor',
+                       'previous_student_account', 'previous_jm_paper_number', 'returning_account_note')
         }),
         ('Review', {
             'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
@@ -101,6 +103,24 @@ class UserApplicationAdmin(admin.ModelAdmin):
     @admin.display(description='Role', ordering='role')
     def role_badge(self, obj):
         return _role_badge(obj.role, obj.get_role_display())
+
+    @admin.display(description='Existing account')
+    def returning_account_note(self, obj):
+        """Tell the reviewer approving will upgrade a former student's account,
+        and show which job market paper (if any) the applicant is claiming."""
+        notes = []
+        if obj.pk and obj.status == 'pending' and obj.returning_student() is not None:
+            notes.append('A deactivated student account uses this email. Approving reactivates '
+                         'it as a fellow account, keeping all of its papers and posts.')
+        if obj.previous_student_account and obj.previous_jm_paper_number:
+            from publications.models import Publication
+            paper = Publication.find_original(obj.previous_jm_paper_number, job_market_only=True)
+            if paper is None:
+                notes.append(f'Claimed job market paper {obj.previous_jm_paper_number}: not found.')
+            else:
+                authors = ', '.join(a.name or a.user.get_full_name() for a in paper.authors.select_related('user'))
+                notes.append(f'Claimed job market paper {paper.display_number}: {paper.title} ({authors}).')
+        return ' '.join(notes) or '-'
 
     def get_urls(self):
         urls = super().get_urls()
@@ -131,6 +151,9 @@ class UserApplicationAdmin(admin.ModelAdmin):
                         request,
                         f'Application approved! User account created for {user.email}'
                     )
+                    note = getattr(application, 'claim_note', '')
+                    if note:
+                        messages.warning(request, note)
                 except ValueError as e:
                     messages.error(request, f'Error approving application: {str(e)}')
 

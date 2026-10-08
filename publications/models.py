@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models, transaction
@@ -82,6 +84,17 @@ class Publication(Approvable):
         null=True, blank=True, unique=True,
     )
 
+    # A revised version of an earlier paper. Always points at the ORIGINAL
+    # (never at another revision), so versions are 323, 323.1, 323.2 -- not
+    # 323.1.1. A revision takes no slot in either numbering series; its number
+    # is the original's plus revision_number. PROTECT so deleting an original
+    # can't leave a revision with a dangling base number.
+    revision_of = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.PROTECT,
+        related_name='revisions',
+    )
+    revision_number = models.PositiveSmallIntegerField(null=True, blank=True)
+
     submitted_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -130,7 +143,13 @@ class Publication(Approvable):
     def display_number(self):
         """The number shown on the card/cover: "J3" for a job-market paper's
         own series, or the plain integer for the regular series. None until
-        the paper has been assigned one of the two."""
+        the paper has been assigned one of the two. A revision reads
+        "323.1" / "J3.1": the original's number plus its revision number."""
+        if self.revision_of_id is not None:
+            base = self.revision_of.display_number
+            if base is None or self.revision_number is None:
+                return None
+            return f"{base}.{self.revision_number}"
         if self.job_market_paper_number is not None:
             return f"J{self.job_market_paper_number}"
         if self.discussion_paper_number is not None:
@@ -150,6 +169,9 @@ class Publication(Approvable):
         """
         if self.is_example:
             return
+        if self.revision_of_id is not None:
+            self._assign_revision_number()
+            return
         field = 'job_market_paper_number' if self.is_job_market else 'discussion_paper_number'
         if getattr(self, field) is not None:
             return
@@ -161,6 +183,57 @@ class Publication(Approvable):
             )
             setattr(self, field, (current_max or 0) + 1)
             self.save(update_fields=[field])
+
+    def _assign_revision_number(self):
+        """Next .N under the original, once. Locks the original's row so two
+        revisions approved together can't both take the same N."""
+        if self.revision_number is not None:
+            return
+        with transaction.atomic():
+            Publication.objects.select_for_update().get(pk=self.revision_of_id)
+            current_max = (
+                Publication.objects.filter(revision_of_id=self.revision_of_id)
+                .aggregate(Max('revision_number'))['revision_number__max']
+            )
+            self.revision_number = (current_max or 0) + 1
+            self.save(update_fields=['revision_number'])
+
+    @classmethod
+    def find_original(cls, raw, job_market_only=False):
+        """Resolve "323", "323.1", "No. 323" or "J3" to the published ORIGINAL
+        paper (a revision's number resolves to the paper it revises), or None."""
+        match = re.fullmatch(
+            r'(?i)(?:no\.?\s*)?(j)?\s*(\d+)(?:\.\d+)?', (raw or '').strip())
+        if not match:
+            return None
+        is_jm = bool(match.group(1))
+        if job_market_only and not is_jm:
+            return None
+        field = 'job_market_paper_number' if is_jm else 'discussion_paper_number'
+        return cls.objects.filter(
+            status='approved', revision_of__isnull=True,
+            **{field: int(match.group(2))},
+        ).first()
+
+    def is_authored_by(self, user):
+        """Whether ``user`` is one of this paper's authors -- linked to their
+        account, or typed in under their full name (the rule the edit page
+        has always used)."""
+        if not user.is_authenticated:
+            return False
+        return (
+            self.authors.filter(user=user).exists()
+            or self.authors.filter(name=user.get_full_name()).exists()
+        )
+
+    def other_versions(self):
+        """The original and every approved revision, except this paper.
+        Ordered original first, then by revision."""
+        original_id = self.revision_of_id or self.pk
+        versions = Publication.objects.filter(status='approved').filter(
+            models.Q(pk=original_id) | models.Q(revision_of_id=original_id)
+        ).exclude(pk=self.pk).select_related('revision_of')
+        return sorted(versions, key=lambda p: p.revision_number or 0)
 
     def record_download(self):
         """Bump download_count by one, atomically, without a read-modify-write

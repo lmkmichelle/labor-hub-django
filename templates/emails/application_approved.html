@@ -8,9 +8,17 @@
     <strong>approved</strong> and your account is now active.
   </p>
   <p style="margin:0 0 24px; font-size:15px; color:#374151;">
+    {% if returning %}
+    Your earlier student account is now a fellow account, so everything you
+    posted is still attached to it. Sign in with your email address
+    (<strong>{{ user.email }}</strong>) and your existing password, or
+    <a href="{{ reset_url }}" style="color:#b91c1c;">reset it</a> if you have
+    forgotten it.
+    {% else %}
     You can sign in with your email address
     (<strong>{{ user.email }}</strong>) and the password you chose
     when you applied.
+    {% endif %}
   </p>
   {% include "emails/_button.html" with url=login_url label="Sign in to Labor Hub" %}
   <p style="margin:0; font-size:13px; color:#6b7280;">

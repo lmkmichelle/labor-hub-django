@@ -28,7 +28,7 @@ def handle_authors(raw_input):
                 matching_user = CustomUser.objects.filter(
                     first_name__iexact=first_name,
                     last_name__iexact=last_name
-                ).first()
+                ).order_by('-is_active', 'pk').first()  # an active account beats a deactivated namesake
 
             if matching_user:
                 author, _ = Author.objects.get_or_create(

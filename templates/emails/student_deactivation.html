@@ -1,0 +1,26 @@
+{% extends "emails/_layout.html" %}
+{% block title %}Your Labor Hub student account{% endblock %}
+{% block content %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 16px; font-size:16px;">Hi {{ user.first_name|default:user.email }},</p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    Student accounts on Labor Hub are deactivated two years after they are
+    created. Yours will be deactivated on <strong>{{ deactivation_date|date:"F j, Y" }}</strong>.
+  </p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    Nothing you have posted is removed, and everything on Labor Hub stays open
+    to read without an account.
+  </p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    If you later move into a faculty or postdoctoral role and would like a
+    fellow account, you can apply and mention that you previously had a student
+    account, so we can link your job market paper to it.
+  </p>
+  <p style="margin:0;"><a href="{{ apply_url }}" style="color:#b91c1c;">Apply as a fellow</a></p>
+  <!-- djlint:on -->
+{% endblock %}
+{% block footer %}
+  <!-- djlint:off -->
+  <p style="margin:0;">The Labor Hub team</p>
+  <!-- djlint:on -->
+{% endblock %}

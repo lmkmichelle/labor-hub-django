@@ -106,3 +106,14 @@ class FaqPageTests(TestCase):
             role=CustomUser.Role.RESEARCHER, is_active=True)
         self.client.force_login(user)
         self.assertContains(self.client.get(reverse('home')), f'href="{reverse("faq")}"', count=2)
+
+
+class FaqContentTests(TestCase):
+    def test_covers_revisions_students_and_alerts(self):
+        response = self.client.get(reverse('faq'))
+        self.assertContains(response, 'id="alerts"')
+        self.assertContains(response, 'Can I set up alerts for visits to specific universities?')
+        self.assertContains(response, 'Can I set up alerts for certain themes in discussion papers?')
+        self.assertContains(response, 'Other Versions')
+        self.assertContains(response, 'two years after they are created')
+        self.assertContains(response, f'href="{reverse("apply_researcher")}"')
