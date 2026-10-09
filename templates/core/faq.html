@@ -26,7 +26,16 @@
       <p class="faq-answer">
         Student memberships don't convert automatically. To become a fellow, you'll
         need to submit a formal application, which is reviewed like any new
-        application. <a href="{% url 'contact' %}">Contact us</a> to start one.
+        application: <a href="{% url 'apply_researcher' %}">apply as a fellow</a>.
+        On the form, tell us you previously had a student account. If you apply with
+        the same email, your student account is upgraded and everything you posted
+        stays attached. If you use a different email, give us the number of your job
+        market paper and, once you're approved, we'll attach it to your new account.
+      </p>
+      <p class="faq-answer">
+        Student accounts are deactivated two years after they are created. We email you
+        a month beforehand. Nothing you've posted is removed, and you don't need an
+        account to read anything on Labor Hub.
       </p>
     </details>
 
@@ -42,8 +51,18 @@
     <details class="faq-item">
       <summary class="faq-question">Can I revise a discussion paper after it has been processed?</summary>
       <p class="faq-answer">
-        Yes. Open your paper and click Edit. Changes, including a new PDF, appear
-        right away, and the paper keeps its discussion paper number.
+        The PDF of a published paper is fixed and can't be replaced. You can still
+        edit the other details, such as the title, abstract and topics, from the
+        paper's page.
+      </p>
+      <p class="faq-answer">
+        To share a revised version, <a href="{% url 'submit_paper' %}">submit it as a
+        new paper</a> and tick “Is this a revised version of a previous
+        discussion paper?”, entering the number of the paper you are revising.
+        Once approved, it is published with a version number: if the original is 323,
+        the first revision is 323.1, the next 323.2, and so on. The original and its
+        revisions are linked to each other under “Other Versions” on each
+        paper's page.
       </p>
     </details>
 
@@ -54,6 +73,25 @@
         Workshops, conferences, jobs and long-distance visits are all reviewed by
         an administrator before they appear, usually within 1–2 days. They go live
         as soon as they are approved.
+      </p>
+    </details>
+
+    <h3 id="alerts">Alerts</h3>
+    <details class="faq-item">
+      <summary class="faq-question">Can I set up alerts for visits to specific universities?</summary>
+      <p class="faq-answer">
+        Yes. Under <a href="{% url 'settings' %}">Settings</a> → Alerts, add the
+        institutions you care about, and you'll get a weekly email when a visit to one
+        of them is posted. You can also choose countries. Leave the alerts empty to
+        turn them off.
+      </p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-question">Can I set up alerts for certain themes in discussion papers?</summary>
+      <p class="faq-answer">
+        Yes. Under <a href="{% url 'settings' %}">Settings</a> → Alerts, pick the
+        research topics you follow, and you'll get a weekly email when a new paper on
+        one of them is posted.
       </p>
     </details>
   </article>

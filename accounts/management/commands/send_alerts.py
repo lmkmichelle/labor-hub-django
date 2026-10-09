@@ -37,7 +37,8 @@ class Command(BaseCommand):
             user for user in (
                 CustomUser.objects.filter(is_active=True).select_related("profile")
             )
-            if user.profile.alert_topics or user.profile.alert_countries
+            if (user.profile.alert_topics or user.profile.alert_countries
+                or user.profile.alert_universities)
         ]
 
         sent = 0

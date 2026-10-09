@@ -49,9 +49,17 @@ class PublicationCreateView(LoginRequiredMixin, CreateView):
     form_class = PublicationForm
     template_name = 'publications/publication_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         publication = process_publication_form(self.request, form)
-        if publication.is_job_market and publication.jm_advisor_id:
+        # A revision inherits its original's advisor response; asking the
+        # advisor to acknowledge the same paper again would be noise.
+        if (publication.is_job_market and publication.jm_advisor_id
+                and publication.revision_of_id is None):
             send_paper_advisor_ack_email(publication)
         return redirect(reverse_lazy('publications'))
 
@@ -64,13 +72,7 @@ class PublicationUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
 
-        user_full_name = self.request.user.get_full_name()
-        is_author = (
-                obj.authors.filter(user=self.request.user).exists() or
-                obj.authors.filter(name=user_full_name).exists()
-        )
-
-        if not is_author:
+        if not obj.is_authored_by(self.request.user):
             raise Http404("You don't have permission to edit this publication.")
 
         return obj

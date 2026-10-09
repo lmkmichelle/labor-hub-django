@@ -18,7 +18,7 @@ def _absolute_url(path):
     return "{}{}".format(settings.SITE_URL.rstrip("/"), path)
 
 
-def send_application_approved_email(user, fail_silently=True):
+def send_application_approved_email(user, fail_silently=True, returning=False):
     """Email an approved applicant that their account is active.
 
     Sends a plain-text + HTML message pointing at the sign-in page. Transport
@@ -28,6 +28,8 @@ def send_application_approved_email(user, fail_silently=True):
     context = {
         "user": user,
         "login_url": _absolute_url(reverse("login")),
+        "reset_url": _absolute_url(reverse("password_reset")),
+        "returning": returning,
         "site_url": settings.SITE_URL.rstrip("/"),
     }
     subject = "Your Labor Hub application has been approved"
@@ -157,3 +159,32 @@ def send_advisor_review_email(application, fail_silently=True):
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
     message.send(fail_silently=fail_silently)
+
+
+def send_student_deactivation_warning(user, deactivation_date, fail_silently=True):
+    """Tell a student their account closes on ``deactivation_date``.
+
+    Same shape as the other transactional emails here; failures are swallowed
+    so one bad address can't stop the daily run for everyone else.
+    """
+    context = {
+        "user": user,
+        "deactivation_date": deactivation_date,
+        "apply_url": _absolute_url(reverse("apply_researcher")),
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    subject = "Your Labor Hub student account will be deactivated"
+    text_body = render_to_string("emails/student_deactivation.txt", context)
+    html_body = render_to_string("emails/student_deactivation.html", context)
+
+    message = EmailMultiAlternatives(
+        subject,
+        text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+        reply_to=default_reply_to(),
+        headers=cm_headers(),
+    )
+    message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
+    return message.send(fail_silently=fail_silently)

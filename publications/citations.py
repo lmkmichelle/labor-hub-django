@@ -48,11 +48,13 @@ def format_author_name(author):
 
 def cite_key(publication):
     """A short, stable BibTeX key: "LaborHubJ3" for a job-market paper's own
-    series, "LaborHubDP5" for the regular series -- mirroring how
+    series, "LaborHubDP5" for the regular series, and "LaborHubDP5.1" for its
+    first revision -- mirroring how
     Publication.display_number keeps the two apart."""
-    if publication.job_market_paper_number is not None:
-        return f"LaborHubJ{publication.job_market_paper_number}"
-    return f"LaborHubDP{publication.discussion_paper_number}"
+    number = publication.display_number
+    if number is not None and number.startswith("J"):
+        return f"LaborHub{number}"
+    return f"LaborHubDP{number}"
 
 
 def build_bibtex(publication, url):

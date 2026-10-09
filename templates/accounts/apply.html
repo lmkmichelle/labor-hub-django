@@ -87,6 +87,21 @@
         {% render_field form.research_paper_2 %}
     {% endif %}
 
+    {% if form.previous_student_account %}
+    <div class="form-field not-format">
+        <div class="flex items-center">
+            <input type="checkbox" name="{{ form.previous_student_account.name }}" id="{{ form.previous_student_account.id_for_label }}" {% if form.previous_student_account.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
+            <label for="{{ form.previous_student_account.id_for_label }}" class="form-check-label">{{ form.previous_student_account.label }}</label>
+        </div>
+    </div>
+    {# Shown only when the box above is ticked; see static/js/conditional-field.js #}
+    <div data-conditional-field
+         data-when-checked="{{ form.previous_student_account.id_for_label }}"
+         data-target="{{ form.previous_jm_paper_number.id_for_label }}">
+        {% render_field form.previous_jm_paper_number placeholder="e.g. J3" %}
+    </div>
+    {% endif %}
+
     {% render_field form.email label="Email" placeholder="net-id@school.edu" %}
 
     {% render_field form.password1 label="Password" placeholder="•••••••••" help_text="Enter a secure password" %}

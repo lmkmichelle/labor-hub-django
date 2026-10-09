@@ -63,7 +63,27 @@ Submit Paper
         {% render_select form.jm_advisor empty_label="Choose your advisor" %}
     </div>
 
-    {% render_field form.pdf %}
+    {% if form.is_revision %}
+    <div class="form-field not-format">
+        <div class="flex items-center">
+            <input type="checkbox" name="{{ form.is_revision.name }}" id="{{ form.is_revision.id_for_label }}" {% if form.is_revision.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
+            <label for="{{ form.is_revision.id_for_label }}" class="form-check-label">{{ form.is_revision.label }}</label>
+        </div>
+    </div>
+
+    {# Shown only when "revised version" is ticked; see static/js/conditional-field.js #}
+    <div data-conditional-field
+         data-when-checked="{{ form.is_revision.id_for_label }}"
+         data-target="{{ form.previous_number.id_for_label }}">
+        {% render_field form.previous_number placeholder="e.g. 323" %}
+    </div>
+    {% endif %}
+
+    {% if form.pdf %}
+        {% render_field form.pdf %}
+    {% else %}
+        <p class="mb-5 text-sm text-body">The PDF of a published paper cannot be changed. To share a revised version, <a href="{% url 'submit_paper' %}">submit it as a new paper</a> and tick “revised version”.</p>
+    {% endif %}
     
     <div class="flex gap-3 mb-5">
         <button type="submit" class="btn-primary">

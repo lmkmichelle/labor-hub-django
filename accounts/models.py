@@ -170,6 +170,9 @@ class Profile(models.Model):
         help_text="Get a weekly email when a new visit to one of these institutions is posted.",
     )
     last_alert_sent_at = models.DateTimeField(null=True, blank=True)
+    # Set when the 2-year student deactivation warning is emailed, so it goes
+    # out once. See deactivate_expired_students.
+    deactivation_warned_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.user.email
@@ -248,6 +251,16 @@ class UserApplication(models.Model):
         related_name="student_applications",
         help_text="Only required for student applications",
     )
+    # Fellow applications only: "I used to have a student account." The number
+    # lets approve() attach that student-era job market paper to the new
+    # account. Optional -- an applicant may not remember it.
+    previous_student_account = models.BooleanField(
+        default=False, verbose_name='Previously had a student account')
+    previous_jm_paper_number = models.CharField(
+        max_length=20, blank=True,
+        verbose_name='Job market paper number',
+        help_text='Discussion series number of their job market paper, e.g. J3.',
+    )
     status = models.CharField(max_length=10, choices=Status.choices, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -273,7 +286,8 @@ class UserApplication(models.Model):
         if self.status != 'pending':
             raise ValueError("Only pending applications can be approved")
 
-        if CustomUser.objects.filter(email=self.email).exists():
+        existing = self.returning_student()
+        if CustomUser.objects.filter(email=self.email).exists() and existing is None:
             raise ValueError("A user with this email already exists")
 
         # Fall back to the advisor the student named on the application. Without
@@ -281,17 +295,29 @@ class UserApplication(models.Model):
         # silently drops the advisor link.
         advisor = advisor or self.advisor
 
-        user = CustomUser.objects.create(
-            email=self.email,
-            password=self.password,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            is_active=True,
-            role = self.role,
-            advisor = advisor if self.role == CustomUser.Role.STUDENT else None,
-        )
-
-        user.save()
+        if existing is not None:
+            # A former student becoming a fellow keeps their account, so every
+            # paper and post stays attached. Their password is left alone: the
+            # applicant could be someone else typing a stranger's address, and
+            # the email below sends the real owner to the reset link.
+            user = existing
+            user.is_active = True
+            user.role = self.role
+            user.advisor = None
+            user.first_name = self.first_name
+            user.last_name = self.last_name
+            user.save()
+        else:
+            user = CustomUser.objects.create(
+                email=self.email,
+                password=self.password,
+                first_name=self.first_name,
+                last_name=self.last_name,
+                is_active=True,
+                role = self.role,
+                advisor = advisor if self.role == CustomUser.Role.STUDENT else None,
+            )
+            user.save()
         user.profile.position = self.position
         user.profile.department = self.department
         university = self.university
@@ -320,11 +346,46 @@ class UserApplication(models.Model):
             self.reviewed_by = admin_user
         self.save()
 
+        self.claim_note = self._claim_job_market_paper(user) if existing is None else ''
+
         # Let the new member know their account is live and they can sign in.
         from accounts.emails import send_application_approved_email
-        send_application_approved_email(user)
+        send_application_approved_email(user, returning=existing is not None)
 
         return user
+
+    def returning_student(self):
+        """The inactive student account this fellow application would reactivate,
+        or None. Same email, deactivated, still a student."""
+        if self.role != CustomUser.Role.RESEARCHER:
+            return None
+        return CustomUser.objects.filter(
+            email=self.email, role=CustomUser.Role.STUDENT, is_active=False).first()
+
+    def _claim_job_market_paper(self, user):
+        """Attach the applicant's student-era job market paper to ``user``.
+
+        Only when they said they had a student account and gave a number, and
+        only to the author entry matching their name -- so typing someone
+        else's paper number attaches nothing. Returns a short note for the
+        admin ("" when nothing was claimed, a warning when it didn't attach).
+        """
+        if not (self.previous_student_account and self.previous_jm_paper_number):
+            return ''
+        # Local import: publications imports accounts.
+        from publications.models import Publication
+        paper = Publication.find_original(self.previous_jm_paper_number, job_market_only=True)
+        if paper is None:
+            return f'Job market paper "{self.previous_jm_paper_number}" was not found.'
+        full_name = f"{self.first_name} {self.last_name}".strip().lower()
+        for author in paper.authors.select_related('user'):
+            label = (author.user.get_full_name() if author.user else author.name) or ''
+            if label.strip().lower() == full_name:
+                author.user = user
+                author.save(update_fields=['user'])
+                return f'Job market paper {paper.display_number} was attached to this account.'
+        return (f'Job market paper {paper.display_number} has no author named '
+                f'"{self.first_name} {self.last_name}", so it was not attached.')
 
     def reject(self, admin_user):
         if self.status != self.Status.PENDING:

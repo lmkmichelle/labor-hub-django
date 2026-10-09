@@ -73,6 +73,12 @@ applications:
         spec: "0 12 * * 5"
         commands:
           start: "python manage.py send_alerts"
+      # Student accounts close two years after creation, with a warning email
+      # 30 days before (accounts/management/commands/deactivate_expired_students.py).
+      student-lifecycle:
+        spec: "0 6 * * *"
+        commands:
+          start: "python manage.py deactivate_expired_students"
 
     web:
       commands:

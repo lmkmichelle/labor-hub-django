@@ -10,6 +10,7 @@ from django.template import loader
 from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES, RECOMMENDED_KEYWORDS
 from core.email import attach_logo, cm_headers, default_reply_to
 from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
+from publications.models import Publication
 from seminars.forms import UniversityChoiceField, narrow_university_field
 from seminars.models import University
 
@@ -158,9 +159,18 @@ class BaseApplicationForm(forms.ModelForm):
 
         return password2
 
+    # Fellow applications let a deactivated student reuse their email, so the
+    # account (and everything on it) can be upgraded in place.
+    allow_returning_students = False
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if CustomUser.objects.filter(email=email).exists():
+        existing = CustomUser.objects.filter(email=email).first()
+        returning = (
+            self.allow_returning_students and existing is not None
+            and existing.role == CustomUser.Role.STUDENT and not existing.is_active
+        )
+        if existing is not None and not returning:
             raise forms.ValidationError("A user with this email already exists.")
 
         if UserApplication.objects.filter(email=email, status='pending').exists():
@@ -182,8 +192,36 @@ class ResearcherApplicationForm(BaseApplicationForm):
         widget=forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
     )
 
+    allow_returning_students = True
+
+    previous_student_account = forms.BooleanField(
+        required=False,
+        label='Did you previously have a student account with the Labor Hub?',
+    )
+    previous_jm_paper_number = forms.CharField(
+        required=False,
+        max_length=20,
+        label='Discussion paper number of your job market paper',
+        help_text='For example J3. Optional, but it lets us attach your paper to your new account.',
+    )
+
     class Meta(BaseApplicationForm.Meta):
-        fields = BaseApplicationForm.Meta.fields + RESEARCH_PAPER_FIELDS
+        fields = BaseApplicationForm.Meta.fields + RESEARCH_PAPER_FIELDS + (
+            'previous_student_account', 'previous_jm_paper_number')
+
+    def clean(self):
+        cleaned = super().clean()
+        number = (cleaned.get('previous_jm_paper_number') or '').strip()
+        if not cleaned.get('previous_student_account'):
+            # A number typed without ticking the box is ignored.
+            cleaned['previous_jm_paper_number'] = ''
+        elif number and Publication.find_original(number, job_market_only=True) is None:
+            self.add_error(
+                'previous_jm_paper_number',
+                'We could not find a published job market paper with that number (for example J3).')
+        else:
+            cleaned['previous_jm_paper_number'] = number
+        return cleaned
 
 class AdvisorChoiceField(forms.ModelChoiceField):
     """Renders advisor options as "Full Name - Position" (presentation only)."""

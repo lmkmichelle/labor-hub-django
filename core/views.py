@@ -119,7 +119,7 @@ def home(request):
     # Get recent approved papers (last 6)
     recent_papers_qs = Publication.objects.filter(
         status='approved'
-    ).prefetch_related('author_links__author__user').order_by('-applied_at')[:6]
+    ).select_related('revision_of').prefetch_related('author_links__author__user').order_by('-applied_at')[:6]
 
     # Format papers for _list_display template
     recent_papers = []
@@ -332,6 +332,7 @@ def map_country_detail(request, code):
 
     papers_qs = (
         Publication.objects.filter(status="approved", country_code__iexact=code)
+        .select_related("revision_of")
         .prefetch_related("author_links__author__user")
         .order_by("-applied_at")
     )
@@ -464,7 +465,7 @@ class ScholarsListView(ListView):
 @require_GET
 def search_accounts(request):
     query = request.GET.get('q', '')
-    users = CustomUser.objects.filter(first_name__icontains=query)[:10]
+    users = CustomUser.objects.filter(is_active=True, first_name__icontains=query)[:10]
     return JsonResponse([
         {'value': f"{u.first_name} {u.last_name}", 'id': str(u.id)}
         for u in users
@@ -545,7 +546,7 @@ def city_search(request):
 def publications_list(request):
     publications = Publication.objects.filter(
         status='approved'
-    ).prefetch_related('author_links__author__user')
+    ).select_related('revision_of').prefetch_related('author_links__author__user')
 
     query = request.GET.get('q', '').strip()
     if query:

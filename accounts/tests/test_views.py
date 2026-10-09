@@ -71,7 +71,8 @@ class ApplicationViewTests(TestCase):
         content = response.content.decode()
         for network in ("CESifo", "NBER", "CEPR", "IZA"):
             self.assertIn(f'value="{network}"', content)
-        self.assertEqual(content.count("data-conditional-field"), 4)
+        # One per network, plus the "previous student account" toggle.
+        self.assertEqual(content.count("data-conditional-field"), 5)
         self.assertIn('name="network_url_nber"', content)
 
     def test_apply_researcher_post_creates_application(self):

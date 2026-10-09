@@ -1,0 +1,13 @@
+Hi {{ user.first_name|default:user.email }},
+
+Student accounts on Labor Hub are deactivated two years after they are created. Yours will be deactivated on {{ deactivation_date|date:"F j, Y" }}.
+
+Nothing you have posted is removed, and everything on Labor Hub stays open to read without an account.
+
+If you later move into a faculty or postdoctoral role and would like a fellow account, you can apply here and mention that you previously had a student account, so we can link your job market paper to it:
+
+{{ apply_url }}
+
+--
+The Labor Hub team
+{{ site_url }}

@@ -81,5 +81,18 @@
                 <span class="pill-accent">{{ topic }}</span>
             {% endfor %}
         </div>
+        {% with versions=publication.other_versions %}
+            {% if versions %}
+                <h4>Other Versions</h4>
+                <ul>
+                    {% for version in versions %}
+                        <li>
+                            <a href="{% url 'publication_detail' pk=version.pk %}">Discussion Paper No. {{ version.display_number }}: {{ version.title }}</a>
+                            ({{ version.formatted_date }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
     </article>
 {% endblock content %}
