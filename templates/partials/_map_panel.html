@@ -17,10 +17,10 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle[,description
         </div>
         {% if scholars_more %}
             <a href="{{ scholars_see_all_url }}"
-               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ scholars_total }} scholars →</a>
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ scholars_total }} fellows →</a>
         {% endif %}
     {% else %}
-        {% include 'partials/_empty_state.html' with text="No scholars are based here yet." %}
+        {% include 'partials/_empty_state.html' with text="No fellows are based here yet." %}
     {% endif %}
 </section>
 

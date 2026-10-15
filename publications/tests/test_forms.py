@@ -14,7 +14,7 @@ def valid_form_data(**overrides):
         "title": "A Study",
         "abstract": "Abstract text.",
         "country_code": "US",
-        "is_job_market": "",
+        "paper_type": "discussion",
         "authors_input": '[{"value":"Jane Doe"}]',
         "topics_input": '[{"value":"Labor Supply"}]',
     }
@@ -69,23 +69,27 @@ class PublicationFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["topics_input"], ["Labor Supply"])
 
-    def test_is_job_market_is_optional(self):
-        data = valid_form_data()
-        del data["is_job_market"]
-        form = PublicationForm(data=data)
+    def test_a_discussion_paper_is_not_a_job_market_paper(self):
+        form = PublicationForm(data=valid_form_data())
         self.assertTrue(form.is_valid(), form.errors)
-        publication = form.save()
-        self.assertFalse(publication.is_job_market)
+        self.assertFalse(form.save().is_job_market)
+
+    def test_paper_type_is_required_when_submitting(self):
+        data = valid_form_data()
+        del data["paper_type"]
+        form = PublicationForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("paper_type", form.errors)
 
     def test_job_market_paper_requires_an_advisor(self):
-        form = PublicationForm(data=valid_form_data(is_job_market=True))
+        form = PublicationForm(data=valid_form_data(paper_type="job_market"))
         self.assertFalse(form.is_valid())
         self.assertIn("jm_advisor", form.errors)
 
     def test_job_market_paper_with_a_researcher_advisor_is_valid(self):
         advisor = make_researcher()
         form = PublicationForm(data=valid_form_data(
-            is_job_market=True, jm_advisor=advisor.pk))
+            paper_type="job_market", jm_advisor=advisor.pk))
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.save().jm_advisor, advisor)
 
@@ -97,7 +101,7 @@ class PublicationFormTests(TestCase):
         )
         self.assertNotIn(student, PublicationForm().fields["jm_advisor"].queryset)
 
-    def test_advisor_is_discarded_when_box_unchecked(self):
+    def test_advisor_is_discarded_for_a_non_job_market_type(self):
         advisor = make_researcher()
         form = PublicationForm(data=valid_form_data(jm_advisor=advisor.pk))
         self.assertTrue(form.is_valid(), form.errors)

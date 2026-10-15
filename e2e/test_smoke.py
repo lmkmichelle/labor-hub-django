@@ -61,6 +61,38 @@ class SmokeTests(PlaywrightSmokeTestCase):
         ).to_be_visible()
         expect(page.locator("#id_title")).to_be_visible()
 
+    def test_paper_type_cards_reveal_their_own_fields(self):
+        """Each paper-type card shows only its own sub-panel, and the revision
+        picker offers the user's published papers as a single pill."""
+        from publications.models import Author
+
+        paper = Publication.objects.create(
+            title="Wages and Work", abstract="a", status="approved",
+            discussion_paper_number=323, submitted_by=self.user)
+        paper.authors.add(Author.objects.create(user=self.user, name="Test Scholar"))
+        page = self.page
+        self.login(USER_EMAIL, USER_PASSWORD)
+        page.goto(self.url("submit_paper"), wait_until="domcontentloaded")
+
+        advisor, revision = page.locator("#id_jm_advisor"), page.locator("#revision-of-input")
+        expect(advisor).to_be_hidden()
+        page.get_by_text("Job market paper", exact=True).click()
+        expect(advisor).to_be_visible()
+        page.get_by_text("Revision of a previous paper", exact=True).click()
+        expect(advisor).to_be_hidden()
+
+        # The pill picker needs Tagify (loaded from a CDN); skip if it can't load.
+        try:
+            page.wait_for_selector("tags.tagify", timeout=5000)
+        except Exception:
+            self.skipTest("Tagify did not load (no network)")
+        picker = page.locator(
+            'tags.tagify:has(.tagify__input[data-placeholder="Choose the paper you are revising"])')
+        picker.locator(".tagify__input").click()
+        page.get_by_text("323 \u2014 Wages and Work").click()
+        expect(picker.locator(".tagify__tag")).to_have_count(1)
+        self.assertIn(f'"id":{paper.pk}', revision.input_value())
+
     def test_world_map_country_click(self):
         """Clicking a country on the world map loads its side-panel details."""
         Publication.objects.create(

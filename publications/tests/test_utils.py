@@ -62,6 +62,7 @@ class ProcessPublicationFormTests(TestCase):
     def test_topic_comes_from_cleaned_data_not_raw_post(self):
         data = {
             "title": "Study", "abstract": "a", "country_code": "US",
+            "paper_type": "discussion",
             "authors_input": '[{"value":"Jane Doe"}]',
             "topics_input": '[{"value":"labor supply"}]',
         }

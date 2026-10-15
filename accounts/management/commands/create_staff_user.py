@@ -109,7 +109,7 @@ class Command(BaseCommand):
             default=CustomUser.Role.RESEARCHER,
             help=(
                 "Directory role (default: researcher). Note that 'admin' hides the "
-                "account from the public scholars directory."
+                "account from the public fellows directory."
             ),
         )
         parser.add_argument(

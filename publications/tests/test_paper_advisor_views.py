@@ -151,7 +151,7 @@ class PaperAdvisorEmailTests(TestCase):
             "country_code": "US",
             "authors_input": '[{"value":"Jane Doe"}]',
             "topics_input": '[{"value":"Labor Supply"}]',
-            "is_job_market": "on",
+            "paper_type": "job_market",
         }
         if advisor is not None:
             data["jm_advisor"] = advisor.pk
@@ -182,6 +182,6 @@ class PaperAdvisorEmailTests(TestCase):
             last_name="T", is_active=True)
         self.client.force_login(submitter)
         data = self._submit_data()
-        data["is_job_market"] = ""
+        data["paper_type"] = "discussion"
         self.client.post(reverse("submit_paper"), data)
         self.assertEqual(len(mail.outbox), 0)

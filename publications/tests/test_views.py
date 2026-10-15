@@ -28,7 +28,7 @@ def create_post_data(**overrides):
         "title": "New Paper",
         "abstract": "Some abstract.",
         "country_code": "US",
-        "is_job_market": "",
+        "paper_type": "discussion",
         "authors_input": '[{"value":"Jane Doe"}]',
         "topics_input": '[{"value":"Labor Supply"}]',
     }

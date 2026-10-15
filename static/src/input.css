@@ -326,6 +326,17 @@
   .home-tab-count {
     @apply rounded-full bg-neutral-secondary-medium px-2 py-0.5 text-xs font-semibold text-body;
   }
+  /* Paper-type option cards on the submit form (publications/publication_form.html):
+     a visually-hidden radio inside a label, so the whole card is the click target
+     and the selected state comes from :has(:checked), no JS. */
+  .type-card {
+    @apply relative block p-4 bg-neutral-primary-soft border border-default rounded-base shadow-xs cursor-pointer hover:bg-neutral-secondary-medium has-checked:border-red-700 has-checked:bg-red-50 has-focus-visible:ring-2 has-focus-visible:ring-red-600 has-disabled:opacity-60 has-disabled:cursor-not-allowed;
+  }
+  /* The fields a chosen card reveals sit indented under the cards. */
+  .type-subpanel {
+    @apply mb-5 ms-3 ps-4 border-s-2 border-red-700;
+  }
+
   /* FAQ accordion (core/faq.html): native <details>, no JS. */
   .faq-item {
     @apply border-b border-default py-3;
