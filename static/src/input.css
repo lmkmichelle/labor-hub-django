@@ -338,19 +338,16 @@
   }
 
   /* Grouped PDF uploads on the application form (partials/_upload_slot.html,
-     static/js/file-slot.js): a card holds one or more dashed drop slots. */
+     static/js/file-slot.js): a card holds one or more drop slots. */
   .upload-card {
     @apply p-4 bg-neutral-primary-soft border border-default rounded-base shadow-xs;
   }
   .upload-slot-label {
-    @apply flex flex-col items-center justify-center gap-1 min-h-28 p-4 text-center border-2 border-dashed border-default-medium rounded-base cursor-pointer hover:bg-neutral-secondary-medium has-focus-visible:ring-2 has-focus-visible:ring-red-600;
+    @apply flex flex-col items-center justify-center gap-1 min-h-28 p-4 text-center border-2 border-solid border-default-medium rounded-base cursor-pointer hover:bg-neutral-secondary-medium has-focus-visible:ring-2 has-focus-visible:ring-red-600;
   }
   .upload-slot-done .upload-slot-label,
   .upload-slot-over .upload-slot-label {
     @apply border-red-700 bg-red-50;
-  }
-  .upload-slot-done .upload-slot-label {
-    @apply border-solid;
   }
   .upload-slot-title {
     @apply text-sm font-semibold text-heading;
