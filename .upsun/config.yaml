@@ -69,10 +69,23 @@ applications:
       # Topic/country alerts (accounts/management/commands/send_alerts.py),
       # one cohort, run weekly on Fridays so the week's approved content is
       # in by the time it goes out.
+      #
+      # With Campaign Monitor configured, alerts are a campaign: the 11:00 run
+      # prepares it (CM needs ~an hour to calculate new segments) and the 12:00
+      # run sends it. Without CM, 11:00 is a no-op and 12:00 sends per-user mail.
+      alerts-prepare:
+        spec: "0 11 * * 5"
+        commands:
+          start: "python manage.py send_alerts --prepare"
       alerts-weekly:
         spec: "0 12 * * 5"
         commands:
           start: "python manage.py send_alerts"
+      # Retry/backfill Campaign Monitor list membership (no-op without CM).
+      cm-sync:
+        spec: "30 5 * * *"
+        commands:
+          start: "python manage.py cm_sync --if-configured"
       # Student accounts close two years after creation, with a warning email
       # 30 days before (accounts/management/commands/deactivate_expired_students.py).
       student-lifecycle:

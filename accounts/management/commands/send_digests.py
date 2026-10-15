@@ -8,8 +8,9 @@ the two ``crons`` entries in ``.upsun/config.yaml`` (specs are UTC)::
     # 1st of the month 12:00 UTC - monthly digests
     0 12 1 * *  python manage.py send_digests --frequency monthly
 """
+from django.conf import settings
 from django.core.mail import get_connection
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from accounts.digests import collect_new_content, default_since, send_user_digest
@@ -36,6 +37,9 @@ class Command(BaseCommand):
         frequency = options["frequency"]
         dry_run = options["dry_run"]
         now = timezone.now()
+
+        if settings.CAMPAIGN_DELIVERY == "cm":
+            return self._handle_campaign(frequency, dry_run, now)
 
         users = CustomUser.objects.filter(
             is_active=True,
@@ -82,3 +86,26 @@ class Command(BaseCommand):
                 "{} digest: sent {}, skipped {}.".format(frequency, sent, skipped)
             )
         )
+
+    def _handle_campaign(self, frequency, dry_run, now):
+        """One CM campaign to the cohort's segment instead of per-user SMTP."""
+        from accounts import campaigns
+        from core.campaign_monitor import CampaignMonitorError
+        from core.models import EmailCampaign
+
+        if dry_run:
+            last = EmailCampaign.objects.filter(
+                kind=campaigns._KIND_FOR_FREQUENCY[frequency],
+                status=EmailCampaign.Status.SENT).first()
+            since = last.period_end if last else default_since(frequency, now)
+            count = sum(len(s["items"]) for s in collect_new_content(since))
+            self.stdout.write("[dry-run] would send a {} campaign with {} update(s).".format(
+                frequency, count))
+            return
+        try:
+            campaign = campaigns.send_digest_campaign(frequency, now=now)
+        except (CampaignMonitorError, RuntimeError) as exc:
+            raise CommandError(f"Campaign Monitor error: {exc}") from exc
+        self.stdout.write(self.style.SUCCESS(
+            "{} digest: sent campaign {}.".format(frequency, campaign.cm_campaign_id) if campaign
+            else "{} digest: nothing new, no campaign sent.".format(frequency)))

@@ -251,6 +251,20 @@ REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL", "")
 # admin request. Harmless on any non-CM SMTP server.
 EMAIL_GROUP_NAME = os.environ.get("EMAIL_GROUP_NAME", "LaborHub")
 
+# Campaign Monitor REST API. Digests and alerts are *campaigns* under CM's terms
+# (the transactional SMTP token is for 1:1 mail only), so when these are set they
+# are sent as CM campaigns to list segments instead of per-user SMTP messages.
+# Secrets come from env / Upsun sensitive variables, never the repo.
+CM_API_KEY = os.environ.get("CM_API_KEY", "")
+CM_CLIENT_ID = os.environ.get("CM_CLIENT_ID", "")
+CM_DIGEST_LIST_ID = os.environ.get("CM_DIGEST_LIST_ID", "")
+CM_ALERT_LIST_ID = os.environ.get("CM_ALERT_LIST_ID", "")
+CM_WEBHOOK_SECRET = os.environ.get("CM_WEBHOOK_SECRET", "")
+# "cm" only when fully configured, so dev/CI/preview keep per-user SMTP delivery.
+CAMPAIGN_DELIVERY = (
+    "cm" if CM_API_KEY and CM_CLIENT_ID and CM_DIGEST_LIST_ID and CM_ALERT_LIST_ID else "smtp"
+)
+
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
 

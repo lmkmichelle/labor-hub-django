@@ -6,6 +6,7 @@ from .views import ScholarsListView, SuperuserTemplateView
 urlpatterns = [
     path('', views.home, name='home'),
     path('healthz/', views.healthz, name='healthz'),
+    path('email/campaign/<str:token>.<str:ext>', views.campaign_snapshot, name='campaign_snapshot'),
     path('announcements/', views.announcements, name='announcements'),
     path('announcements/new/', views.post_announcement, name='announcement-new'),
     path('map/', views.map_view, name='map'),

@@ -18,6 +18,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.cm_sync import alert_field_values, country_token, topic_token, university_token
 from accounts.digests import absolute_url, publication_item, visit_item
 from core.email import attach_logo, cm_headers, default_reply_to
 from publications.models import Publication
@@ -67,51 +68,66 @@ def _posted_since(since, submitted_field):
         reviewed_at__isnull=True, **{f"{submitted_field}__gte": since})
 
 
-def collect_alert_matches(profile, since):
-    """Return the non-empty alert sections for ``profile`` since ``since``.
+def week_items(since):
+    """The papers and visits that went public since ``since``, each with the set
+    of interest tokens (accounts.cm_sync) that make it relevant to a subscriber.
 
     Matching is done in Python over the week's approved rows (a small set)
     rather than a JSON-contains query, which would behave differently on
-    SQLite vs. the MariaDB used in production.
+    SQLite vs. the MariaDB used in production. Returns ``(publications, visits)``
+    as lists of ``(item_dict, tokens)``.
     """
+    publications = [
+        (publication_item(pub), {topic_token(t) for t in pub.topic or []})
+        for pub in (
+            Publication.objects.filter(status="approved")
+            .filter(_posted_since(since, "applied_at"))
+            .prefetch_related("author_links__author__user")
+            .order_by("-applied_at")
+        )
+    ]
+    visits = []
+    for visit in (
+        Seminar.objects.approved().filter(_posted_since(since, "created_at"))
+        .select_related("university")
+        .order_by("-created_at")
+    ):
+        tokens = {country_token(c) for c in visit.countries or []}
+        if visit.university_id:
+            tokens.add(university_token(visit.university_id))
+        visits.append((visit_item(visit), tokens))
+    return publications, visits
+
+
+def profile_tokens(profile):
+    """Every interest token ``profile`` follows."""
+    tokens = set()
+    for value in alert_field_values(profile).values():
+        tokens.update(t for t in value.split("|") if t)
+    return tokens
+
+
+def collect_alert_matches(profile, since):
+    """Return the non-empty alert sections for ``profile`` since ``since``."""
+    followed = profile_tokens(profile)
+    publications, visits = week_items(since)
     sections = []
 
-    if profile.alert_topics:
-        topics = set(profile.alert_topics)
-        publications = [
-            pub for pub in (
-                Publication.objects.filter(status="approved")
-                .filter(_posted_since(since, "applied_at"))
-                .prefetch_related("author_links__author__user")
-                .order_by("-applied_at")
-            )
-            if topics.intersection(pub.topic or [])
-        ]
-        if publications:
-            sections.append({
-                "key": "publications",
-                "label": "New papers matching your topics",
-                "items": [publication_item(pub) for pub in publications],
-            })
+    matched = [item for item, tokens in publications if followed & tokens]
+    if matched:
+        sections.append({
+            "key": "publications",
+            "label": "New papers matching your topics",
+            "items": matched,
+        })
 
-    if profile.alert_countries or profile.alert_universities:
-        countries = set(profile.alert_countries)
-        university_ids = set(profile.alert_universities)
-        visits = [
-            visit for visit in (
-                Seminar.objects.approved().filter(_posted_since(since, "created_at"))
-                .select_related("university")
-                .order_by("-created_at")
-            )
-            if countries.intersection(visit.countries or [])
-            or visit.university_id in university_ids
-        ]
-        if visits:
-            sections.append({
-                "key": "visits",
-                "label": "New visits matching your alerts",
-                "items": [visit_item(visit) for visit in visits],
-            })
+    matched = [item for item, tokens in visits if followed & tokens]
+    if matched:
+        sections.append({
+            "key": "visits",
+            "label": "New visits matching your alerts",
+            "items": matched,
+        })
 
     return sections
 

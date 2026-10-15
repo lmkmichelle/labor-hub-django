@@ -154,3 +154,51 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} <{self.email}> ({self.created_at:%Y-%m-%d})"
+
+
+class EmailCampaign(models.Model):
+    """A digest/alerts mailing sent as a Campaign Monitor campaign.
+
+    Campaign Monitor fetches a campaign's HTML from a public URL, so the rendered
+    snapshot is stored here and served unguessably at ``email/campaign/<token>``.
+    Alerts are *prepared* (segments created) an hour before they are *sent*, since
+    CM needs time to calculate new segments. The row also makes sending
+    idempotent: a ``sent`` campaign is never sent twice.
+    """
+
+    class Kind(models.TextChoices):
+        DIGEST_WEEKLY = 'digest_weekly', 'Weekly digest'
+        DIGEST_MONTHLY = 'digest_monthly', 'Monthly digest'
+        ALERTS = 'alerts', 'Weekly alerts'
+
+    class Status(models.TextChoices):
+        PREPARED = 'prepared', 'Prepared'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    subject = models.CharField(max_length=200)
+    html = models.TextField()
+    text = models.TextField()
+    # The look-back window the content covers, so the next run continues from it.
+    period_start = models.DateTimeField()
+    period_end = models.DateTimeField()
+    cm_campaign_id = models.CharField(max_length=64, blank=True)
+    segment_ids = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PREPARED)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.get_kind_display()} {self.created_at:%Y-%m-%d} ({self.status})"

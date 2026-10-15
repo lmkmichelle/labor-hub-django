@@ -173,6 +173,11 @@ class Profile(models.Model):
     # Set when the 2-year student deactivation warning is emailed, so it goes
     # out once. See deactivate_expired_students.
     deactivation_warned_at = models.DateTimeField(null=True, blank=True)
+    # Campaign Monitor sync bookkeeping (accounts.cm_sync): a hash of the state
+    # last pushed, and the email it was pushed under (to drop the old address
+    # when a member changes theirs). Not user-facing.
+    cm_synced_state = models.CharField(max_length=64, blank=True, editable=False)
+    cm_synced_email = models.EmailField(blank=True, editable=False)
 
     def __str__(self):
         return self.user.email
