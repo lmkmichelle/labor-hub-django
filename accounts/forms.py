@@ -6,6 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth.hashers import make_password
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
+from django.utils.functional import cached_property
 
 from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES, RECOMMENDED_KEYWORDS
 from core.email import attach_logo, cm_headers, default_reply_to
@@ -21,6 +22,41 @@ logger = logging.getLogger(__name__)
 # The two named research-paper upload fields on ResearcherApplicationForm,
 # in the order they should be saved as ResearchPaper rows.
 RESEARCH_PAPER_FIELDS = ("research_paper_1", "research_paper_2")
+
+
+class PillInput(forms.TextInput):
+    """A text input driven by a Tagify pill picker.
+
+    Tagify submits its pills as JSON (``[{"value": "NBER"}]``). ``value_for_input``
+    lets ``render_field`` put that JSON back in the box when the form is redisplayed.
+    """
+
+    def value_for_input(self, value):
+        if not value:
+            return ''
+        if isinstance(value, str):
+            return value
+        return json.dumps([{"value": v} for v in value])
+
+
+class PillMultipleInput(PillInput):
+    """Pill input for a ``MultipleChoiceField``: reads Tagify's JSON or comma text.
+
+    Also accepts repeated values (``name=A&name=B``) and a plain list, so it behaves
+    like the checkbox widget it replaces for any other client.
+    """
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(data, 'getlist'):
+            values = data.getlist(name)
+            if len(values) > 1:
+                return values
+            raw = values[0] if values else ''
+        else:
+            raw = data.get(name)
+        if isinstance(raw, (list, tuple)):
+            return list(raw)
+        return parse_pill_terms(raw)
 
 
 class BaseApplicationForm(forms.ModelForm):
@@ -78,13 +114,12 @@ class BaseApplicationForm(forms.ModelForm):
         widget=forms.TextInput(),
     )
 
+    # Tagify pill picker over OTHER_NETWORK_CHOICES; the choices are re-checked
+    # server-side, so a hand-made POST can't add a network that isn't listed.
     other_networks = forms.MultipleChoiceField(
         choices=OTHER_NETWORK_CHOICES,
         required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'w-4 h-4 text-brand bg-gray-100 border-gray-300 '
-                     'rounded focus:ring-brand focus:ring-2',
-        }),
+        widget=PillMultipleInput(attrs={'id': 'networks-input'}),
         label='Are you a member of any of the following other networks?',
     )
 
@@ -116,6 +151,10 @@ class BaseApplicationForm(forms.ModelForm):
             self.fields[f'network_url_{code.lower()}'] = forms.URLField(
                 required=False, label=f'{code} profile URL',
             )
+
+    @property
+    def network_whitelist(self):
+        return [{'value': code} for code, _label in OTHER_NETWORK_CHOICES]
 
     def clean(self):
         cleaned = super().clean()
@@ -181,15 +220,16 @@ class BaseApplicationForm(forms.ModelForm):
 class ResearcherApplicationForm(BaseApplicationForm):
     # Two explicit slots, not one multi-select input -- discoverable without
     # needing to know a shift/cmd-click trick to attach a second paper.
+    # Both are required: the form shows them as one "Research papers" card.
     research_paper_1 = forms.FileField(
         label="Research paper 1 (PDF)",
-        required=False,
         widget=forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
+        error_messages={"required": "Please upload both research papers."},
     )
     research_paper_2 = forms.FileField(
         label="Research paper 2 (PDF)",
-        required=False,
         widget=forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
+        error_messages={"required": "Please upload both research papers."},
     )
 
     allow_returning_students = True
@@ -198,29 +238,66 @@ class ResearcherApplicationForm(BaseApplicationForm):
         required=False,
         label='Did you previously have a student account with the Labor Hub?',
     )
+    # A single pill chosen from the job market papers on the site. Tagify submits
+    # [{"value": "[J3] Title (Authors)", "id": 42}]; clean() turns it back into the
+    # plain "J3" that UserApplication stores. No max_length: the raw value is JSON.
     previous_jm_paper_number = forms.CharField(
         required=False,
-        max_length=20,
-        label='Discussion paper number of your job market paper',
-        help_text='For example J3. Optional, but it lets us attach your paper to your new account.',
+        label='Your job market paper',
+        help_text='Optional, but it lets us attach your paper to your new account.',
+        widget=PillInput(attrs={'id': 'previous-jm-input'}),
     )
 
     class Meta(BaseApplicationForm.Meta):
         fields = BaseApplicationForm.Meta.fields + RESEARCH_PAPER_FIELDS + (
             'previous_student_account', 'previous_jm_paper_number')
 
+    @cached_property
+    def jm_papers(self):
+        """Published job market papers an applicant can claim (public information)."""
+        return list(
+            Publication.objects.filter(
+                status='approved', is_job_market=True, revision_of__isnull=True,
+                job_market_paper_number__isnull=False)
+            .prefetch_related('author_links__author__user')
+            .order_by('job_market_paper_number'))
+
+    @property
+    def jm_paper_whitelist(self):
+        """Tagify whitelist: "[J3] Title (Authors)", so applicants can spot their own."""
+        entries = []
+        for paper in self.jm_papers:
+            authors = ', '.join(str(author) for author in paper.ordered_authors)
+            label = f'[{paper.display_number}] {paper.title}'
+            entries.append({'value': f'{label} ({authors})' if authors else label, 'id': paper.pk})
+        return entries
+
+    def _chosen_jm_paper(self, raw):
+        """The paper picked in the pill input (its id is checked against the same list
+        the picker offers), or a typed number such as "J3" for other clients."""
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            return Publication.find_original(raw, job_market_only=True)
+        if isinstance(data, list):
+            data = data[0] if data else None
+        if isinstance(data, dict):
+            data = data.get('id')
+        return next((p for p in self.jm_papers if str(p.pk) == str(data)), None)
+
     def clean(self):
         cleaned = super().clean()
-        number = (cleaned.get('previous_jm_paper_number') or '').strip()
-        if not cleaned.get('previous_student_account'):
-            # A number typed without ticking the box is ignored.
+        raw = (cleaned.get('previous_jm_paper_number') or '').strip()
+        if not cleaned.get('previous_student_account') or not raw or raw == '[]':
+            # A paper chosen without ticking the box is ignored.
             cleaned['previous_jm_paper_number'] = ''
-        elif number and Publication.find_original(number, job_market_only=True) is None:
-            self.add_error(
-                'previous_jm_paper_number',
-                'We could not find a published job market paper with that number (for example J3).')
         else:
-            cleaned['previous_jm_paper_number'] = number
+            paper = self._chosen_jm_paper(raw)
+            if paper is None:
+                self.add_error(
+                    'previous_jm_paper_number', 'Choose a job market paper from the list.')
+            else:
+                cleaned['previous_jm_paper_number'] = f'J{paper.job_market_paper_number}'
         return cleaned
 
 class AdvisorChoiceField(forms.ModelChoiceField):

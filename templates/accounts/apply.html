@@ -23,9 +23,9 @@
         {% render_select form.advisor label="Select an Advisor" empty_label="Select an existing researcher as an advisor" %}
     {% endif %}
 
-    {% render_field form.first_name label="First Name" placeholder="First name" %}
+    {% render_field form.first_name label="First Name" %}
 
-    {% render_field form.last_name label="Last Name" placeholder="Last name" %}
+    {% render_field form.last_name label="Last Name" %}
 
     {% render_select form.country_code label="Country" empty_label="Choose a country" %}
 
@@ -39,52 +39,70 @@
         {% render_field form.university_name %}
     </div>
 
-    {% render_field form.department label="Department" placeholder="Department" %}
+    {% render_field form.department label="Department" %}
 
-    {% render_field form.position label="Position" placeholder="Position" %}
+    {% render_field form.position label="Position" %}
 
-    {% render_field form.motivation label="Motivation" %}
+    {% render_field form.motivation label="Motivation" placeholder="Why do you want to join this platform?" help_text="" %}
 
     {% render_field form.website label="Personal Website (optional)" placeholder="https://" %}
 
-    <div class="form-field not-format">
-        <span class="form-label">{{ form.other_networks.label }}</span>
-        {% for checkbox in form.other_networks %}
-            <div class="flex items-center mb-1">
-                {{ checkbox.tag }}
-                <label for="{{ checkbox.id_for_label }}" class="form-check-label">{{ checkbox.choice_label }}</label>
-            </div>
-        {% endfor %}
-        {% if form.other_networks.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.other_networks.errors.0 }}</p>
-        {% endif %}
-    </div>
+    {{ form.network_whitelist|json_script:"networks-data" }}
+    {% render_field form.other_networks placeholder="Choose from the list" help_text="Choose every network you belong to." %}
 
-    {# Each reveals only when its network is ticked; see static/js/conditional-field.js #}
-    <div data-conditional-field data-when-checked-name="other_networks"
-         data-when-checked-value="CESifo" data-target="{{ form.network_url_cesifo.id_for_label }}">
+    {# Each reveals while its network pill is present; see static/js/conditional-field.js #}
+    <div data-conditional-field data-when-pill-input="networks-input"
+         data-when-pill-value="CESifo" data-target="{{ form.network_url_cesifo.id_for_label }}">
         {% render_field form.network_url_cesifo placeholder="https://" %}
     </div>
-    <div data-conditional-field data-when-checked-name="other_networks"
-         data-when-checked-value="NBER" data-target="{{ form.network_url_nber.id_for_label }}">
+    <div data-conditional-field data-when-pill-input="networks-input"
+         data-when-pill-value="NBER" data-target="{{ form.network_url_nber.id_for_label }}">
         {% render_field form.network_url_nber placeholder="https://" %}
     </div>
-    <div data-conditional-field data-when-checked-name="other_networks"
-         data-when-checked-value="CEPR" data-target="{{ form.network_url_cepr.id_for_label }}">
+    <div data-conditional-field data-when-pill-input="networks-input"
+         data-when-pill-value="CEPR" data-target="{{ form.network_url_cepr.id_for_label }}">
         {% render_field form.network_url_cepr placeholder="https://" %}
     </div>
-    <div data-conditional-field data-when-checked-name="other_networks"
-         data-when-checked-value="IZA" data-target="{{ form.network_url_iza.id_for_label }}">
+    <div data-conditional-field data-when-pill-input="networks-input"
+         data-when-pill-value="IZA" data-target="{{ form.network_url_iza.id_for_label }}">
         {% render_field form.network_url_iza placeholder="https://" %}
     </div>
 
-    {% render_field form.cv_url label="Link to your CV (optional)" placeholder="https://" %}
-
-    {% render_field form.resume label="Or upload your resume/CV (PDF only)" %}
+    {# CV: a link or a PDF, never both. The switch is added by static/js/file-slot.js. #}
+    <div class="upload-card form-field not-format" data-cv-card>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h4 class="form-label !mb-0">CV (optional)</h4>
+            <div class="segmented hidden" role="radiogroup" aria-label="How to provide your CV" data-js-only>
+                <label class="segmented-option">
+                    <input type="radio" name="cv_mode" value="link" class="sr-only" {% if not form.resume.errors %}checked{% endif %}>
+                    Link
+                </label>
+                <label class="segmented-option">
+                    <input type="radio" name="cv_mode" value="upload" class="sr-only" {% if form.resume.errors %}checked{% endif %}>
+                    Upload PDF
+                </label>
+            </div>
+        </div>
+        <div data-cv-panel="link">
+            {% render_field form.cv_url label="Link to your online CV" placeholder="https://" help_text="" %}
+        </div>
+        <div data-cv-panel="upload">
+            {% include "partials/_upload_slot.html" with field=form.resume slot_label="Your CV (PDF)" %}
+        </div>
+    </div>
 
     {% if form.research_paper_1 %}
-        {% render_field form.research_paper_1 %}
-        {% render_field form.research_paper_2 %}
+    <div class="upload-card form-field not-format" data-upload-group>
+        <div class="flex items-baseline justify-between gap-3">
+            <h4 class="form-label !mb-0">Research papers<span class="text-red-600 ms-0.5" aria-hidden="true">*</span></h4>
+            <p class="text-sm font-medium text-body" data-upload-counter aria-live="polite">0 of 2 added</p>
+        </div>
+        <p class="form-help mt-1">Please upload two research papers, as PDFs.</p>
+        <div class="grid gap-3 mt-3 sm:grid-cols-2">
+            {% include "partials/_upload_slot.html" with field=form.research_paper_1 slot_label="Paper 1 of 2" required=True %}
+            {% include "partials/_upload_slot.html" with field=form.research_paper_2 slot_label="Paper 2 of 2" required=True %}
+        </div>
+    </div>
     {% endif %}
 
     {% if form.previous_student_account %}
@@ -95,17 +113,18 @@
         </div>
     </div>
     {# Shown only when the box above is ticked; see static/js/conditional-field.js #}
+    {{ form.jm_paper_whitelist|json_script:"previous-jm-data" }}
     <div data-conditional-field
          data-when-checked="{{ form.previous_student_account.id_for_label }}"
          data-target="{{ form.previous_jm_paper_number.id_for_label }}">
-        {% render_field form.previous_jm_paper_number placeholder="e.g. J3" %}
+        {% render_field form.previous_jm_paper_number placeholder="Choose your job market paper" %}
     </div>
     {% endif %}
 
     {% render_field form.email label="Email" placeholder="net-id@school.edu" %}
 
-    {% render_field form.password1 label="Password" placeholder="•••••••••" help_text="Enter a secure password" %}
-    {% render_field form.password2 label="Confirm Password" placeholder="•••••••••" help_text="Enter the same password as before, for verification" %}
+    {% render_field form.password1 label="Password" help_text="Enter a secure password" %}
+    {% render_field form.password2 label="Confirm Password" help_text="Enter the same password as before, for verification" %}
 
     <div class="flex gap-3 mb-5">
         <button type="submit" class="btn-primary">
@@ -116,6 +135,11 @@
 </form>
  </article>
 
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+<script src="{% static 'js/tagify.js' %}"></script>
 <script src="{% static 'js/university-picker.js' %}"></script>
 <script src="{% static 'js/conditional-field.js' %}"></script>
+<script src="{% static 'js/file-slot.js' %}"></script>
 {% endblock %}

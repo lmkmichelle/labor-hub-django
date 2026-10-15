@@ -1,0 +1,19 @@
+{% comment %}
+One PDF upload target: a dashed drop area wrapping the native file input (visually
+hidden but keyboard-focusable), so it still works as a plain file input without
+JavaScript. static/js/file-slot.js adds the filename, remove button, drag and drop
+and the group counter. Inputs: field (a bound file field), slot_label,
+required (optional).
+{% endcomment %}
+<div class="upload-slot" data-upload-slot>
+    <label for="{{ field.id_for_label }}" class="upload-slot-label">
+        <span class="upload-slot-title">{{ slot_label }}{% if required %}<span class="text-red-600 ms-0.5" aria-hidden="true">*</span>{% endif %}</span>
+        <span class="upload-slot-hint" data-upload-hint>Drop a PDF here, or choose a file</span>
+        <span class="upload-slot-file hidden" data-upload-name></span>
+        <input type="file" id="{{ field.id_for_label }}" name="{{ field.name }}"
+               accept="application/pdf" class="sr-only" {% if required %}required{% endif %}>
+    </label>
+    <button type="button" class="upload-slot-remove hidden" data-upload-remove>Remove</button>
+    <p class="mt-2 text-sm text-red-600 hidden" data-upload-error role="alert"></p>
+    {% if field.errors %}<p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>{% endif %}
+</div>

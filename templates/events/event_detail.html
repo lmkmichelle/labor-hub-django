@@ -22,7 +22,7 @@
         </div>
         {% if event.host %}
             <div class="not-format mb-4">
-                Posted by <a class="text-red-700 underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
+                Posted by <a class="text-red-700 hover:underline" href="{% url 'profile' pk=event.host.id %}">{{ event.host.get_full_name }}</a>
             </div>
         {% endif %}
     </div>
@@ -48,7 +48,7 @@
     {% if event.application_url %}
         <h4>Where to Apply</h4>
         <p>
-            <a class="text-red-700 underline" href="{{ event.application_url }}"
+            <a class="text-red-700 hover:underline" href="{{ event.application_url }}"
                target="_blank" rel="noopener noreferrer">{{ event.application_url }}</a>
         </p>
     {% endif %}

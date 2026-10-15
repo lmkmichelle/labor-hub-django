@@ -52,6 +52,8 @@ def render_field(field, label=None, placeholder=None, help_text=None, required=N
         # attribute for any widget not named exactly FileInput/ClearableFileInput.
         'is_file': isinstance(widget, forms.FileInput),
         'date_value': _normalize_date_value(raw_value),
+        # Pill widgets (Tagify) redisplay their own JSON, not a Python list repr.
+        'pill_value': widget.value_for_input(raw_value) if hasattr(widget, 'value_for_input') else None,
         'required': resolved_required,
     }
 

@@ -58,7 +58,7 @@
             <div class="not-format mb-4">
                 {% for author in publication.ordered_authors %}
                     {% if author.user %}
-                        <a class="text-red-700 underline"
+                        <a class="text-red-700 hover:underline"
                            href="{% url 'profile' pk=author.user.id %}">{{ author.user.get_full_name }}</a>
                     {% else %}
                         {{ author.name }}

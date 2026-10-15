@@ -337,6 +337,41 @@
     @apply mb-5 ms-3 ps-4 border-s-2 border-red-700;
   }
 
+  /* Grouped PDF uploads on the application form (partials/_upload_slot.html,
+     static/js/file-slot.js): a card holds one or more dashed drop slots. */
+  .upload-card {
+    @apply p-4 bg-neutral-primary-soft border border-default rounded-base shadow-xs;
+  }
+  .upload-slot-label {
+    @apply flex flex-col items-center justify-center gap-1 min-h-28 p-4 text-center border-2 border-dashed border-default-medium rounded-base cursor-pointer hover:bg-neutral-secondary-medium has-focus-visible:ring-2 has-focus-visible:ring-red-600;
+  }
+  .upload-slot-done .upload-slot-label,
+  .upload-slot-over .upload-slot-label {
+    @apply border-red-700 bg-red-50;
+  }
+  .upload-slot-done .upload-slot-label {
+    @apply border-solid;
+  }
+  .upload-slot-title {
+    @apply text-sm font-semibold text-heading;
+  }
+  .upload-slot-hint {
+    @apply text-sm text-body;
+  }
+  .upload-slot-file {
+    @apply text-sm font-medium text-red-700 break-all;
+  }
+  .upload-slot-remove {
+    @apply mt-1 text-sm text-body hover:text-red-700;
+  }
+  /* A two-option switch (the CV Link | Upload PDF choice): radios in labels. */
+  .segmented {
+    @apply inline-flex p-0.5 bg-neutral-secondary-medium border border-default-medium rounded-base;
+  }
+  .segmented-option {
+    @apply px-3 py-1.5 text-sm font-medium text-body rounded-base cursor-pointer has-checked:bg-neutral-primary-soft has-checked:text-heading has-checked:shadow-xs has-focus-visible:ring-2 has-focus-visible:ring-red-600;
+  }
+
   /* FAQ accordion (core/faq.html): native <details>, no JS. */
   .faq-item {
     @apply border-b border-default py-3;
@@ -366,9 +401,21 @@
     @apply mt-2 text-body;
   }
 
-  /* Plain hyperlinks inside prose pages use the carnelian red theme.
-     Only class-less anchors: buttons and cards carry their own classes. */
+}
+
+/* Links are not underlined. These rules sit in the utilities layer on purpose: the
+   typography plugin's `.format a { underline }` is emitted there, and a rule in a
+   lower layer (components) loses to it no matter its specificity. Buttons, cards and
+   nav links (anything with a class) never underline; plain prose links are carnelian
+   red and underline only on hover or keyboard focus. */
+@layer utilities {
+  .format a {
+    text-decoration-line: none;
+  }
   .format a:where(:not([class])) {
-    @apply text-red-700 underline hover:text-red-800;
+    @apply text-red-700;
+  }
+  .format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-red-800 underline;
   }
 }

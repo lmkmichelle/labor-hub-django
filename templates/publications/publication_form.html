@@ -82,15 +82,15 @@ Submit Paper
     <p class="mb-5 text-sm text-body">This is a revision of <a href="{% url 'publication_detail' pk=object.revision_of.pk %}">{{ object.revision_of.display_number }}: {{ object.revision_of.title }}</a>.</p>
     {% endif %}
 
-    {% render_field form.title placeholder="Paper title" %}
+    {% render_field form.title %}
     
-    {% render_field form.authors_input placeholder="Authors" %}
+    {% render_field form.authors_input placeholder="Type a name, press Enter" %}
 
-    {% render_field form.abstract placeholder="Abstract" %}
+    {% render_field form.abstract %}
 
     {% render_select form.country_code empty_label="Choose a country" %}
 
-    {% render_field form.topics_input placeholder="Research topics" %}
+    {% render_field form.topics_input placeholder="Choose from the list" %}
 
     {% if form.pdf %}
         {% render_field form.pdf %}
