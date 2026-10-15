@@ -89,7 +89,7 @@ class SmokeTests(PlaywrightSmokeTestCase):
         picker = page.locator(
             'tags.tagify:has(.tagify__input[data-placeholder="Choose the paper you are revising"])')
         picker.locator(".tagify__input").click()
-        page.get_by_text("323 \u2014 Wages and Work").click()
+        page.get_by_text("[323] Wages and Work").click()
         expect(picker.locator(".tagify__tag")).to_have_count(1)
         self.assertIn(f'"id":{paper.pk}', revision.input_value())
 

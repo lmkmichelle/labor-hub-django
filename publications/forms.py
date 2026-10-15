@@ -138,7 +138,7 @@ class PublicationForm(forms.ModelForm):
     def revision_whitelist(self):
         """The papers the picker offers, as Tagify whitelist entries."""
         return [
-            {'value': f'{paper.display_number} \u2014 {paper.title}', 'id': paper.pk}
+            {'value': f'[{paper.display_number}] {paper.title}', 'id': paper.pk}
             for paper in self.revisable
         ]
 

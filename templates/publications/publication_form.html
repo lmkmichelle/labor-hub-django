@@ -36,16 +36,6 @@ Submit Paper
     </div>
     {% endif %}
     
-    {% render_field form.title placeholder="Paper title" %}
-    
-    {% render_field form.authors_input placeholder="Authors" %}
-
-    {% render_field form.abstract placeholder="Abstract" %}
-
-    {% render_select form.country_code empty_label="Choose a country" %}
-
-    {% render_field form.topics_input placeholder="Research topics" %}
-
     {% if form.paper_type %}
     <fieldset class="form-field not-format">
         <legend class="form-label">Type of paper<span class="text-red-600 ms-0.5" aria-hidden="true">*</span></legend>
@@ -91,6 +81,16 @@ Submit Paper
     {% elif object.revision_of %}
     <p class="mb-5 text-sm text-body">This is a revision of <a href="{% url 'publication_detail' pk=object.revision_of.pk %}">{{ object.revision_of.display_number }}: {{ object.revision_of.title }}</a>.</p>
     {% endif %}
+
+    {% render_field form.title placeholder="Paper title" %}
+    
+    {% render_field form.authors_input placeholder="Authors" %}
+
+    {% render_field form.abstract placeholder="Abstract" %}
+
+    {% render_select form.country_code empty_label="Choose a country" %}
+
+    {% render_field form.topics_input placeholder="Research topics" %}
 
     {% if form.pdf %}
         {% render_field form.pdf %}

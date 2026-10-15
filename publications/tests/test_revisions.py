@@ -59,7 +59,7 @@ class RevisionNumberingTests(TestCase):
 
 def pick(paper):
     """What Tagify submits after choosing ``paper`` in the revision picker."""
-    return json.dumps([{"value": f"{paper.display_number} - {paper.title}", "id": paper.pk}])
+    return json.dumps([{"value": f"[{paper.display_number}] {paper.title}", "id": paper.pk}])
 
 
 class RevisionFormTests(TestCase):
@@ -160,7 +160,8 @@ class SubmitPageTests(TestCase):
         for label in ("Discussion paper", "Job market paper", "Revision of a previous paper"):
             self.assertContains(page, label)
         self.assertContains(page, 'id="revision-papers-data"')
-        self.assertContains(page, "323 \\u2014 Wages and Work")  # JSON-escaped dash
+        self.assertContains(page, "[323] Wages and Work")
+        self.assertNotContains(page, "\\u2014")
         self.assertNotContains(page, "You have no published papers to revise yet.")
 
     def test_papers_the_user_cannot_revise_are_not_in_the_page(self):
