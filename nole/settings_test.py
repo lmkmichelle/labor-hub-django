@@ -76,3 +76,9 @@ if (os.environ.get("DATABASE_ENGINE") or "sqlite3") == "sqlite3":
             "NAME": ":memory:",
         }
     }
+
+# Campaign Monitor is opt-in via CM_* variables; a developer's local .env may
+# have them set. Tests must never talk to CM or switch delivery mode on their own --
+# the CM tests opt in with override_settings.
+CM_API_KEY = CM_CLIENT_ID = CM_DIGEST_LIST_ID = CM_ALERT_LIST_ID = CM_WEBHOOK_SECRET = ""
+CAMPAIGN_DELIVERY = "smtp"
