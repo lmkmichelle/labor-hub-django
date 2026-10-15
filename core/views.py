@@ -637,3 +637,24 @@ def publications_list(request):
         'page_heading': page_heading,
         'filter_querystring': urlencode(filter_params),
     })
+
+
+@require_GET
+def campaign_snapshot(request, token, ext):
+    """Public, unguessable copy of a Campaign Monitor campaign's HTML/text.
+
+    CM fetches this by URL when the campaign is created. The content is the same
+    public site content the digest would show anyway; the token only keeps the
+    snapshots from being enumerated.
+    """
+    from core.models import EmailCampaign
+    campaign = EmailCampaign.objects.filter(token=token).first()
+    if campaign is None or ext not in ('html', 'txt'):
+        raise Http404
+    html = ext == 'html'
+    response = HttpResponse(
+        campaign.html if html else campaign.text,
+        content_type='text/html; charset=utf-8' if html else 'text/plain; charset=utf-8',
+    )
+    response['X-Robots-Tag'] = 'noindex'
+    return response

@@ -21,3 +21,10 @@ def save_profile(sender, instance, **kwargs):
     # Only save if profile exists
     if hasattr(instance, 'profile'):
         instance.profile.save()
+
+
+@receiver(post_save, sender=Profile)
+def sync_to_campaign_monitor(sender, instance, **kwargs):
+    """Queue a CM list update when preferences or account state changed."""
+    from .cm_sync import queue_sync
+    queue_sync(instance)
