@@ -39,6 +39,12 @@ applications:
         # Same idea for the event-location city picker's City table.
         python manage.py import_cities --if-empty || true
 
+    # Size of the app's persistent disk in MB, shared by both mounts below. Raised
+    # from 512 to 2048 on 2026-10-15 (production alert: <10% free, almost all of it
+    # uploaded PDFs under media/). Production was changed with
+    # `upsun resources:set --disk laborhub:2048`; this line keeps the repo in step.
+    disk: 2048
+
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
     # avatars, resumes and paper PDFs.
@@ -95,7 +101,10 @@ applications:
 
     web:
       commands:
-        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
+        # --timeout 120: gunicorn's default 30s killed the worker while an admin
+        # approval was merging a large PDF's cover (J1, 2026-10-16). 120s is ample
+        # headroom for that merge; the approval is also transactional now.
+        start: "gunicorn nole.wsgi:application -b unix:$SOCKET --timeout 120"
       upstream:
         socket_family: unix
       locations:

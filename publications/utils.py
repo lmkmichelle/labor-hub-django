@@ -105,6 +105,7 @@ def process_publication_form(request, form):
         publication.submitted_by = request.user
 
     publication.save()
+    form.discard_replaced_files(publication)
 
     raw_authors = request.POST.get('authors_input', '[]')
     set_ordered_authors(publication, handle_authors(raw_authors))
