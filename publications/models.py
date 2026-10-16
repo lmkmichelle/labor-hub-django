@@ -308,7 +308,20 @@ class Publication(Approvable):
             self.pdf.storage.delete(name)
 
     def approve(self, admin_user=None):
-        super().approve(admin_user)
-        self.assign_discussion_paper_number()
-        self.rebuild_covered_pdf()
+        """Approve, number and cover the paper as one all-or-nothing step.
+
+        Building the cover of a large PDF is slow, and this runs inside the admin's web
+        request. If it fails -- or gunicorn kills the worker mid-merge, as happened to
+        J1 -- the whole transaction rolls back, so the paper stays pending (and its
+        number is not used up) instead of ending up approved with no cover.
+        """
+        try:
+            with transaction.atomic():
+                super().approve(admin_user)
+                self.assign_discussion_paper_number()
+                self.rebuild_covered_pdf()
+        except Exception:
+            # The rows were rolled back; put this in-memory object back in step.
+            self.refresh_from_db()
+            raise
 

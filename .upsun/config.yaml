@@ -95,7 +95,10 @@ applications:
 
     web:
       commands:
-        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
+        # --timeout 120: gunicorn's default 30s killed the worker while an admin
+        # approval was merging a large PDF's cover (J1, 2026-10-16). 120s is ample
+        # headroom for that merge; the approval is also transactional now.
+        start: "gunicorn nole.wsgi:application -b unix:$SOCKET --timeout 120"
       upstream:
         socket_family: unix
       locations:
