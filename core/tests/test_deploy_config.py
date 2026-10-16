@@ -16,3 +16,9 @@ class UpsunConfigTests(SimpleTestCase):
         self.assertIn("gunicorn nole.wsgi:application", command)
         timeout = int(command.split("--timeout")[1].split()[0])
         self.assertGreaterEqual(timeout, 120)
+
+    def test_disk_is_not_set_in_the_config_file(self):
+        # With flexible resources Upsun rejects a `disk:` key and aborts the whole
+        # build ("disk configuration is not supported"; production deploy, 2026-10-16).
+        # Disk is changed with `upsun resources:set --disk laborhub:<MB>` instead.
+        self.assertNotIn("disk", self.app)
