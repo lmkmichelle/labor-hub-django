@@ -3,7 +3,7 @@
 {% load text_filters %}
 {% block title %}{{ publication.title }}{% endblock %}
 {% block content %}
-    <article class="max-w-none format lg:format-lg">
+    <article class="max-w-none format lg:format-lg{% if publication.is_job_market %} jm-theme{% endif %}">
         <div class="col md-6">
             <div class="flex flex-row w-full justify-between items-center">
                 <p>{{ publication.formatted_date }}</p>
@@ -87,7 +87,7 @@
                 <ul>
                     {% for version in versions %}
                         <li>
-                            <a href="{% url 'publication_detail' pk=version.pk %}">Discussion Paper No. {{ version.display_number }}: {{ version.title }}</a>
+                            <a href="{% url 'publication_detail' pk=version.pk %}">{% if version.is_job_market %}Job Market Paper{% else %}Discussion Paper{% endif %} No. {{ version.display_number }}: {{ version.title }}</a>
                             ({{ version.formatted_date }})
                         </li>
                     {% endfor %}

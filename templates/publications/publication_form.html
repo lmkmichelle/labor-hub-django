@@ -39,7 +39,7 @@ Submit Paper
     {% if form.paper_type %}
     <fieldset class="form-field not-format">
         <legend class="form-label">Type of paper<span class="text-red-600 ms-0.5" aria-hidden="true">*</span></legend>
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-3 {% if form.is_student %}sm:grid-cols-2{% else %}sm:grid-cols-3{% endif %}">
             {% for value, label in form.paper_type.field.choices %}
             <label class="type-card">
                 <input type="radio" name="{{ form.paper_type.name }}" value="{{ value }}"
@@ -50,8 +50,8 @@ Submit Paper
                 <span class="mt-1 block text-sm text-body">
                     {% if value == 'discussion' %}A paper for the Labor Hub discussion paper series.
                     {% elif value == 'job_market' %}Your job market paper, supervised by an advisor.
-                    {% elif form.revisable %}A new version of one of your published papers.
-                    {% else %}You have no published papers to revise yet.{% endif %}
+                    {% elif form.revisable %}A new version of one of your published {% if form.is_student %}job market {% endif %}papers.{% if form.is_student %} Your advisor approves it again.{% endif %}
+                    {% else %}You have no published {% if form.is_student %}job market {% endif %}papers to revise yet.{% endif %}
                 </span>
             </label>
             {% endfor %}

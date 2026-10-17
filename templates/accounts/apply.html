@@ -7,7 +7,9 @@
 <h3 class="title">{{ application_type }} Application</h3>
 
 {% if application_type == "Student" %}
-    <p class="pb-4">Please select an advisor from the list of available researchers.</p>
+    <p class="pb-4">Candidates for student membership should be currently enrolled in graduate study. Your advisor should be someone on your dissertation committee. If they are not already a member of the network, ask them to apply to join first so that they can add you.</p>
+{% else %}
+    <p class="pb-4">Candidates for the Labor Hub should have a record of producing research in labor economics, broadly defined. There is no minimum number of papers you need to have written or published.</p>
 {% endif %}
 
 <form method="POST" enctype="multipart/form-data" class="max-w-full mx-auto">

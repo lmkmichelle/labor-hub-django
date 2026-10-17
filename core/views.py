@@ -139,7 +139,8 @@ def home(request):
             # of the discussion series yet. display_number covers both the
             # regular series ("5") and a job-market paper's own "J" series.
             'subtitle': (
-                f'Discussion Paper No. {paper.display_number}'
+                f'{"Job Market Paper" if paper.is_job_market else "Discussion Paper"} '
+                f'No. {paper.display_number}'
                 if paper.display_number else ''
             ),
             'is_example': paper.is_example,

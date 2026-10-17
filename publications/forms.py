@@ -74,7 +74,11 @@ class PublicationForm(forms.ModelForm):
         self.user = user
         self._original = None
         self._is_job_market = False
+        self.is_student = bool(user and user.role == CustomUser.Role.STUDENT)
         self.revisable = list(Publication.revisable_by(user)) if user else []
+        if self.is_student:
+            # Students only post job market papers, so only those can be revised.
+            self.revisable = [p for p in self.revisable if p.is_job_market]
 
         if self.instance and self.instance.pk:
             # A revision is chosen when a paper is first submitted. Once a
@@ -93,6 +97,12 @@ class PublicationForm(forms.ModelForm):
                     'job_market' if self.instance.is_job_market else 'discussion')
             if self.instance.status == 'approved':
                 del self.fields['pdf']
+
+        if self.is_student and 'paper_type' in self.fields:
+            # No discussion-paper card for students: job market or its revision.
+            self.fields['paper_type'].choices = [
+                c for c in self.fields['paper_type'].choices if c[0] != 'discussion']
+            self.fields['paper_type'].initial = 'job_market'
 
         self.fields['jm_advisor'].queryset = CustomUser.objects.filter(
             role=CustomUser.Role.RESEARCHER, is_active=True,
@@ -209,8 +219,11 @@ class PublicationForm(forms.ModelForm):
 
         if self._original is not None:
             publication.revision_of = self._original
-            publication.jm_advisor_acknowledged = self._original.jm_advisor_acknowledged
-            publication.jm_advisor_responded_at = self._original.jm_advisor_responded_at
+            if not self.is_student:
+                # A fellow's revision inherits the original's advisor response; a
+                # student's goes back to the advisor for approval.
+                publication.jm_advisor_acknowledged = self._original.jm_advisor_acknowledged
+                publication.jm_advisor_responded_at = self._original.jm_advisor_responded_at
 
         upload = self.cleaned_data.get('pdf')
         if upload:
