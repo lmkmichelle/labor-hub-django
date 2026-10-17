@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% comment %} World Map is the one full-width exception so a side panel fits beside the map. {% endcomment %}
-{% block content_max_width %}max-w-screen-2xl{% endblock %}
-
 {% block content %}
     <article class="format lg:format-lg max-w-none">
         <h2>Explore Our Impact</h2>
@@ -32,7 +29,7 @@
             <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
 
             <aside id="map-panel"
-                   class="w-full lg:sticky lg:top-4 lg:w-96 lg:shrink-0"
+                   class="card-surface w-full lg:sticky lg:top-4 lg:w-80 lg:shrink-0 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
                    aria-live="polite">
                 <p class="text-sm text-body">Select a country on the map to see the fellows and research papers connected to it.</p>
             </aside>

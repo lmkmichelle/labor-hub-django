@@ -6,18 +6,21 @@ Both sections are rendered; map.js shows only the one matching the active tab.
 Inputs: country_name, scholars/papers (lists of {title,url,subtitle[,description]}),
 *_total, *_more (bool), *_see_all_url.
 {% endcomment %}
+<button type="button" data-map-back
+        class="mb-3 text-sm font-medium text-red-700 hover:underline">← All countries</button>
 <h3 class="text-2xl font-semibold text-heading">{{ country_name }}</h3>
 
 <section class="map-panel-section mt-4" data-metric="scholars">
+    <p class="mb-3 text-sm text-body">{{ scholars_total }} fellow{{ scholars_total|pluralize }}</p>
     {% if scholars %}
         <div class="flex flex-col gap-3">
             {% for item in scholars %}
                 {% include 'partials/_list_item.html' with title=item.title url=item.url subtitle=item.subtitle description=item.description %}
             {% endfor %}
         </div>
-        {% if scholars_more %}
+        {% if scholars_total %}
             <a href="{{ scholars_see_all_url }}"
-               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ scholars_total }} fellows →</a>
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">{% if scholars_more %}See all {{ scholars_total }} fellows{% else %}View in the directory{% endif %} →</a>
         {% endif %}
     {% else %}
         {% include 'partials/_empty_state.html' with text="No fellows are based here yet." %}
@@ -25,15 +28,16 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle[,description
 </section>
 
 <section class="map-panel-section mt-4" data-metric="papers">
+    <p class="mb-3 text-sm text-body">{{ papers_total }} research paper{{ papers_total|pluralize }}</p>
     {% if papers %}
         <div class="flex flex-col gap-3">
             {% for item in papers %}
                 {% include 'partials/_list_item.html' with title=item.title url=item.url subtitle=item.subtitle %}
             {% endfor %}
         </div>
-        {% if papers_more %}
+        {% if papers_total %}
             <a href="{{ papers_see_all_url }}"
-               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">See all {{ papers_total }} papers →</a>
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">{% if papers_more %}See all {{ papers_total }} papers{% else %}View in the papers list{% endif %} →</a>
         {% endif %}
     {% else %}
         {% include 'partials/_empty_state.html' with text="No research papers are based here yet." %}
