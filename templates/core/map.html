@@ -25,13 +25,16 @@
                     class="map-toggle">Research Papers</button>
         </div>
 
-        {# The drawer slides over the right edge of the map (lg+) once a country is selected. #}
-        <div class="relative overflow-hidden">
-            <div id="map-wrap">{% include 'partials/world.svg' %}</div>
+        {# Selecting a country opens a panel beside the map (lg+); the map narrows to make room instead of being covered. #}
+        <div class="lg:flex lg:items-start">
+            <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
 
-            <aside id="map-panel"
-                   class="card-surface mt-6 hidden w-full transition-transform duration-200 ease-out lg:absolute lg:inset-y-0 lg:right-0 lg:mt-0 lg:block lg:w-96 lg:translate-x-full lg:invisible lg:overflow-y-auto lg:shadow-lg"
-                   aria-live="polite"></aside>
+            <div id="map-drawer"
+                 class="hidden transition-[width,margin] duration-200 ease-out lg:sticky lg:top-4 lg:block lg:w-0 lg:shrink-0 lg:overflow-hidden lg:invisible">
+                <aside id="map-panel"
+                       class="card-surface w-full lg:max-h-[calc(100vh-2rem)] lg:w-96 lg:overflow-y-auto"
+                       aria-live="polite"></aside>
+            </div>
         </div>
     </div>
 
