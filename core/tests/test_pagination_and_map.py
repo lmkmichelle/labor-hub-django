@@ -69,3 +69,15 @@ class MapCountryNamesTests(TestCase):
         from core.constants import COUNTRY_CHOICES
         names = dict(COUNTRY_CHOICES)
         self.assertNotEqual(names["CG"], names["CD"])
+
+
+class VersionedStaticTests(TestCase):
+    def test_scripts_carry_a_version_so_a_deploy_busts_the_browser_cache(self):
+        html = self.client.get(reverse("map")).content.decode()
+        self.assertRegex(html, r'/static/js/map\.js\?v=\w+')
+
+    def test_deploy_tree_id_is_the_version_on_upsun(self):
+        from unittest import mock
+        from core.templatetags.static_version import static_v
+        with mock.patch.dict("os.environ", {"PLATFORM_TREE_ID": "abcdef1234567890"}):
+            self.assertTrue(static_v("js/map.js").endswith("?v=abcdef123456"))

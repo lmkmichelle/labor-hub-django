@@ -10,6 +10,7 @@ Submit Paper
 
 {% block content %}
 {% load static %}
+{% load static_version %}
 {% load form_tags %}
 
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
@@ -106,7 +107,7 @@ Submit Paper
     </div>
 </form>
 </article>
-<script src="{% static 'js/tagify.js' %}"></script>
-<script src="{% static 'js/conditional-field.js' %}"></script>
+<script src="{% static_v 'js/tagify.js' %}"></script>
+<script src="{% static_v 'js/conditional-field.js' %}"></script>
 
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load form_tags %}
 {% load static %}
+{% load static_version %}
 
 {% block title %}
     {% if object %}Edit event{% else %}Create an event{% endif %}
@@ -78,5 +79,5 @@
 
 </form>
  </article>
-<script src="{% static 'js/location-picker.js' %}"></script>
+<script src="{% static_v 'js/location-picker.js' %}"></script>
 {% endblock %}

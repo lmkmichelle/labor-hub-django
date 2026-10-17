@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load compress %}
 {% load static %}
+{% load static_version %}
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -212,8 +213,8 @@
       {% block footer %}
         {% include "partials/_footer.html" %}
       {% endblock %}
-      <script src="{% static 'js/flowbite.min.js' %}"></script>
-      <script src="{% static 'js/select-combobox.js' %}"></script>
+      <script src="{% static_v 'js/flowbite.min.js' %}"></script>
+      <script src="{% static_v 'js/select-combobox.js' %}"></script>
       {{ recommended_keywords|json_script:"recommended-keywords-data" }}
     </body>
   </html>
