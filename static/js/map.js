@@ -4,7 +4,7 @@
  * - Loads compact per-country counts (`/api/map/summary/`) and colours each
  *   country by the currently highlighted metric (scholars or papers).
  * - On country click, fetches a server-rendered panel fragment
- *   (`/api/map/country/<code>/`) and injects it into the side panel, so the card
+ *   (`/api/map/country/<code>/`) and injects it into a drawer that opens beside the map, so the card
  *   markup stays identical to the rest of the site.
  *
  * Endpoint URLs come from `data-*` attributes on #map-app (built with Django's
@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const summaryUrl = app.dataset.summaryUrl;
   const detailUrlTemplate = app.dataset.detailUrl;
-  const introText = panel.textContent.trim();
-  const TOP_COUNTRIES = 8;
 
   // A linked-in metric (e.g. "?metric=papers" from the Scholars/Papers pages)
   // picks which toggle is active on load; otherwise default to scholars.
@@ -40,54 +38,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Country names come from the SVG paths' title attribute.
-  function countryName(code) {
-    const path = document.querySelector(`#map-wrap path.land[id="${code}"]`);
-    return (path && path.getAttribute("title")) || code;
+  // The drawer is closed until a country is selected. Below `lg` it simply
+  // stacks under the map instead of sliding over it.
+  const CLOSED = ["hidden", "lg:block", "lg:translate-x-full", "lg:invisible"];
+
+  function openDrawer() {
+    panel.classList.remove(...CLOSED);
   }
 
-  // The panel's resting state: the countries with the most fellows / papers,
-  // each a button that opens the country just like clicking it on the map.
-  function renderCountryList() {
-    const label = currentMetric === "papers" ? "papers" : "fellows";
-    const rows = Object.entries(summary)
-      .map(([code, info]) => [code, (info && info[currentMetric]) || 0])
-      .filter(([, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1] || countryName(a[0]).localeCompare(countryName(b[0])))
-      .slice(0, TOP_COUNTRIES);
-
-    const heading = document.createElement("h3");
-    heading.className = "text-lg font-semibold text-heading";
-    heading.textContent = `Top countries by ${label}`;
-    const intro = document.createElement("p");
-    intro.className = "mt-1 mb-3 text-sm text-body";
-    intro.textContent = introText;
-    const list = document.createElement("ul");
-    list.className = "m-0 flex list-none flex-col p-0";
-    rows.forEach(([code, count]) => {
-      const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.countryCode = code;
-      button.className =
-        "flex w-full items-center justify-between rounded px-2 py-2 text-left text-sm hover:bg-neutral-secondary-medium";
-      const name = document.createElement("span");
-      name.className = "font-medium text-heading";
-      name.textContent = countryName(code);
-      const total = document.createElement("span");
-      total.className = "text-body";
-      total.textContent = String(count);
-      button.append(name, total);
-      item.appendChild(button);
-      list.appendChild(item);
-    });
-    panel.replaceChildren(heading, intro, list);
-  }
-
-  function showCountryList() {
+  function closeDrawer() {
     selectedCode = null;
     updateMapColors();
-    renderCountryList();
+    panel.classList.add(...CLOSED);
   }
 
   function setMetric(metric) {
@@ -98,11 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
     updateMapColors();
-    if (selectedCode) {
-      applyPanelMetric();
-    } else {
-      renderCountryList();
-    }
+    applyPanelMetric();
   }
 
   // The panel fragment holds both a scholars and a papers section; show only the
@@ -140,17 +98,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       summary = await response.json();
       updateMapColors();
-      if (!selectedCode) {
-        renderCountryList();
-      }
     } catch (err) {
       console.error("Failed to load map summary:", err);
     }
   }
 
   async function showCountry(code) {
+    // Clicking the open country again closes the drawer.
+    if (code === selectedCode) {
+      closeDrawer();
+      return;
+    }
     selectedCode = code;
     updateMapColors();
+    openDrawer();
     panel.setAttribute("aria-busy", "true");
     try {
       const url = detailUrlTemplate.replace("__CODE__", encodeURIComponent(code));
@@ -169,6 +130,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       panel.removeAttribute("aria-busy");
     }
+    const close = panel.querySelector("[data-map-close]");
+    if (close) {
+      close.focus({ preventScroll: true });
+    }
   }
 
   document.querySelectorAll(".map-toggle").forEach((btn) => {
@@ -179,13 +144,15 @@ document.addEventListener("DOMContentLoaded", () => {
     path.addEventListener("click", () => showCountry(path.id));
   });
 
-  // One delegated listener covers the list rows and the fragment's back button.
+  // Delegated: the close button lives in the fetched fragment.
   panel.addEventListener("click", (event) => {
-    const row = event.target.closest("[data-country-code]");
-    if (row) {
-      showCountry(row.dataset.countryCode);
-    } else if (event.target.closest("[data-map-back]")) {
-      showCountryList();
+    if (event.target.closest("[data-map-close]")) {
+      closeDrawer();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && selectedCode) {
+      closeDrawer();
     }
   });
 

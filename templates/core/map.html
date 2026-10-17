@@ -25,14 +25,13 @@
                     class="map-toggle">Research Papers</button>
         </div>
 
-        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
-            <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
+        {# The drawer slides over the right edge of the map (lg+) once a country is selected. #}
+        <div class="relative overflow-hidden">
+            <div id="map-wrap">{% include 'partials/world.svg' %}</div>
 
             <aside id="map-panel"
-                   class="card-surface w-full lg:sticky lg:top-4 lg:w-80 lg:shrink-0 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
-                   aria-live="polite">
-                <p class="text-sm text-body">Select a country on the map to see the fellows and research papers connected to it.</p>
-            </aside>
+                   class="card-surface mt-6 hidden w-full transition-transform duration-200 ease-out lg:absolute lg:inset-y-0 lg:right-0 lg:mt-0 lg:block lg:w-96 lg:translate-x-full lg:invisible lg:overflow-y-auto lg:shadow-lg"
+                   aria-live="polite"></aside>
         </div>
     </div>
 
