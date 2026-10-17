@@ -703,3 +703,10 @@ class FormHintTests(TestCase):
         content = self.client.get(reverse("apply_student")).content.decode()
         self.assertNotIn("data-upload-group", content)
         self.assertNotIn("research_paper_1", content)
+
+
+class ApplicationSubmittedPageTests(TestCase):
+    def test_page_is_styled_like_the_other_content_pages(self):
+        response = self.client.get(reverse("application_submitted"))
+        self.assertContains(response, 'class="format lg:format-lg max-w-none"')
+        self.assertContains(response, "Back to home")

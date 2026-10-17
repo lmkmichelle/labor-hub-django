@@ -39,6 +39,12 @@ applications:
         # Same idea for the event-location city picker's City table.
         python manage.py import_cities --if-empty || true
 
+    # The app's disk, memory and CPU are NOT set in this file: this project uses
+    # Upsun's flexible resources, and a `disk:` key here makes the build fail
+    # ("disk configuration is not supported"). Resize with the CLI instead; the disk
+    # shared by both mounts below was raised from 512 to 2048 MB on 2026-10-15 with
+    #   upsun resources:set --disk laborhub:2048
+
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
     # avatars, resumes and paper PDFs.
@@ -95,7 +101,10 @@ applications:
 
     web:
       commands:
-        start: "gunicorn nole.wsgi:application -b unix:$SOCKET"
+        # --timeout 120: gunicorn's default 30s killed the worker while an admin
+        # approval was merging a large PDF's cover (J1, 2026-10-16). 120s is ample
+        # headroom for that merge; the approval is also transactional now.
+        start: "gunicorn nole.wsgi:application -b unix:$SOCKET --timeout 120 --worker-class gthread --threads 4"
       upstream:
         socket_family: unix
       locations:

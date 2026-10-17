@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import UploadedFile
 
 from accounts.models import CustomUser
 from core.constants import PAPER_COUNTRY_CHOICES, RECOMMENDED_KEYWORDS
@@ -79,6 +80,12 @@ class PublicationForm(forms.ModelForm):
         if self.is_student:
             # Students only post job market papers, so only those can be revised.
             self.revisable = [p for p in self.revisable if p.is_job_market]
+        # The files the paper has stored *now*. ModelForm assigns a new upload to the
+        # instance during validation, long before save(), so this is the only moment
+        # these names are still the old ones (see discard_replaced_files).
+        self._stored_files = (
+            [f.name for f in (self.instance.pdf_original, self.instance.pdf) if f]
+            if self.instance.pk else [])
 
         if self.instance and self.instance.pk:
             # A revision is chosen when a paper is first submitted. Once a
@@ -225,8 +232,15 @@ class PublicationForm(forms.ModelForm):
                 publication.jm_advisor_acknowledged = self._original.jm_advisor_acknowledged
                 publication.jm_advisor_responded_at = self._original.jm_advisor_responded_at
 
+        # A new upload on a pending paper replaces both stored copies; the old ones
+        # are deleted once the new ones are saved (discard_replaced_files).
+        self._replaced_files = []
         upload = self.cleaned_data.get('pdf')
-        if upload:
+        # When nothing was uploaded, Django hands back the paper's *existing* file here
+        # (truthy, with a name). Treating that as a new upload re-saved both PDFs on
+        # every edit of a pending paper -- under a doubled path, orphaning the originals.
+        if isinstance(upload, UploadedFile):
+            self._replaced_files = list(self._stored_files)
             # Keep the author's file untouched on pdf_original -- the only
             # thing Publication.rebuild_covered_pdf() ever reads from -- and
             # mirror it onto pdf uncovered for now, so the author can still
@@ -240,5 +254,13 @@ class PublicationForm(forms.ModelForm):
         if commit:
             publication.save()
             self.save_m2m()
+            self.discard_replaced_files(publication)
 
         return publication
+
+    def discard_replaced_files(self, publication):
+        """Delete the PDFs a new upload replaced. Call after the publication is saved
+        (process_publication_form does this; save(commit=True) does it itself)."""
+        for name in getattr(self, '_replaced_files', []):
+            publication.discard_file(name)
+        self._replaced_files = []

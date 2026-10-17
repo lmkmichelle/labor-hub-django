@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
@@ -5,6 +7,8 @@ from django.utils.html import format_html
 
 from core.models import ApprovalStatus
 from .models import ContactMessage
+
+logger = logging.getLogger(__name__)
 
 
 class ApprovableAdmin(admin.ModelAdmin):
@@ -123,6 +127,16 @@ class ApprovableAdmin(admin.ModelAdmin):
                 self.message_user(request, "Item rejected.", messages.WARNING)
         except ValueError as exc:
             self.message_user(request, str(exc), messages.ERROR)
+        except Exception as exc:
+            # e.g. the cover could not be built. approve() is all-or-nothing, so the
+            # item is still pending and can simply be approved again.
+            logger.exception("Could not %s %s %s", "approve" if approve else "reject",
+                             self.model.__name__, pk)
+            self.message_user(
+                request,
+                f"Could not {'approve' if approve else 'reject'} this item ({exc}). "
+                "It was left pending; nothing was changed.",
+                messages.ERROR)
         return self._changelist_redirect()
 
     def process_approve(self, request, pk):

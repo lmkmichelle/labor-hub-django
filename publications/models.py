@@ -284,6 +284,9 @@ class Publication(Approvable):
         author_names = [str(author) for author in self.ordered_authors]
         with self.pdf_original.open('rb') as f:
             original_bytes = f.read()
+        # What `pdf` pointed at before this rebuild: the author's plain-copy mirror
+        # the first time (a pending paper), the previous cover on every rebuild after.
+        previous_pdf = self.pdf.name if self.pdf else ''
 
         # A job-market paper reuses the exact same backdrop/layout -- only the
         # overlay differs: black instead of Carnelian text, the "Job Market
@@ -304,9 +307,38 @@ class Publication(Approvable):
             )
             filename = f"DP{self.display_number}-{slugify(self.title)[:60]}.pdf"
         self.pdf.save(filename, ContentFile(covered), save=save)
+        # Django never deletes a file it replaces, so without this every approval and
+        # every edit left another full-size PDF behind on the (small) persistent disk.
+        # Only once the new file is recorded (save=True) is the old one unreferenced.
+        if save:
+            self.discard_file(previous_pdf)
+
+    def discard_file(self, name):
+        """Delete a stored file this paper no longer points at.
+
+        Never deletes a file the paper still uses (`pdf` or `pdf_original`), and is
+        a no-op for an empty name or a file that is already gone.
+        """
+        in_use = {self.pdf.name if self.pdf else '',
+                  self.pdf_original.name if self.pdf_original else ''}
+        if name and name not in in_use:
+            self.pdf.storage.delete(name)
 
     def approve(self, admin_user=None):
-        super().approve(admin_user)
-        self.assign_discussion_paper_number()
-        self.rebuild_covered_pdf()
+        """Approve, number and cover the paper as one all-or-nothing step.
+
+        Building the cover of a large PDF is slow, and this runs inside the admin's web
+        request. If it fails -- or gunicorn kills the worker mid-merge, as happened to
+        J1 -- the whole transaction rolls back, so the paper stays pending (and its
+        number is not used up) instead of ending up approved with no cover.
+        """
+        try:
+            with transaction.atomic():
+                super().approve(admin_user)
+                self.assign_discussion_paper_number()
+                self.rebuild_covered_pdf()
+        except Exception:
+            # The rows were rolled back; put this in-memory object back in step.
+            self.refresh_from_db()
+            raise
 
