@@ -326,6 +326,49 @@
   .home-tab-count {
     @apply rounded-full bg-neutral-secondary-medium px-2 py-0.5 text-xs font-semibold text-body;
   }
+  /* Paper-type option cards on the submit form (publications/publication_form.html):
+     a visually-hidden radio inside a label, so the whole card is the click target
+     and the selected state comes from :has(:checked), no JS. */
+  .type-card {
+    @apply relative block p-4 bg-neutral-primary-soft border border-default rounded-base shadow-xs cursor-pointer hover:bg-neutral-secondary-medium has-checked:border-red-700 has-checked:bg-red-50 has-focus-visible:ring-2 has-focus-visible:ring-red-600 has-disabled:opacity-60 has-disabled:cursor-not-allowed;
+  }
+  /* The fields a chosen card reveals sit indented under the cards. */
+  .type-subpanel {
+    @apply mb-5 ms-3 ps-4 border-s-2 border-red-700;
+  }
+
+  /* Grouped PDF uploads on the application form (partials/_upload_slot.html,
+     static/js/file-slot.js): a card holds one or more drop slots. */
+  .upload-card {
+    @apply p-4 bg-neutral-primary-soft border border-default rounded-base shadow-xs;
+  }
+  .upload-slot-label {
+    @apply flex flex-col items-center justify-center gap-1 min-h-28 p-4 text-center border-2 border-solid border-default-medium rounded-base cursor-pointer hover:bg-neutral-secondary-medium has-focus-visible:ring-2 has-focus-visible:ring-red-600;
+  }
+  .upload-slot-done .upload-slot-label,
+  .upload-slot-over .upload-slot-label {
+    @apply border-red-700 bg-red-50;
+  }
+  .upload-slot-title {
+    @apply text-sm font-semibold text-heading;
+  }
+  .upload-slot-hint {
+    @apply text-sm text-body;
+  }
+  .upload-slot-file {
+    @apply text-sm font-medium text-red-700 break-all;
+  }
+  .upload-slot-remove {
+    @apply mt-1 text-sm text-body hover:text-red-700;
+  }
+  /* A two-option switch (the CV Link | Upload PDF choice): radios in labels. */
+  .segmented {
+    @apply inline-flex p-0.5 bg-neutral-secondary-medium border border-default-medium rounded-base;
+  }
+  .segmented-option {
+    @apply px-3 py-1.5 text-sm font-medium text-body rounded-base cursor-pointer has-checked:bg-neutral-primary-soft has-checked:text-heading has-checked:shadow-xs has-focus-visible:ring-2 has-focus-visible:ring-red-600;
+  }
+
   /* FAQ accordion (core/faq.html): native <details>, no JS. */
   .faq-item {
     @apply border-b border-default py-3;
@@ -355,9 +398,58 @@
     @apply mt-2 text-body;
   }
 
-  /* Plain hyperlinks inside prose pages use the carnelian red theme.
-     Only class-less anchors: buttons and cards carry their own classes. */
+}
+
+/* Links are not underlined. These rules sit in the utilities layer on purpose: the
+   typography plugin's `.format a { underline }` is emitted there, and a rule in a
+   lower layer (components) loses to it no matter its specificity. Buttons, cards and
+   nav links (anything with a class) never underline; plain prose links are carnelian
+   red and underline only on hover or keyboard focus. */
+@layer utilities {
+  .format a {
+    text-decoration-line: none;
+  }
   .format a:where(:not([class])) {
-    @apply text-red-700 underline hover:text-red-800;
+    @apply text-red-700;
+  }
+  .format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-red-800 underline;
+  }
+}
+
+/* Job market papers read green instead of carnelian: the card, the detail page and
+   everything red inside them (number pill, authors, topic pills, icons, Edit button). */
+@layer utilities {
+  .jm-theme .pill-accent {
+    @apply bg-green-100 text-green-800;
+  }
+  .jm-theme .card-inline-link,
+  .jm-theme a.text-red-700,
+  .jm-theme.format a:where(:not([class])),
+  .jm-theme .format a:where(:not([class])) {
+    @apply text-green-700;
+  }
+  .jm-theme .format a:where(:not([class])):is(:hover, :focus-visible),
+  .jm-theme.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-green-800 underline;
+  }
+  .jm-theme svg {
+    @apply fill-green-700;
+  }
+  .jm-theme a.bg-red-700 {
+    @apply bg-green-700 hover:bg-green-800 focus:ring-green-600;
+  }
+}
+
+/* FAQ sections. The typography plugin zeroes heading margins with a rule of equal
+   specificity that is emitted later, so `mt-*` utilities lose; `.format .faq-section`
+   is one class higher. Space sits above each heading and below each section's last
+   question. */
+@layer utilities {
+  .format .faq-section {
+    margin-top: 2rem;
+  }
+  .format .faq-item:has(+ .faq-section) {
+    margin-bottom: 2rem;
   }
 }

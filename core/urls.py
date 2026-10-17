@@ -1,5 +1,5 @@
 from django.urls import include, path
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 from . import views
 from .views import ScholarsListView, SuperuserTemplateView
 
@@ -15,7 +15,9 @@ urlpatterns = [
     path('faq/', TemplateView.as_view(template_name='core/faq.html'), name='faq'),
     path('privacy/', TemplateView.as_view(template_name='core/privacy.html'), name='privacy'),
     path('accessibility/', TemplateView.as_view(template_name='core/accessibility.html'), name='accessibility'),
-    path('scholars/', ScholarsListView.as_view(), name='scholars'),
+    path('fellows/', ScholarsListView.as_view(), name='scholars'),
+    # The directory used to live at /scholars/; keep old links and bookmarks working.
+    path('scholars/', RedirectView.as_view(pattern_name='scholars', permanent=True, query_string=True)),
 
     # Internal admin guides. Superuser-only: they document moderation workflows
     # and are linked from the profile dropdown, not from the public footer.

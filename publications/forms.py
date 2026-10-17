@@ -13,8 +13,7 @@ from .utils import handle_keywords
 class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
-        fields = ['title', 'abstract', 'country_code', 'is_job_market',
-                  'jm_advisor', 'pdf']
+        fields = ['title', 'abstract', 'country_code', 'jm_advisor', 'pdf']
 
     authors_input = forms.CharField(
         required=True,
@@ -34,9 +33,18 @@ class PublicationForm(forms.ModelForm):
         label='Country of Study',
     )
 
-    is_job_market = forms.BooleanField(
-        required=False,
-        label='Is this a job market paper?',
+    # Replaces the old "job market paper" / "revised version" checkboxes: one
+    # choice, shown as three cards, each revealing only its own fields.
+    PAPER_TYPES = [
+        ('discussion', 'Discussion paper'),
+        ('job_market', 'Job market paper'),
+        ('revision', 'Revision of a previous paper'),
+    ]
+    paper_type = forms.ChoiceField(
+        choices=PAPER_TYPES,
+        widget=forms.RadioSelect,
+        initial='discussion',
+        label='Type of paper',
     )
 
     jm_advisor = forms.ModelChoiceField(
@@ -52,23 +60,26 @@ class PublicationForm(forms.ModelForm):
         widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
     )
 
-    is_revision = forms.BooleanField(
+    # Tagify (single pill) writes JSON here: [{"value": "323 - Title", "id": 42}].
+    # Only the id is used, and it is re-checked against revisable_by() in clean().
+    revision_of_input = forms.CharField(
         required=False,
-        label='Is this a revised version of a previous discussion paper?',
-    )
-
-    previous_number = forms.CharField(
-        required=False,
-        max_length=20,
-        label='Number of the previous discussion paper',
-        help_text='For example 323, or J3 for a job market paper. '
-                  'If you are revising 323.1, enter 323.',
+        label='Paper you are revising',
+        help_text='Only papers you submitted or are an author of. '
+                  'To revise 323.1, pick 323.',
+        widget=forms.TextInput(attrs={'id': 'revision-of-input'}),
     )
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
         self._original = None
+        self._is_job_market = False
+        self.is_student = bool(user and user.role == CustomUser.Role.STUDENT)
+        self.revisable = list(Publication.revisable_by(user)) if user else []
+        if self.is_student:
+            # Students only post job market papers, so only those can be revised.
+            self.revisable = [p for p in self.revisable if p.is_job_market]
         # The files the paper has stored *now*. ModelForm assigns a new upload to the
         # instance during validation, long before save(), so this is the only moment
         # these names are still the old ones (see discard_replaced_files).
@@ -77,13 +88,28 @@ class PublicationForm(forms.ModelForm):
             if self.instance.pk else [])
 
         if self.instance and self.instance.pk:
-            # Revisions are chosen when a paper is first submitted. Once a
+            # A revision is chosen when a paper is first submitted. Once a
             # paper is published its PDF is fixed for good: a new version is a
             # new submission, not an edit.
-            del self.fields['is_revision']
-            del self.fields['previous_number']
+            del self.fields['revision_of_input']
+            if self.instance.revision_of_id:
+                # A revision stays in its original's series; nothing to choose.
+                del self.fields['paper_type']
+            else:
+                # Editing never changes a paper into a revision; if no type is
+                # posted the paper simply keeps the one it has.
+                self.fields['paper_type'].choices = self.PAPER_TYPES[:2]
+                self.fields['paper_type'].required = False
+                self.fields['paper_type'].initial = (
+                    'job_market' if self.instance.is_job_market else 'discussion')
             if self.instance.status == 'approved':
                 del self.fields['pdf']
+
+        if self.is_student and 'paper_type' in self.fields:
+            # No discussion-paper card for students: job market or its revision.
+            self.fields['paper_type'].choices = [
+                c for c in self.fields['paper_type'].choices if c[0] != 'discussion']
+            self.fields['paper_type'].initial = 'job_market'
 
         self.fields['jm_advisor'].queryset = CustomUser.objects.filter(
             role=CustomUser.Role.RESEARCHER, is_active=True,
@@ -125,45 +151,86 @@ class PublicationForm(forms.ModelForm):
             raise forms.ValidationError("Select at least one research topic.")
         return cleaned
 
-    def clean_previous_number(self):
-        return (self.cleaned_data.get('previous_number') or '').strip()
+    @property
+    def revision_whitelist(self):
+        """The papers the picker offers, as Tagify whitelist entries."""
+        return [
+            {'value': f'[{paper.display_number}] {paper.title}', 'id': paper.pk}
+            for paper in self.revisable
+        ]
+
+    def _chosen_paper_id(self):
+        """The pk Tagify submitted, or None. Accepts its JSON and a bare id."""
+        raw = (self.cleaned_data.get('revision_of_input') or '').strip()
+        if not raw:
+            return None
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            data = raw
+        if isinstance(data, list):
+            data = data[0] if data else None
+        if isinstance(data, dict):
+            data = data.get('id')
+        try:
+            return int(data)
+        except (TypeError, ValueError):
+            return None
 
     def clean(self):
         cleaned = super().clean()
-        if cleaned.get('is_revision'):
-            raw = cleaned.get('previous_number', '')
-            original = Publication.find_original(raw)
-            if original is None:
-                self.add_error(
-                    'previous_number',
-                    'We could not find a published discussion paper with that number.')
-            elif not (self.user and original.is_authored_by(self.user)):
-                self.add_error(
-                    'previous_number',
-                    'Only an author of the original paper can submit a revision.')
+        if self.instance.pk and self.instance.revision_of_id:
+            # Editing a revision: its series and advisor were fixed at submission.
+            self._is_job_market = self.instance.is_job_market
+            cleaned['jm_advisor'] = self.instance.jm_advisor
+            return cleaned
+
+        paper_type = cleaned.get('paper_type')
+        if not paper_type and self.instance.pk:
+            paper_type = 'job_market' if self.instance.is_job_market else 'discussion'
+        self._is_job_market = paper_type == 'job_market'
+
+        if paper_type == 'revision':
+            chosen = self._chosen_paper_id()
+            if chosen is None:
+                self.add_error('revision_of_input', 'Select the paper you are revising.')
             else:
-                self._original = original
-                # A revision stays in its original's series (J3 -> J3.1).
-                cleaned['is_job_market'] = original.is_job_market
-                cleaned['jm_advisor'] = original.jm_advisor
-                return cleaned
-        if cleaned.get('is_job_market') and not cleaned.get('jm_advisor'):
+                # Checked server-side: Tagify's whitelist is only a convenience,
+                # a hand-made POST could name anyone's paper.
+                original = next((p for p in self.revisable if p.pk == chosen), None)
+                if original is None:
+                    self.add_error(
+                        'revision_of_input',
+                        'You can only revise papers you submitted or authored.')
+                else:
+                    self._original = original
+                    # A revision stays in its original's series (J3 -> J3.1).
+                    self._is_job_market = original.is_job_market
+                    cleaned['jm_advisor'] = original.jm_advisor
+                    return cleaned
+            return cleaned
+
+        if paper_type == 'job_market' and not cleaned.get('jm_advisor'):
             self.add_error(
                 'jm_advisor',
                 'Select your advisor for a job market paper.',
             )
-        if not cleaned.get('is_job_market'):
-            # An advisor picked without ticking the box is ignored.
+        if paper_type != 'job_market':
+            # An advisor picked under another type is ignored.
             cleaned['jm_advisor'] = None
         return cleaned
 
     def save(self, commit=True):
         publication = super().save(commit=False)
+        publication.is_job_market = self._is_job_market
 
         if self._original is not None:
             publication.revision_of = self._original
-            publication.jm_advisor_acknowledged = self._original.jm_advisor_acknowledged
-            publication.jm_advisor_responded_at = self._original.jm_advisor_responded_at
+            if not self.is_student:
+                # A fellow's revision inherits the original's advisor response; a
+                # student's goes back to the advisor for approval.
+                publication.jm_advisor_acknowledged = self._original.jm_advisor_acknowledged
+                publication.jm_advisor_responded_at = self._original.jm_advisor_responded_at
 
         # A new upload on a pending paper replaces both stored copies; the old ones
         # are deleted once the new ones are saved (discard_replaced_files).

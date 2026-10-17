@@ -75,6 +75,20 @@
       });
     }
 
+    // Lists already fetched this page view, by country: switching back is instant.
+    var cache = {};
+    var requestId = 0;
+
+    function showLoading() {
+      universitySelect.innerHTML = "";
+      var option = document.createElement("option");
+      option.value = "";
+      option.disabled = true;
+      option.selected = true;
+      option.textContent = "Loading institutions\u2026";
+      universitySelect.appendChild(option);
+    }
+
     function load() {
       var country = (countrySelect.value || "").toUpperCase();
       if (!country) {
@@ -84,6 +98,12 @@
       }
 
       setVisible(true);
+      if (cache[country]) {
+        refill(cache[country]);
+        return;
+      }
+      showLoading();
+      var thisRequest = ++requestId;
       fetch(endpoint + "?country=" + encodeURIComponent(country), {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       })
@@ -91,11 +111,20 @@
           return response.ok ? response.json() : { universities: [] };
         })
         .then(function (payload) {
-          refill((payload && payload.universities) || []);
+          var list = (payload && payload.universities) || [];
+          if (list.length) {
+            cache[country] = list;
+          }
+          // A slower answer for a country the user already left is ignored.
+          if (thisRequest === requestId) {
+            refill(list);
+          }
         })
         .catch(function () {
           // Leave the free-text fallback field as the way through.
-          refill([]);
+          if (thisRequest === requestId) {
+            refill([]);
+          }
         });
     }
 

@@ -1,3 +1,5 @@
+import json
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -55,54 +57,129 @@ class RevisionNumberingTests(TestCase):
         self.assertEqual(cite_key(make_revision(original)), "LaborHubDP323.1")
 
 
+def pick(paper):
+    """What Tagify submits after choosing ``paper`` in the revision picker."""
+    return json.dumps([{"value": f"[{paper.display_number}] {paper.title}", "id": paper.pk}])
+
+
 class RevisionFormTests(TestCase):
-    def _form(self, user, **data):
-        post = create_post_data(is_revision="on", **data)
+    def _form(self, user, paper=None, **data):
+        post = create_post_data(paper_type="revision", **data)
+        if paper is not None:
+            post["revision_of_input"] = pick(paper)
         return PublicationForm(post, user=user)
 
-    def test_author_can_revise_by_original_number(self):
+    def test_author_can_revise_their_paper(self):
         original, user = numbered_paper(323)
-        form = self._form(user, previous_number="323")
+        form = self._form(user, original)
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form._original, original)
 
-    def test_revision_number_resolves_to_the_original(self):
-        original, user = numbered_paper(323)
-        form = self._form(user, previous_number="323.1")
+    def test_submitter_who_is_not_listed_as_an_author_can_revise(self):
+        original, _ = numbered_paper(323)
+        submitter = make_user(email="sub@example.com", first_name="Sub", last_name="Mitter")
+        Publication.objects.filter(pk=original.pk).update(submitted_by=submitter)
+        form = self._form(submitter, original)
         self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form._original, original)
 
-    def test_unknown_number_is_rejected(self):
-        _, user = numbered_paper(323)
-        form = self._form(user, previous_number="999")
-        self.assertFalse(form.is_valid())
-        self.assertIn("previous_number", form.errors)
-
-    def test_non_author_is_rejected(self):
-        numbered_paper(323)
+    def test_someone_elses_paper_is_rejected(self):
+        original, _ = numbered_paper(323)
         stranger = make_user(email="x@example.com", first_name="Not", last_name="Author")
-        form = self._form(stranger, previous_number="323")
+        form = self._form(stranger, original)
         self.assertFalse(form.is_valid())
-        self.assertIn("previous_number", form.errors)
+        self.assertIn("revision_of_input", form.errors)
 
-    def test_unpublished_original_is_rejected(self):
+    def test_a_forged_id_for_a_paper_not_in_the_picker_is_rejected(self):
+        original, _ = numbered_paper(323)
+        stranger = make_user(email="x@example.com", first_name="Not", last_name="Author")
+        post = create_post_data(paper_type="revision", revision_of_input=str(original.pk))
+        self.assertFalse(PublicationForm(post, user=stranger).is_valid())
+
+    def test_unpublished_paper_is_rejected(self):
         original, user = numbered_paper(323)
         Publication.objects.filter(pk=original.pk).update(status="pending")
-        form = self._form(user, previous_number="323")
-        self.assertFalse(form.is_valid())
+        original.refresh_from_db()
+        self.assertFalse(self._form(user, original).is_valid())
 
-    def test_ticking_without_a_number_is_rejected(self):
+    def test_choosing_revision_without_a_paper_is_rejected(self):
         _, user = numbered_paper(323)
-        self.assertFalse(self._form(user, previous_number="").is_valid())
+        form = self._form(user)
+        self.assertFalse(form.is_valid())
+        self.assertIn("revision_of_input", form.errors)
+
+    def test_a_revision_inherits_the_job_market_series_and_advisor(self):
+        advisor = make_user(email="adv@example.com", first_name="Ad", last_name="Visor")
+        user = make_user()
+        original = make_publication(
+            status="approved", is_job_market=True, job_market_paper_number=3, jm_advisor=advisor)
+        original.authors.add(Author.objects.get_or_create(user=user, name="Jane Doe")[0])
+        form = self._form(user, original)
+        self.assertTrue(form.is_valid(), form.errors)
+        revision = form.save()
+        self.assertTrue(revision.is_job_market)
+        self.assertEqual(revision.jm_advisor, advisor)
 
     def test_submitting_creates_a_linked_pending_revision(self):
         original, user = numbered_paper(323)
         self.client.force_login(user)
         self.client.post(reverse("submit_paper"), create_post_data(
-            is_revision="on", previous_number="323"))
+            paper_type="revision", revision_of_input=pick(original)))
         revision = Publication.objects.get(title="New Paper")
         self.assertEqual(revision.revision_of, original)
         self.assertEqual(revision.status, "pending")
+
+
+class RevisablePapersTests(TestCase):
+    def test_lists_only_published_originals_the_user_submitted_or_authored(self):
+        original, user = numbered_paper(323)
+        make_revision(original)                       # a revision is not offered
+        pending = make_publication(status="pending")  # not published yet
+        pending.authors.add(Author.objects.get(user=user))
+        other = make_publication(status="approved", discussion_paper_number=400)
+        submitted = make_publication(status="approved", discussion_paper_number=401,
+                                     submitted_by=user)
+        self.assertEqual(set(Publication.revisable_by(user)), {original, submitted})
+        self.assertNotIn(other, Publication.revisable_by(user))
+
+    def test_matches_an_author_typed_in_under_the_users_full_name(self):
+        paper = make_publication(status="approved", discussion_paper_number=500)
+        paper.authors.add(Author.objects.create(user=None, name="Jane Doe"))
+        self.assertEqual(list(Publication.revisable_by(make_user())), [paper])
+
+    def test_anonymous_user_gets_nothing(self):
+        from django.contrib.auth.models import AnonymousUser
+        numbered_paper(323)
+        self.assertFalse(Publication.revisable_by(AnonymousUser()).exists())
+
+
+class SubmitPageTests(TestCase):
+    def test_shows_the_three_type_cards_and_the_users_papers(self):
+        original, user = numbered_paper(323, title="Wages and Work")
+        self.client.force_login(user)
+        page = self.client.get(reverse("submit_paper"))
+        for label in ("Discussion paper", "Job market paper", "Revision of a previous paper"):
+            self.assertContains(page, label)
+        self.assertContains(page, 'id="revision-papers-data"')
+        self.assertContains(page, "[323] Wages and Work")
+        self.assertNotContains(page, "\\u2014")
+        self.assertNotContains(page, "You have no published papers to revise yet.")
+
+    def test_papers_the_user_cannot_revise_are_not_in_the_page(self):
+        numbered_paper(323, title="Someone Else's Paper")
+        stranger = make_user(email="x@example.com", first_name="Not", last_name="Author")
+        self.client.force_login(stranger)
+        page = self.client.get(reverse("submit_paper"))
+        self.assertNotContains(page, "Someone Else")
+        self.assertContains(page, "You have no published papers to revise yet.")
+        self.assertContains(page, "disabled")
+
+    def test_editing_offers_no_revision_card(self):
+        paper, user = numbered_paper(323)
+        self.client.force_login(user)
+        page = self.client.get(reverse("edit_publication", kwargs={"pk": paper.pk}))
+        self.assertNotContains(page, 'value="revision"')
+        self.assertContains(page, 'value="job_market"')
+        self.assertContains(page, "checked")
 
 
 class PublishedPaperEditingTests(TestCase):
@@ -118,7 +195,8 @@ class PublishedPaperEditingTests(TestCase):
     def test_edit_form_has_no_revision_fields(self):
         paper, user = numbered_paper(323)
         fields = PublicationForm(instance=paper, user=user).fields
-        self.assertNotIn("is_revision", fields)
+        self.assertNotIn("revision_of_input", fields)
+        self.assertEqual([c[0] for c in fields["paper_type"].choices], ["discussion", "job_market"])
 
     def test_posted_pdf_is_ignored_on_a_published_paper(self):
         paper, user = numbered_paper(323)
@@ -131,6 +209,34 @@ class PublishedPaperEditingTests(TestCase):
         self.assertEqual(paper.title, "Retitled")
         self.assertFalse(paper.pdf_original)
         self.assertIsNone(paper.revision_number)
+
+
+class EditingKeepsTheTypeTests(TestCase):
+    def test_editing_a_job_market_paper_keeps_its_type_and_advisor(self):
+        advisor = make_user(email="adv@example.com", first_name="Ad", last_name="Visor")
+        user = make_user()
+        paper = make_publication(status="pending", is_job_market=True, jm_advisor=advisor)
+        paper.authors.add(Author.objects.get_or_create(user=user, name="Jane Doe")[0])
+        form = PublicationForm(
+            {k: v for k, v in create_post_data(jm_advisor=advisor.pk).items() if k != "paper_type"},
+            instance=paper, user=user)
+        self.assertTrue(form.is_valid(), form.errors)
+        saved = form.save()
+        self.assertTrue(saved.is_job_market)
+        self.assertEqual(saved.jm_advisor, advisor)
+
+    def test_editing_a_revision_keeps_its_series_and_has_no_type_choice(self):
+        original, user = numbered_paper(323)
+        revision = make_revision(original)
+        form = PublicationForm(instance=revision, user=user)
+        self.assertNotIn("paper_type", form.fields)
+        edited = PublicationForm(
+            {k: v for k, v in create_post_data(title="Retitled").items() if k != "paper_type"},
+            instance=revision, user=user)
+        self.assertTrue(edited.is_valid(), edited.errors)
+        saved = edited.save()
+        self.assertEqual(saved.revision_of, original)
+        self.assertEqual(saved.is_job_market, original.is_job_market)
 
 
 class OtherVersionsTests(TestCase):

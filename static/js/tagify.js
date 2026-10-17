@@ -106,6 +106,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   const editors_input = document.querySelector("#editors-input");
   const research_interests_input = document.querySelector("#research-interests-input");
   const topics_input = document.querySelector("#topics-input");
+  const revision_input = document.querySelector("#revision-of-input");
+  const networks_input = document.querySelector("#networks-input");
+  const previous_jm_input = document.querySelector("#previous-jm-input");
 
   function getRecommendedKeywords() {
     const el = document.getElementById("recommended-keywords-data");
@@ -206,5 +209,81 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     addTagReorderButtons(topics_tag);
+  }
+
+  if (revision_input) {
+    // One pill: the published paper being revised, chosen from the (short) list
+    // of the user's own papers embedded in the page. The server re-checks the
+    // chosen id (PublicationForm.clean), so this is only a convenience.
+    const dataEl = document.getElementById("revision-papers-data");
+    let papers = [];
+    try {
+      papers = dataEl ? JSON.parse(dataEl.textContent) : [];
+    } catch (e) {
+      papers = [];
+    }
+    new Tagify(revision_input, {
+      mode: "select",
+      whitelist: papers,
+      enforceWhitelist: true,
+      dropdown: {
+        enabled: 0,
+        closeOnSelect: true,
+        maxItems: Math.max(papers.length, 1),
+        classname: "dropdown-panel"
+      },
+      originalInputValueFormat: values =>
+        JSON.stringify(values.map(v => ({value: v.value, id: v.id}))),
+    });
+  }
+
+  function readJson(id) {
+    const el = document.getElementById(id);
+    try {
+      return el ? JSON.parse(el.textContent) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  if (networks_input) {
+    // Closed list: several pills allowed (a person can be in more than one network).
+    // The server re-checks the choices (BaseApplicationForm.other_networks).
+    const networks = readJson("networks-data");
+    const networks_tag = new Tagify(networks_input, {
+      whitelist: networks,
+      enforceWhitelist: true,
+      delimiters: null,
+      dropdown: {
+        enabled: 0,
+        closeOnSelect: false,
+        maxItems: networks.length,
+        classname: "dropdown-panel"
+      },
+      originalInputValueFormat: values =>
+        JSON.stringify(values.map(v => ({value: v.value}))),
+    });
+    // Per-network URL fields (conditional-field.js) watch this input.
+    networks_tag.on("change", () =>
+      networks_input.dispatchEvent(new Event("pillchange", {bubbles: true})));
+  }
+
+  if (previous_jm_input) {
+    // One pill: the applicant's own job market paper, chosen from the published ones.
+    // The server checks the id against the same list (ResearcherApplicationForm.clean).
+    const papers = readJson("previous-jm-data");
+    new Tagify(previous_jm_input, {
+      mode: "select",
+      whitelist: papers,
+      enforceWhitelist: true,
+      dropdown: {
+        enabled: 0,
+        closeOnSelect: true,
+        maxItems: Math.max(papers.length, 1),
+        classname: "dropdown-panel"
+      },
+      originalInputValueFormat: values =>
+        JSON.stringify(values.map(v => ({value: v.value, id: v.id}))),
+    });
   }
 });

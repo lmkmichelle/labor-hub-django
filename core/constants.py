@@ -49,7 +49,7 @@ COUNTRY_CHOICES = [
     ("CO", "Colombia"),
     ("KM", "Comoros"),
     ("CG", "Congo"),
-    ("CD", "Congo"),
+    ("CD", "Congo, Democratic Republic of the"),
     ("CK", "Cook Islands"),
     ("CR", "Costa Rica"),
     ("HR", "Croatia"),

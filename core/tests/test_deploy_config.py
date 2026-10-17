@@ -22,3 +22,10 @@ class UpsunConfigTests(SimpleTestCase):
         # build ("disk configuration is not supported"; production deploy, 2026-10-16).
         # Disk is changed with `upsun resources:set --disk laborhub:<MB>` instead.
         self.assertNotIn("disk", self.app)
+
+    def test_gunicorn_is_threaded_so_requests_do_not_queue_behind_one_another(self):
+        # One sync worker made the affiliation list wait behind other visitors.
+        command = self.app["web"]["commands"]["start"]
+        self.assertIn("--worker-class gthread", command)
+        threads = int(command.split("--threads")[1].split()[0])
+        self.assertGreaterEqual(threads, 2)

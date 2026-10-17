@@ -28,7 +28,7 @@ def create_post_data(**overrides):
         "title": "New Paper",
         "abstract": "Some abstract.",
         "country_code": "US",
-        "is_job_market": "",
+        "paper_type": "discussion",
         "authors_input": '[{"value":"Jane Doe"}]',
         "topics_input": '[{"value":"Labor Supply"}]',
     }
@@ -295,7 +295,7 @@ class PublicationsListDisplayNumberTests(TestCase):
         publication = make_publication(status="pending", is_job_market=True)
         publication.approve(admin)
         response = self.client.get(reverse("publications"))
-        self.assertContains(response, "Discussion Paper No. J1")
+        self.assertContains(response, "Job Market Paper No. J1")
 
     def test_regular_paper_shows_the_plain_number(self):
         admin = CustomUser.objects.create_user(
@@ -392,3 +392,14 @@ class PublicationUpdateViewTests(TestCase):
         content = response.content.decode()
         self.assertIn("Migration", content)
         self.assertIn("Inequality", content)
+
+
+class JobMarketGreenTests(TestCase):
+    def test_card_and_detail_carry_the_green_scope_and_label(self):
+        jm = make_publication(status="approved", is_job_market=True, job_market_paper_number=1)
+        dp = make_publication(status="approved", discussion_paper_number=2, title="Other")
+        listing = self.client.get(reverse("publications")).content.decode()
+        self.assertIn("Job Market Paper No. J1", listing)
+        self.assertEqual(listing.count("jm-theme"), 1)
+        self.assertContains(self.client.get(reverse("publication_detail", args=[jm.pk])), "jm-theme")
+        self.assertNotContains(self.client.get(reverse("publication_detail", args=[dp.pk])), "jm-theme")

@@ -27,6 +27,15 @@ def make_image_file(name="avatar.png"):
     return SimpleUploadedFile(name, buffer.read(), content_type="image/png")
 
 
+def paper_uploads():
+    return {
+        "research_paper_1": SimpleUploadedFile(
+            "paper1.pdf", b"%PDF-1.4 fake one", content_type="application/pdf"),
+        "research_paper_2": SimpleUploadedFile(
+            "paper2.pdf", b"%PDF-1.4 fake two", content_type="application/pdf"),
+    }
+
+
 def application_post_data(**overrides):
     data = {
         "email": "applicant@example.com",
@@ -77,7 +86,7 @@ class ApplicationViewTests(TestCase):
 
     def test_apply_researcher_post_creates_application(self):
         response = self.client.post(
-            reverse("apply_researcher"), application_post_data())
+            reverse("apply_researcher"), application_post_data(**paper_uploads()))
         self.assertRedirects(
             response, reverse("application_submitted"),
             fetch_redirect_response=False)
@@ -85,15 +94,14 @@ class ApplicationViewTests(TestCase):
         self.assertEqual(application.role, CustomUser.Role.RESEARCHER)
         self.assertEqual(application.status, UserApplication.Status.PENDING)
 
-    def test_apply_researcher_post_with_paper_creates_research_paper(self):
+    def test_apply_researcher_post_with_one_paper_is_rejected(self):
         data = application_post_data()
         data["research_paper_1"] = SimpleUploadedFile(
             "paper.pdf", b"%PDF-1.4 fake", content_type="application/pdf")
         response = self.client.post(reverse("apply_researcher"), data)
-        self.assertEqual(response.status_code, 302)
-        application = UserApplication.objects.get(email="applicant@example.com")
-        self.assertEqual(
-            ResearchPaper.objects.filter(application=application).count(), 1)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please upload both research papers.")
+        self.assertFalse(UserApplication.objects.filter(email="applicant@example.com").exists())
 
     def test_researcher_application_renders_two_separate_paper_upload_fields(self):
         # Regression: this used to be one <input multiple> requiring a
@@ -102,18 +110,14 @@ class ApplicationViewTests(TestCase):
         response = self.client.get(reverse("apply_researcher"))
         content = response.content.decode()
         self.assertRegex(
-            content, r'<input[^>]*name="research_paper_1"[^>]*type="file"[^>]*>')
+            content, r'<input(?=[^>]*type="file")(?=[^>]*name="research_paper_1")[^>]*>')
         self.assertRegex(
-            content, r'<input[^>]*name="research_paper_2"[^>]*type="file"[^>]*>')
+            content, r'<input(?=[^>]*type="file")(?=[^>]*name="research_paper_2")[^>]*>')
         self.assertNotIn("multiple", content.split("research_paper_1")[1][:200])
         self.assertNotIn("multiple", content.split("research_paper_2")[1][:200])
 
     def test_apply_researcher_post_with_two_papers_creates_two_research_papers(self):
-        data = application_post_data()
-        data["research_paper_1"] = SimpleUploadedFile(
-            "paper1.pdf", b"%PDF-1.4 fake one", content_type="application/pdf")
-        data["research_paper_2"] = SimpleUploadedFile(
-            "paper2.pdf", b"%PDF-1.4 fake two", content_type="application/pdf")
+        data = application_post_data(**paper_uploads())
         response = self.client.post(reverse("apply_researcher"), data)
         self.assertEqual(response.status_code, 302)
         application = UserApplication.objects.get(email="applicant@example.com")
@@ -656,3 +660,53 @@ class VisitsListTitleTests(TestCase):
         response = self.client.get(reverse("seminars-list"))
         self.assertContains(response, "Ada Lovelace")
         self.assertContains(response, 'class="card-title"')
+
+
+class FormHintTests(TestCase):
+    """Empty fields repeat neither their own label nor look pre-filled with dots."""
+
+    def test_no_password_dots_on_login_or_application_pages(self):
+        for name in ("login", "apply_researcher", "apply_student"):
+            with self.subTest(page=name):
+                self.assertNotContains(self.client.get(reverse(name)), "\u2022\u2022")
+
+    def test_no_password_dots_when_changing_a_password(self):
+        user = CustomUser.objects.create_user(
+            email="pw@example.com", password="pass12345", first_name="P", last_name="W",
+            role=CustomUser.Role.RESEARCHER, is_active=True)
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(reverse("password_change")), "\u2022\u2022")
+
+    def test_application_placeholders_do_not_repeat_their_labels(self):
+        content = self.client.get(reverse("apply_researcher")).content.decode()
+        for repeated in ('placeholder="First name"', 'placeholder="Last name"',
+                         'placeholder="Department"', 'placeholder="Position"'):
+            self.assertNotIn(repeated, content)
+        # Examples and format hints are still shown.
+        self.assertIn('placeholder="net-id@school.edu"', content)
+
+    def test_motivation_hint_is_inside_the_text_box(self):
+        content = self.client.get(reverse("apply_researcher")).content.decode()
+        self.assertIn('placeholder="Why do you want to join this platform?"', content)
+        # ...and no longer a separate help line above it.
+        self.assertEqual(content.count("Why do you want to join this platform?"), 1)
+
+    def test_apply_page_carries_the_network_and_job_market_picker_data(self):
+        content = self.client.get(reverse("apply_researcher")).content.decode()
+        self.assertIn('id="networks-data"', content)
+        self.assertIn('id="previous-jm-data"', content)
+        self.assertIn('id="networks-input"', content)
+        self.assertIn('data-upload-group', content)
+        self.assertIn("0 of 2 added", content)
+
+    def test_student_application_has_no_paper_uploads(self):
+        content = self.client.get(reverse("apply_student")).content.decode()
+        self.assertNotIn("data-upload-group", content)
+        self.assertNotIn("research_paper_1", content)
+
+
+class ApplicationSubmittedPageTests(TestCase):
+    def test_page_is_styled_like_the_other_content_pages(self):
+        response = self.client.get(reverse("application_submitted"))
+        self.assertContains(response, 'class="format lg:format-lg max-w-none"')
+        self.assertContains(response, "Back to home")

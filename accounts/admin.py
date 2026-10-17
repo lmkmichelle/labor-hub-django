@@ -74,7 +74,8 @@ class UserApplicationAdmin(admin.ModelAdmin):
         "first_name",
         "last_name",
         'role_badge',
-        'status',
+        'advisor_display',
+        'status_display',
         'resume',
         'account_actions',
         'applied_at',
@@ -82,6 +83,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
     ]
 
     list_filter = ['status', 'role', 'applied_at']
+    list_select_related = ['advisor', 'reviewed_by']
     # 10k universities: a search box, not a 10k-option <select>.
     autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
@@ -103,6 +105,17 @@ class UserApplicationAdmin(admin.ModelAdmin):
     @admin.display(description='Role', ordering='role')
     def role_badge(self, obj):
         return _role_badge(obj.role, obj.get_role_display())
+
+    @admin.display(description='Advisor', ordering='advisor__last_name')
+    def advisor_display(self, obj):
+        return obj.advisor.get_full_name() if obj.advisor else '-'
+
+    @admin.display(description='Status', ordering='status')
+    def status_display(self, obj):
+        # The named advisor approves students; admins need not act on them.
+        if obj.status == 'pending' and obj.role == CustomUser.Role.STUDENT and obj.advisor:
+            return 'Awaiting advisor'
+        return obj.get_status_display()
 
     @admin.display(description='Existing account')
     def returning_account_note(self, obj):

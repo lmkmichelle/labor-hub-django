@@ -23,7 +23,7 @@
       </a>
       <a href="{% url 'scholars' %}"
          class="inline-flex items-center rounded-base border border-white/70 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-red-300">
-        Meet scholars
+        Meet fellows
       </a>
       <a href="{% url 'map' %}"
          class="inline-flex items-center rounded-base border border-white/70 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-red-300">
@@ -45,7 +45,7 @@
       <li role="presentation">
         <button class="home-tab" id="tab-scholars" type="button" role="tab"
                 data-tabs-target="#panel-scholars" aria-controls="panel-scholars" aria-selected="true">
-          New Scholars <span class="home-tab-count">{{ new_scholars|length }}</span>
+          New Fellows <span class="home-tab-count">{{ new_scholars|length }}</span>
         </button>
       </li>
       <li role="presentation">
@@ -64,13 +64,13 @@
   </div>
 
   <div id="home-tab-content">
-    <!-- New Scholars -->
+    <!-- New Fellows -->
     <div class="pt-6" id="panel-scholars" role="tabpanel" aria-labelledby="tab-scholars">
       <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-heading">New Scholars</h2>
-        <a href="{% url 'scholars' %}" class="btn-primary">See all scholars</a>
+        <h2 class="text-lg font-semibold text-heading">New Fellows</h2>
+        <a href="{% url 'scholars' %}" class="btn-primary">See all fellows</a>
       </div>
-      {% include 'partials/_list_display.html' with items=new_scholars container_class="grid gap-3 sm:grid-cols-2" empty_message="No new scholars to display." %}
+      {% include 'partials/_list_display.html' with items=new_scholars container_class="grid gap-3 sm:grid-cols-2" empty_message="No new fellows to display." %}
     </div>
 
     <!-- Recent Papers -->

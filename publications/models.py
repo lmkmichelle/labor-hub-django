@@ -215,6 +215,23 @@ class Publication(Approvable):
             **{field: int(match.group(2))},
         ).first()
 
+    @classmethod
+    def revisable_by(cls, user):
+        """Published originals ``user`` may submit a revision of: papers they
+        submitted, or are listed on as an author (linked to their account, or
+        typed in under their full name -- the rule ``is_authored_by`` uses).
+        Revisions are excluded: a revision of 323.1 is a revision of 323."""
+        if not user or not user.is_authenticated:
+            return cls.objects.none()
+        match = models.Q(submitted_by=user) | models.Q(authors__user=user)
+        name = user.get_full_name().strip()
+        if name:
+            match |= models.Q(authors__name=name)
+        return (
+            cls.objects.filter(status='approved', revision_of__isnull=True)
+            .filter(match).distinct().order_by('-applied_at')
+        )
+
     def is_authored_by(self, user):
         """Whether ``user`` is one of this paper's authors -- linked to their
         account, or typed in under their full name (the rule the edit page

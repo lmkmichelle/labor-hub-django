@@ -1,13 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% comment %} World Map is the one full-width exception so a side panel fits beside the map. {% endcomment %}
-{% block content_max_width %}max-w-screen-2xl{% endblock %}
-
 {% block content %}
     <article class="format lg:format-lg max-w-none">
         <h2>Explore Our Impact</h2>
-        <p class="mb-6">Explore where our scholars and their research papers are based around the world. Select a country to see the researchers and papers connected to it.</p>
+        <p class="mb-6">Explore where our fellows and their research papers are based around the world. Select a country to see the researchers and papers connected to it.</p>
     </article>
 
     <div id="map-app"
@@ -20,7 +17,7 @@
                     type="button"
                     data-metric="scholars"
                     aria-pressed="true"
-                    class="map-toggle">Scholars</button>
+                    class="map-toggle">Fellows</button>
             <button id="toggle-papers"
                     type="button"
                     data-metric="papers"
@@ -28,14 +25,16 @@
                     class="map-toggle">Research Papers</button>
         </div>
 
-        <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
+        {# Selecting a country opens a panel beside the map (lg+); the map narrows to make room instead of being covered. #}
+        <div class="lg:flex lg:items-start">
             <div id="map-wrap" class="min-w-0 lg:flex-1">{% include 'partials/world.svg' %}</div>
 
-            <aside id="map-panel"
-                   class="w-full lg:sticky lg:top-4 lg:w-96 lg:shrink-0"
-                   aria-live="polite">
-                <p class="text-sm text-body">Select a country on the map to see the scholars and research papers connected to it.</p>
-            </aside>
+            <div id="map-drawer"
+                 class="hidden transition-[width,margin] duration-200 ease-out lg:sticky lg:top-4 lg:block lg:w-0 lg:shrink-0 lg:overflow-hidden lg:invisible">
+                <aside id="map-panel"
+                       class="card-surface w-full lg:max-h-[calc(100vh-2rem)] lg:w-96 lg:overflow-y-auto"
+                       aria-live="polite"></aside>
+            </div>
         </div>
     </div>
 

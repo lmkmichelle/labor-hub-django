@@ -89,7 +89,7 @@ def _summary(entry):
         subtitle = obj.journal
         description = f"Deadline {obj.submission_deadline.strftime('%b %d, %Y')}"
     else:
-        title = obj.visitor_name or 'Visiting scholar'
+        title = obj.visitor_name or 'Visiting fellow'
         subtitle = f'Visiting {obj.get_university_display()}'
         description = ', '.join(obj.country_labels())
     return {

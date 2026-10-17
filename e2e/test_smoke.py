@@ -61,6 +61,124 @@ class SmokeTests(PlaywrightSmokeTestCase):
         ).to_be_visible()
         expect(page.locator("#id_title")).to_be_visible()
 
+    def test_paper_type_cards_reveal_their_own_fields(self):
+        """Each paper-type card shows only its own sub-panel, and the revision
+        picker offers the user's published papers as a single pill."""
+        from publications.models import Author
+
+        paper = Publication.objects.create(
+            title="Wages and Work", abstract="a", status="approved",
+            discussion_paper_number=323, submitted_by=self.user)
+        paper.authors.add(Author.objects.create(user=self.user, name="Test Scholar"))
+        page = self.page
+        self.login(USER_EMAIL, USER_PASSWORD)
+        page.goto(self.url("submit_paper"), wait_until="domcontentloaded")
+
+        advisor, revision = page.locator("#id_jm_advisor"), page.locator("#revision-of-input")
+        expect(advisor).to_be_hidden()
+        page.get_by_text("Job market paper", exact=True).click()
+        expect(advisor).to_be_visible()
+        page.get_by_text("Revision of a previous paper", exact=True).click()
+        expect(advisor).to_be_hidden()
+
+        # The pill picker needs Tagify (loaded from a CDN); skip if it can't load.
+        try:
+            page.wait_for_selector("tags.tagify", timeout=5000)
+        except Exception:
+            self.skipTest("Tagify did not load (no network)")
+        picker = page.locator(
+            'tags.tagify:has(.tagify__input[data-placeholder="Choose the paper you are revising"])')
+        picker.locator(".tagify__input").click()
+        page.get_by_text("[323] Wages and Work").click()
+        expect(picker.locator(".tagify__tag")).to_have_count(1)
+        self.assertIn(f'"id":{paper.pk}', revision.input_value())
+
+    def _tagify_or_skip(self, page):
+        try:
+            page.wait_for_selector("tags.tagify", timeout=5000)
+        except Exception:
+            self.skipTest("Tagify did not load (no network)")
+
+    def test_application_network_pills_reveal_their_url_field(self):
+        """Choosing a network pill shows that network's URL box; removing it hides it."""
+        page = self.page
+        page.goto(self.url("apply_researcher"), wait_until="domcontentloaded")
+        self._tagify_or_skip(page)
+        nber = page.locator("#id_network_url_nber")
+        expect(nber).to_be_hidden()
+        picker = page.locator(
+            'tags.tagify:has(.tagify__input[data-placeholder="Choose from the list"])')
+        picker.locator(".tagify__input").click()
+        page.locator(".tagify__dropdown__item", has_text="NBER").click()
+        expect(nber).to_be_visible()
+        expect(page.locator("#id_network_url_iza")).to_be_hidden()
+        picker.locator(".tagify__tag__removeBtn").click()
+        expect(nber).to_be_hidden()
+
+    def test_application_previous_job_market_paper_is_picked_not_typed(self):
+        from publications.models import Author
+
+        paper = Publication.objects.create(
+            title="Do Firms Know", abstract="a", status="approved",
+            is_job_market=True, job_market_paper_number=3)
+        paper.authors.add(Author.objects.create(user=None, name="Jo Candidate"))
+        page = self.page
+        page.goto(self.url("apply_researcher"), wait_until="domcontentloaded")
+        self._tagify_or_skip(page)
+        picker_input = page.locator("#previous-jm-input")
+        page.locator("#id_previous_student_account").check()
+        picker = page.locator(
+            'tags.tagify:has(.tagify__input[data-placeholder="Choose your job market paper"])')
+        expect(picker).to_be_visible()
+        picker.locator(".tagify__input").click()
+        page.get_by_text("[J3] Do Firms Know (Jo Candidate)").click()
+        self.assertIn(f'"id":{paper.pk}', picker_input.input_value())
+
+    def test_application_upload_slots_cv_switch_and_counter(self):
+        page = self.page
+        page.goto(self.url("apply_researcher"), wait_until="domcontentloaded")
+        counter = page.locator("[data-upload-counter]")
+        expect(counter).to_have_text("0 of 2 added")
+        pdf = {"name": "a.pdf", "mimeType": "application/pdf", "buffer": b"%PDF-1.4 a"}
+        page.set_input_files("#id_research_paper_1", pdf)
+        expect(counter).to_have_text("1 of 2 added")
+        expect(page.locator("[data-upload-group] [data-upload-name]").first).to_have_text("a.pdf")
+        page.set_input_files(
+            "#id_research_paper_2", {**pdf, "name": "notes.txt", "mimeType": "text/plain"})
+        expect(page.get_by_text("Please choose a PDF file.")).to_be_visible()
+        expect(counter).to_have_text("1 of 2 added")
+        page.locator("[data-upload-group] [data-upload-remove]").first.click()
+        expect(counter).to_have_text("0 of 2 added")
+
+        # CV: a link or an upload, never both showing.
+        expect(page.locator("#id_cv_url")).to_be_visible()
+        expect(page.locator("#id_resume")).to_be_hidden()
+        page.get_by_text("Upload PDF", exact=True).click()
+        expect(page.locator("[data-cv-panel='upload']")).to_be_visible()
+        expect(page.locator("#id_cv_url")).to_be_hidden()
+
+    def test_links_and_link_buttons_are_not_underlined(self):
+        page = self.page
+
+        def decoration(locator):
+            return locator.evaluate("el => getComputedStyle(el).textDecorationLine")
+
+        page.goto(self.url("login"), wait_until="domcontentloaded")
+        for link in (page.get_by_role("link", name="Cancel"),
+                     page.get_by_role("link", name="Forgot your password?")):
+            self.assertEqual(decoration(link), "none")
+            link.hover()
+            self.assertEqual(decoration(link), "none" if link.inner_text() == "Cancel" else "underline")
+
+        # A plain prose link: red, not underlined, underlined only on hover.
+        page.goto(self.url("faq"), wait_until="domcontentloaded")
+        prose = page.get_by_role("link", name="Get in touch")
+        self.assertEqual(decoration(prose), "none")
+        self.assertEqual(
+            prose.evaluate("el => getComputedStyle(el).color"), "oklch(0.505 0.213 27.518)")  # Tailwind red-700
+        prose.hover()
+        self.assertEqual(decoration(prose), "underline")
+
     def test_world_map_country_click(self):
         """Clicking a country on the world map loads its side-panel details."""
         Publication.objects.create(

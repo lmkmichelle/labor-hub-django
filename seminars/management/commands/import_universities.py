@@ -3,6 +3,7 @@ from django.db import transaction
 
 from seminars.hipolabs import fetch_universities
 from seminars.models import University
+from seminars.university_merge import DROPPED_EXTERNAL_IDS, NAME_OVERRIDES
 
 
 class Command(BaseCommand):
@@ -89,6 +90,10 @@ class Command(BaseCommand):
                 external_id = str(domains[0]).strip().lower()
             if not external_id:
                 external_id = f"{name.lower()}::{country_name.lower()}"
+
+            if external_id in DROPPED_EXTERNAL_IDS:
+                continue
+            name = NAME_OVERRIDES.get(external_id, name)
 
             key = (source, external_id)
             if key in seen_keys:

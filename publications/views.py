@@ -56,10 +56,10 @@ class PublicationCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         publication = process_publication_form(self.request, form)
-        # A revision inherits its original's advisor response; asking the
-        # advisor to acknowledge the same paper again would be noise.
+        # A fellow's revision inherits its original's advisor response; a
+        # student's revision goes back to the advisor like a new paper.
         if (publication.is_job_market and publication.jm_advisor_id
-                and publication.revision_of_id is None):
+                and (publication.revision_of_id is None or form.is_student)):
             send_paper_advisor_ack_email(publication)
         return redirect(reverse_lazy('publications'))
 

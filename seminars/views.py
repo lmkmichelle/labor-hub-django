@@ -8,6 +8,9 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.middleware.gzip import GZipMiddleware
+from django.utils.decorators import decorator_from_middleware
+from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 from django.views.generic import CreateView, DetailView, ListView
 from core.constants import COUNTRY_CHOICES
@@ -15,7 +18,10 @@ from core.views import OwnerDeleteView
 
 from seminars.forms import SeminarForm
 from seminars.hipolabs import fetch_universities
-from seminars.models import Seminar, University, university_label
+from seminars.models import (
+    Seminar, University, ambiguous_university_names, university_domain, university_label,
+)
+from seminars.university_merge import DROPPED_EXTERNAL_IDS
 
 
 COUNTRY_MAP = dict(COUNTRY_CHOICES)
@@ -226,6 +232,14 @@ def _fetch_universities_for_country(country_name):
         return []
 
 
+# Only this response is compressed (not the whole site: compressing pages that
+# carry CSRF tokens invites BREACH). A country's list is ~120 KB for the US.
+gzip_response = decorator_from_middleware(GZipMiddleware)
+
+
+@gzip_response
+# The list only changes on an import, so browsers may reuse it for a day.
+@cache_control(public=True, max_age=86400)
 @require_GET
 def universities_by_country(request):
     country_code = (request.GET.get('country') or '').strip().upper()
@@ -249,6 +263,8 @@ def universities_by_country(request):
             if not external_id:
                 external_id = f"{name.lower()}::{country_code.lower()}"
 
+            if external_id in DROPPED_EXTERNAL_IDS:
+                continue
             University.objects.update_or_create(
                 source='hipolabs',
                 external_id=external_id,
@@ -261,7 +277,18 @@ def universities_by_country(request):
 
         queryset = University.objects.filter(country_code=country_code).exclude(name__isnull=True).exclude(name='').order_by('name')
 
-    data = [{'id': uni.id, 'name': uni.name} for uni in queryset]
+    unis = list(queryset)
+    # Different schools can share a name ("Glendale Community College" exists in
+    # two states); show the domain so the picker doesn't look like it has duplicates.
+    counts = {}
+    for uni in unis:
+        counts[uni.name.lower()] = counts.get(uni.name.lower(), 0) + 1
+    data = [
+        {'id': uni.id,
+         'name': f"{uni.name} ({university_domain(uni)})"
+                 if counts[uni.name.lower()] > 1 and university_domain(uni) else uni.name}
+        for uni in unis
+    ]
     return JsonResponse({'universities': data})
 
 
@@ -290,8 +317,11 @@ def university_search(request):
             .exclude(id__in=[u.id for u in matches])
             .order_by('name')[:remaining]
         )
+    ambiguous = ambiguous_university_names(matches)
     return JsonResponse({'universities': [
-        {'value': str(u.id), 'label': university_label(u)} for u in matches
+        {'value': str(u.id),
+         'label': university_label(u, ambiguous=(u.name, u.country_code) in ambiguous)}
+        for u in matches
     ]})
 
 

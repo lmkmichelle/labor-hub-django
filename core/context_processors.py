@@ -60,7 +60,7 @@ _NAV_SECTIONS = (
     ("announcements", ("/announcements/", "/jobs/", "/events/", "/visits/",
                        "/seminars/", "/special-issues/")),
     ("papers", ("/publications/",)),
-    ("scholars", ("/scholars/",)),
+    ("scholars", ("/fellows/", "/scholars/")),
     ("contact", ("/contact/",)),
 )
 

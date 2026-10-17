@@ -139,7 +139,8 @@ def home(request):
             # of the discussion series yet. display_number covers both the
             # regular series ("5") and a job-market paper's own "J" series.
             'subtitle': (
-                f'Discussion Paper No. {paper.display_number}'
+                f'{"Job Market Paper" if paper.is_job_market else "Discussion Paper"} '
+                f'No. {paper.display_number}'
                 if paper.display_number else ''
             ),
             'is_example': paper.is_example,
@@ -300,6 +301,10 @@ def map_summary(request):
     return JsonResponse(summary)
 
 
+# Shapes on the map that are not (yet) selectable country choices.
+MAP_EXTRA_COUNTRY_NAMES = {"XK": "Kosovo"}
+
+
 @require_GET
 def map_country_detail(request, code):
     """Server-rendered side-panel fragment for a single country.
@@ -312,7 +317,7 @@ def map_country_detail(request, code):
     code = code.upper()
     if code in PAPER_SPECIAL_COUNTRY_CODES:
         raise Http404("No map panel for that code.")
-    country_name = dict(COUNTRY_CHOICES).get(code, code)
+    country_name = MAP_EXTRA_COUNTRY_NAMES.get(code) or dict(COUNTRY_CHOICES).get(code, code)
 
     scholars_qs = (
         CustomUser.objects.select_related("profile")

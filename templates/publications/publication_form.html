@@ -23,12 +23,12 @@ Submit Paper
     Submit a paper
     {% endif %}
 </h3>
-<p class="mb-5 text-sm text-body">Papers are reviewed before they are published. See the <a href="{% url 'faq' %}#papers">FAQ</a> for timing and revisions.</p>
+<p class="mb-5 text-sm text-body">Papers are reviewed before they are published. See the <a href="{% url 'faq' %}#papers">FAQ</a> for timing and revisions. <span class="text-red-600" aria-hidden="true">*</span> indicates a required field.</p>
 
 <form method="POST" class="mb-8" enctype="multipart/form-data">
     {% csrf_token %}
     
-    <p class="mb-5 text-sm text-body"><span class="text-red-600" aria-hidden="true">*</span> indicates a required field.</p>
+    
     
     {% if form.non_field_errors %}
     <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
@@ -36,53 +36,66 @@ Submit Paper
     </div>
     {% endif %}
     
-    {% render_field form.title placeholder="Paper title" %}
-    
-    {% render_field form.authors_input placeholder="Authors" %}
-
-    {% render_field form.abstract placeholder="Abstract" %}
-
-    {% render_select form.country_code empty_label="Choose a country" %}
-
-    {% render_field form.topics_input placeholder="Research topics" %}
-
-    <div class="form-field not-format">
-        <div class="flex items-center">
-            <input type="checkbox" name="{{ form.is_job_market.name }}" id="{{ form.is_job_market.id_for_label }}" {% if form.is_job_market.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
-            <label for="{{ form.is_job_market.id_for_label }}" class="form-check-label">{{ form.is_job_market.label }}</label>
+    {% if form.paper_type %}
+    <fieldset class="form-field not-format">
+        <legend class="form-label">Type of paper<span class="text-red-600 ms-0.5" aria-hidden="true">*</span></legend>
+        <div class="grid gap-3 {% if form.is_student %}sm:grid-cols-2{% else %}sm:grid-cols-3{% endif %}">
+            {% for value, label in form.paper_type.field.choices %}
+            <label class="type-card">
+                <input type="radio" name="{{ form.paper_type.name }}" value="{{ value }}"
+                       class="sr-only"
+                       {% if form.paper_type.value|default:'discussion' == value %}checked{% endif %}
+                       {% if value == 'revision' and not form.revisable %}disabled{% endif %}>
+                <span class="card-title">{{ label }}</span>
+                <span class="mt-1 block text-sm text-body">
+                    {% if value == 'discussion' %}A paper for the Labor Hub discussion paper series.
+                    {% elif value == 'job_market' %}Your job market paper, supervised by an advisor.
+                    {% elif form.revisable %}A new version of one of your published {% if form.is_student %}job market {% endif %}papers.{% if form.is_student %} Your advisor approves it again.{% endif %}
+                    {% else %}You have no published {% if form.is_student %}job market {% endif %}papers to revise yet.{% endif %}
+                </span>
+            </label>
+            {% endfor %}
         </div>
-        {% if form.is_job_market.errors %}
-        <p class="mt-2 text-sm text-red-600">{{ form.is_job_market.errors.0 }}</p>
+        {% if form.paper_type.errors %}
+        <p class="mt-2 text-sm text-red-600">{{ form.paper_type.errors.0 }}</p>
         {% endif %}
-    </div>
+    </fieldset>
 
-    {# Shown only when "job market paper" is ticked; see static/js/conditional-field.js #}
-    <div data-conditional-field
-         data-when-checked="{{ form.is_job_market.id_for_label }}"
+    {# Each sub-panel shows only for its card; see static/js/conditional-field.js #}
+    <div class="type-subpanel" data-conditional-field
+         data-when-radio-name="{{ form.paper_type.name }}"
+         data-when-radio-value="job_market"
          data-target="{{ form.jm_advisor.id_for_label }}">
         {% render_select form.jm_advisor empty_label="Choose your advisor" %}
     </div>
 
-    {% if form.is_revision %}
-    <div class="form-field not-format">
-        <div class="flex items-center">
-            <input type="checkbox" name="{{ form.is_revision.name }}" id="{{ form.is_revision.id_for_label }}" {% if form.is_revision.value %}checked{% endif %} class="w-4 h-4 text-brand bg-gray-100 border-gray-300 rounded focus:ring-brand focus:ring-2">
-            <label for="{{ form.is_revision.id_for_label }}" class="form-check-label">{{ form.is_revision.label }}</label>
-        </div>
-    </div>
-
-    {# Shown only when "revised version" is ticked; see static/js/conditional-field.js #}
-    <div data-conditional-field
-         data-when-checked="{{ form.is_revision.id_for_label }}"
-         data-target="{{ form.previous_number.id_for_label }}">
-        {% render_field form.previous_number placeholder="e.g. 323" %}
+    {% if form.revision_of_input %}
+    {{ form.revision_whitelist|json_script:"revision-papers-data" }}
+    <div class="type-subpanel" data-conditional-field
+         data-when-radio-name="{{ form.paper_type.name }}"
+         data-when-radio-value="revision"
+         data-target="{{ form.revision_of_input.id_for_label }}">
+        {% render_field form.revision_of_input placeholder="Choose the paper you are revising" %}
     </div>
     {% endif %}
+    {% elif object.revision_of %}
+    <p class="mb-5 text-sm text-body">This is a revision of <a href="{% url 'publication_detail' pk=object.revision_of.pk %}">{{ object.revision_of.display_number }}: {{ object.revision_of.title }}</a>.</p>
+    {% endif %}
+
+    {% render_field form.title %}
+    
+    {% render_field form.authors_input placeholder="Type a name, press Enter" %}
+
+    {% render_field form.abstract %}
+
+    {% render_select form.country_code empty_label="Choose a country" %}
+
+    {% render_field form.topics_input placeholder="Choose from the list" %}
 
     {% if form.pdf %}
         {% render_field form.pdf %}
     {% else %}
-        <p class="mb-5 text-sm text-body">The PDF of a published paper cannot be changed. To share a revised version, <a href="{% url 'submit_paper' %}">submit it as a new paper</a> and tick “revised version”.</p>
+        <p class="mb-5 text-sm text-body">The PDF of a published paper cannot be changed. To share a revised version, <a href="{% url 'submit_paper' %}">submit it as a new paper</a> and choose “Revision of a previous paper”.</p>
     {% endif %}
     
     <div class="flex gap-3 mb-5">

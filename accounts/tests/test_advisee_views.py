@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.hashers import make_password
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -151,6 +152,8 @@ class ApplicationNotificationEmailTests(TestCase):
             "email": "newapplicant@example.com", "first_name": "New",
             "last_name": "Applicant", "department": "Econ", "country_code": "US",
             "motivation": "hi", "password1": "pass12345", "password2": "pass12345",
+            "research_paper_1": SimpleUploadedFile("a.pdf", b"%PDF-1.4 a", content_type="application/pdf"),
+            "research_paper_2": SimpleUploadedFile("b.pdf", b"%PDF-1.4 b", content_type="application/pdf"),
         }
         self.client.post(reverse("apply_researcher"), data)
 
