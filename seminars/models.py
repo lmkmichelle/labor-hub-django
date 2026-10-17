@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.db import models
 from django.urls import reverse
 from django.core.exceptions import ValidationError
@@ -54,10 +56,35 @@ class University(models.Model):
             name=name, country_code=country_code, source='write-in')
 
 
-def university_label(university):
-    """"Name, Country" -- what the alert pills and search results display."""
+def university_domain(university):
+    """The institution's web domain ("gccaz.edu"), used to tell same-named schools apart."""
+    host = urlparse(university.website or '').netloc.lower()
+    if host.startswith('www.'):
+        host = host[4:]
+    return host or (university.external_id or '').split('::')[0]
+
+
+def ambiguous_university_names(universities):
+    """(name, country) pairs shared by more than one university in the table --
+    different schools that happen to have the same name."""
+    pairs = {(u.name, u.country_code) for u in universities}
+    if not pairs:
+        return set()
+    counts = (
+        University.objects.filter(name__in={n for n, _ in pairs})
+        .values('name', 'country_code').annotate(n=models.Count('id')).filter(n__gt=1)
+    )
+    return {(row['name'], row['country_code']) for row in counts} & pairs
+
+
+def university_label(university, ambiguous=False):
+    """"Name, Country" -- what the alert pills and search results display. When the
+    name is shared by several schools, the domain is appended to tell them apart."""
+    name = university.name
+    if ambiguous and university_domain(university):
+        name = f"{name} ({university_domain(university)})"
     country = COUNTRY_MAP.get(university.country_code, university.country_code or '')
-    return f"{university.name}, {country}" if country else university.name
+    return f"{name}, {country}" if country else name
 
 
 class Seminar(Approvable):
