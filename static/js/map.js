@@ -28,13 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedCode = null;
 
   const landPaths = () => document.querySelectorAll("#map-wrap path.land");
+  // Russia is drawn as two shapes (RU_europe, RU_asia); both stand for "RU".
+  const codeOf = (path) => path.dataset.code || path.id;
 
   function updateMapColors() {
     landPaths().forEach((path) => {
-      const info = summary[path.id];
+      const info = summary[codeOf(path)];
       const count = info ? info[currentMetric] || 0 : 0;
       path.classList.toggle("has-data", count > 0);
-      path.classList.toggle("selected", path.id === selectedCode);
+      path.classList.toggle("selected", codeOf(path) === selectedCode);
     });
   }
 
@@ -145,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   landPaths().forEach((path) => {
-    path.addEventListener("click", () => showCountry(path.id));
+    path.addEventListener("click", () => showCountry(codeOf(path)));
   });
 
   // Delegated: the close button lives in the fetched fragment.

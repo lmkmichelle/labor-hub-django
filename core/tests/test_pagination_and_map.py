@@ -42,3 +42,30 @@ class WorldMapPageTests(TestCase):
         html = self.client.get(reverse("map_country_detail", args=["US"])).content.decode()
         self.assertIn("data-map-close", html)
         self.assertIn("0 fellows", html)
+
+
+class MapCountryNamesTests(TestCase):
+    def test_every_map_shape_resolves_to_a_country_with_the_site_name(self):
+        import re
+        from pathlib import Path
+        from django.conf import settings
+        from core.constants import COUNTRY_CHOICES
+        from core.views import MAP_EXTRA_COUNTRY_NAMES
+
+        names = {**dict(COUNTRY_CHOICES), **MAP_EXTRA_COUNTRY_NAMES}
+        svg = (Path(settings.BASE_DIR) / "templates/partials/world.svg").read_text()
+        for shape_id, code, title in re.findall(
+                r'<path id="([^"]+)"(?: data-code="([^"]+)")? title="([^"]*)"', svg):
+            code = code or shape_id
+            self.assertIn(code, names, shape_id)
+            self.assertEqual(title, names[code], shape_id)
+
+    def test_russia_is_one_country_drawn_as_two_shapes(self):
+        html = self.client.get(reverse("map")).content.decode()
+        self.assertIn('id="RU_europe" data-code="RU"', html)
+        self.assertIn('id="RU_asia" data-code="RU"', html)
+
+    def test_the_two_congos_have_different_names(self):
+        from core.constants import COUNTRY_CHOICES
+        names = dict(COUNTRY_CHOICES)
+        self.assertNotEqual(names["CG"], names["CD"])
