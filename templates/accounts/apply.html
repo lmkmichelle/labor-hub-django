@@ -47,7 +47,7 @@
 
     {% render_field form.motivation label="Motivation" placeholder="Why do you want to join this platform?" help_text="" %}
 
-    {% render_field form.website label="Personal Website (optional)" placeholder="https://" %}
+    {% render_field form.website label="Personal Website (optional)" %}
 
     {{ form.network_whitelist|json_script:"networks-data" }}
     {% render_field form.other_networks placeholder="Choose from the list" help_text="Choose every network you belong to." %}
@@ -55,19 +55,19 @@
     {# Each reveals while its network pill is present; see static/js/conditional-field.js #}
     <div data-conditional-field data-when-pill-input="networks-input"
          data-when-pill-value="CESifo" data-target="{{ form.network_url_cesifo.id_for_label }}">
-        {% render_field form.network_url_cesifo placeholder="https://" %}
+        {% render_field form.network_url_cesifo %}
     </div>
     <div data-conditional-field data-when-pill-input="networks-input"
          data-when-pill-value="NBER" data-target="{{ form.network_url_nber.id_for_label }}">
-        {% render_field form.network_url_nber placeholder="https://" %}
+        {% render_field form.network_url_nber %}
     </div>
     <div data-conditional-field data-when-pill-input="networks-input"
          data-when-pill-value="CEPR" data-target="{{ form.network_url_cepr.id_for_label }}">
-        {% render_field form.network_url_cepr placeholder="https://" %}
+        {% render_field form.network_url_cepr %}
     </div>
     <div data-conditional-field data-when-pill-input="networks-input"
          data-when-pill-value="IZA" data-target="{{ form.network_url_iza.id_for_label }}">
-        {% render_field form.network_url_iza placeholder="https://" %}
+        {% render_field form.network_url_iza %}
     </div>
 
     {# CV: a link or a PDF, never both. The switch is added by static/js/file-slot.js. #}
@@ -86,7 +86,7 @@
             </div>
         </div>
         <div data-cv-panel="link">
-            {% render_field form.cv_url label="Link to your online CV" placeholder="https://" help_text="" %}
+            {% render_field form.cv_url label="Link to your online CV" help_text="" %}
         </div>
         <div data-cv-panel="upload">
             {% include "partials/_upload_slot.html" with field=form.resume slot_label="Your CV (PDF)" %}
