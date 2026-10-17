@@ -440,3 +440,16 @@
     @apply bg-green-700 hover:bg-green-800 focus:ring-green-600;
   }
 }
+
+/* FAQ sections. The typography plugin zeroes heading margins with a rule of equal
+   specificity that is emitted later, so `mt-*` utilities lose; `.format .faq-section`
+   is one class higher. Space sits above each heading and below each section's last
+   question. */
+@layer utilities {
+  .format .faq-section {
+    margin-top: 2rem;
+  }
+  .format .faq-item:has(+ .faq-section) {
+    margin-bottom: 2rem;
+  }
+}
