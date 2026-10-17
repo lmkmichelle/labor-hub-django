@@ -282,11 +282,11 @@ def universities_by_country(request):
     # two states); show the domain so the picker doesn't look like it has duplicates.
     counts = {}
     for uni in unis:
-        counts[uni.name] = counts.get(uni.name, 0) + 1
+        counts[uni.name.lower()] = counts.get(uni.name.lower(), 0) + 1
     data = [
         {'id': uni.id,
          'name': f"{uni.name} ({university_domain(uni)})"
-                 if counts[uni.name] > 1 and university_domain(uni) else uni.name}
+                 if counts[uni.name.lower()] > 1 and university_domain(uni) else uni.name}
         for uni in unis
     ]
     return JsonResponse({'universities': data})
