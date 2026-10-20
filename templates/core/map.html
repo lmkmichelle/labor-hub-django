@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load static_version %}
 
 {% block content %}
     <article class="format lg:format-lg max-w-none">
@@ -38,5 +39,5 @@
         </div>
     </div>
 
-    <script src="{% static 'js/map.js' %}"></script>
+    <script src="{% static_v 'js/map.js' %}"></script>
 {% endblock %}

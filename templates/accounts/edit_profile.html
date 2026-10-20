@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load static_version %}
 {% load form_tags %}
 
 {% block title %}Edit Profile{% endblock title %}
@@ -143,9 +144,9 @@
 <link rel="stylesheet" href="{% static 'css/cropper.min.css' %}"/>
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
-<script src="{% static 'js/tagify.js' %}"></script>
-<script src="{% static 'js/university-picker.js' %}"></script>
-<script src="{% static 'js/cropper.min.js' %}"></script>
-<script src="{% static 'js/avatar-editor.js' %}"></script>
+<script src="{% static_v 'js/tagify.js' %}"></script>
+<script src="{% static_v 'js/university-picker.js' %}"></script>
+<script src="{% static_v 'js/cropper.min.js' %}"></script>
+<script src="{% static_v 'js/avatar-editor.js' %}"></script>
 {% endblock content %}
 

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load form_tags %}
 {% load static %}
+{% load static_version %}
 
 {% block title %}
     Post a Special Issue
@@ -46,5 +47,5 @@
             </div>
         </form>
     </article>
-    <script src="{% static 'js/tagify.js' %}"></script>
+    <script src="{% static_v 'js/tagify.js' %}"></script>
 {% endblock %}
