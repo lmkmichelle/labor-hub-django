@@ -1,8 +1,6 @@
 Hi {{ application.first_name|default:application.email }},
 
-Thank you for your interest in Labor Hub. After review, we're not able to approve your application at this time.
-
-If you have questions about this decision, you're welcome to reach out to us.
+Thank you for your interest in the Labor Hub. We regret to inform you that we are currently not able to accept your application. Reasons for rejecting applications are either poor fit with labor economics or insufficient evidence of recent publication record in Labor Economics. We encourage you to apply again in the future.
 
 --
 The Labor Hub team
