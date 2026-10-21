@@ -1,3 +1,32 @@
-{% comment %}Home layout "wide": announcements, then papers, each full width.{% endcomment %}
-<section class="mt-10">{% include "partials/_home_announcements.html" %}</section>
-<section class="mt-10">{% include "partials/_home_papers.html" %}</section>
+{% comment %}Home layout "wide": announcements and papers as full-width tabs (Flowbite tabs, no custom JS).{% endcomment %}
+<section class="mt-10">
+  <div class="border-b border-default">
+    <ul class="-mb-px flex flex-wrap gap-1 text-sm"
+        id="home-tabs"
+        role="tablist"
+        data-tabs-toggle="#home-tab-content"
+        data-tabs-active-classes="border-red-700 text-red-700"
+        data-tabs-inactive-classes="border-transparent text-body hover:border-default-medium hover:text-heading">
+      <li role="presentation">
+        <button class="home-tab" id="tab-announcements" type="button" role="tab"
+                data-tabs-target="#panel-announcements" aria-controls="panel-announcements" aria-selected="true">
+          Recent Announcements <span class="home-tab-count">{{ recent_announcements|length }}</span>
+        </button>
+      </li>
+      <li role="presentation">
+        <button class="home-tab" id="tab-papers" type="button" role="tab"
+                data-tabs-target="#panel-papers" aria-controls="panel-papers" aria-selected="false">
+          Recent Papers <span class="home-tab-count">{{ recent_papers|length }}</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+  <div id="home-tab-content">
+    <div class="pt-6" id="panel-announcements" role="tabpanel" aria-labelledby="tab-announcements">
+      {% include "partials/_home_announcements.html" %}
+    </div>
+    <div class="hidden pt-6" id="panel-papers" role="tabpanel" aria-labelledby="tab-papers">
+      {% include "partials/_home_papers.html" %}
+    </div>
+  </div>
+</section>
