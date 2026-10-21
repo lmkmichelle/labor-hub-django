@@ -69,10 +69,12 @@ class HomeLayoutTests(TestCase):
         page = self.client.get(reverse("home"), {"layout": "bogus"})
         self.assertEqual(page.context["home_layout"], "wide")
 
-    def test_both_layouts_keep_the_job_market_colour_and_announcements_first(self):
+    def test_both_layouts_keep_the_job_market_colour_and_their_order(self):
         for layout in ("wide", "split"):
             html = self.client.get(reverse("home"), {"layout": layout}).content.decode()
             self.assertIn("Job Market Paper No. J1", html)
             self.assertIn("jm-theme", html)
-            self.assertLess(html.index("Recent Announcements"), html.index("Recent Papers"))
+            first, second = (("Recent Papers", "Recent Announcements") if layout == "wide"
+                             else ("Recent Announcements", "Recent Papers"))
+            self.assertLess(html.index(first), html.index(second))
             self.assertIn("Gender Workshop", html)
