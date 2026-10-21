@@ -444,6 +444,51 @@
   }
 }
 
+/* Conferences/workshops read blue and special issues purple, the way job market
+   papers read green: pills, deadline text, "Posted by" names and links on the card
+   and the detail page. A card or article opts in with the class. */
+@layer utilities {
+  .theme-blue .pill-accent {
+    @apply bg-blue-100 text-blue-800;
+  }
+  .theme-blue .card-inline-link,
+  .theme-blue .text-red-700,
+  .theme-blue.format a:where(:not([class])),
+  .theme-blue .format a:where(:not([class])) {
+    @apply text-blue-700;
+  }
+  .theme-blue .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-blue.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-blue-800 underline;
+  }
+  .theme-blue svg {
+    @apply fill-blue-700;
+  }
+  .theme-blue a.bg-red-700 {
+    @apply bg-blue-700 hover:bg-blue-800 focus:ring-blue-600;
+  }
+
+  .theme-purple .pill-accent {
+    @apply bg-purple-100 text-purple-800;
+  }
+  .theme-purple .card-inline-link,
+  .theme-purple .text-red-700,
+  .theme-purple.format a:where(:not([class])),
+  .theme-purple .format a:where(:not([class])) {
+    @apply text-purple-700;
+  }
+  .theme-purple .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-purple.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-purple-800 underline;
+  }
+  .theme-purple svg {
+    @apply fill-purple-700;
+  }
+  .theme-purple a.bg-red-700 {
+    @apply bg-purple-700 hover:bg-purple-800 focus:ring-purple-600;
+  }
+}
+
 /* FAQ sections. The typography plugin zeroes heading margins with a rule of equal
    specificity that is emitted later, so `mt-*` utilities lose; `.format .faq-section`
    is one class higher. Space sits above each heading and below each section's last

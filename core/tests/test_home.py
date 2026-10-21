@@ -78,3 +78,38 @@ class HomeLayoutTests(TestCase):
                              else ("Recent Announcements", "Recent Papers"))
             self.assertLess(html.index(first), html.index(second))
             self.assertIn("Gender Workshop", html)
+
+
+class AnnouncementColourTests(TestCase):
+    """Conferences/workshops are blue and special issues purple, like green job market papers."""
+
+    def _event(self, category):
+        return Event.objects.create(
+            title=f"A {category}", description="d", category=category,
+            date=timezone.now() + timedelta(days=3), location="Essen", status="approved")
+
+    def test_conference_and_workshop_cards_are_blue_others_are_not(self):
+        for category, blue in (("conference", True), ("workshop", True),
+                               ("schools", False), ("other", False)):
+            event = self._event(category)
+            html = self.client.get(reverse("announcements")).content.decode()
+            card = html[html.index(event.title) - 600:html.index(event.title)]
+            self.assertEqual("theme-blue" in card, blue, category)
+
+    def test_event_detail_page_carries_the_scope(self):
+        page = self.client.get(reverse("event-detail", args=[self._event("workshop").pk]))
+        self.assertContains(page, "theme-blue")
+        page = self.client.get(reverse("event-detail", args=[self._event("other").pk]))
+        self.assertNotContains(page, "theme-blue")
+
+    def test_special_issue_card_and_detail_are_purple_with_a_label(self):
+        from special_issues.models import SpecialIssue
+        issue = SpecialIssue.objects.create(
+            title="Sports as Natural Experiments", journal="SJPE", description="d",
+            submission_deadline=timezone.localdate() + timedelta(days=30), status="approved")
+        feed = self.client.get(reverse("announcements"))
+        self.assertContains(feed, "theme-purple")
+        self.assertContains(feed, '<span class="pill-accent">Special Issue</span>', html=True)
+        detail = self.client.get(reverse("special-issue-detail", args=[issue.pk]))
+        self.assertContains(detail, "theme-purple")
+        self.assertContains(detail, "Special Issue</span>")

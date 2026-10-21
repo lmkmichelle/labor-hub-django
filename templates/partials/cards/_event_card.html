@@ -3,7 +3,7 @@ Detailed event card. Inputs:
   event   an Event instance
 Used by the Events list page.
 {% endcomment %}
-<div class="card-surface w-full">
+<div class="card-surface w-full {{ event.theme_class }}">
   <div class="card-header">
     <h5 class="card-title"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
     <div class="card-meta">

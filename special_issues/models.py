@@ -41,6 +41,9 @@ class SpecialIssue(Approvable):
     def get_absolute_url(self):
         return reverse('special-issue-detail', kwargs={'pk': self.pk})
 
+    # Special issues read purple (see .theme-purple in input.css).
+    theme_class = 'theme-purple'
+
     @property
     def is_open(self):
         return self.submission_deadline >= timezone.localdate()

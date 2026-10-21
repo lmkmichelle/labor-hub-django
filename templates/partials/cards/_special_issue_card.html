@@ -3,11 +3,12 @@ Detailed special issue card. Inputs:
   special_issue   a SpecialIssue instance
 Used by the Special Issues list page and the Announcements feed.
 {% endcomment %}
-<div class="card-surface w-full">
+<div class="card-surface w-full {{ special_issue.theme_class }}">
   <div class="card-header">
     <h5 class="card-title"><a href="{{ special_issue.get_absolute_url }}" class="card-stretch-link">{{ special_issue.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=special_issue.is_example %}
+      <span class="pill-accent">Special Issue</span>
       <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ special_issue.submission_deadline|date:"N j, Y" }}</p>
     </div>
   </div>

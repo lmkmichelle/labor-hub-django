@@ -2,7 +2,7 @@
 {% load text_filters %}
 {% block title %}{{ special_issue.title }}{% endblock %}
 {% block content %}
-<article class="max-w-none format lg:format-lg">
+<article class="max-w-none format lg:format-lg {{ special_issue.theme_class }}">
     <div>
         <div class="flex flex-row w-full justify-between items-center">
             <p>Deadline: {{ special_issue.submission_deadline|date:"N j, Y" }}</p>
@@ -10,6 +10,7 @@
         </div>
         <h3>{{ special_issue.title }}</h3>
         <p class="not-format mb-4 text-body">{{ special_issue.journal }}</p>
+        <div class="not-format mb-4"><span class="pill-accent">Special Issue</span></div>
     </div>
 
     <h4>Special Issue Editors</h4>
