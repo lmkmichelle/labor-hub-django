@@ -409,3 +409,7 @@ if SENTRY_DSN:
         # Off by default: don't attach usernames/emails/client IPs to events.
         send_default_pii=_env_bool("SENTRY_SEND_PII", "0"),
     )
+
+# Layout of the lower half of the home page: "wide" (stacked) or "split"
+# (announcements beside papers). ?layout= overrides it per request.
+HOME_LAYOUT = os.environ.get("HOME_LAYOUT", "wide")

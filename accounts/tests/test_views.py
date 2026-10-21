@@ -68,7 +68,7 @@ class ApplicationViewTests(TestCase):
         response = self.client.get(reverse("apply_researcher"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/apply.html")
-        self.assertEqual(response.context["application_type"], "Researcher")
+        self.assertEqual(response.context["application_type"], "Scholar")
 
     def test_apply_student_get(self):
         response = self.client.get(reverse("apply_student"))

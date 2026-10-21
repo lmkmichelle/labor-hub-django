@@ -1,0 +1,14 @@
+{% comment %}
+One announcement of any kind. Input:
+  entry   a dict from core.announcements.load_announcements: {kind, label, obj}
+Shared by the Announcements feed and the home page.
+{% endcomment %}
+{% if entry.kind == "job" %}
+  {% include "partials/cards/_job_board_card.html" with item=entry.obj %}
+{% elif entry.kind == "event" %}
+  {% include "partials/cards/_event_card.html" with event=entry.obj %}
+{% elif entry.kind == "special_issue" %}
+  {% include "partials/cards/_special_issue_card.html" with special_issue=entry.obj %}
+{% else %}
+  {% include "partials/cards/_visit_card.html" with visit=entry.obj %}
+{% endif %}

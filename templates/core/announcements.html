@@ -13,15 +13,7 @@
         {% if announcements %}
             <div class="flex flex-col gap-3 w-full not-format">
                 {% for entry in announcements %}
-                    {% if entry.kind == "job" %}
-                        {% include "partials/cards/_job_board_card.html" with item=entry.obj %}
-                    {% elif entry.kind == "event" %}
-                        {% include "partials/cards/_event_card.html" with event=entry.obj %}
-                    {% elif entry.kind == "special_issue" %}
-                        {% include "partials/cards/_special_issue_card.html" with special_issue=entry.obj %}
-                    {% else %}
-                        {% include "partials/cards/_visit_card.html" with visit=entry.obj %}
-                    {% endif %}
+                    {% include "partials/cards/_announcement_card.html" with entry=entry %}
                 {% endfor %}
             </div>
             {% include "partials/_pagination.html" with page_obj=page_obj is_paginated=is_paginated querystring="" %}

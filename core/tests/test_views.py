@@ -80,11 +80,12 @@ class HomeContextTests(TestCase):
 
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
-        announcements = {a["title"]: a for a in response.context["recent_announcements"]}
-        self.assertEqual(announcements["Upcoming Conf"]["badge"]["text"], "Event")
-        self.assertEqual(announcements["Upcoming Visitor"]["badge"]["text"], "Visit")
-        self.assertEqual(announcements["New Postdoc"]["badge"]["text"], "Job")
-        paper_titles = [p["title"] for p in response.context["recent_papers"]]
+        kinds = {e["obj"].title if e["kind"] != "visit" else e["obj"].visitor_name: e["label"]
+                 for e in response.context["recent_announcements"]}
+        self.assertEqual(kinds["Upcoming Conf"], "Event")
+        self.assertEqual(kinds["Upcoming Visitor"], "Visit")
+        self.assertEqual(kinds["New Postdoc"], "Job")
+        paper_titles = [p.title for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
         self.assertContains(response, "Recent Announcements")
         self.assertContains(response, reverse("map"))
@@ -116,10 +117,6 @@ class HomeEventTimeDisplayTests(TestCase):
         )
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
-        event = next(
-            e for e in response.context["recent_announcements"]
-            if e["title"] == "Midnight Event")
-        self.assertFalse(event.get("meta"))
         self.assertNotContains(response, "04:00")
         self.assertNotContains(response, "05:00")
 
@@ -205,7 +202,7 @@ class MapCountryDetailTests(TestCase):
 
         response = self.client.get(reverse("map_country_detail", args=["US"]))
         content = response.content.decode()
-        self.assertIn("See all 7 fellows", content)
+        self.assertIn("See all 7 researchers", content)
         self.assertIn("countries=US", content)
         self.assertEqual(content.count('href="/profile/'), 5)
 
@@ -213,7 +210,7 @@ class MapCountryDetailTests(TestCase):
         response = self.client.get(reverse("map_country_detail", args=["JP"]))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn("No fellows are based here yet.", content)
+        self.assertIn("No researchers are based here yet.", content)
         self.assertIn("No research papers are based here yet.", content)
 
 
@@ -484,7 +481,7 @@ class ScholarsListViewTests(TestCase):
 
     def test_no_matches_shows_empty_state(self):
         response = self.client.get(reverse("scholars"), {"q": "nobody-matches-this"})
-        self.assertContains(response, "No fellows match your criteria.")
+        self.assertContains(response, "No researchers match your criteria.")
 
     def test_scholars_list_shows_all_members(self):
         researcher = make_user(email="r@example.com", role=CustomUser.Role.RESEARCHER)
@@ -575,23 +572,25 @@ class ScholarsListViewTests(TestCase):
         self.assertIn(term, response.context["selected_interests_serialized"])
 
 
-class FellowsDirectoryTests(TestCase):
-    """The scholars directory is now the fellows directory."""
+class ResearchersDirectoryTests(TestCase):
+    """The directory lists every member, so it is the researchers directory."""
 
-    def test_lives_at_fellows_and_says_fellows(self):
-        self.assertEqual(reverse("scholars"), "/fellows/")
-        response = self.client.get("/fellows/")
-        self.assertContains(response, "<h2>Fellows</h2>", html=True)
-        self.assertNotContains(response, "Scholars")
+    def test_lives_at_researchers_and_says_researchers(self):
+        self.assertEqual(reverse("scholars"), "/researchers/")
+        response = self.client.get("/researchers/")
+        self.assertContains(response, "<h2>Researchers</h2>", html=True)
+        self.assertNotContains(response, "Fellows")
 
-    def test_old_scholars_url_redirects_with_its_query(self):
-        response = self.client.get("/scholars/?countries=US&sort=newest")
-        self.assertRedirects(
-            response, "/fellows/?countries=US&sort=newest", status_code=301)
+    def test_old_urls_redirect_with_their_query(self):
+        for old in ("/scholars/", "/fellows/"):
+            response = self.client.get(old + "?countries=US&sort=newest")
+            self.assertRedirects(
+                response, "/researchers/?countries=US&sort=newest", status_code=301)
 
-    def test_nav_and_home_use_fellows_wording(self):
+    def test_nav_and_home_use_researchers_wording(self):
         home = self.client.get(reverse("home"))
-        self.assertContains(home, "New Fellows")
-        self.assertNotContains(home, "Scholars")
+        self.assertContains(home, "New researchers")
+        self.assertContains(home, "Meet researchers")
+        self.assertNotContains(home, "Fellow")
         self.assertEqual(
-            self.client.get("/fellows/").context["nav_section"], "scholars")
+            self.client.get("/researchers/").context["nav_section"], "scholars")

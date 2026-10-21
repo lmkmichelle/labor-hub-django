@@ -7,7 +7,7 @@ Replaces four near-identical loops that each hardcoded the same utility string.
 {% endcomment %}
 {% if labels %}
   {% with slice_spec=limit|default:":5" pill=pill_class|default:"pill-accent" %}
-    <div class="mt-2 flex w-full flex-row gap-2 overflow-auto">
+    <div class="mt-2 flex w-full flex-row flex-wrap gap-2">
       {% for label in labels|slice:slice_spec %}
         <span class="{{ pill }}">{{ label }}</span>
       {% endfor %}

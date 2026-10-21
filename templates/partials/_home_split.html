@@ -1,0 +1,5 @@
+{% comment %}Home layout "split": announcements left, papers right (stacked below lg).{% endcomment %}
+<div class="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-8">
+  <section class="min-w-0">{% include "partials/_home_announcements.html" %}</section>
+  <section class="min-w-0">{% include "partials/_home_papers.html" %}</section>
+</div>

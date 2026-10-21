@@ -15,7 +15,7 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle[,description
 </div>
 
 <section class="map-panel-section mt-4" data-metric="scholars">
-    <p class="mb-3 text-sm text-body">{{ scholars_total }} fellow{{ scholars_total|pluralize }}</p>
+    <p class="mb-3 text-sm text-body">{{ scholars_total }} researcher{{ scholars_total|pluralize }}</p>
     {% if scholars %}
         <div class="flex flex-col gap-3">
             {% for item in scholars %}
@@ -24,10 +24,10 @@ Inputs: country_name, scholars/papers (lists of {title,url,subtitle[,description
         </div>
         {% if scholars_total %}
             <a href="{{ scholars_see_all_url }}"
-               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">{% if scholars_more %}See all {{ scholars_total }} fellows{% else %}View in the directory{% endif %} →</a>
+               class="mt-3 inline-block text-sm font-medium text-red-700 no-underline hover:underline">{% if scholars_more %}See all {{ scholars_total }} researchers{% else %}View in the directory{% endif %} →</a>
         {% endif %}
     {% else %}
-        {% include 'partials/_empty_state.html' with text="No fellows are based here yet." %}
+        {% include 'partials/_empty_state.html' with text="No researchers are based here yet." %}
     {% endif %}
 </section>
 

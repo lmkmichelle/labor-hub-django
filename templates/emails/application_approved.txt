@@ -2,7 +2,7 @@ Hi {{ user.first_name|default:user.email }},
 
 Great news - your Labor Hub application has been approved and your account is now active.
 
-{% if returning %}Your earlier student account is now a fellow account, so everything you posted is still attached to it. Sign in with your email address ({{ user.email }}) and your existing password:
+{% if returning %}Your earlier student account is now a scholar account, so everything you posted is still attached to it. Sign in with your email address ({{ user.email }}) and your existing password:
 
 {{ login_url }}
 

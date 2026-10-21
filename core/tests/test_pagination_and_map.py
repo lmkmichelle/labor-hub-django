@@ -41,7 +41,7 @@ class WorldMapPageTests(TestCase):
     def test_panel_fragment_shows_counts_and_a_way_back(self):
         html = self.client.get(reverse("map_country_detail", args=["US"])).content.decode()
         self.assertIn("data-map-close", html)
-        self.assertIn("0 fellows", html)
+        self.assertIn("0 researchers", html)
 
 
 class MapCountryNamesTests(TestCase):

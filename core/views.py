@@ -29,7 +29,6 @@ from core.constants import (
 from core.announcements import (
     announcements_queryset,
     load_announcements,
-    recent_announcement_summaries,
 )
 from core.filters import map_country_terms_to_codes, parse_pill_terms, serialize_pill_terms
 from core.forms import ContactForm
@@ -98,62 +97,32 @@ class SuperuserTemplateView(UserPassesTestMixin, TemplateView):
         return self.request.user.is_superuser
 
 
+HOME_LAYOUTS = ('wide', 'split')
+
+
 def home(request):
-    # Get new scholars (recently joined, last 6)
-    new_scholars_qs = CustomUser.objects.filter(
-        is_active=True,
-        profile__isnull=False
-    ).order_by('-date_joined')[:6]
+    # The three newest members, students and scholars alike.
+    new_researchers = list(
+        CustomUser.objects.filter(is_active=True, profile__isnull=False)
+        .select_related('profile').order_by('-date_joined')[:3])
 
-    # Format scholars for _list_display template
-    new_scholars = []
-    for scholar in new_scholars_qs:
-        new_scholars.append({
-            'url': f'/profile/{scholar.pk}/',
-            'title': scholar.get_full_name(),
-            'date': scholar.date_joined.strftime('%b %d'),
-            'subtitle': scholar.profile.position or 'Position not specified',
-            'description': scholar.profile.get_country_code_display() if scholar.profile.country_code else ''
-        })
+    recent_papers = list(
+        Publication.objects.filter(status='approved')
+        .select_related('revision_of')
+        .prefetch_related('author_links__author__user')
+        .order_by('-applied_at')[:6])
 
-    # Get recent approved papers (last 6)
-    recent_papers_qs = Publication.objects.filter(
-        status='approved'
-    ).select_related('revision_of').prefetch_related('author_links__author__user').order_by('-applied_at')[:6]
+    # ?layout= previews the other arrangement; HOME_LAYOUT sets the default.
+    layout = request.GET.get('layout')
+    if layout not in HOME_LAYOUTS:
+        layout = settings.HOME_LAYOUT if settings.HOME_LAYOUT in HOME_LAYOUTS else 'wide'
 
-    # Format papers for _list_display template
-    recent_papers = []
-    for paper in recent_papers_qs:
-        authors = []
-        for author in paper.ordered_authors:
-            if author.user:
-                authors.append(author.user.get_full_name())
-            else:
-                authors.append(author.name)
-
-        recent_papers.append({
-            'url': f'/publications/{paper.id}/',
-            'title': paper.title,
-            'date': paper.applied_at.strftime('%b %d'),
-            # Unnumbered (unapproved or example) papers aren't actually part
-            # of the discussion series yet. display_number covers both the
-            # regular series ("5") and a job-market paper's own "J" series.
-            'subtitle': (
-                f'{"Job Market Paper" if paper.is_job_market else "Discussion Paper"} '
-                f'No. {paper.display_number}'
-                if paper.display_number else ''
-            ),
-            'is_example': paper.is_example,
-            'description': ', '.join(authors) if authors else 'Unknown Author'
-        })
-
-    context = {
-        'new_scholars': new_scholars,
+    return render(request, 'core/home.html', {
+        'new_researchers': new_researchers,
         'recent_papers': recent_papers,
-        'recent_announcements': recent_announcement_summaries(),
-    }
-
-    return render(request, 'core/home.html', context)
+        'recent_announcements': load_announcements(announcements_queryset()[:6]),
+        'home_layout': layout,
+    })
 
 
 def announcements(request):
@@ -449,7 +418,7 @@ class ScholarsListView(ListView):
         context['selected_interests_serialized'] = serialize_pill_terms(interest_terms)
         context['role_choices'] = [
             (CustomUser.Role.STUDENT.value, 'Students'),
-            (CustomUser.Role.RESEARCHER.value, 'Researchers'),
+            (CustomUser.Role.RESEARCHER.value, 'Scholars'),
         ]
         context['selected_roles'] = selected_roles
 

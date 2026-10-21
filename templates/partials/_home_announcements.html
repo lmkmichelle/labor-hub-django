@@ -1,0 +1,12 @@
+{% comment %}Recent announcements, as the same cards the Announcements page uses.{% endcomment %}
+<div class="mb-4 flex items-center justify-between gap-3">
+  <h2 class="text-lg font-semibold text-heading">Recent Announcements</h2>
+  <a href="{% url 'announcements' %}" class="btn-primary">See all announcements</a>
+</div>
+<div class="flex flex-col gap-3">
+  {% for entry in recent_announcements %}
+    {% include "partials/cards/_announcement_card.html" with entry=entry %}
+  {% empty %}
+    {% include "partials/_empty_state.html" with text="No recent announcements to display." %}
+  {% endfor %}
+</div>

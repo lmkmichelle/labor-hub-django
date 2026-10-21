@@ -76,7 +76,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
         'role_badge',
         'advisor_display',
         'status_display',
-        'resume',
+        'cv_link_display',
         'account_actions',
         'applied_at',
         'reviewed_by'
@@ -87,7 +87,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
     # 10k universities: a search box, not a 10k-option <select>.
     autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
-    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'other_networks',
+    readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'cv_link_display', 'other_networks',
                        'returning_account_note']
     ordering = ['-applied_at']
 
@@ -98,13 +98,19 @@ class UserApplicationAdmin(admin.ModelAdmin):
                        'previous_student_account', 'previous_jm_paper_number', 'returning_account_note')
         }),
         ('Review', {
-            'fields': ('resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
+            'fields': ('cv_link_display', 'resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
         }),
     )
 
     @admin.display(description='Role', ordering='role')
     def role_badge(self, obj):
         return _role_badge(obj.role, obj.get_role_display())
+
+    @admin.display(description='CV')
+    def cv_link_display(self, obj):
+        if not obj.cv_url:
+            return '—'
+        return format_html('<a href="{}" target="_blank" rel="noopener">CV link</a>', obj.cv_url)
 
     @admin.display(description='Advisor', ordering='advisor__last_name')
     def advisor_display(self, obj):
@@ -124,7 +130,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
         notes = []
         if obj.pk and obj.status == 'pending' and obj.returning_student() is not None:
             notes.append('A deactivated student account uses this email. Approving reactivates '
-                         'it as a fellow account, keeping all of its papers and posts.')
+                         'it as a scholar account, keeping all of its papers and posts.')
         if obj.previous_student_account and obj.previous_jm_paper_number:
             from publications.models import Publication
             paper = Publication.find_original(obj.previous_jm_paper_number, job_market_only=True)

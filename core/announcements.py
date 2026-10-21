@@ -71,38 +71,3 @@ def load_announcements(rows):
         {'kind': row['kind'], 'label': KIND_LABELS[row['kind']], 'obj': objects[row['kind']][row['id']]}
         for row in rows
     ]
-
-
-def _summary(entry):
-    """Map one loaded announcement onto the keys partials/_list_item.html reads."""
-    obj, kind = entry['obj'], entry['kind']
-    if kind == JOB:
-        title = obj.title
-        subtitle = obj.employer or 'Employer not specified'
-        description = ', '.join(obj.country_labels())
-    elif kind == EVENT:
-        title = obj.title
-        subtitle = obj.location
-        description = ''
-    elif kind == SPECIAL_ISSUE:
-        title = obj.title
-        subtitle = obj.journal
-        description = f"Deadline {obj.submission_deadline.strftime('%b %d, %Y')}"
-    else:
-        title = obj.visitor_name or 'Visiting fellow'
-        subtitle = f'Visiting {obj.get_university_display()}'
-        description = ', '.join(obj.country_labels())
-    return {
-        'url': obj.get_absolute_url(),
-        'title': title,
-        'date': timezone.localtime(obj.created_at).strftime('%b %d'),
-        'subtitle': subtitle,
-        'description': description,
-        'badge': {'text': entry['label']},
-        'is_example': obj.is_example,
-    }
-
-
-def recent_announcement_summaries(limit=6):
-    """The newest ``limit`` announcements as dicts for partials/_list_display.html."""
-    return [_summary(e) for e in load_announcements(announcements_queryset()[:limit])]

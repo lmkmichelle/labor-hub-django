@@ -46,7 +46,7 @@ class CustomUser(AbstractUser):
     class Role(models.TextChoices):
         STUDENT = 'student', 'Student'
         ADMIN = 'admin', 'Admin'
-        RESEARCHER = 'researcher', 'Researcher'
+        RESEARCHER = 'researcher', 'Scholar'
 
 
     email = models.EmailField(unique=True)
