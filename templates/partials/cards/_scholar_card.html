@@ -2,6 +2,7 @@
 Scholar row for the Scholars list page. Inputs:
   item   a CustomUser (named "item" because _list_display.html passes it so)
 Full-width horizontal card, same shape as _job_board_card.html.
+  limit  optional slice spec for the interest pills (default ":3"; the home page passes ":2")
 {% endcomment %}
 <div class="card-surface w-full">
   <div class="card-header">
@@ -15,5 +16,5 @@ Full-width horizontal card, same shape as _job_board_card.html.
   <p class="mt-1 text-sm text-body">
     {{ item.profile.position|default:"Position not specified" }}{% if item.profile.get_university_display %} · {{ item.profile.get_university_display }}{% endif %}
   </p>
-  {% include "partials/cards/_pill_row.html" with labels=item.profile.research_interest_list limit=":3" %}
+  {% include "partials/cards/_pill_row.html" with labels=item.profile.research_interest_list limit=limit|default:":3" %}
 </div>

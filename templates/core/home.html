@@ -32,24 +32,17 @@
       </div>
     </div>
 
-    <!-- The three newest members, students and scholars alike: one white panel,
-         like the cards below, so it doesn't fight the red. -->
-    <aside class="rounded-base bg-white p-5 shadow-xs" aria-labelledby="new-researchers-heading">
-      <h3 id="new-researchers-heading" class="m-0 text-base font-semibold text-red-700">New researchers</h3>
-      <ul class="mt-2 list-none divide-y divide-gray-200 p-0">
+    <!-- The three newest members, students and scholars alike, as the same cards the directory uses. -->
+    <aside aria-labelledby="new-researchers-heading">
+      <h3 id="new-researchers-heading" class="m-0 text-base font-semibold text-white">New researchers</h3>
+      <div class="mt-3 flex flex-col gap-3">
         {% for person in new_researchers %}
-          <li>
-            <a href="{% url 'profile' pk=person.pk %}" class="block py-3 no-underline hover:bg-red-50">
-              <span class="block text-sm font-semibold text-heading">{{ person.get_full_name }}</span>
-              <span class="block text-sm text-body">{{ person.profile.position|default:"Position not specified" }}</span>
-              {% if person.profile.country_code %}<span class="block text-xs text-body">{{ person.profile.get_country_code_display }}</span>{% endif %}
-            </a>
-          </li>
+          {% include "partials/cards/_scholar_card.html" with item=person limit=":2" %}
         {% empty %}
-          <li class="py-3 text-sm text-body">No new researchers yet.</li>
+          <p class="text-sm text-red-50">No new researchers yet.</p>
         {% endfor %}
-      </ul>
-      <a href="{% url 'scholars' %}" class="inline-block text-sm font-semibold text-red-700 hover:underline">See all researchers →</a>
+      </div>
+      <a href="{% url 'scholars' %}" class="mt-4 inline-block text-sm font-semibold text-white underline-offset-2 hover:underline">See all researchers →</a>
     </aside>
   </div>
 </section>
