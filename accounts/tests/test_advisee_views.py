@@ -140,14 +140,26 @@ class AdviseeNavAndCountTests(TestCase):
         self.assertEqual(response.context["pending_advisee_count"], 0)
 
 
-@override_settings(SITE_URL="http://testserver")
+@override_settings(SITE_URL="http://testserver", ADMIN_NOTIFY_EMAIL="ega@example.com")
 class ApplicationNotificationEmailTests(TestCase):
-    def test_staff_notified_on_submission(self):
-        CustomUser.objects.create_user(
+    def _staff(self):
+        return CustomUser.objects.create_user(
             email="staff@example.com", password="x", first_name="S",
             last_name="Taff", role=CustomUser.Role.ADMIN, is_active=True,
             is_staff=True,
         )
+
+    def _student_data(self, **extra):
+        data = {
+            "email": "newstudent@example.com", "first_name": "New",
+            "last_name": "Student", "department": "Econ", "country_code": "US",
+            "motivation": "hi", "password1": "pass12345", "password2": "pass12345",
+        }
+        data.update(extra)
+        return data
+
+    def test_shared_inbox_notified_on_scholar_submission_not_each_staff_user(self):
+        self._staff()
         data = {
             "email": "newapplicant@example.com", "first_name": "New",
             "last_name": "Applicant", "department": "Econ", "country_code": "US",
@@ -157,15 +169,48 @@ class ApplicationNotificationEmailTests(TestCase):
         }
         self.client.post(reverse("apply_researcher"), data)
 
-        staff_mails = [m for m in mail.outbox if "staff@example.com" in m.to]
-        self.assertEqual(len(staff_mails), 1)
-        self.assertIn("application", staff_mails[0].subject.lower())
-        self.assertTrue(staff_mails[0].subject.startswith("[Action Required]"))
+        self.assertFalse([m for m in mail.outbox if "staff@example.com" in m.to])
+        ega_mails = [m for m in mail.outbox if m.to == ["ega@example.com"]]
+        self.assertEqual(len(ega_mails), 1)
+        self.assertIn("application", ega_mails[0].subject.lower())
+        self.assertTrue(ega_mails[0].subject.startswith("[Action Required]"))
+        self.assertEqual(ega_mails[0].reply_to, ["newapplicant@example.com"])
         self.assertEqual(
-            staff_mails[0].extra_headers.get("X-Cmail-GroupName"),
+            ega_mails[0].extra_headers.get("X-Cmail-GroupName"),
             "LaborHub")
         # Regression: this notification used to be plain-text only.
-        assert_has_html_alternative_with_logo(self, staff_mails[0])
+        assert_has_html_alternative_with_logo(self, ega_mails[0])
+
+    def test_several_addresses_can_be_configured(self):
+        data = {
+            "email": "multi@example.com", "first_name": "M", "last_name": "A",
+            "department": "Econ", "country_code": "US", "motivation": "hi",
+            "password1": "pass12345", "password2": "pass12345",
+            "research_paper_1": SimpleUploadedFile("a.pdf", b"%PDF-1.4 a", content_type="application/pdf"),
+            "research_paper_2": SimpleUploadedFile("b.pdf", b"%PDF-1.4 b", content_type="application/pdf"),
+        }
+        with override_settings(ADMIN_NOTIFY_EMAIL="ega@example.com, second@example.com"):
+            self.client.post(reverse("apply_researcher"), data)
+        self.assertEqual(
+            [m.to for m in mail.outbox if m.reply_to == ["multi@example.com"]],
+            [["ega@example.com", "second@example.com"]])
+
+    def test_student_without_an_advisor_still_goes_to_the_shared_inbox(self):
+        # The public form requires an advisor, but one can be missing (the advisor's
+        # account was deleted, or an admin entered the application). Nobody else can
+        # approve it, so the admins are told.
+        from accounts.emails import send_application_submitted_email
+
+        application = UserApplication.objects.create(
+            email="orphan@example.com", first_name="Or", last_name="Phan",
+            role=CustomUser.Role.STUDENT, password="x")
+        send_application_submitted_email(application)
+        self.assertEqual([m.to for m in mail.outbox], [["ega@example.com"]])
+
+    def test_student_with_advisor_only_notifies_the_advisor(self):
+        advisor = make_researcher()
+        self.client.post(reverse("apply_student"), self._student_data(advisor=advisor.pk))
+        self.assertEqual([m.to for m in mail.outbox], [[advisor.email]])
 
     def test_advisor_notified_on_student_submission(self):
         advisor = make_researcher()

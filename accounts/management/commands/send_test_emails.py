@@ -16,7 +16,7 @@ Every send here goes through the real ``send_*_email``/form/view code this
 app actually uses in production -- nothing is re-implemented -- so what
 lands in the inbox (or the preview file) is exactly what a real user would
 receive. Some email types need a real, saved database row to work at all
-(the staff alert reads its recipients from the DB; the digest reads real
+(the digest reads real
 approved content; the password reset looks up a real active user). If
 ``--to`` isn't an existing account, a throwaway one is created for the send
 and deleted again in a ``finally`` block. If ``--to`` *is* an existing
@@ -207,27 +207,18 @@ class Command(BaseCommand):
         send_application_rejected_email(application, fail_silently=False)
 
     def _send_staff_alert(self, to):
-        # send_application_submitted_email reads its recipients from
-        # CustomUser.objects.filter(is_staff=True, is_active=True) and
-        # builds review_url from application.pk -- both need real, saved rows.
-        staff, created = self._get_or_reuse_user(
-            to, role=CustomUser.Role.ADMIN, is_staff=True)
-        if not created and not (staff.is_staff and staff.is_active):
-            raise CommandError(
-                f"{to} is an existing account but isn't an active staff "
-                "member, so it wouldn't actually receive this email -- "
-                "can't preview it without creating a duplicate account."
-            )
+        # review_url is built from application.pk, so the row must be saved; it
+        # is deleted again straight after. Recipients are passed explicitly,
+        # since the real ones come from settings.ADMIN_NOTIFY_EMAIL.
         application = UserApplication.objects.create(
             email="applicant-preview@example.com", first_name="Preview",
             last_name="Applicant", position="Postdoc", department="Economics",
         )
         try:
-            send_application_submitted_email(application, fail_silently=False)
+            send_application_submitted_email(
+                application, fail_silently=False, recipients=[to])
         finally:
             application.delete()
-            if created:
-                staff.delete()
 
     def _send_advisor_review(self, to):
         advisor = CustomUser(

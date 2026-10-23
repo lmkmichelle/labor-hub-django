@@ -241,6 +241,11 @@ SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 # that should receive site inquiries.
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", DEFAULT_FROM_EMAIL)
 
+# Where "a new application needs review" goes: the shared admin inbox (an EGA),
+# not each staff user. Comma-separate to notify several. Defaults to
+# CONTACT_EMAIL, so one mailbox receives both site inquiries and applications.
+ADMIN_NOTIFY_EMAIL = os.environ.get("ADMIN_NOTIFY_EMAIL", CONTACT_EMAIL)
+
 # Reply-To on automated mail that has no more specific reply address (see
 # core.email.default_reply_to) -- meant to be a shared inbox such as an EGA
 # (e.g. laborhub@cornell.edu), not a person. Empty means no Reply-To header.

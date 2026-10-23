@@ -77,20 +77,27 @@ def send_application_rejected_email(application, fail_silently=True):
     message.send(fail_silently=fail_silently)
 
 
-def send_application_submitted_email(application, fail_silently=True):
-    """Notify every active staff member that a new application needs review.
+def send_application_submitted_email(application, fail_silently=True, recipients=None):
+    """Tell the admins' shared inbox that a new application needs review.
+
+    Goes to ``settings.ADMIN_NOTIFY_EMAIL`` (the shared EGA mailbox), not to each
+    staff user. A student who named an advisor is skipped: that advisor approves
+    them (see ``send_advisor_review_email``) and an admin need not act. A student
+    with no advisor has no one else to approve them, so the admins are told.
 
     Modeled on ``core.views._send_contact_notification``: sent from
     ``DEFAULT_FROM_EMAIL`` with ``Reply-To`` set to the applicant, and failing
     silently so a mail outage can't 500 the applicant whose row is already saved.
+    ``recipients`` overrides the setting (used by the send_test_emails preview).
     """
     from accounts.models import CustomUser
 
-    recipients = list(
-        CustomUser.objects.filter(is_staff=True, is_active=True)
-        .exclude(email="")
-        .values_list("email", flat=True)
-    )
+    if application.role == CustomUser.Role.STUDENT and application.advisor_id:
+        return
+    if recipients is None:
+        recipients = [
+            addr.strip() for addr in settings.ADMIN_NOTIFY_EMAIL.split(",") if addr.strip()
+        ]
     if not recipients:
         return
 
