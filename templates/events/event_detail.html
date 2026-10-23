@@ -3,7 +3,7 @@
 {% load text_filters %}
 {% block title %}{{ event.title }}{% endblock %}
 {% block content %}
-<article class="max-w-none format lg:format-lg">
+<article class="max-w-none format lg:format-lg {{ event.theme_class }}">
     <div class="col md-6">
         <div class="flex flex-row w-full justify-between items-center">
             <p>{{ event.date|date:"N j, Y" }}</p>

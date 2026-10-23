@@ -1,0 +1,6 @@
+{% comment %}Recent papers, as the same cards the Research Papers page uses (green job market series).{% endcomment %}
+<div class="mb-4 flex items-center justify-between gap-3">
+  <h2 class="text-lg font-semibold text-heading">Recent Papers</h2>
+  <a href="{% url 'publications' %}" class="btn-primary">See all papers</a>
+</div>
+{% include "partials/_publications_list.html" with publications=recent_papers empty_text="No recent papers to display." %}

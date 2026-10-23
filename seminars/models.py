@@ -131,6 +131,8 @@ class Seminar(Approvable):
         verbose_name = 'Visit'
         verbose_name_plural = 'Visits'
 
+    theme_class = 'theme-pink'
+
     def get_absolute_url(self):
         return reverse('seminar-detail', kwargs={'pk': self.pk})
 

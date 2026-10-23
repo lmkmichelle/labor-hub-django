@@ -49,7 +49,7 @@ class ResearcherApplicationView(BaseApplicationView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['application_type'] = 'Researcher'
+        context['application_type'] = 'Scholar'
         return context
 
 class StudentApplicationView(BaseApplicationView):

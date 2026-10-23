@@ -78,7 +78,7 @@ class CustomUserManagerTests(TestCase):
 class CustomUserModelTests(TestCase):
     def test_str_includes_email_and_role(self):
         user = make_user()
-        self.assertEqual(str(user), f"{user.email} (Researcher)")
+        self.assertEqual(str(user), f"{user.email} (Scholar)")
 
     def test_username_defaults_to_email(self):
         user = make_user()

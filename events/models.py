@@ -71,6 +71,20 @@ class Event(Approvable):
     def get_absolute_url(self):
         return reverse('event-detail', kwargs={'pk': self.pk})
 
+    # Colour scope per category (see .theme-* in input.css). Red is left for
+    # the site itself ("All" tab, buttons), so every category has its own.
+    THEME_BY_CATEGORY = {
+        'workshop': 'theme-blue',
+        'conference': 'theme-orange',
+        'schools': 'theme-lime',
+        'courses': 'theme-indigo',
+        'other': 'theme-slate',
+    }
+
+    @property
+    def theme_class(self):
+        return self.THEME_BY_CATEGORY.get(self.category, '')
+
     @property
     def is_upcoming(self):
         return self.date >= timezone.now()

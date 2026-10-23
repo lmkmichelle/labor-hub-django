@@ -84,7 +84,7 @@ class SpecialIssueDetailView(DetailView):
 
 
 class SpecialIssueCreateView(LoginRequiredMixin, CreateView):
-    """Fellows (researchers) only: a special issue needs a fellow as an editor."""
+    """Scholars only: a special issue needs a scholar as an editor."""
 
     model = SpecialIssue
     form_class = SpecialIssueForm
@@ -93,7 +93,7 @@ class SpecialIssueCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and not request.user.is_researcher():
-            raise PermissionDenied("Only fellows can post a special issue.")
+            raise PermissionDenied("Only scholars can post a special issue.")
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):

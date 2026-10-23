@@ -400,6 +400,7 @@ class JobMarketGreenTests(TestCase):
         dp = make_publication(status="approved", discussion_paper_number=2, title="Other")
         listing = self.client.get(reverse("publications")).content.decode()
         self.assertIn("Job Market Paper No. J1", listing)
-        self.assertEqual(listing.count("jm-theme"), 1)
+        # the card, plus the green "job market paper series" link in the intro
+        self.assertEqual(listing.count("jm-theme"), 2)
         self.assertContains(self.client.get(reverse("publication_detail", args=[jm.pk])), "jm-theme")
         self.assertNotContains(self.client.get(reverse("publication_detail", args=[dp.pk])), "jm-theme")

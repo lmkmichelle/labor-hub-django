@@ -24,6 +24,9 @@ JUNIOR_RANKS = ['predoc', 'postdoc']
 
 
 class Job(Approvable):
+    # Jobs read teal (see .theme-teal in input.css).
+    theme_class = 'theme-teal'
+
     title = models.CharField(max_length=255)
     employer = models.CharField(
         max_length=255,

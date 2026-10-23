@@ -1,21 +1,29 @@
 {% comment %}
 Detailed event card. Inputs:
   event   an Event instance
+  compact optional; the home hero: type pill top right, date bottom left
 Used by the Events list page.
 {% endcomment %}
-<div class="card-surface w-full">
+<div class="card-surface w-full{% if compact %} p-4{% endif %} {{ event.theme_class }}">
   <div class="card-header">
-    <h5 class="card-title"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
+    <h5 class="card-title{% if compact %} text-base{% endif %}"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=event.is_example %}
       <span class="pill-accent">{{ event.get_category_display }}</span>
-      <p class="m-0 text-sm">{{ event.date|date:"N j, Y" }}</p>
+      {% if not compact %}<p class="m-0 text-sm">{{ event.date|date:"N j, Y" }}</p>{% endif %}
     </div>
   </div>
-  {% if event.deadline %}
+  {% if event.deadline and not compact %}
     <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y" }}</p>
   {% endif %}
-  {% if event.host %}
+  {% if compact %}
+    <div class="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm text-body">
+      <p class="m-0">{{ event.date|date:"N j, Y" }}</p>
+      {% if event.host %}
+        <p class="m-0">Posted by <a href="{% url 'profile' pk=event.host.id %}" class="card-inline-link">{{ event.host.get_full_name|default:event.host.email }}</a></p>
+      {% endif %}
+    </div>
+  {% elif event.host %}
     <p class="mt-2 text-sm text-body text-right">
       Posted by
       <a href="{% url 'profile' pk=event.host.id %}" class="card-inline-link">{{ event.host.get_full_name|default:event.host.email }}</a>

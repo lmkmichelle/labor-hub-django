@@ -156,11 +156,11 @@ class TopNavTests(TestCase):
 
     def test_nav_lists_exactly_the_four_sections(self):
         nav = self.nav_html()
-        for label in ("Fellows", "Announcements", "Research Papers", "Contact Us"):
+        for label in ("Researchers", "Announcements", "Research Papers", "Contact Us"):
             self.assertIn(label, nav)
         for gone in ("World Map", ">Home<"):
             self.assertNotIn(gone, nav)
-        self.assertLess(nav.index("Fellows"), nav.index("Announcements"))
+        self.assertLess(nav.index("Researchers"), nav.index("Announcements"))
         self.assertLess(nav.index("Announcements"), nav.index("Research Papers"))
         self.assertLess(nav.index("Research Papers"), nav.index("Contact Us"))
 

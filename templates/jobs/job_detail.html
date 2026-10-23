@@ -2,7 +2,7 @@
 {% load text_filters %}
 {% block title %}{{ job.title }}{% endblock %}
 {% block content %}
-<article class="max-w-none format lg:format-lg">
+<article class="max-w-none format lg:format-lg {{ job.theme_class }}">
     <div>
         <div class="flex flex-row w-full justify-between items-center">
             <p>{{ job.deadline|date:"N j, Y" }}</p>
@@ -11,6 +11,7 @@
         <div class="flex flex-row gap-2 items-center w-full overflow-auto">
             <h3>{{ job.title }}</h3>
         </div>
+        <div class="not-format mb-2"><span class="pill-accent">Job</span></div>
         {% if job.employer %}
             <p class="not-format mb-2 text-body">{{ job.employer }}</p>
         {% endif %}
