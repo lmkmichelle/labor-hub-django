@@ -91,15 +91,28 @@ class AnnouncementColourTests(TestCase):
             title=f"A {category}", description="d", category=category,
             date=timezone.now() + timedelta(days=3), location="Essen", status="approved")
 
-    def test_workshops_are_blue_conferences_orange_others_red(self):
-        for category, scope in (("conference", "theme-orange"), ("workshop", "theme-blue"),
-                                ("schools", None), ("other", None)):
+    def test_each_event_category_has_its_own_colour(self):
+        scopes = {"conference": "theme-orange", "workshop": "theme-blue", "schools": "theme-lime",
+                  "courses": "theme-indigo", "other": "theme-slate"}
+        for category, scope in scopes.items():
             event = self._event(category)
             html = self.client.get(reverse("announcements")).content.decode()
             html = html[html.index("</nav>", html.index("Announcement types")):]  # past the filter tabs, which carry theme classes too
             card = html[max(0, html.index(event.title) - 600):html.index(event.title)]
-            for name in ("theme-blue", "theme-orange"):
+            for name in scopes.values():
                 self.assertEqual(name in card, name == scope, (category, name))
+        self.assertEqual(len(set(scopes.values())), len(scopes))
+
+    def test_visit_card_and_detail_are_pink(self):
+        from seminars.models import Seminar
+        visit = Seminar.objects.create(
+            visitor_name="Ada Visitor", visitor_email="ada@example.com", description="d",
+            visit_start=timezone.localdate() + timedelta(days=5),
+            visit_end=timezone.localdate() + timedelta(days=9), status="approved")
+        feed = self.client.get(reverse("announcements"))
+        self.assertContains(feed, "theme-pink")
+        self.assertContains(feed, '<span class="pill-accent">Visit</span>', html=True)
+        self.assertContains(self.client.get(reverse("seminar-detail", args=[visit.pk])), "theme-pink")
 
     def test_event_detail_page_carries_the_scope(self):
         page = self.client.get(reverse("event-detail", args=[self._event("workshop").pk]))
@@ -107,6 +120,7 @@ class AnnouncementColourTests(TestCase):
         page = self.client.get(reverse("event-detail", args=[self._event("conference").pk]))
         self.assertContains(page, "theme-orange")
         page = self.client.get(reverse("event-detail", args=[self._event("other").pk]))
+        self.assertContains(page, "theme-slate")
         self.assertNotContains(page, "theme-blue")
 
     def test_special_issue_card_and_detail_are_purple_with_a_label(self):
@@ -136,7 +150,8 @@ class AnnouncementColourTests(TestCase):
 class AnnouncementTabColourTests(TestCase):
     def test_active_tab_takes_its_types_colour_and_all_stays_red(self):
         for name, scope in (("jobs-list", "theme-teal"), ("events-list", "theme-blue"),
-                            ("special-issues-list", "theme-purple")):
+                            ("special-issues-list", "theme-purple"),
+                            ("seminars-list", "theme-pink")):
             html = self.client.get(reverse(name)).content.decode()
             active = [l for l in html.splitlines() if "announce-tab-active" in l]
             self.assertEqual(len(active), 1, name)

@@ -528,6 +528,89 @@
   .theme-orange a.bg-red-700 {
     @apply bg-orange-700 hover:bg-orange-800 focus:ring-orange-600;
   }
+
+  .announce-tab-active.theme-pink {
+    @apply border-pink-700 bg-pink-50 text-pink-700 hover:bg-pink-50 hover:text-pink-700;
+  }
+  .theme-pink .pill-accent {
+    @apply bg-pink-100 text-pink-800;
+  }
+  .theme-pink .card-inline-link,
+  .theme-pink .text-red-700,
+  .theme-pink.format a:where(:not([class])),
+  .theme-pink .format a:where(:not([class])) {
+    @apply text-pink-700;
+  }
+  .theme-pink .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-pink.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-pink-800 underline;
+  }
+  .theme-pink svg {
+    @apply fill-pink-700;
+  }
+  .theme-pink a.bg-red-700 {
+    @apply bg-pink-700 hover:bg-pink-800 focus:ring-pink-600;
+  }
+
+  .theme-lime .pill-accent {
+    @apply bg-lime-100 text-lime-800;
+  }
+  .theme-lime .card-inline-link,
+  .theme-lime .text-red-700,
+  .theme-lime.format a:where(:not([class])),
+  .theme-lime .format a:where(:not([class])) {
+    @apply text-lime-700;
+  }
+  .theme-lime .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-lime.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-lime-800 underline;
+  }
+  .theme-lime svg {
+    @apply fill-lime-700;
+  }
+  .theme-lime a.bg-red-700 {
+    @apply bg-lime-700 hover:bg-lime-800 focus:ring-lime-600;
+  }
+
+  .theme-indigo .pill-accent {
+    @apply bg-indigo-100 text-indigo-800;
+  }
+  .theme-indigo .card-inline-link,
+  .theme-indigo .text-red-700,
+  .theme-indigo.format a:where(:not([class])),
+  .theme-indigo .format a:where(:not([class])) {
+    @apply text-indigo-700;
+  }
+  .theme-indigo .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-indigo.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-indigo-800 underline;
+  }
+  .theme-indigo svg {
+    @apply fill-indigo-700;
+  }
+  .theme-indigo a.bg-red-700 {
+    @apply bg-indigo-700 hover:bg-indigo-800 focus:ring-indigo-600;
+  }
+
+  .theme-slate .pill-accent {
+    @apply bg-slate-100 text-slate-800;
+  }
+  .theme-slate .card-inline-link,
+  .theme-slate .text-red-700,
+  .theme-slate.format a:where(:not([class])),
+  .theme-slate .format a:where(:not([class])) {
+    @apply text-slate-700;
+  }
+  .theme-slate .format a:where(:not([class])):is(:hover, :focus-visible),
+  .theme-slate.format a:where(:not([class])):is(:hover, :focus-visible) {
+    @apply text-slate-800 underline;
+  }
+  .theme-slate svg {
+    @apply fill-slate-700;
+  }
+  .theme-slate a.bg-red-700 {
+    @apply bg-slate-700 hover:bg-slate-800 focus:ring-slate-600;
+  }
 }
 
 /* FAQ sections. The typography plugin zeroes heading margins with a rule of equal

@@ -4,15 +4,17 @@ Detailed visit card. Inputs:
   title   optional heading override
   badge   optional extra pill (the profile passes "Pending review")
   compact optional; the home hero: dates bottom left, no visit type or country pills
+Every visit carries a "Visit" pill in the top right, in the visits' pink.
 The Visits list page titles cards with the visitor's name. On a member's own
 profile that would repeat their name down the page, so the profile passes
 title=visit.get_university_display instead.
 {% endcomment %}
-<div class="card-surface w-full{% if compact %} p-4{% endif %}">
+<div class="card-surface w-full{% if compact %} p-4{% endif %} {{ visit.theme_class }}">
   <div class="card-header">
     <h5 class="card-title{% if compact %} text-base{% endif %}"><a href="{{ visit.get_absolute_url }}" class="card-stretch-link">{% firstof title visit.visitor_name "Visiting scholar" %}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=visit.is_example %}
+      <span class="pill-accent">Visit</span>
       {% if badge %}<span class="pill-neutral">{{ badge }}</span>{% endif %}
       {% if not compact %}
       <p class="m-0 text-sm">

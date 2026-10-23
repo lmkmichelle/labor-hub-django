@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load text_filters %}
 {% block content %}
-    <article class="max-w-none format lg:format-lg">
+    <article class="max-w-none format lg:format-lg {{ seminar.theme_class }}">
         <div>
             <div class="flex flex-row w-full justify-between items-center">
                 <p>
@@ -11,7 +11,7 @@
                         {{ seminar.visit_start|date:"N j, Y" }}
                     {% endif %}
                 </p>
-                <div class="not-format">{% include "partials/_example_badge.html" with show=seminar.is_example %}</div>
+                <div class="not-format flex items-center gap-2">{% include "partials/_example_badge.html" with show=seminar.is_example %}<span class="pill-accent">Visit</span></div>
             </div>
             <div class="not-format mb-2">
                 Visitor:
