@@ -72,5 +72,5 @@ fi
 # overrides these without touching the repository -- which is how the Cornell
 # sender should be applied once IT provides one.
 : "${DEFAULT_FROM_EMAIL:=Labor Hub <noreply@main-bvxea6i-zv7ifts4uu3lk.us-3.platformsh.site>}"
-: "${CONTACT_EMAIL:=mzm24@cornell.edu}"
+: "${CONTACT_EMAIL:=laborhub@cornell.edu}"
 export DEFAULT_FROM_EMAIL CONTACT_EMAIL
