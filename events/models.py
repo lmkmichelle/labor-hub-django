@@ -71,13 +71,13 @@ class Event(Approvable):
     def get_absolute_url(self):
         return reverse('event-detail', kwargs={'pk': self.pk})
 
-    # Conferences and workshops read blue (see .theme-blue in input.css); the
-    # other categories keep the default red.
-    BLUE_CATEGORIES = ('conference', 'workshop')
+    # Colour scope per category (see .theme-* in input.css); the other
+    # categories keep the default red.
+    THEME_BY_CATEGORY = {'workshop': 'theme-blue', 'conference': 'theme-orange'}
 
     @property
     def theme_class(self):
-        return 'theme-blue' if self.category in self.BLUE_CATEGORIES else ''
+        return self.THEME_BY_CATEGORY.get(self.category, '')
 
     @property
     def is_upcoming(self):

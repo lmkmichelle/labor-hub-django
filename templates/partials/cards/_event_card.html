@@ -1,11 +1,12 @@
 {% comment %}
 Detailed event card. Inputs:
   event   an Event instance
+  compact optional; the home hero: tighter spacing
 Used by the Events list page.
 {% endcomment %}
-<div class="card-surface w-full {{ event.theme_class }}">
+<div class="card-surface w-full{% if compact %} p-4{% endif %} {{ event.theme_class }}">
   <div class="card-header">
-    <h5 class="card-title"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
+    <h5 class="card-title{% if compact %} text-base{% endif %}"><a href="{% url 'event-detail' event.id %}" class="card-stretch-link">{{ event.title }}</a></h5>
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=event.is_example %}
       <span class="pill-accent">{{ event.get_category_display }}</span>
@@ -16,7 +17,7 @@ Used by the Events list page.
     <p class="mt-1 text-sm font-medium text-red-700">Application Deadline: {{ event.deadline|date:"N j, Y" }}</p>
   {% endif %}
   {% if event.host %}
-    <p class="mt-2 text-sm text-body text-right">
+    <p class="{% if compact %}mt-1{% else %}mt-2{% endif %} text-sm text-body text-right">
       Posted by
       <a href="{% url 'profile' pk=event.host.id %}" class="card-inline-link">{{ event.host.get_full_name|default:event.host.email }}</a>
     </p>

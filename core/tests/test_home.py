@@ -1,11 +1,12 @@
 from datetime import timedelta
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import CustomUser
 from events.models import Event
+from jobs.models import Job
 from publications.models import Publication
 
 
@@ -19,65 +20,67 @@ def member(email, role=CustomUser.Role.RESEARCHER, days_ago=0):
 
 
 class HomeHeroTests(TestCase):
-    def test_lists_the_three_newest_members_students_included(self):
-        member("oldest@example.com", days_ago=9)
-        member("scholar@example.com", days_ago=3)
-        member("student@example.com", CustomUser.Role.STUDENT, days_ago=2)
-        member("newest@example.com", days_ago=1)
+    def _event(self, title, days, category="workshop"):
+        return Event.objects.create(
+            title=title, description="Long description text", category=category,
+            date=timezone.now() + timedelta(days=days), location="Essen", status="approved")
+
+    def test_hero_shows_only_the_three_newest_announcements_compactly(self):
+        for i, title in enumerate(("Oldest", "Older", "Newer", "Newest")):
+            event = self._event(title, 3)
+            Event.objects.filter(pk=event.pk).update(
+                created_at=timezone.now() - timedelta(days=10 - i))
         page = self.client.get(reverse("home"))
-        names = [u.first_name for u in page.context["new_researchers"]]
-        self.assertEqual(names, ["Newest", "Student", "Scholar"])
-        self.assertContains(page, "New researchers")
+        titles = [e["obj"].title for e in page.context["recent_announcements"]]
+        self.assertEqual(titles, ["Newest", "Newer", "Older"])
+        self.assertContains(page, "New announcements")
+        self.assertNotContains(page, "Oldest")
+        self.assertNotContains(page, "New researchers")
+
+    def test_hero_cards_keep_their_colours_but_drop_the_body(self):
+        job = Job.objects.create(
+            title="Postdoc", description="A long job description", url="https://example.com",
+            deadline=timezone.localdate() + timedelta(days=30), status="approved")
+        self._event("Conf", 3, category="conference")
+        html = self.client.get(reverse("home")).content.decode()
+        self.assertIn("theme-teal", html)
+        self.assertIn("theme-orange", html)
+        self.assertNotIn("A long job description", html)
+        full = self.client.get(reverse("announcements")).content.decode()
+        self.assertIn("A long job description", full)
 
     def test_has_all_six_links(self):
         page = self.client.get(reverse("home"))
         for name in ("publications", "scholars", "map", "special-issues-list",
-                     "seminars-list", "jobs-list"):
+                     "seminars-list", "jobs-list", "announcements"):
             self.assertContains(page, f'href="{reverse(name)}"')
         for label in ("Special issues", "Long-distance visits", "New jobs"):
             self.assertContains(page, label)
 
 
-class HomeLayoutTests(TestCase):
-    def setUp(self):
-        Event.objects.create(
-            title="Gender Workshop", description="d", category="workshop",
-            date=timezone.now() + timedelta(days=3), location="Essen",
-            status="approved")
+class HomePapersTests(TestCase):
+    def test_six_newest_papers_with_both_series_colours_and_no_tabs(self):
         Publication.objects.create(
             title="Market Paper", abstract="a", status="approved",
             is_job_market=True, job_market_paper_number=1)
-
-    def test_wide_is_the_default(self):
+        for n in range(2, 9):
+            Publication.objects.create(
+                title=f"Paper {n}", abstract="a", status="approved", discussion_paper_number=n)
         page = self.client.get(reverse("home"))
-        self.assertEqual(page.context["home_layout"], "wide")
-        self.assertTemplateUsed(page, "partials/_home_wide.html")
-        self.assertTemplateNotUsed(page, "partials/_home_split.html")
+        self.assertEqual(len(page.context["recent_papers"]), 6)
+        html = page.content.decode()
+        self.assertIn("Recent Papers", html)
+        self.assertNotIn('role="tablist"', html)
+        Publication.objects.filter(title="Market Paper").update(
+            applied_at=timezone.now() + timedelta(days=1))
+        html = self.client.get(reverse("home")).content.decode()
+        self.assertIn("Job Market Paper No. J1", html)
+        self.assertIn("jm-theme", html)
+        self.assertIn("Discussion Paper No.", html)
 
-    def test_query_string_switches_layout(self):
+    def test_layout_switch_is_gone(self):
         page = self.client.get(reverse("home"), {"layout": "split"})
-        self.assertTemplateUsed(page, "partials/_home_split.html")
-        self.assertTemplateNotUsed(page, "partials/_home_wide.html")
-
-    @override_settings(HOME_LAYOUT="split")
-    def test_setting_changes_the_default_and_query_still_wins(self):
-        self.assertTemplateUsed(self.client.get(reverse("home")), "partials/_home_split.html")
-        self.assertTemplateUsed(
-            self.client.get(reverse("home"), {"layout": "wide"}), "partials/_home_wide.html")
-
-    def test_unknown_layout_falls_back_to_the_default(self):
-        page = self.client.get(reverse("home"), {"layout": "bogus"})
-        self.assertEqual(page.context["home_layout"], "wide")
-
-    def test_both_layouts_keep_the_job_market_colour_and_their_order(self):
-        for layout in ("wide", "split"):
-            html = self.client.get(reverse("home"), {"layout": layout}).content.decode()
-            self.assertIn("Job Market Paper No. J1", html)
-            self.assertIn("jm-theme", html)
-            first, second = (("Recent Papers", "Recent Announcements") if layout == "wide"
-                             else ("Recent Announcements", "Recent Papers"))
-            self.assertLess(html.index(first), html.index(second))
-            self.assertIn("Gender Workshop", html)
+        self.assertNotIn("home_layout", page.context)
 
 
 class AnnouncementColourTests(TestCase):
@@ -88,17 +91,20 @@ class AnnouncementColourTests(TestCase):
             title=f"A {category}", description="d", category=category,
             date=timezone.now() + timedelta(days=3), location="Essen", status="approved")
 
-    def test_conference_and_workshop_cards_are_blue_others_are_not(self):
-        for category, blue in (("conference", True), ("workshop", True),
-                               ("schools", False), ("other", False)):
+    def test_workshops_are_blue_conferences_orange_others_red(self):
+        for category, scope in (("conference", "theme-orange"), ("workshop", "theme-blue"),
+                                ("schools", None), ("other", None)):
             event = self._event(category)
             html = self.client.get(reverse("announcements")).content.decode()
             card = html[html.index(event.title) - 600:html.index(event.title)]
-            self.assertEqual("theme-blue" in card, blue, category)
+            for name in ("theme-blue", "theme-orange"):
+                self.assertEqual(name in card, name == scope, (category, name))
 
     def test_event_detail_page_carries_the_scope(self):
         page = self.client.get(reverse("event-detail", args=[self._event("workshop").pk]))
         self.assertContains(page, "theme-blue")
+        page = self.client.get(reverse("event-detail", args=[self._event("conference").pk]))
+        self.assertContains(page, "theme-orange")
         page = self.client.get(reverse("event-detail", args=[self._event("other").pk]))
         self.assertNotContains(page, "theme-blue")
 
@@ -113,3 +119,14 @@ class AnnouncementColourTests(TestCase):
         detail = self.client.get(reverse("special-issue-detail", args=[issue.pk]))
         self.assertContains(detail, "theme-purple")
         self.assertContains(detail, "Special Issue</span>")
+
+    def test_job_card_and_detail_are_teal_with_a_label(self):
+        job = Job.objects.create(
+            title="Research Data Analyst", description="d", url="https://example.com",
+            deadline=timezone.localdate() + timedelta(days=30), status="approved")
+        feed = self.client.get(reverse("announcements"))
+        self.assertContains(feed, "theme-teal")
+        self.assertContains(feed, '<span class="pill-accent">Job</span>', html=True)
+        detail = self.client.get(reverse("job-detail", args=[job.pk]))
+        self.assertContains(detail, "theme-teal")
+        self.assertContains(detail, "Job</span>")

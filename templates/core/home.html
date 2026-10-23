@@ -32,24 +32,22 @@
       </div>
     </div>
 
-    <!-- The three newest members, students and scholars alike, as the same cards the directory uses. -->
-    <aside class="flex flex-col" aria-labelledby="new-researchers-heading">
-      <h3 id="new-researchers-heading" class="m-0 text-base font-semibold text-white">New researchers</h3>
+    <!-- The three newest announcements, compact, in their type colours. -->
+    <aside class="flex flex-col" aria-labelledby="new-announcements-heading">
+      <h3 id="new-announcements-heading" class="m-0 text-base font-semibold text-white">New announcements</h3>
       <div class="mt-3 flex flex-col gap-3">
-        {% for person in new_researchers %}
-          {% include "partials/cards/_scholar_card.html" with item=person compact=True %}
+        {% for entry in recent_announcements %}
+          {% include "partials/cards/_announcement_card.html" with entry=entry compact=True %}
         {% empty %}
-          <p class="text-sm text-red-50">No new researchers yet.</p>
+          <p class="text-sm text-red-50">No new announcements yet.</p>
         {% endfor %}
       </div>
-      <a href="{% url 'scholars' %}" class="mt-4 inline-block text-sm font-semibold text-white underline-offset-2 hover:underline xl:mt-auto xl:pt-4">See all researchers →</a>
+      <a href="{% url 'announcements' %}" class="mt-4 inline-block text-sm font-semibold text-white underline-offset-2 hover:underline xl:mt-auto xl:pt-4">See all announcements →</a>
     </aside>
   </div>
 </section>
 
-{% if home_layout == "split" %}
-  {% include "partials/_home_split.html" %}
-{% else %}
-  {% include "partials/_home_wide.html" %}
-{% endif %}
+<section class="mt-10">
+  {% include "partials/_home_papers.html" %}
+</section>
 {% endblock %}

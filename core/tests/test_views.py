@@ -87,7 +87,7 @@ class HomeContextTests(TestCase):
         self.assertEqual(kinds["New Postdoc"], "Job")
         paper_titles = [p.title for p in response.context["recent_papers"]]
         self.assertIn("Recent Paper", paper_titles)
-        self.assertContains(response, "Recent Announcements")
+        self.assertContains(response, "New announcements")
         self.assertContains(response, reverse("map"))
 
 
@@ -589,8 +589,14 @@ class ResearchersDirectoryTests(TestCase):
 
     def test_nav_and_home_use_researchers_wording(self):
         home = self.client.get(reverse("home"))
-        self.assertContains(home, "New researchers")
         self.assertContains(home, "Meet researchers")
         self.assertNotContains(home, "Fellow")
         self.assertEqual(
             self.client.get("/researchers/").context["nav_section"], "scholars")
+
+
+class FaqDiscussionPaperSeriesTests(TestCase):
+    def test_answers_whether_a_paper_can_go_to_other_series(self):
+        page = self.client.get(reverse("faq"))
+        self.assertContains(page, "can I submit to other working paper series?")
+        self.assertContains(page, "may be published in other outlets")

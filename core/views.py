@@ -97,31 +97,16 @@ class SuperuserTemplateView(UserPassesTestMixin, TemplateView):
         return self.request.user.is_superuser
 
 
-HOME_LAYOUTS = ('wide', 'split')
-
-
 def home(request):
-    # The three newest members, students and scholars alike.
-    new_researchers = list(
-        CustomUser.objects.filter(is_active=True, profile__isnull=False)
-        .select_related('profile').order_by('-date_joined')[:3])
-
     recent_papers = list(
         Publication.objects.filter(status='approved')
         .select_related('revision_of')
         .prefetch_related('author_links__author__user')
         .order_by('-applied_at')[:6])
 
-    # ?layout= previews the other arrangement; HOME_LAYOUT sets the default.
-    layout = request.GET.get('layout')
-    if layout not in HOME_LAYOUTS:
-        layout = settings.HOME_LAYOUT if settings.HOME_LAYOUT in HOME_LAYOUTS else 'wide'
-
     return render(request, 'core/home.html', {
-        'new_researchers': new_researchers,
         'recent_papers': recent_papers,
-        'recent_announcements': load_announcements(announcements_queryset()[:6]),
-        'home_layout': layout,
+        'recent_announcements': load_announcements(announcements_queryset()[:3]),
     })
 
 
