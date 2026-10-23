@@ -1,7 +1,7 @@
 {% comment %}
 Detailed job card. Inputs:
   item     a Job instance (named "item" because _list_display.html passes it so)
-  compact  optional; the home hero: no categories, description or countries
+  compact  optional; the home hero: type pill top right, deadline bottom left, no categories, description or countries
 Used by the Jobs list page and the announcements feed.
 {% endcomment %}
 <div class="card-surface w-full{% if compact %} p-4{% endif %} {{ item.theme_class }}">
@@ -10,7 +10,7 @@ Used by the Jobs list page and the announcements feed.
     <div class="card-meta">
       {% include "partials/_example_badge.html" with show=item.is_example %}
       <span class="pill-accent">Job</span>
-      <p class="m-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
+      {% if not compact %}<p class="m-0 text-sm font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>{% endif %}
     </div>
   </div>
   {% if item.employer %}
@@ -21,8 +21,15 @@ Used by the Jobs list page and the announcements feed.
     <p class="mt-1 text-sm text-body">{{ item.description|truncatechars:300 }}</p>
     {% include "partials/cards/_pill_row.html" with labels=item.country_labels %}
   {% endif %}
-  {% if item.uploader %}
-    <p class="{% if compact %}mt-1{% else %}mt-2{% endif %} text-sm text-body text-right">
+  {% if compact %}
+    <div class="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm text-body">
+      <p class="m-0 font-medium text-red-700">Deadline: {{ item.deadline|date:"N j, Y" }}</p>
+      {% if item.uploader %}
+        <p class="m-0">Posted by <a href="{% url 'profile' pk=item.uploader.id %}" class="card-inline-link">{{ item.uploader.get_full_name|default:item.uploader.email }}</a></p>
+      {% endif %}
+    </div>
+  {% elif item.uploader %}
+    <p class="mt-2 text-sm text-body text-right">
       Posted by
       <a href="{% url 'profile' pk=item.uploader.id %}" class="card-inline-link">{{ item.uploader.get_full_name|default:item.uploader.email }}</a>
     </p>
