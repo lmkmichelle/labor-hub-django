@@ -123,6 +123,15 @@ class TokenAndSyncTests(TestCase):
         self.assertTrue(cm_sync.sync_profile(profile, client=client))
         self.assertEqual(client.calls, [])
 
+    @override_settings(CM_MEMBERS_LIST_ID="members-list")
+    def test_every_active_member_joins_the_newsletter_list_without_resubscribing(self):
+        client = FakeClient()
+        profile = make_user().profile
+        self.assertTrue(cm_sync.sync_profile(profile, client=client))
+        members = [c for c in client.calls if c[0] == "upsert" and c[1][0] == "members-list"]
+        self.assertEqual(len(members), 1)
+        self.assertIs(members[0][2].get("resubscribe"), False)
+
     def test_clearing_alerts_unsubscribes_from_the_alert_list(self):
         client = FakeClient()
         profile = make_user(topics=["Migration"]).profile

@@ -170,6 +170,7 @@ class EmailCampaign(models.Model):
         DIGEST_WEEKLY = 'digest_weekly', 'Weekly digest'
         DIGEST_MONTHLY = 'digest_monthly', 'Monthly digest'
         ALERTS = 'alerts', 'Weekly alerts'
+        NEWSLETTER = 'newsletter', 'Newsletter'
 
     class Status(models.TextChoices):
         PREPARED = 'prepared', 'Prepared'

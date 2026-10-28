@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- djlint:off -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Labor Hub Newsletter</title>
+</head>
+<body style="margin:0;padding:0;background:#eef0f3;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef0f3;">
+<tr><td align="center" style="padding:24px 12px;">
+
+<table role="presentation" width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;max-width:680px;background:#ffffff;border:1px solid #d9dde3;font-family:Arial,Helvetica,sans-serif;color:#22262b;">
+
+  <!-- Header -->
+  <tr>
+    <td style="padding:22px 32px 18px 32px;border-bottom:4px solid #b91c1c;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td valign="middle" style="vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td valign="middle" style="vertical-align:middle;padding-right:12px;"><a href="{{ site_url }}/" style="text-decoration:none;"><img src="{{ logo_src }}" alt="" height="48" style="display:block;height:48px;width:auto;border:0;"></a></td><td valign="middle" style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:1;font-weight:bold;white-space:nowrap;"><a href="{{ site_url }}/" style="text-decoration:none;"><span style="color:#000000;">The Labor </span><span style="color:#b91c1c;">Hub</span></a></td></tr></table>
+          </td>
+          <td valign="middle" align="right" style="vertical-align:middle;text-align:right;font-family:Arial,Helvetica,sans-serif;">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#b91c1c;font-weight:bold;">Newsletter No. {{ issue_number }}</div>
+            <div style="font-size:13px;color:#5b6370;padding-top:2px;">{{ issue_date|date:"F j, Y" }}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Welcome -->
+  <tr>
+    <td style="padding:26px 32px 8px 32px;">
+      <h1 style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:1.25;font-weight:normal;color:#1d2b44;">Welcome to <span style="color:#000000;">The Labor</span> <span style="color:#b91c1c;">Hub</span>!</h1>
+      <p style="margin:0;font-size:15px;line-height:1.6;color:#22262b;">{{ issue.welcome }}</p>
+    </td>
+  </tr>
+
+  <!-- How to use -->
+  <tr>
+    <td style="padding:18px 32px 6px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f5f8;">
+        <tr>
+          <td style="padding:18px 22px 14px 22px;">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#b91c1c;font-weight:bold;padding-bottom:8px;">How to use the Labor Hub</div>
+            <p style="margin:0 0 10px 0;font-size:14px;line-height:1.55;">The Hub is built by its members. Log in and post:</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;line-height:1.5;">
+              <tr>
+                <td width="50%" valign="top" style="vertical-align:top;padding:0 12px 8px 0;"><strong style="color:#1d2b44;">Job postings</strong><br><span style="color:#4a515c;">Openings at your institution</span></td>
+                <td width="50%" valign="top" style="vertical-align:top;padding:0 0 8px 12px;"><strong style="color:#1d2b44;">Events</strong><br><span style="color:#4a515c;">Conferences, workshops and seminars</span></td>
+              </tr>
+              <tr>
+                <td width="50%" valign="top" style="vertical-align:top;padding:0 12px 8px 0;"><strong style="color:#1d2b44;">Special issues</strong><br><span style="color:#4a515c;">Calls for papers for journal special issues</span></td>
+                <td width="50%" valign="top" style="vertical-align:top;padding:0 0 8px 12px;"><strong style="color:#1d2b44;">Long-distance visits</strong><br><span style="color:#4a515c;">Trips you're planning, so colleagues can coordinate seminars and visits</span></td>
+              </tr>
+              <tr>
+                <td colspan="2" valign="top" style="vertical-align:top;padding:0 0 4px 0;"><strong style="color:#1d2b44;">Research papers</strong><br><span style="color:#4a515c;">Share your working papers in our Discussion Paper series</span></td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;border-top:1px solid #dde0e6;">
+              <tr>
+                <td style="padding:12px 0 0 0;font-size:14px;line-height:1.5;color:#22262b;"><strong style="color:#b91c1c;">Choose your alerts.</strong> You decide what reaches your inbox. In your account settings, pick alerts such as new papers on specific topics or visits to your region. <a href="{{ urls.login }}" style="color:#22262b;font-weight:bold;">Log in to set alerts &rarr;</a></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr><td style="padding:26px 32px 0 32px;"><p style="margin:0;font-size:13px;color:#5b6370;">This week on the Hub: everything currently open, sorted by deadline. <a href="{{ urls.announcements }}" style="color:#22262b;font-weight:bold;">All announcements &rarr;</a></p></td></tr>
+  {% if events %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Events</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in events %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.events }}" style="color:#22262b;font-weight:bold;">All events &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if special_issues %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Special issues</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in special_issues %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.special_issues }}" style="color:#22262b;font-weight:bold;">All special issues &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if papers %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Most downloaded papers</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for paper in papers %}<tr><td width="30" valign="top" style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.1;color:#b91c1c;padding:0 0 12px 0;">{{ paper.rank }}</td><td valign="top" style="vertical-align:top;padding:0 0 12px 0;font-size:14px;line-height:1.4;"><a href="{{ paper.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ paper.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ paper.authors }}</span> &middot; <a href="{{ paper.download_url }}" style="color:#22262b;font-weight:bold;font-size:14px;">PDF</a></td></tr>{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.papers }}" style="color:#22262b;font-weight:bold;">Browse all discussion papers &rarr;</a></p></td></tr>
+  {% endif %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Long-distance visits</h2><p style="margin:0 0 10px 0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.visits }}</p><p style="margin:0;font-size:14px;"><a href="{{ urls.visits }}" style="color:#22262b;font-weight:bold;">See upcoming visits &rarr;</a></p></td></tr>
+  {% if jobs %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Job postings</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in jobs %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.jobs }}" style="color:#22262b;font-weight:bold;">All job postings &rarr;</a></p></td></tr>
+  {% endif %}
+  <!-- Coming next week -->
+  <tr>
+    <td style="padding:26px 32px 6px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6c4c4;background:#fdf6f5;">
+        <tr>
+          <td width="120" valign="middle" align="center" style="width:120px;vertical-align:middle;text-align:center;padding:18px 10px;border-right:1px dashed #e0b3b3;">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#b91c1c;font-weight:bold;">Coming</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:26px;line-height:1.1;color:#b91c1c;padding:2px 0;">next</div>
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#b91c1c;font-weight:bold;">week</div>
+          </td>
+          <td valign="middle" style="vertical-align:middle;padding:16px 20px;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:19px;color:#b91c1c;padding-bottom:6px;">{{ issue.next_title }}</div>
+            <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.next_body }}</p>
+            <p style="margin:0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.next_note }} <a href="{{ urls.membership }}" style="color:#22262b;font-weight:bold;">Apply here &rarr;</a></p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Help us grow -->
+  <tr>
+    <td style="padding:22px 32px 26px 32px;text-align:center;">
+      <h3 style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:normal;color:#b91c1c;">Help us grow</h3>
+      <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;">The Hub is only as useful as its community. Please pass the word along and invite colleagues and students to join.</p>
+      <p style="margin:0;font-size:14px;"><a href="{{ urls.membership }}" style="color:#22262b;font-weight:bold;">Invite others to apply &rarr;</a></p>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td style="padding:16px 32px;background:#f4f5f8;border-top:1px solid #e3e6eb;font-size:12px;line-height:1.5;color:#5b6370;">
+      <strong style="color:#1d2b44;">The Labor Hub Team</strong> &middot; Cornell ILR<br>
+      <a href="{{ site_url }}/" style="color:#5b6370;">{{ site_url }}</a> &middot; <a href="{{ urls.contact }}" style="color:#5b6370;">Contact us</a> &middot; <a href="{{ urls.faq }}" style="color:#5b6370;">FAQ</a> &middot; <a href="{{ urls.settings }}" style="color:#5b6370;">Manage preferences</a> &middot; <unsubscribe style="color:#5b6370;text-decoration:underline;">Unsubscribe</unsubscribe>
+    </td>
+  </tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+<!-- djlint:on -->
+</html>

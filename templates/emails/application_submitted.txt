@@ -1,5 +1,7 @@
 A new {{ role_label }} application is awaiting review.
-
+{% if unanswered_advisor %}
+The student's advisor, {{ application.advisor.get_full_name|default:application.advisor.email }}, has not responded after two weeks and two reminders, so an administrator needs to review it.
+{% endif %}
 Name: {{ application.first_name }} {{ application.last_name }}
 Email: {{ application.email }}
 Role: {{ role_label }}

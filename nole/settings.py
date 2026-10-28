@@ -264,6 +264,8 @@ CM_API_KEY = os.environ.get("CM_API_KEY", "")
 CM_CLIENT_ID = os.environ.get("CM_CLIENT_ID", "")
 CM_DIGEST_LIST_ID = os.environ.get("CM_DIGEST_LIST_ID", "")
 CM_ALERT_LIST_ID = os.environ.get("CM_ALERT_LIST_ID", "")
+# Every active member; the newsletter is sent to this list (core/newsletter.py).
+CM_MEMBERS_LIST_ID = os.environ.get("CM_MEMBERS_LIST_ID", "")
 CM_WEBHOOK_SECRET = os.environ.get("CM_WEBHOOK_SECRET", "")
 # "cm" only when fully configured, so dev/CI/preview keep per-user SMTP delivery.
 CAMPAIGN_DELIVERY = (

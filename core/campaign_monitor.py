@@ -89,14 +89,14 @@ class CampaignMonitorClient:
         return self._request("GET", f"lists/{list_id}/customfields.json")
 
     # -- subscribers -------------------------------------------------------
-    def upsert_subscriber(self, list_id, email, name, custom_fields=None):
+    def upsert_subscriber(self, list_id, email, name, custom_fields=None, resubscribe=True):
         """Add the subscriber, or update them (and resubscribe) if they exist."""
         return self._request("POST", f"subscribers/{list_id}.json", {
             "EmailAddress": email,
             "Name": name,
             "CustomFields": [{"Key": k, "Value": v} for k, v in (custom_fields or {}).items()],
             "ConsentToTrack": "Yes",
-            "Resubscribe": True,
+            "Resubscribe": resubscribe,
             "RestartSubscriptionBasedAutoresponders": False,
         })
 

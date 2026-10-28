@@ -64,6 +64,8 @@ def desired_state(profile):
     return {
         "email": user.email,
         "name": user.get_full_name(),
+        # Every active member is on the newsletter list (no custom fields).
+        "members": {} if active and settings.CM_MEMBERS_LIST_ID else None,
         "digest": {DIGEST_FIELD: freq} if active and freq != profile.DigestFrequency.OFF else None,
         "alerts": alerts if active and any(alerts.values()) else None,
     }
@@ -83,7 +85,10 @@ def _unsubscribe_quietly(client, list_id, email):
 
 
 def _apply(client, state, previous_email=""):
-    for key, list_id in (("digest", settings.CM_DIGEST_LIST_ID), ("alerts", settings.CM_ALERT_LIST_ID)):
+    lists = [("digest", settings.CM_DIGEST_LIST_ID), ("alerts", settings.CM_ALERT_LIST_ID)]
+    if settings.CM_MEMBERS_LIST_ID:
+        lists.append(("members", settings.CM_MEMBERS_LIST_ID))
+    for key, list_id in lists:
         fields = state[key]
         # The member changed their email: the old address must stop receiving.
         if previous_email and previous_email != state["email"]:
@@ -91,7 +96,10 @@ def _apply(client, state, previous_email=""):
         if fields is None:
             _unsubscribe_quietly(client, list_id, state["email"])
         else:
-            client.upsert_subscriber(list_id, state["email"], state["name"], fields)
+            # Members who unsubscribed from the newsletter in CM must stay out,
+            # so a later name/email sync never resubscribes them.
+            client.upsert_subscriber(list_id, state["email"], state["name"], fields,
+                                     resubscribe=(key != "members"))
 
 
 def sync_profile(profile, client=None, force=False):
@@ -107,7 +115,8 @@ def sync_profile(profile, client=None, force=False):
     new_hash = state_hash(state)
     if not force and profile.cm_synced_state == new_hash:
         return False
-    if not profile.cm_synced_state and state["digest"] is None and state["alerts"] is None:
+    if (not profile.cm_synced_state and state["digest"] is None
+            and state["alerts"] is None and state["members"] is None):
         # Never pushed and wants nothing: record that, skip two pointless API calls
         # (this is most members when CM is first backfilled).
         type(profile).objects.filter(pk=profile.pk).update(

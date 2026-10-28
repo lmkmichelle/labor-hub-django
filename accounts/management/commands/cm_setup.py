@@ -32,6 +32,7 @@ class Command(BaseCommand):
         try:
             digest_id = self._ensure_list(client, campaigns.DIGEST_LIST_TITLE, DIGEST_FIELDS)
             alert_id = self._ensure_list(client, campaigns.ALERT_LIST_TITLE, ALERT_FIELDS)
+            members_id = self._ensure_list(client, campaigns.MEMBERS_LIST_TITLE, [])
             existing = {s["Title"] for s in client.segments(digest_id)}
             for frequency, title in campaigns.DIGEST_SEGMENTS.items():
                 if title not in existing:
@@ -44,7 +45,7 @@ class Command(BaseCommand):
             raise CommandError(f"Campaign Monitor error: {exc}") from exc
         self.stdout.write(self.style.SUCCESS(
             f"Set these (Upsun sensitive/project variables):\n"
-            f"  CM_DIGEST_LIST_ID={digest_id}\n  CM_ALERT_LIST_ID={alert_id}"))
+            f"  CM_DIGEST_LIST_ID={digest_id}\n  CM_ALERT_LIST_ID={alert_id}\n  CM_MEMBERS_LIST_ID={members_id}"))
 
     def _ensure_list(self, client, title, fields):
         found = {entry["Name"]: entry["ListID"] for entry in client.lists()}

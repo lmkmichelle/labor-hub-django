@@ -3,6 +3,9 @@
 {% block content %}
   <!-- djlint:off -->
   <p style="margin:0 0 16px; font-size:16px;">Hi {{ advisor.first_name|default:advisor.email }},</p>
+  {% if reminder %}
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;"><strong>A reminder:</strong> this application is still waiting for you.</p>
+  {% endif %}
   <p style="margin:0 0 16px; font-size:15px; color:#374151;">
     <strong>{{ application.first_name }} {{ application.last_name }}</strong>
     has applied to join Labor Hub as a student and listed you as
@@ -21,6 +24,6 @@
 {% endblock %}
 {% block footer %}
   <!-- djlint:off -->
-  <p style="margin:0;">If you were not expecting this, you can decline the application from the same page, or ignore this email and an administrator will review it.</p>
+  <p style="margin:0;">If you were not expecting this, you can decline the application from the same page, or ignore this email, in which case a Labor Hub administrator will review it after two weeks.</p>
   <!-- djlint:on -->
 {% endblock %}

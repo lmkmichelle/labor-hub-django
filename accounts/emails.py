@@ -77,7 +77,8 @@ def send_application_rejected_email(application, fail_silently=True):
     message.send(fail_silently=fail_silently)
 
 
-def send_application_submitted_email(application, fail_silently=True, recipients=None):
+def send_application_submitted_email(application, fail_silently=True, recipients=None,
+                                     unanswered_advisor=False):
     """Tell the admins' shared inbox that a new application needs review.
 
     Goes to ``settings.ADMIN_NOTIFY_EMAIL`` (the shared EGA mailbox), not to each
@@ -92,7 +93,8 @@ def send_application_submitted_email(application, fail_silently=True, recipients
     """
     from accounts.models import CustomUser
 
-    if application.role == CustomUser.Role.STUDENT and application.advisor_id:
+    if (application.role == CustomUser.Role.STUDENT and application.advisor_id
+            and not unanswered_advisor):
         return
     if recipients is None:
         recipients = [
@@ -108,6 +110,7 @@ def send_application_submitted_email(application, fail_silently=True, recipients
     context = {
         "application": application,
         "role_label": role_label,
+        "unanswered_advisor": unanswered_advisor,
         "review_url": review_url,
         "site_url": settings.SITE_URL.rstrip("/"),
     }
@@ -115,8 +118,8 @@ def send_application_submitted_email(application, fail_silently=True, recipients
     html_body = render_to_string("emails/application_submitted.html", context)
 
     message = EmailMultiAlternatives(
-        subject=f"[Action Required] New {role_label} application: "
-        f"{application.first_name} {application.last_name}",
+        subject=f"[Action Required] {'Advisor has not responded: ' if unanswered_advisor else 'New '}"
+        f"{role_label} application: {application.first_name} {application.last_name}",
         body=text_body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
@@ -128,7 +131,7 @@ def send_application_submitted_email(application, fail_silently=True, recipients
     message.send(fail_silently=fail_silently)
 
 
-def send_advisor_review_email(application, fail_silently=True):
+def send_advisor_review_email(application, fail_silently=True, reminder=False):
     """Tell the advisor a student named that they can review the application.
 
     Links to the on-site advisee review page, never the admin. No-op unless the
@@ -146,10 +149,11 @@ def send_advisor_review_email(application, fail_silently=True):
         "advisor": advisor,
         "application": application,
         "review_url": _absolute_url(reverse("advisee_applications")),
+        "reminder": reminder,
         "site_url": settings.SITE_URL.rstrip("/"),
     }
     subject = (
-        f"[Action Required] A student listed you as their advisor: "
+        f"{'Reminder: ' if reminder else ''}[Action Required] A student listed you as their advisor: "
         f"{application.first_name} {application.last_name}"
     )
     text_body = render_to_string("emails/advisor_review.txt", context)

@@ -3,6 +3,9 @@
 {% block content %}
   <!-- djlint:off -->
   <p style="margin:0 0 16px; font-size:16px;">A new {{ role_label }} application is awaiting review.</p>
+  {% if unanswered_advisor %}
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">The student's advisor, {{ application.advisor.get_full_name|default:application.advisor.email }}, has not responded after two weeks and two reminders, so an administrator needs to review it.</p>
+  {% endif %}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px; font-size:15px; color:#374151;">
     <tr>
       <td style="padding:4px 0; width:100px; color:#6b7280;">Name</td>

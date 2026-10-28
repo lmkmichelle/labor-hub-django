@@ -268,6 +268,9 @@ class UserApplication(models.Model):
     )
     status = models.CharField(max_length=10, choices=Status.choices, default='pending')
     applied_at = models.DateTimeField(auto_now_add=True)
+    # Advisor follow-up (accounts.management.commands.remind_advisors).
+    advisor_reminders_sent = models.PositiveSmallIntegerField(default=0)
+    advisor_escalated_at = models.DateTimeField(null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
         CustomUser,

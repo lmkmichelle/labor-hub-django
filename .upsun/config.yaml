@@ -98,6 +98,12 @@ applications:
         spec: "0 6 * * *"
         commands:
           start: "python manage.py deactivate_expired_students"
+      # Nudge advisors who haven't acted on a student's application; tell the
+      # admins' inbox after 14 days (accounts/management/commands/remind_advisors.py).
+      advisor-reminders:
+        spec: "0 14 * * *"
+        commands:
+          start: "python manage.py remind_advisors"
 
     web:
       commands:

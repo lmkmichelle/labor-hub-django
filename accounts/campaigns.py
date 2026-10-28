@@ -32,6 +32,7 @@ from core.models import EmailCampaign
 
 DIGEST_LIST_TITLE = "Labor Hub Digest"
 ALERT_LIST_TITLE = "Labor Hub Alerts"
+MEMBERS_LIST_TITLE = "Labor Hub Members"
 DIGEST_SEGMENTS = {"weekly": "Digest weekly", "monthly": "Digest monthly"}
 SEGMENT_PREFIX = "Alert "
 RECIPIENTS_PREFIX = "Alert recipients "
@@ -77,7 +78,7 @@ def last_sent(kind):
     return EmailCampaign.objects.filter(kind=kind, status=EmailCampaign.Status.SENT).first()
 
 
-def _create_and_send(client, campaign, segment_ids):
+def _create_and_send(client, campaign, segment_ids, list_ids=()):
     html_url, text_url = (
         absolute_url(reverse("campaign_snapshot", kwargs={"token": campaign.token, "ext": ext}))
         for ext in ("html", "txt"))
@@ -85,7 +86,7 @@ def _create_and_send(client, campaign, segment_ids):
         campaign.cm_campaign_id = client.create_campaign(
             name=f"{campaign.get_kind_display()} {campaign.created_at:%Y-%m-%d}",
             subject=campaign.subject, html_url=html_url, text_url=text_url,
-            list_ids=[], segment_ids=segment_ids,
+            list_ids=list(list_ids), segment_ids=segment_ids,
             from_name="The Labor Hub", from_email=_from_address(),
             reply_to=settings.REPLY_TO_EMAIL or _from_address(),
         )

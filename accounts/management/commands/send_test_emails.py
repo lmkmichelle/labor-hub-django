@@ -10,7 +10,8 @@ Or, to review the HTML without sending anything anywhere (no SMTP
 credentials needed, nothing leaves the machine):
 
     python manage.py send_test_emails --preview
-    open /tmp/labor-hub-email-previews/index.html
+    open "$(python -c 'import tempfile;print(tempfile.gettempdir())')/labor-hub-email-previews/index.html"
+    (the command prints the exact path when it finishes)
 
 Every send here goes through the real ``send_*_email``/form/view code this
 app actually uses in production -- nothing is re-implemented -- so what
@@ -55,7 +56,7 @@ from seminars.models import Seminar
 ALL_KEYS = [
     "approved", "rejected", "staff_alert", "advisor_review",
     "paper_advisor_ack", "digest", "alerts", "contact", "contact_confirmation",
-    "password_reset",
+    "password_reset", "newsletter",
 ]
 
 # Matches core.constants.RECOMMENDED_KEYWORDS[0] -- any entry works, this is
@@ -310,6 +311,21 @@ class Command(BaseCommand):
                 user.profile.alert_countries = original_countries
                 user.profile.last_alert_sent_at = original_last_sent
                 user.profile.save()
+
+    def _send_newsletter(self, to):
+        # Rendered from live data, sent as a plain message with the logo inlined
+        # (the real one goes out as a CM campaign; see send_newsletter).
+        from django.core.mail import EmailMultiAlternatives
+        from core.newsletter import newsletter_context, render_newsletter
+        context = newsletter_context()
+        with open(os.path.join(settings.BASE_DIR, "static", "images", "logo.png"), "rb") as fh:
+            context["logo_src"] = "data:image/png;base64," + base64.b64encode(fh.read()).decode()
+        html, text = render_newsletter(context)
+        message = EmailMultiAlternatives(
+            f"The Labor Hub Newsletter No. {context['issue_number']}", text,
+            from_email=settings.DIGEST_FROM_EMAIL, to=[to])
+        message.attach_alternative(html, "text/html")
+        message.send()
 
     def _send_contact(self, to):
         # _send_contact_notification always sends to settings.CONTACT_EMAIL,
