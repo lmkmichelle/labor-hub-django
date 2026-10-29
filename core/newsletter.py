@@ -51,6 +51,7 @@ def issue_number():
 def newsletter_context(now=None):
     now = now or timezone.now()
     today = timezone.localdate(now)
+    number = issue_number()
     url = lambda name, **kw: absolute_url(reverse(name, kwargs=kw))  # noqa: E731
 
     events = []
@@ -79,20 +80,31 @@ def newsletter_context(now=None):
         "deadline": _deadline_label(job.deadline, today),
     } for job in Job.objects.filter(status="approved", deadline__gte=today).order_by("deadline")]
 
+    # The last 7 days; in a quiet week (or before the timestamped log has a week of
+    # data) fall back to the all-time ranking rather than drop the section.
+    ranked = list(Publication.most_downloaded(MAX_PAPERS, since=now - timedelta(days=7)))
+    papers_heading = "Most downloaded papers this week"
+    if not ranked:
+        ranked = list(Publication.most_downloaded(MAX_PAPERS))
+        papers_heading = "Most downloaded papers"
     papers = [{
         "rank": i, "title": p.title, "url": url("publication_detail", pk=p.pk),
         "download_url": url("publication_download", pk=p.pk),
         "authors": ", ".join(str(a) for a in p.ordered_authors),
-    } for i, p in enumerate(Publication.most_downloaded(MAX_PAPERS, since=now - timedelta(days=7)), start=1)]
+    } for i, p in enumerate(ranked, start=1)]
 
     return {
         "issue": ISSUE,
-        "issue_number": issue_number(),
+        "issue_number": number,
+        # The welcome note and the "coming next week" block belong to the first
+        # newsletter only; later issues leave them out.
+        "first_issue": number == 1,
         "issue_date": now,
         "events": events[:MAX_LISTED],
         "special_issues": special_issues[:MAX_LISTED],
         "jobs": jobs[:MAX_LISTED],
         "papers": papers,
+        "papers_heading": papers_heading,
         "site_url": settings.SITE_URL.rstrip("/"),
         "logo_src": absolute_url(static("images/logo.png")),
         "urls": {

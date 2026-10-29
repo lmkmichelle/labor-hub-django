@@ -1,0 +1,27 @@
+{% extends "emails/_layout.html" %}
+{% block title %}Your application is waiting for your advisor{% endblock %}
+{% block content %}
+  <!-- djlint:off -->
+  <p style="margin:0 0 16px; font-size:16px;">Hi {{ application.first_name }},</p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    Thank you for applying to Labor Hub. Your application is still waiting for
+    approval from your advisor, <strong>{{ advisor.first_name }} {{ advisor.last_name }}</strong>.
+  </p>
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
+    Student applications are approved by the advisor named on the application,
+    so nothing more is needed from you on the site. The quickest way to move it
+    along is to let {{ advisor.first_name }} know to look for our email, or to
+    log in to Labor Hub and open the &ldquo;Advisees&rdquo; page in the menu. We
+    will email you as soon as it is approved.
+  </p>
+  <p style="margin:0; font-size:15px; color:#374151;">
+    If you listed the wrong advisor, or your advisor is not able to review it,
+    just reply to this email and we will help.
+  </p>
+  <!-- djlint:on -->
+{% endblock %}
+{% block footer %}
+  <!-- djlint:off -->
+  <p style="margin:0;">The Labor Hub team</p>
+  <!-- djlint:on -->
+{% endblock %}

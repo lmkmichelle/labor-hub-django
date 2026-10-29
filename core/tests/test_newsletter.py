@@ -42,6 +42,35 @@ class NewsletterTests(TestCase):
             period_start=timezone.now(), period_end=timezone.now())
         self.assertEqual(newsletter_context()["issue_number"], 2)
 
+    def test_welcome_and_next_week_blocks_are_for_the_first_issue_only(self):
+        first = create_newsletter_campaign()
+        self.assertIn("Welcome to", first.html)
+        self.assertIn("Coming", first.html)
+        self.assertIn("COMING NEXT WEEK", first.text)
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            period_start=timezone.now(), period_end=timezone.now())
+        second = create_newsletter_campaign()
+        for text in ("Welcome to", "Job Market Papers", "Coming"):
+            self.assertNotIn(text, second.html)
+        self.assertNotIn("COMING NEXT WEEK", second.text)
+        self.assertNotIn("Thank you for joining", second.text)
+
+    def test_papers_fall_back_to_all_time_when_the_week_is_quiet(self):
+        from publications.models import Publication
+        from publications.tests.test_models import make_publication
+
+        paper = make_publication(status="approved")
+        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", download_count=7)
+        ctx = newsletter_context()
+        self.assertEqual([p["title"] for p in ctx["papers"]], [paper.title])
+        self.assertEqual(ctx["papers_heading"], "Most downloaded papers")
+
+        paper.record_download()
+        ctx = newsletter_context()
+        self.assertEqual(ctx["papers_heading"], "Most downloaded papers this week")
+        self.assertIn("Most downloaded papers this week", create_newsletter_campaign().html)
+
     @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_MEMBERS_LIST_ID="members",
                        DIGEST_FROM_EMAIL="The Labor Hub <digest@ilr.mail.example.edu>")
     def test_send_goes_to_members_list_from_digest_address(self):

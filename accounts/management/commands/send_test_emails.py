@@ -40,6 +40,7 @@ from accounts.alerts import send_user_alerts
 from accounts.digests import send_user_digest
 from accounts.emails import (
     send_advisor_review_email,
+    send_student_awaiting_advisor_email,
     send_application_approved_email,
     send_application_rejected_email,
     send_application_submitted_email,
@@ -54,7 +55,7 @@ from publications.models import Publication
 from seminars.models import Seminar
 
 ALL_KEYS = [
-    "approved", "rejected", "staff_alert", "advisor_review",
+    "approved", "rejected", "staff_alert", "advisor_review", "student_awaiting_advisor",
     "paper_advisor_ack", "digest", "alerts", "contact", "contact_confirmation",
     "password_reset", "newsletter",
 ]
@@ -236,6 +237,17 @@ class Command(BaseCommand):
             last_name="Student", role=CustomUser.Role.STUDENT, advisor=advisor,
         )
         send_advisor_review_email(application, fail_silently=False)
+
+    def _send_student_awaiting_advisor(self, to):
+        advisor = CustomUser(
+            email="advisor-preview@example.com", first_name="Advisor", last_name="Test",
+            role=CustomUser.Role.RESEARCHER,
+        )
+        application = UserApplication(
+            email=to, first_name="Preview", last_name="Student",
+            role=CustomUser.Role.STUDENT, advisor=advisor,
+        )
+        send_student_awaiting_advisor_email(application, fail_silently=False)
 
     def _send_paper_advisor_ack(self, to):
         advisor = CustomUser(email=to, first_name="Advisor", last_name="Test")

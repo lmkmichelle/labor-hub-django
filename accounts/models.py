@@ -272,6 +272,8 @@ class UserApplication(models.Model):
     # Advisor follow-up (accounts.management.commands.remind_advisors).
     advisor_reminders_sent = models.PositiveSmallIntegerField(default=0)
     advisor_escalated_at = models.DateTimeField(null=True, blank=True)
+    # When the student was told the application is still waiting on their advisor.
+    student_reminded_at = models.DateTimeField(null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
         CustomUser,

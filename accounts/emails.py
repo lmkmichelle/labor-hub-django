@@ -172,6 +172,37 @@ def send_advisor_review_email(application, fail_silently=True, reminder=False):
     message.send(fail_silently=fail_silently)
 
 
+def send_student_awaiting_advisor_email(application, fail_silently=True):
+    """Tell a student their application is still waiting on their advisor.
+
+    Sent once, a week after applying (accounts.management.commands.remind_advisors).
+    No-op without an advisor, since there is then nobody for them to wait on.
+    """
+    advisor = application.advisor
+    if advisor is None or not application.email:
+        return
+    context = {
+        "application": application,
+        "advisor": advisor,
+        "site_url": settings.SITE_URL.rstrip("/"),
+    }
+    subject = "Your Labor Hub application is waiting for your advisor"
+    text_body = render_to_string("emails/student_awaiting_advisor.txt", context)
+    html_body = render_to_string("emails/student_awaiting_advisor.html", context)
+
+    message = EmailMultiAlternatives(
+        subject,
+        text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[application.email],
+        reply_to=default_reply_to(),
+        headers=cm_headers(),
+    )
+    message.attach_alternative(html_body, "text/html")
+    attach_logo(message)
+    message.send(fail_silently=fail_silently)
+
+
 def send_student_deactivation_warning(user, deactivation_date, fail_silently=True):
     """Tell a student their account closes on ``deactivation_date``.
 

@@ -1,0 +1,11 @@
+Hi {{ application.first_name }},
+
+Thank you for applying to Labor Hub. Your application is still waiting for approval from your advisor, {{ advisor.first_name }} {{ advisor.last_name }}.
+
+Student applications are approved by the advisor named on the application, so nothing more is needed from you on the site. The quickest way to move it along is to let {{ advisor.first_name }} know to look for our email, or to log in to Labor Hub and open the "Advisees" page in the menu. We will email you as soon as it is approved.
+
+If you listed the wrong advisor, or your advisor is not able to review it, just reply to this email and we will help.
+
+--
+The Labor Hub team
+{{ site_url }}

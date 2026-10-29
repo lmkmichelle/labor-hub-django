@@ -1,8 +1,8 @@
 The Labor Hub Newsletter No. {{ issue_number }} - {{ issue_date|date:"F j, Y" }}
 
-{{ issue.welcome }}
+{% if first_issue %}{{ issue.welcome }}
 
-This week on the Hub: everything currently open, sorted by deadline.
+{% endif %}This week on the Hub: everything currently open, sorted by deadline.
 All announcements: {{ urls.announcements }}
 {% if events %}
 EVENTS
@@ -13,7 +13,7 @@ SPECIAL ISSUES
 {% for item in special_issues %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
   {{ item.url }}
 {% endfor %}{% endif %}{% if papers %}
-MOST DOWNLOADED PAPERS THIS WEEK
+{{ papers_heading|upper }}
 {% for paper in papers %}{{ paper.rank }}. {{ paper.title }} ({{ paper.authors }})
    {{ paper.url }}
 {% endfor %}{% endif %}
@@ -25,11 +25,11 @@ JOB POSTINGS
 {% for item in jobs %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
   {{ item.url }}
 {% endfor %}{% endif %}
-COMING NEXT WEEK: {{ issue.next_title }}
+{% if first_issue %}COMING NEXT WEEK: {{ issue.next_title }}
 {{ issue.next_body }}
 {{ issue.next_note }} Apply: {{ urls.membership }}
 
-HELP US GROW
+{% endif %}HELP US GROW
 Please pass the word along and invite colleagues and students to join: {{ urls.membership }}
 
 --

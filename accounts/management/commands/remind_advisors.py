@@ -6,6 +6,9 @@ Run daily. For each pending student application that names an advisor:
 * 7 days old  -> second reminder
 * 14 days old -> the admins' shared inbox is told, so an administrator can step in
 
+Also, once the application is 7 days old the student is told it is still waiting on
+their advisor.
+
 Each step happens once (counted on the application), so re-running is safe.
 """
 from datetime import timedelta
@@ -13,11 +16,15 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts.emails import send_advisor_review_email, send_application_submitted_email
+from accounts.emails import (
+    send_advisor_review_email, send_application_submitted_email,
+    send_student_awaiting_advisor_email,
+)
 from accounts.models import CustomUser, UserApplication
 
 REMINDER_AFTER = (timedelta(days=3), timedelta(days=7))
 ESCALATE_AFTER = timedelta(days=14)
+STUDENT_REMINDER_AFTER = timedelta(days=7)
 
 
 class Command(BaseCommand):
@@ -33,9 +40,16 @@ class Command(BaseCommand):
             status=UserApplication.Status.PENDING, role=CustomUser.Role.STUDENT,
             advisor__isnull=False,
         ).select_related("advisor")
-        reminded = escalated = 0
+        reminded = escalated = students = 0
         for app in pending:
             age = now - app.applied_at
+            if age >= STUDENT_REMINDER_AFTER and app.student_reminded_at is None:
+                self.stdout.write(f"{'[dry-run] ' if dry else ''}tell student {app.email}")
+                if not dry:
+                    send_student_awaiting_advisor_email(app)
+                    app.student_reminded_at = now
+                    app.save(update_fields=["student_reminded_at"])
+                students += 1
             if age >= ESCALATE_AFTER:
                 if app.advisor_escalated_at is None:
                     self.stdout.write(f"{'[dry-run] ' if dry else ''}escalate: {app.email}")
@@ -53,4 +67,5 @@ class Command(BaseCommand):
                     app.save(update_fields=["advisor_reminders_sent"])
                 reminded += 1
         self.stdout.write(self.style.SUCCESS(
-            f"{'[dry-run] ' if dry else ''}{reminded} reminded, {escalated} escalated."))
+            f"{'[dry-run] ' if dry else ''}{reminded} advisors reminded, {students} students told, "
+            f"{escalated} escalated."))
