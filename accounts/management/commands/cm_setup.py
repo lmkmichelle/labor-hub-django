@@ -22,6 +22,9 @@ class Command(BaseCommand):
     help = "Create the Campaign Monitor lists, custom fields and digest segments."
 
     def add_arguments(self, parser):
+        parser.add_argument("--members-only", action="store_true",
+                            help="Create only the newsletter members list; digests and alerts "
+                                 "keep their current delivery.")
         parser.add_argument("--webhooks", action="store_true",
                             help="Also register the Deactivate webhooks (needs CM_WEBHOOK_SECRET and a public SITE_URL).")
 
@@ -29,6 +32,14 @@ class Command(BaseCommand):
         if not (settings.CM_API_KEY and settings.CM_CLIENT_ID):
             raise CommandError("Set CM_API_KEY and CM_CLIENT_ID first.")
         client = CampaignMonitorClient()
+        if options["members_only"]:
+            try:
+                members_id = self._ensure_list(client, campaigns.MEMBERS_LIST_TITLE, [])
+            except CampaignMonitorError as exc:
+                raise CommandError(f"Campaign Monitor error: {exc}") from exc
+            self.stdout.write(self.style.SUCCESS(
+                f"Set this Upsun variable:\n  CM_MEMBERS_LIST_ID={members_id}"))
+            return
         try:
             digest_id = self._ensure_list(client, campaigns.DIGEST_LIST_TITLE, DIGEST_FIELDS)
             alert_id = self._ensure_list(client, campaigns.ALERT_LIST_TITLE, ALERT_FIELDS)

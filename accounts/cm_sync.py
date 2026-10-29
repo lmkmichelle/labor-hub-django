@@ -102,6 +102,20 @@ def _apply(client, state, previous_email=""):
                                      resubscribe=(key != "members"))
 
 
+def sync_member_to_newsletter_list(profile, client):
+    """Put one active member on the newsletter list and nothing else.
+
+    For `cm_sync --members-only`: the newsletter can go out before digests and alerts
+    are moved to Campaign Monitor. Never resubscribes anyone who left the list.
+    Returns True if the member was pushed."""
+    state = desired_state(profile)
+    if state["members"] is None:
+        return False
+    client.upsert_subscriber(settings.CM_MEMBERS_LIST_ID, state["email"], state["name"],
+                             state["members"], resubscribe=False)
+    return True
+
+
 def sync_profile(profile, client=None, force=False):
     """Push ``profile``'s state to CM. Returns True if a sync was performed.
 
