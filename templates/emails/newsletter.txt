@@ -13,7 +13,7 @@ SPECIAL ISSUES
 {% for item in special_issues %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
   {{ item.url }}
 {% endfor %}{% endif %}{% if papers %}
-MOST DOWNLOADED PAPERS
+MOST DOWNLOADED PAPERS THIS WEEK
 {% for paper in papers %}{{ paper.rank }}. {{ paper.title }} ({{ paper.authors }})
    {{ paper.url }}
 {% endfor %}{% endif %}
