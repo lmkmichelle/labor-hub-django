@@ -77,6 +77,10 @@ class Command(BaseCommand):
             help="Address every test email is sent to. Defaults to "
                  f"{PREVIEW_DEFAULT_TO} when --preview is used.")
         parser.add_argument(
+            "--fake-downloads", action="store_true",
+            help="Newsletter only: pretend a few approved papers were downloaded this "
+                 "week (rolled back afterwards) so that section shows locally.")
+        parser.add_argument(
             "--only", default="",
             help="Comma-separated subset of: " + ", ".join(ALL_KEYS))
         parser.add_argument(
@@ -89,6 +93,7 @@ class Command(BaseCommand):
                  f"Default: {PREVIEW_DEFAULT_DIR}")
 
     def handle(self, *args, **options):
+        self.fake_downloads = options["fake_downloads"]
         preview = options["preview"]
         to = options["to"] or (PREVIEW_DEFAULT_TO if preview else None)
         if not to:
@@ -317,7 +322,17 @@ class Command(BaseCommand):
         # (the real one goes out as a CM campaign; see send_newsletter).
         from django.core.mail import EmailMultiAlternatives
         from core.newsletter import newsletter_context, render_newsletter
-        context = newsletter_context()
+        from django.db import transaction
+        with transaction.atomic():
+            if getattr(self, "fake_downloads", False):
+                for n, pub in enumerate(Publication.objects.filter(
+                        status="approved", is_job_market=False)[:4]):
+                    pub.pdf = "preview.pdf"
+                    pub.save(update_fields=["pdf"])
+                    for _ in range(4 - n):
+                        pub.record_download()
+            context = newsletter_context()
+            transaction.set_rollback(True)
         with open(os.path.join(settings.BASE_DIR, "static", "images", "logo.png"), "rb") as fh:
             context["logo_src"] = "data:image/png;base64," + base64.b64encode(fh.read()).decode()
         html, text = render_newsletter(context)
