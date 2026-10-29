@@ -56,7 +56,7 @@
                                 <a href="{{ application.resume.url }}" class="text-red-700 hover:underline">Resume / CV</a>
                             {% endif %}
                             {% for paper in application.research_papers.all %}
-                                <a href="{{ paper.paper.url }}" class="text-red-700 hover:underline">Paper {{ forloop.counter }}</a>
+                                <a href="{% url 'advisee_paper' paper.pk %}" class="text-red-700 hover:underline">Paper {{ forloop.counter }}</a>
                             {% endfor %}
                             <span class="text-body">Applied {{ application.applied_at|date:"M j, Y" }}</span>
                         </div>

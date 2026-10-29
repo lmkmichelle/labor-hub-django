@@ -11,6 +11,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, CreateView, ListView, UpdateView
 
+from accounts.models import ResearchPaper
 from publications.citations import build_bibtex
 from publications.emails import send_paper_advisor_ack_email
 from publications.forms import PublicationForm
@@ -181,15 +182,20 @@ def publication_download(request, pk):
 @staff_member_required
 @require_GET
 def publication_file(request, name):
-    """Stream a stored paper file (the admin's links to `pdf` / `pdf_original`).
+    """Stream a stored paper file (the admin's links to a paper's PDFs and to an
+    application's research samples).
 
     The bucket has no public address, so Django serves it. Only a name some paper
     actually holds is served, so this can't be pointed at any other file."""
     publication = Publication.objects.filter(
         Q(pdf=name) | Q(pdf_original=name)).first()
-    if publication is None:
-        raise Http404("No paper has that file.")
-    field = publication.pdf if publication.pdf.name == name else publication.pdf_original
+    if publication is not None:
+        field = publication.pdf if publication.pdf.name == name else publication.pdf_original
+    else:
+        sample = ResearchPaper.objects.filter(paper=name).first()
+        if sample is None:
+            raise Http404("No paper has that file.")
+        field = sample.paper
     return FileResponse(field.open('rb'), content_type='application/pdf')
 
 

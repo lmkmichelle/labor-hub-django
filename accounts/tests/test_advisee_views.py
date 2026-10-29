@@ -230,3 +230,39 @@ class ApplicationNotificationEmailTests(TestCase):
             advisor_mails[0].extra_headers.get("X-Cmail-GroupName"),
             "LaborHub")
         assert_has_html_alternative_with_logo(self, advisor_mails[0])
+
+
+class AdviseePaperDownloadTests(TestCase):
+    def setUp(self):
+        from django.core.files.base import ContentFile
+        from accounts.models import ResearchPaper
+
+        self.advisor = make_researcher()
+        self.application = make_student_application(self.advisor)
+        self.sample = ResearchPaper.objects.create(
+            application=self.application,
+            paper=ContentFile(b"%PDF-1.4 sample", name="sample.pdf"))
+        self.url = reverse("advisee_paper", args=[self.sample.pk])
+
+    def test_the_advisor_can_open_the_sample(self):
+        self.client.force_login(self.advisor)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), b"%PDF-1.4 sample")
+
+    def test_staff_can_open_the_sample(self):
+        staff = CustomUser.objects.create_user(
+            email="staff@example.com", password="x", is_active=True, is_staff=True)
+        self.client.force_login(staff)
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+
+    def test_another_member_gets_404_and_anonymous_is_sent_to_login(self):
+        self.client.force_login(make_researcher(email="other@example.com"))
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_advisee_page_links_through_the_view(self):
+        self.client.force_login(self.advisor)
+        response = self.client.get(reverse("advisee_applications"))
+        self.assertContains(response, self.url)

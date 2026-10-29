@@ -97,6 +97,16 @@ class PublicationFileViewTests(TestCase):
         self._login()
         self.assertEqual(self.client.get(self.url).status_code, 302)
 
+    def test_staff_can_open_an_application_sample(self):
+        from accounts.models import ResearchPaper, UserApplication
+        application = UserApplication.objects.create(
+            email="a@example.com", first_name="A", last_name="B", password="x")
+        sample = ResearchPaper.objects.create(
+            application=application, paper=ContentFile(b"%PDF-1.4 sample", name="s.pdf"))
+        self._login(is_staff=True)
+        response = self.client.get(reverse("publication_file", args=[sample.paper.name]))
+        self.assertEqual(b"".join(response.streaming_content), b"%PDF-1.4 sample")
+
     def test_only_names_a_paper_holds_are_served(self):
         self._login(is_staff=True)
         response = self.client.get(
@@ -128,6 +138,16 @@ class MovePapersToBucketTests(TestCase):
         self.run_command()
         self.assertEqual(self.bucket.objects, {"publications/pdf/a.pdf": b"%PDF-1.4 a"})
         self.assertTrue(os.path.exists(os.path.join(self.media, "publications/pdf/a.pdf")))
+
+    def test_application_samples_are_copied_too(self):
+        from django.core.files.base import ContentFile as CF
+        from accounts.models import ResearchPaper, UserApplication
+        application = UserApplication.objects.create(
+            email="a@example.com", first_name="A", last_name="B", password="x")
+        sample = ResearchPaper.objects.create(
+            application=application, paper=CF(b"%PDF-1.4 s", name="s.pdf"))
+        self.run_command()
+        self.assertIn(sample.paper.name, self.bucket.objects)
 
     def test_delete_local_frees_the_disk_after_copying(self):
         self.run_command("--delete-local")

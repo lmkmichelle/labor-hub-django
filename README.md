@@ -250,11 +250,12 @@ per-environment variables need to be set by hand. The overridable ones (`SENTRY_
 
 ### Paper PDFs live in object storage
 
-Discussion-paper PDFs (`Publication.pdf` and `pdf_original`) are stored in Upsun's
+Discussion-paper PDFs (`Publication.pdf` and `pdf_original`) and the research samples
+attached to applications (`ResearchPaper.paper`, the biggest files by far) are stored in Upsun's
 S3-compatible **object storage**, which costs far less than the app's disk. The bucket is
 internal to the project, so Django serves the files (`publication_download` for the
-public, `publication_file` for staff in the admin). Avatars, CVs and application uploads
-stay on the `media` mount. Locally and in tests papers use the normal filesystem; the
+public, `publication_file` for staff in the admin, `advisee_paper` for an application's
+advisor). Avatars and CVs stay on the `media` mount. Locally and in tests papers use the normal filesystem; the
 switch happens only when Upsun provides the `OBJECT_STORAGE_*` variables
 (`nole/settings.py`, `core/storage.py`).
 
@@ -263,7 +264,8 @@ One-time rollout, after the deploy that contains this change:
 1. `upsun resources:set --object-storage laborhub:524288` (the minimum size, 512 GB,
    billed on allocated capacity), then wait for the redeploy.
 2. `upsun ssh -- python manage.py move_papers_to_bucket --dry-run`, then without
-   `--dry-run`. Until it has run, papers still on the disk are served from there.
+   `--dry-run`. Until it has run, papers still on the disk are served from there. It copies the
+   application samples too (about 1.6 GB of the disk at the time of writing).
 3. Check a download, then `... move_papers_to_bucket --delete-local` to free the disk.
 
 **One manual step:** the Tailwind v4 CLI (Rust/oxide engine) gets OOM-killed in Upsun's

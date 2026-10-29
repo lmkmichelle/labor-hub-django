@@ -5,7 +5,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, When
-from django.http import JsonResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -25,7 +25,7 @@ from .digests import read_unsubscribe_token
 from .emails import send_advisor_review_email, send_application_submitted_email
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
     StudentApplicationForm, EmailPreferencesForm, AlertPreferencesForm
-from .models import CustomUser, Profile, UserApplication
+from .models import CustomUser, Profile, ResearchPaper, UserApplication
 
 
 class BaseApplicationView(CreateView):
@@ -271,6 +271,17 @@ def _get_own_advisee(request, pk):
         advisor=request.user,
         role=CustomUser.Role.STUDENT,
     )
+
+
+@login_required
+@require_GET
+def advisee_paper(request, pk):
+    """A research sample attached to an application, for that application's advisor
+    (and staff). The bucket has no public address, so Django streams the file."""
+    sample = get_object_or_404(ResearchPaper, pk=pk)
+    if not (request.user.is_staff or sample.application.advisor_id == request.user.pk):
+        raise Http404
+    return FileResponse(sample.paper.open('rb'), content_type='application/pdf')
 
 
 @login_required

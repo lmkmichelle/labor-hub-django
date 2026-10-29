@@ -1,4 +1,4 @@
-"""Copy paper PDFs from the app's disk into the object-storage bucket.
+"""Copy paper PDFs (discussion papers and application samples) from the app's disk into the object-storage bucket.
 
     python manage.py move_papers_to_bucket                  # copy, keep the disk copies
     python manage.py move_papers_to_bucket --delete-local   # copy, then free the disk
@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.core.management.base import BaseCommand, CommandError
 
+from accounts.models import ResearchPaper
 from core.storage import PaperBucketStorage, paper_storage
 from publications.models import Publication
 
@@ -39,6 +40,8 @@ class Command(BaseCommand):
         names = set()
         for pdf, original in Publication.objects.values_list("pdf", "pdf_original"):
             names.update(name for name in (pdf, original) if name)
+        names.update(name for name in ResearchPaper.objects.values_list("paper", flat=True)
+                     if name)
 
         copied = skipped = missing = freed = 0
         for name in sorted(names):
