@@ -6,6 +6,7 @@ from django.db.models import JSONField
 from django.utils import timezone
 
 from core.constants import COUNTRY_CHOICES
+from core.storage import paper_storage
 
 
 class CustomUserManager(BaseUserManager):
@@ -415,6 +416,7 @@ class ResearchPaper(models.Model):
     )
     paper = models.FileField(
         upload_to='research_papers/',
+        storage=paper_storage,
         help_text="Upload your research paper in PDF format"
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)

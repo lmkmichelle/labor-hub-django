@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import json
 import os
 from pathlib import Path
 
+from botocore.config import Config
 from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -333,8 +335,48 @@ else:
     STATIC_URL = "/static/"
     MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
-    
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+
     # (compressor offline mode is configured globally above)
+
+# Research-paper PDFs (Publication.pdf / pdf_original) live in Upsun object storage:
+# it is far cheaper than the app's disk, which the papers were filling. Upsun adds
+# the bucket and the OBJECT_STORAGE_* variables itself once the app has an object
+# storage size (`upsun resources:set --object-storage laborhub:524288`). Without
+# them -- local dev, tests, the build phase, an app with no bucket -- papers stay on
+# the default storage. See core.storage.
+_OBJECT_STORAGE_HOST = os.environ.get("OBJECT_STORAGE_HOST")
+if _OBJECT_STORAGE_HOST:
+    STORAGES["papers"] = {
+        "BACKEND": "core.storage.PaperBucketStorage",
+        "OPTIONS": {
+            "endpoint_url": (
+                f"{os.environ.get('OBJECT_STORAGE_SCHEME', 'http')}://"
+                f"{_OBJECT_STORAGE_HOST}:{os.environ.get('OBJECT_STORAGE_PORT', '8080')}"
+            ),
+            "access_key": os.environ["OBJECT_STORAGE_ACCESS_KEY"],
+            "secret_key": os.environ["OBJECT_STORAGE_SECRET_KEY"],
+            "region_name": os.environ.get("OBJECT_STORAGE_REGION"),
+            # The bucket is named after the app; read it rather than assume it.
+            "bucket_name": next(iter(json.loads(os.environ["OBJECT_STORAGE_BUCKETS"]))),
+            # Upsun's endpoint is path-style only, and implements neither ACLs nor
+            # the newer default checksums boto3 would otherwise send.
+            "addressing_style": "path",
+            "default_acl": None,
+            "file_overwrite": False,
+            "querystring_auth": False,
+            "client_config": Config(
+                s3={"addressing_style": "path"},
+                request_checksum_calculation="when_required",
+                response_checksum_validation="when_required",
+            ),
+        },
+    }
+else:
+    STORAGES["papers"] = STORAGES["default"]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

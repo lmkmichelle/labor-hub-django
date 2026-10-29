@@ -59,6 +59,9 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
+    "papers": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
 }
 
 # Write uploaded files (e.g. cropped avatars) to a throwaway temp directory so the

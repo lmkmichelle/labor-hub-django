@@ -47,7 +47,9 @@ applications:
 
     # Persistent, writable directories. STATIC_ROOT (staticfiles) receives the
     # output of collectstatic; MEDIA_ROOT (media) stores user uploads such as
-    # avatars, resumes and paper PDFs.
+    # avatars and resumes. Paper PDFs live in Upsun object storage instead (see
+    # core/storage.py and the README): enabling it adds the `object-storage`
+    # relationship and the OBJECT_STORAGE_* variables with no change to this file.
     mounts:
       "staticfiles":
         source: storage

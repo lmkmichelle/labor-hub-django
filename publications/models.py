@@ -9,6 +9,7 @@ from django.utils.text import slugify
 from accounts.models import CustomUser
 from core.constants import PAPER_COUNTRY_CHOICES
 from core.models import Approvable
+from core.storage import paper_storage
 
 User = get_user_model()
 
@@ -72,12 +73,15 @@ class Publication(Approvable):
     # The publicly downloaded file: pdf_original with a generated cover page
     # prepended once the paper has a discussion_paper_number. Never edited
     # directly -- see rebuild_covered_pdf().
-    pdf = models.FileField(upload_to='publications/pdf', null=True, blank=True)
+    pdf = models.FileField(
+        upload_to='publications/pdf', storage=paper_storage, null=True, blank=True,
+    )
     # The author's upload, untouched. The only source rebuild_covered_pdf()
     # ever reads from, so regenerating the cover (after an approval or a
     # later title/author edit) can't stack a second cover onto the first.
     pdf_original = models.FileField(
-        upload_to='publications/pdf/original', null=True, blank=True,
+        upload_to='publications/pdf/original', storage=paper_storage,
+        null=True, blank=True,
     )
     applied_at = models.DateTimeField(auto_now_add=True)
 

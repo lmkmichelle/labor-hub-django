@@ -15,7 +15,7 @@ from .forms import LaborHubPasswordResetForm
 from .cm_webhook import cm_webhook
 from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSubmittedView, ResearcherApplicationView, \
     StudentApplicationView, SettingsView, digest_unsubscribe, alerts_unsubscribe, AdviseeApplicationsView, \
-    advisee_approve, advisee_reject
+    advisee_approve, advisee_reject, advisee_paper
 
 urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
@@ -23,6 +23,7 @@ urlpatterns = [
     path('profile/edit/', EditProfileView.as_view(), name='edit_profile'),
     path('settings/', SettingsView.as_view(), name='settings'),
     path('accounts/advisees/', AdviseeApplicationsView.as_view(), name='advisee_applications'),
+    path('accounts/advisees/papers/<int:pk>/', advisee_paper, name='advisee_paper'),
     path('accounts/advisees/<int:pk>/approve/', advisee_approve, name='advisee_approve'),
     path('accounts/advisees/<int:pk>/reject/', advisee_reject, name='advisee_reject'),
     path('cm/webhook/<str:secret>/', cm_webhook, name='cm_webhook'),
