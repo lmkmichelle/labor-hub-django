@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('publications', '0026_congo_label'),
+        ('publications', '0027_papers_on_object_storage'),
     ]
 
     operations = [
