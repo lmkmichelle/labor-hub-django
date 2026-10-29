@@ -9,6 +9,7 @@ from .views import (
     paper_ack_decline,
     publication_bibtex,
     publication_download,
+    publication_file,
 )
 
 urlpatterns = [
@@ -18,6 +19,7 @@ urlpatterns = [
     path('<int:pk>/', PublicationDetailView.as_view(), name='publication_detail'),
     path('<int:pk>/cite/', publication_bibtex, name='publication_bibtex'),
     path('<int:pk>/download/', publication_download, name='publication_download'),
+    path('files/<path:name>', publication_file, name='publication_file'),
     path('edit/<int:pk>/', PublicationUpdateView.as_view(), name='edit_publication'),
     path('submit/', PublicationCreateView.as_view(), name='submit_paper'),
 ]

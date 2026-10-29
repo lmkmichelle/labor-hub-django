@@ -1,7 +1,8 @@
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, IntegerField, When
+from django.db.models import Case, IntegerField, Q, When
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -175,6 +176,21 @@ def publication_download(request, pk):
     filename = f"DP{number}-{slugify(publication.title)[:60]}.pdf"
     return FileResponse(
         publication.pdf.open('rb'), as_attachment=True, filename=filename)
+
+
+@staff_member_required
+@require_GET
+def publication_file(request, name):
+    """Stream a stored paper file (the admin's links to `pdf` / `pdf_original`).
+
+    The bucket has no public address, so Django serves it. Only a name some paper
+    actually holds is served, so this can't be pointed at any other file."""
+    publication = Publication.objects.filter(
+        Q(pdf=name) | Q(pdf_original=name)).first()
+    if publication is None:
+        raise Http404("No paper has that file.")
+    field = publication.pdf if publication.pdf.name == name else publication.pdf_original
+    return FileResponse(field.open('rb'), content_type='application/pdf')
 
 
 @require_GET
