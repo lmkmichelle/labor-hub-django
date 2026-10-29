@@ -415,3 +415,25 @@ class ApprovePdfLifecycleTests(TestCase):
         self.assertIsNotNone(publication.discussion_paper_number)
         with publication.pdf.open('rb') as f:
             self.assertEqual(len(PdfReader(f).pages), 2)
+
+
+class DownloadLogTests(TestCase):
+    def test_record_download_bumps_total_and_logs_a_timestamp(self):
+        pub = make_publication(status='approved')
+        pub.record_download()
+        pub.record_download()
+        self.assertEqual(pub.download_count, 2)
+        self.assertEqual(pub.downloads.count(), 2)
+
+    def test_most_downloaded_all_time_and_windowed(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        old = make_publication(title="Old hit", status='approved', pdf='x.pdf')
+        new = make_publication(title="New hit", status='approved', pdf='y.pdf')
+        for _ in range(3):
+            old.record_download()
+        new.record_download()
+        old.downloads.update(downloaded_at=timezone.now() - timedelta(days=30))
+        self.assertEqual([p.title for p in Publication.most_downloaded()], ["Old hit", "New hit"])
+        week = timezone.now() - timedelta(days=7)
+        self.assertEqual([p.title for p in Publication.most_downloaded(since=week)], ["New hit"])

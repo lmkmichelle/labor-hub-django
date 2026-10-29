@@ -42,6 +42,17 @@ class PublicationAuthor(models.Model):
         unique_together = [('publication', 'author')]
 
 
+class PublicationDownload(models.Model):
+    """One counted download, with its time, so "most downloaded this week" is possible.
+
+    ``Publication.download_count`` stays the all-time total (it predates this
+    table, so it also covers downloads that have no timestamp).
+    """
+    publication = models.ForeignKey(
+        'Publication', on_delete=models.CASCADE, related_name='downloads')
+    downloaded_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+
 class Publication(Approvable):
     title = models.CharField(max_length=200)
     authors = models.ManyToManyField(
@@ -252,6 +263,22 @@ class Publication(Approvable):
         ).exclude(pk=self.pk).select_related('revision_of')
         return sorted(versions, key=lambda p: p.revision_number or 0)
 
+    @classmethod
+    def most_downloaded(cls, limit=5, since=None):
+        """Approved discussion papers with a PDF, most downloaded first.
+
+        ``since`` (a datetime) ranks by downloads after that time, using the
+        timestamped log; without it, by the all-time ``download_count``.
+        """
+        papers = cls.objects.filter(status='approved', is_job_market=False, pdf__gt='')
+        if since is None:
+            papers = papers.filter(download_count__gt=0).order_by('-download_count', '-applied_at')
+        else:
+            papers = (papers.filter(downloads__downloaded_at__gte=since)
+                      .annotate(recent=models.Count('downloads'))
+                      .order_by('-recent', '-applied_at'))
+        return papers.prefetch_related('author_links__author__user')[:limit]
+
     def record_download(self):
         """Bump download_count by one, atomically, without a read-modify-write
         race between two concurrent downloads. Updates the DB row directly
@@ -260,6 +287,7 @@ class Publication(Approvable):
         one today, but a redirect-back page might) sees the new value."""
         Publication.objects.filter(pk=self.pk).update(
             download_count=F('download_count') + 1)
+        PublicationDownload.objects.create(publication=self)
         self.refresh_from_db(fields=['download_count'])
 
     def rebuild_covered_pdf(self, save=True):

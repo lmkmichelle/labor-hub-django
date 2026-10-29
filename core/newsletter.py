@@ -83,11 +83,7 @@ def newsletter_context(now=None):
         "rank": i, "title": p.title, "url": url("publication_detail", pk=p.pk),
         "download_url": url("publication_download", pk=p.pk),
         "authors": ", ".join(str(a) for a in p.ordered_authors),
-    } for i, p in enumerate(
-        Publication.objects.filter(status="approved", is_job_market=False, pdf__gt="",
-                                   download_count__gt=0)
-        .prefetch_related("author_links__author__user")
-        .order_by("-download_count", "-applied_at")[:MAX_PAPERS], start=1)]
+    } for i, p in enumerate(Publication.most_downloaded(MAX_PAPERS), start=1)]
 
     return {
         "issue": ISSUE,
