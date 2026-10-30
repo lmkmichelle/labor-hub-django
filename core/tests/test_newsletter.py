@@ -93,6 +93,18 @@ class NewsletterTests(TestCase):
         cls.return_value.send_campaign.assert_not_called()
         self.assertNotEqual(EmailCampaign.objects.get().status, "sent")
 
+    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_MEMBERS_LIST_ID="members")
+    def test_test_to_accepts_several_addresses_up_to_five(self):
+        with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient") as cls:
+            cls.return_value.create_campaign.return_value = "cm1"
+            call_command("send_newsletter", "--test-to", "a@example.com, b@example.com,c@example.com",
+                         verbosity=0)
+            cls.return_value.send_preview.assert_called_once_with(
+                "cm1", ["a@example.com", "b@example.com", "c@example.com"])
+            with self.assertRaises(CommandError):
+                call_command("send_newsletter", "--test-to",
+                             ",".join(f"{i}@example.com" for i in range(6)), verbosity=0)
+
     def test_requires_exactly_one_mode(self):
         with self.assertRaises(CommandError):
             call_command("send_newsletter")

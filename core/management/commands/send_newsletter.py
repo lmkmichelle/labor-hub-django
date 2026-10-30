@@ -1,6 +1,7 @@
 """Send the Labor Hub newsletter through Campaign Monitor.
 
     python manage.py send_newsletter --test-to you@cornell.edu   # preview to you only
+    python manage.py send_newsletter --test-to a@x.edu,b@x.edu   # up to 5 addresses
     python manage.py send_newsletter --send                      # to every member
 
 Sent from DIGEST_FROM_EMAIL (not the shared laborhub@ inbox); replies go to
@@ -23,13 +24,18 @@ class Command(BaseCommand):
     help = "Send the newsletter as a Campaign Monitor campaign (or a preview to one address)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--test-to", metavar="EMAIL",
-                            help="Send a preview to this address only.")
+        parser.add_argument("--test-to", metavar="EMAIL[,EMAIL...]",
+                            help="Send a preview to these addresses only (comma-separated, "
+                                 "at most 5).")
         parser.add_argument("--send", action="store_true",
                             help="Send to the whole members list.")
 
     def handle(self, *args, **options):
         test_to, send = options["test_to"], options["send"]
+        if test_to:
+            test_to = [a.strip() for a in test_to.split(",") if a.strip()]
+            if not 1 <= len(test_to) <= 5:
+                raise CommandError("--test-to takes 1 to 5 addresses (Campaign Monitor's limit).")
         if bool(test_to) == bool(send):
             raise CommandError("Give exactly one of --test-to EMAIL or --send.")
         if not (settings.CM_API_KEY and settings.CM_CLIENT_ID and settings.CM_MEMBERS_LIST_ID):
@@ -46,7 +52,7 @@ class Command(BaseCommand):
         except CampaignMonitorError as exc:
             raise CommandError(f"Campaign Monitor error: {exc}") from exc
 
-    def _preview(self, client, campaign, address):
+    def _preview(self, client, campaign, addresses):
         from django.urls import reverse
         from accounts.digests import absolute_url
         html_url, text_url = (
@@ -57,7 +63,7 @@ class Command(BaseCommand):
             html_url=html_url, text_url=text_url, list_ids=[settings.CM_MEMBERS_LIST_ID],
             segment_ids=[], from_name="The Labor Hub", from_email=_from_address(),
             reply_to=settings.REPLY_TO_EMAIL or _from_address())
-        client.send_preview(campaign.cm_campaign_id, [address])
+        client.send_preview(campaign.cm_campaign_id, addresses)
         # A preview is never a sent issue: leave it prepared so the issue number holds.
         campaign.save()
-        self.stdout.write(self.style.SUCCESS(f"Preview of '{campaign.subject}' sent to {address}"))
+        self.stdout.write(self.style.SUCCESS(f"Preview of '{campaign.subject}' sent to {", ".join(addresses)}"))
