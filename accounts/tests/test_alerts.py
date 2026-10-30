@@ -256,12 +256,13 @@ class AlertsUnsubscribeTests(TestCase):
     def test_invalid_token_returns_none(self):
         self.assertIsNone(read_unsubscribe_token("not-a-real-token"))
 
-    def test_digest_token_cannot_unsubscribe_alerts(self):
-        # A separate salt from accounts.digests' token, so a digest
+    def test_newsletter_token_cannot_unsubscribe_alerts(self):
+        # A separate salt from the newsletter's token, so a newsletter
         # unsubscribe link can't be replayed to also clear alert prefs.
-        from accounts.digests import make_unsubscribe_token as make_digest_token
+        from django.core import signing
+        from accounts.unsubscribe import LEGACY_SALT
         user = make_user()
-        token = make_digest_token(user)
+        token = signing.dumps({"uid": user.pk}, salt=LEGACY_SALT)
         self.assertIsNone(read_unsubscribe_token(token))
 
     def test_unsubscribe_view_clears_both_lists(self):

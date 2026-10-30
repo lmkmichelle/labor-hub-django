@@ -21,7 +21,7 @@ from publications.models import Publication
 from accounts.utils import process_avatar
 from publications.utils import handle_keywords
 from .alerts import read_unsubscribe_token as read_alert_unsubscribe_token
-from .digests import read_unsubscribe_token
+from .unsubscribe import read_newsletter_unsubscribe_token
 from .emails import send_advisor_review_email, send_application_submitted_email
 from .forms import UpdateProfileForm, UpdateUserForm, CustomLoginForm, BaseApplicationForm, ResearcherApplicationForm, \
     StudentApplicationForm, EmailPreferencesForm, AlertPreferencesForm
@@ -214,6 +214,9 @@ class SettingsView(LoginRequiredMixin, View):
             email_prefs_form = EmailPreferencesForm(
                 request.POST, instance=request.user.profile)
             if email_prefs_form.is_valid():
+                # An explicit choice on this page may turn a list back on, which
+                # (unlike a routine sync) is allowed to resubscribe in Campaign Monitor.
+                request.user.profile.cm_resubscribe = {"newsletter"}
                 email_prefs_form.save()
                 return redirect(f"{reverse('settings')}?saved=notifications")
             return render(request, self.template_name,
@@ -223,6 +226,7 @@ class SettingsView(LoginRequiredMixin, View):
             alert_prefs_form = AlertPreferencesForm(
                 request.POST, instance=request.user.profile)
             if alert_prefs_form.is_valid():
+                request.user.profile.cm_resubscribe = {"alerts"}
                 alert_prefs_form.save()
                 return redirect(f"{reverse('settings')}?saved=alerts")
             return render(request, self.template_name,
@@ -318,29 +322,30 @@ def advisee_reject(request, pk):
 
 
 @require_GET
-def digest_unsubscribe(request, token):
-    """One-click unsubscribe link from digest emails (signed token)."""
-    uid = read_unsubscribe_token(token)
+def newsletter_unsubscribe(request, token):
+    """One-click unsubscribe link from newsletter emails sent before Campaign Monitor
+    (signed token; see accounts.unsubscribe)."""
+    uid = read_newsletter_unsubscribe_token(token)
     profile = None
     if uid is not None:
         profile = Profile.objects.filter(user_id=uid).first()
 
     if profile is not None:
-        if profile.digest_frequency != Profile.DigestFrequency.OFF:
-            profile.digest_frequency = Profile.DigestFrequency.OFF
-            profile.save(update_fields=["digest_frequency"])
-        return render(request, "accounts/digest_unsubscribe.html", {"success": True})
+        if profile.newsletter_frequency != Profile.NewsletterFrequency.OFF:
+            profile.newsletter_frequency = Profile.NewsletterFrequency.OFF
+            profile.save(update_fields=["newsletter_frequency"])
+        return render(request, "accounts/newsletter_unsubscribe.html", {"success": True})
 
-    return render(request, "accounts/digest_unsubscribe.html", {"success": False})
+    return render(request, "accounts/newsletter_unsubscribe.html", {"success": False})
 
 
 @require_GET
 def alerts_unsubscribe(request, token):
     """One-click unsubscribe link from alert emails (signed token).
 
-    Separate from digest_unsubscribe: it reads a token signed with
+    Separate from newsletter_unsubscribe: it reads a token signed with
     accounts.alerts's own salt and clears the alert lists
-    rather than digest_frequency, so each unsubscribe link only turns off
+    rather than newsletter_frequency, so each unsubscribe link only turns off
     the kind of email it came from.
     """
     uid = read_alert_unsubscribe_token(token)

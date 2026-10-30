@@ -3,10 +3,9 @@
 A member can subscribe to specific paper topics, visit countries and visit institutions
 in Settings (Profile.alert_topics / alert_countries / alert_universities). Once a week,
 send_alerts.py emails each subscriber the approved papers and visits posted
-since their last alert that match what they picked. This mirrors
-accounts.digests closely -- same since/last-sent pattern, same unsubscribe
-token scheme, same per-cohort management command shape -- but filters by the
-member's specific interests rather than sending everything new.
+since their last alert that match what they picked. With Campaign Monitor
+configured the alerts go out as one campaign instead (accounts.campaigns); this
+module is the per-user fallback for environments without it.
 """
 from datetime import timedelta
 
@@ -19,24 +18,42 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.cm_sync import alert_field_values, country_token, topic_token, university_token
-from accounts.digests import absolute_url, publication_item, visit_item
 from core.email import attach_logo, cm_headers, default_reply_to
+from core.links import absolute_url
 from publications.models import Publication
 from seminars.models import Seminar
 
 UNSUBSCRIBE_SALT = "accounts.alerts.unsubscribe"
 
-# Alerts are weekly only -- there's no monthly cohort to choose between, so
-# unlike digests.FREQUENCY_WINDOWS this is a single constant.
+# Alerts are weekly only -- there's no monthly cohort to choose between.
 ALERT_WINDOW = timedelta(days=7)
+
+
+def publication_item(pub):
+    """Item dict for one approved publication."""
+    return {
+        "title": pub.title,
+        "url": absolute_url(reverse("publication_detail", kwargs={"pk": pub.pk})),
+        "meta": pub.get_country_code_display() if pub.country_code else "",
+        "authors": ", ".join(str(author) for author in pub.ordered_authors),
+        "abstract": pub.abstract,
+    }
+
+
+def visit_item(visit):
+    """Item dict for one approved visit."""
+    return {
+        "title": str(visit),
+        "url": absolute_url(visit.get_absolute_url()),
+        "meta": ", ".join(visit.country_labels()),
+    }
 
 
 def make_unsubscribe_token(user):
     """Return a signed, tamper-proof token identifying ``user``.
 
-    A separate salt from accounts.digests.make_unsubscribe_token means a
-    digest-unsubscribe link can never be replayed to also turn off alerts
-    (or vice versa).
+    A separate salt from the newsletter's unsubscribe token means a newsletter
+    link can never be replayed to also turn off alerts (or vice versa).
     """
     return signing.dumps({"uid": user.pk}, salt=UNSUBSCRIBE_SALT)
 
@@ -164,7 +181,7 @@ def send_user_alerts(user, now=None, connection=None):
     Returns ``True`` when an email was sent, ``False`` when skipped because
     no topics/countries/institutions are set or there were no matches. ``connection`` lets
     send_alerts reuse a single SMTP connection across the whole cohort,
-    exactly like send_digests does.
+    so the cohort is one connection, not one per member.
     """
     now = now or timezone.now()
     profile = user.profile
@@ -181,14 +198,13 @@ def send_user_alerts(user, now=None, connection=None):
     headers = cm_headers(track_opens=True)
     headers["List-Unsubscribe"] = f"<{unsubscribe_url}>"
     message = EmailMultiAlternatives(
-        subject, text_body, from_email=settings.DIGEST_FROM_EMAIL, to=[user.email],
+        subject, text_body, from_email=settings.CAMPAIGN_FROM_EMAIL, to=[user.email],
         reply_to=default_reply_to(), headers=headers, connection=connection,
     )
     message.attach_alternative(html_body, "text/html")
     attach_logo(message)
-    # Same reasoning as send_user_digest: this runs unattended from cron
-    # across every subscriber in one pass, so one bad address must not abort
-    # the rest of the cohort.
+    # This runs unattended from cron across every subscriber in one pass, so one
+    # bad address must not abort the rest of the cohort.
     sent = message.send(fail_silently=True)
 
     if not sent:

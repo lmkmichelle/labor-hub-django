@@ -208,7 +208,7 @@ class EditProfileViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/edit_profile.html")
         self.assertContains(response, 'name="biography"')
-        self.assertNotContains(response, 'name="digest_frequency"')
+        self.assertNotContains(response, 'name="newsletter_frequency"')
         self.assertNotContains(response, 'name="email"')
 
     def test_avatar_editor_has_no_visible_upload_label_and_modal_controls_are_labelled(self):
@@ -278,7 +278,7 @@ class EditProfileViewTests(TestCase):
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.cv_url, "https://example.org/my-cv")
 
-    def test_post_without_digest_frequency_defaults_off(self):
+    def test_post_without_newsletter_frequency_defaults_off(self):
         user = make_active_user()
         self.client.force_login(user)
         response = self.client.post(reverse("edit_profile"), {
@@ -307,7 +307,7 @@ class SettingsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/settings.html")
         self.assertContains(response, 'name="email"')
-        self.assertContains(response, 'name="digest_frequency"')
+        self.assertContains(response, 'name="newsletter_frequency"')
         self.assertContains(response, reverse("password_change"))
 
     def test_post_save_account_updates_email(self):
@@ -326,17 +326,17 @@ class SettingsViewTests(TestCase):
         self.client.force_login(user)
         response = self.client.post(reverse("settings"), {
             "save_notifications": "1",
-            "digest_frequency": "weekly",
+            "newsletter_frequency": "weekly",
         })
         self.assertRedirects(
             response, reverse("settings") + "?saved=notifications")
         user.profile.refresh_from_db()
-        self.assertEqual(user.profile.digest_frequency, "weekly")
+        self.assertEqual(user.profile.newsletter_frequency, "weekly")
 
     def test_post_save_notifications_without_frequency_defaults_off(self):
         user = make_active_user()
-        user.profile.digest_frequency = "weekly"
-        user.profile.save(update_fields=["digest_frequency"])
+        user.profile.newsletter_frequency = "weekly"
+        user.profile.save(update_fields=["newsletter_frequency"])
         self.client.force_login(user)
         response = self.client.post(reverse("settings"), {
             "save_notifications": "1",
@@ -344,7 +344,7 @@ class SettingsViewTests(TestCase):
         self.assertRedirects(
             response, reverse("settings") + "?saved=notifications")
         user.profile.refresh_from_db()
-        self.assertEqual(user.profile.digest_frequency, "off")
+        self.assertEqual(user.profile.newsletter_frequency, "off")
 
     def test_post_save_alerts_persists_topics_and_countries(self):
         user = make_active_user()

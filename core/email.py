@@ -29,7 +29,7 @@ def cm_headers(track_opens=False, track_clicks=False):
 
     ``track_clicks`` defaults off: CM rewrites every link to a tracking
     redirect, which is undesirable for links like a password reset. Only the
-    digest turns tracking on.
+    newsletter turns tracking on.
     """
     return {
         GROUP_HEADER: settings.EMAIL_GROUP_NAME,

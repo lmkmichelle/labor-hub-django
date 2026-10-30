@@ -1,11 +1,11 @@
-"""Digests and alerts as Campaign Monitor (CM) campaigns.
+"""The newsletter and alerts as Campaign Monitor (CM) campaigns.
 
-Under CM's terms, 1:1 transactional SMTP is for account mail; digests and alerts
-are campaigns sent to list segments. See accounts.cm_sync for how members and
+Under CM's terms, 1:1 transactional SMTP is for account mail; the newsletter and
+alerts are campaigns sent to list segments. See accounts.cm_sync for how members and
 their interests get onto the lists.
 
-* **Digests** -- identical for everyone in a cohort, so one campaign goes to the
-  fixed "Digest weekly"/"Digest monthly" segment.
+* **Newsletter** -- identical for everyone, so one campaign goes to the fixed
+  "Newsletter weekly" segment, plus "Newsletter monthly" in the first week of the month.
 * **Alerts** -- each member must see only what *they* follow. One campaign is
   sent to everyone with at least one match, and every item is wrapped in CM
   ``[ifmemberof:...]`` tags naming the interest segments it is relevant to, so
@@ -25,25 +25,22 @@ from django.utils.safestring import mark_safe
 
 from accounts import cm_sync
 from accounts.alerts import ALERT_WINDOW, profile_tokens, week_items
-from accounts.digests import absolute_url, collect_new_content, default_since
 from accounts.models import Profile
+from core import cm_lists
 from core.campaign_monitor import CampaignMonitorClient
+from core.links import absolute_url
 from core.models import EmailCampaign
+from core.newsletter import create_newsletter_campaign
 
-DIGEST_LIST_TITLE = "Labor Hub Digest"
-ALERT_LIST_TITLE = "Labor Hub Alerts"
-MEMBERS_LIST_TITLE = "Labor Hub Members"
-DIGEST_SEGMENTS = {"weekly": "Digest weekly", "monthly": "Digest monthly"}
+NEWSLETTER_LIST_TITLE = cm_lists.TITLES[cm_lists.NEWSLETTER]
+ALERT_LIST_TITLE = cm_lists.TITLES[cm_lists.ALERTS]
+NEWSLETTER_SEGMENTS = {"weekly": "Newsletter weekly", "monthly": "Newsletter monthly"}
 SEGMENT_PREFIX = "Alert "
 RECIPIENTS_PREFIX = "Alert recipients "
 _FIELD_FOR_PREFIX = {
     "t": cm_sync.TOPICS_FIELD,
     "c": cm_sync.COUNTRIES_FIELD,
     "u": cm_sync.INSTITUTIONS_FIELD,
-}
-_KIND_FOR_FREQUENCY = {
-    "weekly": EmailCampaign.Kind.DIGEST_WEEKLY,
-    "monthly": EmailCampaign.Kind.DIGEST_MONTHLY,
 }
 
 
@@ -58,7 +55,7 @@ def token_rule(token):
 
 
 def _from_address():
-    return parseaddr(settings.DIGEST_FROM_EMAIL)[1]
+    return parseaddr(settings.CAMPAIGN_FROM_EMAIL)[1]
 
 
 def _render(kind, sections, title):
@@ -102,30 +99,31 @@ def _create_and_send(client, campaign, segment_ids, list_ids=()):
     return campaign
 
 
-# -- digests -----------------------------------------------------------------
+# -- newsletter --------------------------------------------------------------
 
-def send_digest_campaign(frequency, now=None, client=None):
-    """Create and send the digest campaign for a cohort. ``None`` if nothing is new."""
+def newsletter_cohorts(now=None):
+    """Which frequency cohorts get the issue sent on ``now``: weekly always, and
+    monthly too in the first seven days of the month (one campaign, one number)."""
+    now = now or timezone.now()
+    return ["weekly", "monthly"] if timezone.localdate(now).day <= 7 else ["weekly"]
+
+
+def send_newsletter_campaign(frequencies, now=None, client=None):
+    """Create and send the newsletter to the given frequency cohorts.
+
+    ``None`` when there is nothing to list (a quiet week sends nothing)."""
     now = now or timezone.now()
     client = client or CampaignMonitorClient()
-    kind = _KIND_FOR_FREQUENCY[frequency]
-    last = last_sent(kind)
-    since = last.period_end if last else default_since(frequency, now)
-    sections = collect_new_content(since)
-    if not sections:
+    campaign = create_newsletter_campaign(now, only_if_content=True)
+    if campaign is None:
         return None
-
-    segments = {s["Title"]: s["SegmentID"] for s in client.segments(settings.CM_DIGEST_LIST_ID)}
-    segment_id = segments.get(DIGEST_SEGMENTS[frequency])
-    if segment_id is None:
-        raise RuntimeError(f"CM segment '{DIGEST_SEGMENTS[frequency]}' is missing; run cm_setup.")
-
-    total = sum(len(s["items"]) for s in sections)
-    subject = "Labor Hub digest: {} new update{}".format(total, "" if total == 1 else "s")
-    html, text = _render("digest", sections, "Labor Hub digest")
-    campaign = EmailCampaign.objects.create(
-        kind=kind, subject=subject, html=html, text=text, period_start=since, period_end=now)
-    return _create_and_send(client, campaign, [segment_id])
+    segments = {s["Title"]: s["SegmentID"]
+                for s in client.segments(cm_lists.list_id(cm_lists.NEWSLETTER))}
+    try:
+        segment_ids = [segments[NEWSLETTER_SEGMENTS[f]] for f in frequencies]
+    except KeyError as missing:
+        raise RuntimeError(f"CM segment {missing} is missing; run cm_setup.") from missing
+    return _create_and_send(client, campaign, segment_ids)
 
 
 # -- alerts ------------------------------------------------------------------
@@ -164,16 +162,16 @@ def prepare_alerts(now=None, client=None):
 
     # Segments: drop last run's, then create one per relevant token plus the
     # union ("recipients") segment the campaign is actually sent to.
-    for segment in client.segments(settings.CM_ALERT_LIST_ID):
+    for segment in client.segments(cm_lists.list_id(cm_lists.ALERTS)):
         if segment["Title"].startswith(SEGMENT_PREFIX):
             client.delete_segment(segment["SegmentID"])
     interest_ids = {
         token: client.create_segment(
-            settings.CM_ALERT_LIST_ID, segment_title(token), [[token_rule(token)]])
+            cm_lists.list_id(cm_lists.ALERTS), segment_title(token), [[token_rule(token)]])
         for token in sorted(relevant)
     }
     recipients_id = client.create_segment(
-        settings.CM_ALERT_LIST_ID, f"{RECIPIENTS_PREFIX}{now:%Y-%m-%d}",
+        cm_lists.list_id(cm_lists.ALERTS), f"{RECIPIENTS_PREFIX}{now:%Y-%m-%d}",
         [[token_rule(token) for token in sorted(relevant)]])
 
     labels = {"publications": "New papers matching your topics",

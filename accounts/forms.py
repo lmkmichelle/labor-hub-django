@@ -511,20 +511,20 @@ class UpdateProfileForm(forms.ModelForm):
 
 
 class EmailPreferencesForm(forms.ModelForm):
-    digest_frequency = forms.ChoiceField(
-        choices=Profile.DigestFrequency.choices,
+    newsletter_frequency = forms.ChoiceField(
+        choices=Profile.NewsletterFrequency.choices,
         required=False,
-        label='Email digest frequency',
-        help_text='Get a summary email of newly added papers, events, jobs, and visits.',
+        label='Newsletter',
+        help_text='The Labor Hub newsletter: open events, special issues and jobs by deadline, and the most downloaded papers.',
         widget=forms.Select(),
     )
 
     class Meta:
         model = Profile
-        fields = ['digest_frequency']
+        fields = ['newsletter_frequency']
 
-    def clean_digest_frequency(self):
-        return self.cleaned_data.get('digest_frequency') or Profile.DigestFrequency.OFF
+    def clean_newsletter_frequency(self):
+        return self.cleaned_data.get('newsletter_frequency') or Profile.NewsletterFrequency.OFF
 
 
 class AlertPreferencesForm(forms.ModelForm):

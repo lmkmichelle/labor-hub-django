@@ -81,8 +81,8 @@ class NewsletterTests(TestCase):
         self.assertEqual(ctx["papers_heading"], "Most downloaded papers this week")
         self.assertIn("Most downloaded papers this week", create_newsletter_campaign().html)
 
-    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_MEMBERS_LIST_ID="members",
-                       DIGEST_FROM_EMAIL="The Labor Hub <digest@ilr.mail.example.edu>")
+    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_NEWSLETTER_LIST_ID="members",
+                       CAMPAIGN_FROM_EMAIL="The Labor Hub <digest@ilr.mail.example.edu>")
     def test_send_goes_to_members_list_from_digest_address(self):
         with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient") as cls:
             client = cls.return_value
@@ -94,7 +94,7 @@ class NewsletterTests(TestCase):
         client.send_campaign.assert_called_once()
         self.assertEqual(EmailCampaign.objects.get().status, "sent")
 
-    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_MEMBERS_LIST_ID="members")
+    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_NEWSLETTER_LIST_ID="members")
     def test_test_to_sends_only_a_preview_and_is_not_marked_sent(self):
         with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient") as cls:
             cls.return_value.create_campaign.return_value = "cm1"
@@ -103,7 +103,7 @@ class NewsletterTests(TestCase):
         cls.return_value.send_campaign.assert_not_called()
         self.assertNotEqual(EmailCampaign.objects.get().status, "sent")
 
-    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_MEMBERS_LIST_ID="members")
+    @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_NEWSLETTER_LIST_ID="members")
     def test_test_to_accepts_several_addresses_up_to_five(self):
         with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient") as cls:
             cls.return_value.create_campaign.return_value = "cm1"

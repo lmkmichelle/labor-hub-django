@@ -157,7 +157,7 @@ class ContactMessage(models.Model):
 
 
 class EmailCampaign(models.Model):
-    """A digest/alerts mailing sent as a Campaign Monitor campaign.
+    """A newsletter/alerts mailing sent as a Campaign Monitor campaign.
 
     Campaign Monitor fetches a campaign's HTML from a public URL, so the rendered
     snapshot is stored here and served unguessably at ``email/campaign/<token>``.
@@ -167,8 +167,6 @@ class EmailCampaign(models.Model):
     """
 
     class Kind(models.TextChoices):
-        DIGEST_WEEKLY = 'digest_weekly', 'Weekly digest'
-        DIGEST_MONTHLY = 'digest_monthly', 'Monthly digest'
         ALERTS = 'alerts', 'Weekly alerts'
         NEWSLETTER = 'newsletter', 'Newsletter'
 
@@ -203,3 +201,16 @@ class EmailCampaign(models.Model):
 
     def __str__(self):
         return f"{self.get_kind_display()} {self.created_at:%Y-%m-%d} ({self.status})"
+
+
+class CampaignMonitorResource(models.Model):
+    """The Campaign Monitor id of something this site created there (a list).
+
+    Filled by ``cm_setup`` so nobody copies ids into environment variables; see
+    core.cm_lists.
+    """
+    key = models.CharField(max_length=40, unique=True)
+    cm_id = models.CharField(max_length=64)
+
+    def __str__(self):
+        return f"{self.key}: {self.cm_id}"

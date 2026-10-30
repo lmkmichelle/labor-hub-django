@@ -141,20 +141,21 @@ class Profile(models.Model):
             return self.cv_file.url
         return ""
 
-    class DigestFrequency(models.TextChoices):
+    class NewsletterFrequency(models.TextChoices):
         OFF = 'off', 'Off'
         WEEKLY = 'weekly', 'Weekly'
         MONTHLY = 'monthly', 'Monthly'
 
-    digest_frequency = models.CharField(
+    # On for everyone by default; "off" is the opt-out (also set when someone
+    # unsubscribes from the newsletter in Campaign Monitor -- see accounts.cm_webhook).
+    newsletter_frequency = models.CharField(
         max_length=10,
-        choices=DigestFrequency.choices,
-        default=DigestFrequency.OFF,
-        help_text="How often to receive an email digest of newly added content.",
+        choices=NewsletterFrequency.choices,
+        default=NewsletterFrequency.WEEKLY,
+        help_text="How often to receive the Labor Hub newsletter.",
     )
-    last_digest_sent_at = models.DateTimeField(null=True, blank=True)
 
-    # Weekly alerts for a specific interest, separate from the general digest
+    # Weekly alerts for a specific interest, separate from the general newsletter
     # above. Alerts are considered "on" whenever either list is non-empty --
     # there's no separate enable flag -- see accounts.alerts.send_user_alerts.
     alert_topics = JSONField(

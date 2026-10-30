@@ -1,8 +1,8 @@
 """Keep Campaign Monitor (CM) subscriber lists in step with member preferences.
 
-Digests and alerts are CM *campaigns*, sent to list segments. A member is on the
-digest list when ``digest_frequency`` is weekly/monthly, and on the alerts list
-when any alert topic/country/institution is set. Alert interests are stored in
+The newsletter and alerts are CM *campaigns*, sent to list segments. A member is on
+the newsletter list when ``newsletter_frequency`` is weekly/monthly, and on the
+alerts list when any alert topic/country/institution is set. Alert interests are stored in
 the list's custom fields as ``|``-delimited tokens (``|t:migration|c:US|``) so a
 CM segment rule ``AlertTopics CONTAINS "|t:migration|"`` means "follows migration".
 
@@ -17,11 +17,12 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.text import slugify
 
+from core import cm_lists
 from core.campaign_monitor import CampaignMonitorClient, CampaignMonitorError, is_configured
 
 logger = logging.getLogger(__name__)
 
-DIGEST_FIELD = "DigestFrequency"
+NEWSLETTER_FIELD = "NewsletterFrequency"
 TOPICS_FIELD = "AlertTopics"
 COUNTRIES_FIELD = "AlertCountries"
 INSTITUTIONS_FIELD = "AlertInstitutions"
@@ -55,18 +56,17 @@ def alert_field_values(profile):
 
 
 def desired_state(profile):
-    """What CM should hold for ``profile``: ``digest`` / ``alerts`` are the custom
+    """What CM should hold for ``profile``: ``newsletter`` / ``alerts`` are the custom
     fields for that list, or ``None`` when the member should not be on it."""
     user = profile.user
     active = user.is_active
-    freq = profile.digest_frequency
+    freq = profile.newsletter_frequency
     alerts = alert_field_values(profile)
     return {
         "email": user.email,
         "name": user.get_full_name(),
-        # Every active member is on the newsletter list (no custom fields).
-        "members": {} if active and settings.CM_MEMBERS_LIST_ID else None,
-        "digest": {DIGEST_FIELD: freq} if active and freq != profile.DigestFrequency.OFF else None,
+        "newsletter": ({NEWSLETTER_FIELD: freq}
+                       if active and freq != profile.NewsletterFrequency.OFF else None),
         "alerts": alerts if active and any(alerts.values()) else None,
     }
 
@@ -84,10 +84,14 @@ def _unsubscribe_quietly(client, list_id, email):
             raise
 
 
-def _apply(client, state, previous_email=""):
-    lists = [("digest", settings.CM_DIGEST_LIST_ID), ("alerts", settings.CM_ALERT_LIST_ID)]
-    if settings.CM_MEMBERS_LIST_ID:
-        lists.append(("members", settings.CM_MEMBERS_LIST_ID))
+def _apply(client, state, previous_email="", resubscribe=()):
+    """Push ``state`` to both lists.
+
+    A member who unsubscribed in CM must stay unsubscribed -- even if our webhook
+    missed it -- so a routine sync never resubscribes; only the lists named in
+    ``resubscribe`` (set when the member saves that list's settings) do."""
+    lists = [("newsletter", cm_lists.list_id(cm_lists.NEWSLETTER)),
+             ("alerts", cm_lists.list_id(cm_lists.ALERTS))]
     for key, list_id in lists:
         fields = state[key]
         # The member changed their email: the old address must stop receiving.
@@ -96,24 +100,8 @@ def _apply(client, state, previous_email=""):
         if fields is None:
             _unsubscribe_quietly(client, list_id, state["email"])
         else:
-            # Members who unsubscribed from the newsletter in CM must stay out,
-            # so a later name/email sync never resubscribes them.
             client.upsert_subscriber(list_id, state["email"], state["name"], fields,
-                                     resubscribe=(key != "members"))
-
-
-def sync_member_to_newsletter_list(profile, client):
-    """Put one active member on the newsletter list and nothing else.
-
-    For `cm_sync --members-only`: the newsletter can go out before digests and alerts
-    are moved to Campaign Monitor. Never resubscribes anyone who left the list.
-    Returns True if the member was pushed."""
-    state = desired_state(profile)
-    if state["members"] is None:
-        return False
-    client.upsert_subscriber(settings.CM_MEMBERS_LIST_ID, state["email"], state["name"],
-                             state["members"], resubscribe=False)
-    return True
+                                     resubscribe=key in resubscribe)
 
 
 def sync_profile(profile, client=None, force=False):
@@ -123,14 +111,14 @@ def sync_profile(profile, client=None, force=False):
     so the nightly ``cm_sync`` retries. Preference saves must not fail because CM
     is down.
     """
-    if not is_configured():
+    if not is_configured() or not cm_lists.provisioned():
         return False
     state = desired_state(profile)
     new_hash = state_hash(state)
     if not force and profile.cm_synced_state == new_hash:
         return False
-    if (not profile.cm_synced_state and state["digest"] is None
-            and state["alerts"] is None and state["members"] is None):
+    if (not profile.cm_synced_state and state["newsletter"] is None
+            and state["alerts"] is None):
         # Never pushed and wants nothing: record that, skip two pointless API calls
         # (this is most members when CM is first backfilled).
         type(profile).objects.filter(pk=profile.pk).update(
@@ -138,7 +126,8 @@ def sync_profile(profile, client=None, force=False):
         profile.cm_synced_state, profile.cm_synced_email = new_hash, state["email"]
         return True
     try:
-        _apply(client or CampaignMonitorClient(), state, profile.cm_synced_email)
+        _apply(client or CampaignMonitorClient(), state, profile.cm_synced_email,
+               resubscribe=getattr(profile, "cm_resubscribe", ()))
     except CampaignMonitorError:
         logger.exception("Campaign Monitor sync failed for profile %s", profile.pk)
         return False
@@ -151,7 +140,7 @@ def sync_profile(profile, client=None, force=False):
 
 def queue_sync(profile):
     """Sync after the surrounding transaction commits (no-op when unchanged)."""
-    if not is_configured():
+    if not is_configured() or not cm_lists.provisioned():
         return
     if profile.cm_synced_state == state_hash(desired_state(profile)):
         return

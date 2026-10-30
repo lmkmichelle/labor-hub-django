@@ -35,15 +35,15 @@
   </section>
 
   <section class="bg-neutral-primary-soft border border-default rounded-base shadow-xs p-6 mb-6">
-    <h3 class="text-lg font-semibold text-heading mb-1">Email notifications</h3>
-    <p class="text-sm text-body mb-4">Choose how often we email you a summary of newly added content.</p>
+    <h3 class="text-lg font-semibold text-heading mb-1">Newsletter</h3>
+    <p class="text-sm text-body mb-4">Choose how often we email you the Labor Hub newsletter.</p>
     <form method="post" class="mb-0">
       {% csrf_token %}
       {% if email_prefs_form.non_field_errors %}
         <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
              role="alert">{{ email_prefs_form.non_field_errors }}</div>
       {% endif %}
-      {% render_field email_prefs_form.digest_frequency %}
+      {% render_field email_prefs_form.newsletter_frequency %}
       <button type="submit" name="save_notifications" class="btn-primary mt-2">Save preferences</button>
     </form>
   </section>

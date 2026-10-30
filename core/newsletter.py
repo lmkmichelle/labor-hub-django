@@ -13,7 +13,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.digests import absolute_url
+from core.links import absolute_url
 from core.models import EmailCampaign
 from events.models import Event
 from jobs.models import Job
@@ -126,10 +126,20 @@ def render_newsletter(context):
             render_to_string("emails/newsletter.txt", context))
 
 
-def create_newsletter_campaign(now=None):
-    """Render this issue and store the snapshot CM will fetch. Not sent yet."""
+def has_content(context):
+    """True when at least one listing section would appear in the issue."""
+    return any(context[key] for key in ("events", "special_issues", "jobs", "papers"))
+
+
+def create_newsletter_campaign(now=None, only_if_content=False):
+    """Render this issue and store the snapshot CM will fetch. Not sent yet.
+
+    With ``only_if_content`` an issue with nothing to list returns ``None`` instead
+    (the weekly cron uses this, so a quiet week sends nothing)."""
     now = now or timezone.now()
     context = newsletter_context(now)
+    if only_if_content and not has_content(context):
+        return None
     html, text = render_newsletter(context)
     last = EmailCampaign.objects.filter(
         kind=EmailCampaign.Kind.NEWSLETTER, status=EmailCampaign.Status.SENT).first()

@@ -1,4 +1,4 @@
-"""Digests/alerts as Campaign Monitor campaigns: client, list sync, webhook, campaigns."""
+"""Newsletter/alerts as Campaign Monitor campaigns: client, list sync, webhook, campaigns."""
 import json
 from datetime import timedelta
 from unittest import mock
@@ -14,10 +14,11 @@ from accounts.models import CustomUser, Profile
 from accounts.tests.test_alerts import make_publication, make_user, make_visit
 from core.campaign_monitor import CampaignMonitorClient, CampaignMonitorError
 from core.models import EmailCampaign
+from special_issues.models import SpecialIssue
 
 CM = dict(
     CAMPAIGN_DELIVERY="cm", CM_API_KEY="key", CM_CLIENT_ID="client",
-    CM_DIGEST_LIST_ID="digest-list", CM_ALERT_LIST_ID="alert-list",
+    CM_NEWSLETTER_LIST_ID="newsletter-list", CM_ALERT_LIST_ID="alert-list",
     CM_WEBHOOK_SECRET="s3cret", SITE_URL="http://testserver",
 )
 
@@ -27,8 +28,8 @@ class FakeClient:
 
     def __init__(self):
         self.calls = []
-        self.digest_segments = [{"Title": "Digest weekly", "SegmentID": "seg-weekly"},
-                                {"Title": "Digest monthly", "SegmentID": "seg-monthly"}]
+        self.newsletter_segments = [{"Title": "Newsletter weekly", "SegmentID": "seg-weekly"},
+                                    {"Title": "Newsletter monthly", "SegmentID": "seg-monthly"}]
         self.alert_segments = []
         self.fail = False
 
@@ -44,7 +45,7 @@ class FakeClient:
         self._log("unsubscribe", *a, **k)
 
     def segments(self, list_id):
-        return self.digest_segments if list_id == "digest-list" else list(self.alert_segments)
+        return self.newsletter_segments if list_id == "newsletter-list" else list(self.alert_segments)
 
     def delete_segment(self, segment_id):
         self._log("delete_segment", segment_id)
@@ -109,28 +110,49 @@ class TokenAndSyncTests(TestCase):
     def test_subscribes_to_the_lists_the_member_chose_and_is_idempotent(self):
         client = FakeClient()
         user = make_user(topics=["Migration"])
-        user.profile.digest_frequency = "weekly"
         profile = Profile.objects.get(pk=user.profile.pk)
-        profile.digest_frequency = "weekly"
+        self.assertEqual(profile.newsletter_frequency, "weekly")  # the default
         self.assertTrue(cm_sync.sync_profile(profile, client=client))
         upserts = [c for c in client.calls if c[0] == "upsert"]
-        self.assertEqual({c[1][0] for c in upserts}, {"digest-list", "alert-list"})
+        self.assertEqual({c[1][0] for c in upserts}, {"newsletter-list", "alert-list"})
         self.assertFalse(cm_sync.sync_profile(profile, client=client))  # unchanged: no calls
 
     def test_member_who_wants_nothing_costs_no_api_call_on_first_sync(self):
         client = FakeClient()
         profile = make_user().profile
+        profile.newsletter_frequency = "off"
         self.assertTrue(cm_sync.sync_profile(profile, client=client))
         self.assertEqual(client.calls, [])
 
-    @override_settings(CM_MEMBERS_LIST_ID="members-list")
-    def test_every_active_member_joins_the_newsletter_list_without_resubscribing(self):
+    def test_new_members_get_the_weekly_newsletter_by_default(self):
         client = FakeClient()
         profile = make_user().profile
         self.assertTrue(cm_sync.sync_profile(profile, client=client))
-        members = [c for c in client.calls if c[0] == "upsert" and c[1][0] == "members-list"]
-        self.assertEqual(len(members), 1)
-        self.assertIs(members[0][2].get("resubscribe"), False)
+        (call,) = [c for c in client.calls if c[0] == "upsert"]
+        self.assertEqual(call[1][0], "newsletter-list")
+        self.assertEqual(call[1][3], {cm_sync.NEWSLETTER_FIELD: "weekly"})
+
+    def test_a_routine_sync_never_resubscribes_but_saving_settings_does(self):
+        client = FakeClient()
+        profile = make_user().profile
+        cm_sync.sync_profile(profile, client=client)
+        profile.user.first_name = "Renamed"  # changes the state, so it syncs again
+        cm_sync.sync_profile(profile, client=client)
+        self.assertEqual([c[2]["resubscribe"] for c in client.calls if c[0] == "upsert"],
+                         [False, False])
+        profile.user.first_name = "Again"
+        profile.cm_resubscribe = {"newsletter"}
+        cm_sync.sync_profile(profile, client=client)
+        upserts = [c for c in client.calls if c[0] == "upsert"]
+        self.assertIs(upserts[-1][2]["resubscribe"], True)
+
+    def test_nothing_is_pushed_until_the_lists_are_set_up(self):
+        client = FakeClient()
+        profile = make_user().profile
+        with override_settings(CM_NEWSLETTER_LIST_ID=""):
+            self.assertFalse(cm_sync.sync_profile(profile, client=client))
+        self.assertEqual(client.calls, [])
+        self.assertEqual(profile.cm_synced_state, "")
 
     def test_clearing_alerts_unsubscribes_from_the_alert_list(self):
         client = FakeClient()
@@ -147,7 +169,7 @@ class TokenAndSyncTests(TestCase):
         profile.user.is_active = False
         cm_sync.sync_profile(profile, client=client)
         unsubscribed = {c[1][0] for c in client.calls if c[0] == "unsubscribe"}
-        self.assertEqual(unsubscribed, {"digest-list", "alert-list"})
+        self.assertEqual(unsubscribed, {"newsletter-list", "alert-list"})
 
     def test_changed_email_unsubscribes_the_old_address(self):
         client = FakeClient()
@@ -201,12 +223,12 @@ class WebhookTests(TestCase):
         profile = Profile.objects.get(user=user)
         self.assertEqual((profile.alert_topics, profile.alert_countries, profile.alert_universities), ([], [], []))
 
-    def test_unsubscribe_from_digest_turns_digest_off_but_keeps_alerts(self):
+    def test_unsubscribe_from_the_newsletter_turns_it_off_but_keeps_alerts(self):
         user = make_user("w@example.com", topics=["Migration"])
-        Profile.objects.filter(user=user).update(digest_frequency="weekly")
-        self._post(list_id="digest-list")
+        Profile.objects.filter(user=user).update(newsletter_frequency="weekly")
+        self._post(list_id="newsletter-list")
         profile = Profile.objects.get(user=user)
-        self.assertEqual(profile.digest_frequency, "off")
+        self.assertEqual(profile.newsletter_frequency, "off")
         self.assertEqual(profile.alert_topics, ["Migration"])
 
     def test_does_not_echo_back_to_cm(self):
@@ -227,41 +249,58 @@ class WebhookTests(TestCase):
 
 
 @override_settings(**CM)
-class DigestCampaignTests(TestCase):
-    def test_sends_one_campaign_to_the_cohort_segment(self):
-        make_publication("A paper", timezone.now() - timedelta(days=1))
+class NewsletterCampaignTests(TestCase):
+    def setUp(self):
+        SpecialIssue.objects.create(
+            journal="J", title="Open call", status="approved",
+            submission_deadline=timezone.localdate() + timedelta(days=5))
+
+    def test_sends_one_campaign_to_the_weekly_segment(self):
         client = FakeClient()
-        campaign = campaigns.send_digest_campaign("weekly", client=client)
+        campaign = campaigns.send_newsletter_campaign(["weekly"], client=client)
         self.assertEqual(campaign.status, "sent")
         create = next(c for c in client.calls if c[0] == "create_campaign")[2]
         self.assertEqual(create["segment_ids"], ["seg-weekly"])
         self.assertIn("<unsubscribe", campaign.html)
-        self.assertIn("A paper", campaign.html)
+        self.assertIn("Open call", campaign.html)
         self.assertNotIn("cid:", campaign.html)
 
-    def test_nothing_new_sends_nothing(self):
+    def test_the_monthly_cohort_is_added_in_one_campaign(self):
         client = FakeClient()
-        self.assertIsNone(campaigns.send_digest_campaign("weekly", client=client))
-        self.assertEqual(client.calls, [])
+        campaigns.send_newsletter_campaign(["weekly", "monthly"], client=client)
+        self.assertEqual(client.names().count("create_campaign"), 1)
+        create = next(c for c in client.calls if c[0] == "create_campaign")[2]
+        self.assertEqual(create["segment_ids"], ["seg-weekly", "seg-monthly"])
 
-    def test_next_run_continues_from_the_last_one(self):
-        make_publication("A paper", timezone.now() - timedelta(days=1))
+    def test_monthly_cohort_only_in_the_first_seven_days_of_the_month(self):
+        tz = timezone.get_current_timezone()
+        first = timezone.datetime(2026, 11, 2, 12, tzinfo=tz)
+        later = timezone.datetime(2026, 11, 9, 12, tzinfo=tz)
+        self.assertEqual(campaigns.newsletter_cohorts(first), ["weekly", "monthly"])
+        self.assertEqual(campaigns.newsletter_cohorts(later), ["weekly"])
+
+    def test_a_week_with_nothing_to_list_sends_nothing(self):
+        SpecialIssue.objects.all().delete()
         client = FakeClient()
-        campaigns.send_digest_campaign("weekly", client=client)
-        self.assertIsNone(campaigns.send_digest_campaign("weekly", client=client))
+        self.assertIsNone(campaigns.send_newsletter_campaign(["weekly"], client=client))
+        self.assertEqual(client.calls, [])
+        self.assertEqual(EmailCampaign.objects.count(), 0)
+
+    def test_a_missing_segment_says_to_run_cm_setup(self):
+        client = FakeClient()
+        client.newsletter_segments = []
+        with self.assertRaisesMessage(RuntimeError, "cm_setup"):
+            campaigns.send_newsletter_campaign(["weekly"], client=client)
 
     def test_failure_is_recorded_and_raised(self):
-        make_publication("A paper", timezone.now() - timedelta(days=1))
         client = FakeClient()
-        original = client.create_campaign
 
         def boom(**kwargs):
             raise CampaignMonitorError("nope", status=400)
         client.create_campaign = boom
         with self.assertRaises(CampaignMonitorError):
-            campaigns.send_digest_campaign("weekly", client=client)
+            campaigns.send_newsletter_campaign(["weekly"], client=client)
         self.assertEqual(EmailCampaign.objects.get().status, "failed")
-        client.create_campaign = original
 
 
 @override_settings(**CM)
@@ -367,15 +406,22 @@ class CommandAndSnapshotTests(TestCase):
             "campaign_snapshot", kwargs={"token": "guess", "ext": "html"})).status_code, 404)
         self.assertEqual(self.client.get(url.replace(".html", ".txt")).content, b"hi")
 
-    def test_send_digests_uses_a_campaign_not_per_user_mail(self):
+    def test_the_scheduled_newsletter_is_a_campaign_not_per_user_mail(self):
         make_user("a@example.com")
-        Profile.objects.update(digest_frequency="weekly")
-        make_publication("A paper", timezone.now() - timedelta(days=1))
+        SpecialIssue.objects.create(
+            journal="J", title="Open call", status="approved",
+            submission_deadline=timezone.localdate() + timedelta(days=5))
         fake = FakeClient()
-        with mock.patch("accounts.campaigns.CampaignMonitorClient", return_value=fake):
-            call_command("send_digests", "--frequency", "weekly")
+        with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient",
+                        return_value=fake):
+            call_command("send_newsletter", "--scheduled", verbosity=0)
         self.assertEqual(mail.outbox, [])
         self.assertIn("create_campaign", fake.names())
+
+    @override_settings(CM_NEWSLETTER_LIST_ID="")
+    def test_the_scheduled_newsletter_is_a_noop_until_cm_is_set_up(self):
+        call_command("send_newsletter", "--scheduled", verbosity=0)
+        self.assertEqual(mail.outbox, [])
 
     def test_send_alerts_prepare_then_send(self):
         make_user("a@example.com", topics=["Migration"])

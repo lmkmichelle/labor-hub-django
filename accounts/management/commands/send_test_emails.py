@@ -4,7 +4,7 @@ to a single inbox, through whatever SMTP backend is currently configured
 reviewing the HTML design before a change goes anywhere near ``main``/prod.
 
     python manage.py send_test_emails --to you@cornell.edu
-    python manage.py send_test_emails --to you@cornell.edu --only approved,digest
+    python manage.py send_test_emails --to you@cornell.edu --only approved,newsletter
 
 Or, to review the HTML without sending anything anywhere (no SMTP
 credentials needed, nothing leaves the machine):
@@ -17,13 +17,13 @@ Every send here goes through the real ``send_*_email``/form/view code this
 app actually uses in production -- nothing is re-implemented -- so what
 lands in the inbox (or the preview file) is exactly what a real user would
 receive. Some email types need a real, saved database row to work at all
-(the digest reads real
+(the alerts read real
 approved content; the password reset looks up a real active user). If
 ``--to`` isn't an existing account, a throwaway one is created for the send
 and deleted again in a ``finally`` block. If ``--to`` *is* an existing
 account (e.g. your own dev superuser), that real account is reused as-is
 instead -- never created, never deleted, and any field this command needs
-to change temporarily (digest subscription) is restored afterward.
+to change temporarily (alert subscription) is restored afterward.
 """
 import base64
 import os
@@ -37,7 +37,6 @@ from django.utils import timezone
 from django.utils.html import escape
 
 from accounts.alerts import send_user_alerts
-from accounts.digests import send_user_digest
 from accounts.emails import (
     send_advisor_review_email,
     send_student_awaiting_advisor_email,
@@ -56,7 +55,7 @@ from seminars.models import Seminar
 
 ALL_KEYS = [
     "approved", "rejected", "staff_alert", "advisor_review", "student_awaiting_advisor",
-    "paper_advisor_ack", "digest", "alerts", "contact", "contact_confirmation",
+    "paper_advisor_ack", "alerts", "contact", "contact_confirmation",
     "password_reset", "newsletter",
 ]
 
@@ -261,36 +260,8 @@ class Command(BaseCommand):
         )
         send_paper_advisor_ack_email(publication, fail_silently=False)
 
-    def _send_digest(self, to):
-        # collect_new_content queries real approved rows, and send_user_digest
-        # needs a saved user with a subscribed profile.
-        user, created = self._get_or_reuse_user(to)
-        original_frequency = user.profile.digest_frequency
-        original_last_sent = user.profile.last_digest_sent_at
-        user.profile.digest_frequency = user.profile.DigestFrequency.WEEKLY
-        user.profile.last_digest_sent_at = None
-        user.profile.save()
-        publication = Publication.objects.create(
-            title="A Preview Discussion Paper",
-            abstract="A preview row for send_test_emails; deleted immediately after.",
-            status="approved",
-        )
-        try:
-            sent = send_user_digest(user, now=timezone.now())
-            if not sent:
-                self.stdout.write(self.style.WARNING(
-                    "  digest: send_user_digest reported nothing to send"))
-        finally:
-            publication.delete()
-            if created:
-                user.delete()
-            else:
-                user.profile.digest_frequency = original_frequency
-                user.profile.last_digest_sent_at = original_last_sent
-                user.profile.save()
-
     def _send_alerts(self, to):
-        # Mirrors _send_digest: collect_alert_matches queries real approved
+        # collect_alert_matches queries real approved
         # rows, and send_user_alerts needs a saved user subscribed to the
         # topic/country the preview rows below match.
         user, created = self._get_or_reuse_user(to)
@@ -350,7 +321,7 @@ class Command(BaseCommand):
         html, text = render_newsletter(context)
         message = EmailMultiAlternatives(
             f"The Labor Hub Newsletter No. {context['issue_number']}", text,
-            from_email=settings.DIGEST_FROM_EMAIL, to=[to])
+            from_email=settings.CAMPAIGN_FROM_EMAIL, to=[to])
         message.attach_alternative(html, "text/html")
         message.send()
 

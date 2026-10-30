@@ -1,6 +1,6 @@
 """Thin Campaign Monitor (createsend) REST v3.3 client.
 
-Stdlib only (``urllib``), so it adds no dependency. Digests and alerts are
+Stdlib only (``urllib``), so it adds no dependency. The newsletter and alerts are
 campaigns under CM's terms of service; this module manages the subscriber lists,
 segments and campaigns they need. Authentication is HTTP Basic with the API key
 as the username and a dummy password, per the CM docs. The key is never logged.
@@ -110,6 +110,21 @@ class CampaignMonitorClient:
     def active_subscribers(self, list_id, page=1, page_size=1000):
         return self._request("GET", f"lists/{list_id}/active.json",
                              params={"page": page, "pagesize": page_size})
+
+    def unsubscribed(self, list_id, page=1, page_size=1000):
+        """One page of subscribers who unsubscribed from ``list_id`` (any time)."""
+        return self._request("GET", f"lists/{list_id}/unsubscribed.json", params={
+            "date": "2000-01-01", "page": page, "pagesize": page_size})
+
+    def all_unsubscribed(self, list_id):
+        """Every email address that unsubscribed from ``list_id``."""
+        page, pages = 1, 1
+        while page <= pages:
+            result = self.unsubscribed(list_id, page=page)
+            pages = result.get("NumberOfPages") or 1
+            for row in result.get("Results", []):
+                yield row["EmailAddress"]
+            page += 1
 
     # -- segments ----------------------------------------------------------
     def create_segment(self, list_id, title, rule_groups):

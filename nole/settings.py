@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -225,15 +227,17 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com"
 # everything else uses. Reuses DEFAULT_FROM_EMAIL unless overridden.
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 
-# Sender for the weekly/monthly digest only (see accounts/digests.py). Kept
-# separate from DEFAULT_FROM_EMAIL so a spam complaint on bulk digest mail
-# doesn't risk the sending reputation of transactional mail (approvals,
-# password resets). Defaults to DEFAULT_FROM_EMAIL until a dedicated address
-# (e.g. digest@laborhub.cornell.edu) is provisioned and set as a project variable.
-DIGEST_FROM_EMAIL = os.environ.get("DIGEST_FROM_EMAIL", DEFAULT_FROM_EMAIL)
+# Sender for bulk mail only: the newsletter and alerts. Kept separate from
+# DEFAULT_FROM_EMAIL so a spam complaint on bulk mail doesn't risk the sending
+# reputation of transactional mail (approvals, password resets). Defaults to
+# DEFAULT_FROM_EMAIL until a dedicated address is set as a project variable. The
+# older DIGEST_FROM_EMAIL variable is still read so an environment that set it
+# keeps working; prefer CAMPAIGN_FROM_EMAIL.
+CAMPAIGN_FROM_EMAIL = os.environ.get(
+    "CAMPAIGN_FROM_EMAIL", os.environ.get("DIGEST_FROM_EMAIL", DEFAULT_FROM_EMAIL))
 
 # Public base URL used to build absolute links in outgoing emails (e.g. the
-# weekly/monthly digest), since management commands have no HttpRequest.
+# newsletter), since management commands have no HttpRequest.
 # On Upsun this is derived from the injected route table in `.environment`; set
 # it explicitly elsewhere, e.g. https://laborhub.example.edu
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
@@ -258,21 +262,24 @@ REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL", "")
 # admin request. Harmless on any non-CM SMTP server.
 EMAIL_GROUP_NAME = os.environ.get("EMAIL_GROUP_NAME", "LaborHub")
 
-# Campaign Monitor REST API. Digests and alerts are *campaigns* under CM's terms
-# (the transactional SMTP token is for 1:1 mail only), so when these are set they
-# are sent as CM campaigns to list segments instead of per-user SMTP messages.
-# Secrets come from env / Upsun sensitive variables, never the repo.
+# Campaign Monitor REST API. The newsletter and alerts are *campaigns* under CM's
+# terms (the transactional SMTP token is for 1:1 mail only), so when the key and
+# client id are set they are sent as CM campaigns to list segments instead of
+# per-user SMTP messages. Those two are the only things set by hand: `cm_setup`
+# (run on every deploy) creates the lists, segments and webhooks and remembers
+# their ids (core.cm_lists). Secrets come from env / Upsun sensitive variables,
+# never the repo.
 CM_API_KEY = os.environ.get("CM_API_KEY", "")
 CM_CLIENT_ID = os.environ.get("CM_CLIENT_ID", "")
-CM_DIGEST_LIST_ID = os.environ.get("CM_DIGEST_LIST_ID", "")
+# Optional overrides of the ids `cm_setup` stores; normally left unset.
+CM_NEWSLETTER_LIST_ID = os.environ.get("CM_NEWSLETTER_LIST_ID", "")
 CM_ALERT_LIST_ID = os.environ.get("CM_ALERT_LIST_ID", "")
-# Every active member; the newsletter is sent to this list (core/newsletter.py).
-CM_MEMBERS_LIST_ID = os.environ.get("CM_MEMBERS_LIST_ID", "")
-CM_WEBHOOK_SECRET = os.environ.get("CM_WEBHOOK_SECRET", "")
-# "cm" only when fully configured, so dev/CI/preview keep per-user SMTP delivery.
-CAMPAIGN_DELIVERY = (
-    "cm" if CM_API_KEY and CM_CLIENT_ID and CM_DIGEST_LIST_ID and CM_ALERT_LIST_ID else "smtp"
-)
+# The webhook URL embeds this secret. Derived from SECRET_KEY unless set.
+CM_WEBHOOK_SECRET = os.environ.get("CM_WEBHOOK_SECRET") or (
+    hmac.new(SECRET_KEY.encode(), b"campaign-monitor-webhook", hashlib.sha256).hexdigest()[:40]
+    if SECRET_KEY else "")
+# "cm" only when configured, so dev/CI/preview keep per-user SMTP delivery.
+CAMPAIGN_DELIVERY = "cm" if CM_API_KEY and CM_CLIENT_ID else "smtp"
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)

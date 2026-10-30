@@ -603,7 +603,7 @@ def campaign_snapshot(request, token, ext):
     """Public, unguessable copy of a Campaign Monitor campaign's HTML/text.
 
     CM fetches this by URL when the campaign is created. The content is the same
-    public site content the digest would show anyway; the token only keeps the
+    public site content the newsletter would show anyway; the token only keeps the
     snapshots from being enumerated.
     """
     from core.models import EmailCampaign

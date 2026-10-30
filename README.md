@@ -237,7 +237,7 @@ Two committed files configure the whole deployment:
 
 - [`.upsun/config.yaml`](.upsun/config.yaml) — the application (build/deploy hooks, the
   MariaDB relationship, the `staticfiles`/`media` mounts, the gunicorn start command,
-  and the two digest cron jobs), the route, and the service.
+  and the newsletter, alerts and Campaign Monitor cron jobs), the route, and the service.
 - [`.environment`](.environment) — sourced on every environment, **contains no secrets**.
   It derives `DJANGO_SECRET_KEY` from Upsun's per-project entropy, and
   `DJANGO_ALLOWED_HOSTS` / `CSRF_TRUSTED_ORIGINS` / `SITE_URL` from the injected route
@@ -247,6 +247,27 @@ Two committed files configure the whole deployment:
 Because both files resolve their values at runtime, a normal deploy is just a push — no
 per-environment variables need to be set by hand. The overridable ones (`SENTRY_DSN`,
 `DEFAULT_FROM_EMAIL`, `CONTACT_EMAIL`) are set as Upsun project variables.
+
+### Newsletter, alerts and Campaign Monitor
+
+Members choose a **Newsletter** (off / weekly / monthly, weekly by default) and **Alerts**
+(topics, countries, institutions) on their Settings page. Both are sent as Campaign Monitor
+campaigns, and the Profile is the only thing anyone edits: saving settings updates the
+Campaign Monitor lists (`accounts/cm_sync.py`), and unsubscribing through Campaign
+Monitor turns the setting off here (webhook, `accounts/cm_webhook.py`).
+
+The only things set by hand are two Upsun variables, `env:CM_CLIENT_ID` and
+`env:CM_API_KEY` (the key marked sensitive; the `env:` prefix is what makes a project
+variable reach the app). `cm_setup` runs on every deploy and before the nightly sync: it
+creates or finds the "Labor Hub Newsletter" and "Labor Hub Alerts" lists, their custom
+fields, the weekly/monthly segments and the unsubscribe webhooks, and remembers the list
+ids. Until it has succeeded nothing is pushed to Campaign Monitor.
+
+- **Newsletter:** the `newsletter` cron sends one issue every Monday (weekly cohort, plus
+  the monthly cohort on the first Monday; nothing in a week with nothing to list). For a
+  one-off issue or a preview use `send_newsletter --send` / `--test-to a@x.edu,b@x.edu`.
+  Per-issue text lives in `core/newsletter.py`.
+- **Alerts:** prepared Fridays 11:00 UTC, sent 12:00 UTC (`send_alerts`).
 
 ### Paper PDFs live in object storage
 

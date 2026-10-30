@@ -33,7 +33,7 @@ class Event(Approvable):
     # location is derived (see save()) from country_code/city/venue for any
     # event created or edited through the structured picker. It stays its own
     # column -- rather than becoming a property -- so admin search/sort and
-    # the various card/digest readers that already read event.location keep
+    # the various card/listing readers that already read event.location keep
     # working unchanged. A pre-picker event's hand-typed location survives
     # untouched until someone fills in the structured fields for it.
     location = models.CharField(max_length=255, blank=True, default='')

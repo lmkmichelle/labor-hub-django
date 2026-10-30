@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 from .forms import LaborHubPasswordResetForm
 from .cm_webhook import cm_webhook
 from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSubmittedView, ResearcherApplicationView, \
-    StudentApplicationView, SettingsView, digest_unsubscribe, alerts_unsubscribe, AdviseeApplicationsView, \
+    StudentApplicationView, SettingsView, newsletter_unsubscribe, alerts_unsubscribe, AdviseeApplicationsView, \
     advisee_approve, advisee_reject, advisee_paper
 
 urlpatterns = [
@@ -27,7 +27,9 @@ urlpatterns = [
     path('accounts/advisees/<int:pk>/approve/', advisee_approve, name='advisee_approve'),
     path('accounts/advisees/<int:pk>/reject/', advisee_reject, name='advisee_reject'),
     path('cm/webhook/<str:secret>/', cm_webhook, name='cm_webhook'),
-    path('accounts/digest/unsubscribe/<str:token>/', digest_unsubscribe, name='digest_unsubscribe'),
+    path('accounts/newsletter/unsubscribe/<str:token>/', newsletter_unsubscribe, name='newsletter_unsubscribe'),
+    # Links in emails sent before the rename still point here.
+    path('accounts/digest/unsubscribe/<str:token>/', newsletter_unsubscribe),
     path('accounts/alerts/unsubscribe/<str:token>/', alerts_unsubscribe, name='alerts_unsubscribe'),
     path('accounts/membership/', TemplateView.as_view(template_name='accounts/apply_landing.html'), name='membership'),
     path('accounts/apply/researcher/', ResearcherApplicationView.as_view(), name='apply_researcher'),

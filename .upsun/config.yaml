@@ -38,6 +38,10 @@ applications:
         python manage.py import_universities --if-empty || true
         # Same idea for the event-location city picker's City table.
         python manage.py import_cities --if-empty || true
+        # Create/find the Campaign Monitor lists, segments and webhooks. A no-op
+        # until CM_API_KEY and CM_CLIENT_ID are set; `|| true` so a Campaign
+        # Monitor outage never fails a deploy (the nightly cm-sync retries).
+        python manage.py cm_setup --if-configured || true
 
     # The app's disk, memory and CPU are NOT set in this file: this project uses
     # Upsun's flexible resources, and a `disk:` key here makes the build fail
@@ -58,22 +62,18 @@ applications:
         source: storage
         source_path: media
 
-    # Scheduled email digests (accounts/management/commands/send_digests.py).
+    # The newsletter (core/management/commands/send_newsletter.py), Mondays.
     # Upsun cron specs are UTC and the project's TIME_ZONE is UTC as well, so
     # 12:00 UTC is roughly 08:00 in America/New_York (07:00 outside daylight
     # saving) -- a morning delivery for the Cornell readership rather than an
-    # overnight one. Each cohort matches a Profile.digest_frequency value; a
-    # user whose digest window turns up no new approved content is skipped, so
-    # a quiet week sends nothing.
+    # overnight one. One campaign goes to the weekly cohort, and also to the
+    # monthly cohort on the first Monday of the month; a week with nothing to
+    # list sends nothing. A no-op until Campaign Monitor is set up.
     crons:
-      digest-weekly:
+      newsletter:
         spec: "0 12 * * 1"
         commands:
-          start: "python manage.py send_digests --frequency weekly"
-      digest-monthly:
-        spec: "0 12 1 * *"
-        commands:
-          start: "python manage.py send_digests --frequency monthly"
+          start: "python manage.py send_newsletter --scheduled"
       # Topic/country alerts (accounts/management/commands/send_alerts.py),
       # one cohort, run weekly on Fridays so the week's approved content is
       # in by the time it goes out.
@@ -89,11 +89,13 @@ applications:
         spec: "0 12 * * 5"
         commands:
           start: "python manage.py send_alerts"
-      # Retry/backfill Campaign Monitor list membership (no-op without CM).
+      # Make sure the Campaign Monitor lists/segments/webhooks exist, then retry and
+      # backfill list membership. Both are no-ops without CM_API_KEY/CM_CLIENT_ID,
+      # and the sync is skipped if setup failed (so no one is pushed prematurely).
       cm-sync:
         spec: "30 5 * * *"
         commands:
-          start: "python manage.py cm_sync --if-configured"
+          start: "python manage.py cm_setup --if-configured && python manage.py cm_sync --if-configured"
       # Student accounts close two years after creation, with a warning email
       # 30 days before (accounts/management/commands/deactivate_expired_students.py).
       student-lifecycle:

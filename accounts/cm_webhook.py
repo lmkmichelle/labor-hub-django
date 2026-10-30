@@ -1,7 +1,7 @@
 """Campaign Monitor list webhook: mirror unsubscribes/bounces/complaints into the app.
 
-A ``Deactivate`` event on the digest list turns the member's digest off; on the
-alerts list it clears their topic/country/institution alerts. Members are matched
+A ``Deactivate`` event on the newsletter list turns the member's newsletter off (this
+is what Campaign Monitor's unsubscribe link in each issue triggers); on the alerts list it clears their topic/country/institution alerts. Members are matched
 by email. Uses ``QuerySet.update`` so the change does not echo back to CM through
 the Profile signal.
 """
@@ -14,14 +14,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from accounts import cm_sync
+from core import cm_lists
 from accounts.models import Profile
 
 
 def _deactivate(list_id, email):
     profiles = Profile.objects.filter(user__email__iexact=email)
-    if list_id == settings.CM_DIGEST_LIST_ID:
-        profiles.update(digest_frequency=Profile.DigestFrequency.OFF)
-    elif list_id == settings.CM_ALERT_LIST_ID:
+    if list_id == cm_lists.list_id(cm_lists.NEWSLETTER):
+        profiles.update(newsletter_frequency=Profile.NewsletterFrequency.OFF)
+    elif list_id == cm_lists.list_id(cm_lists.ALERTS):
         profiles.update(alert_topics=[], alert_countries=[], alert_universities=[])
     else:
         return
