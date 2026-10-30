@@ -66,7 +66,17 @@ class NewsletterTests(TestCase):
         self.assertEqual([p["title"] for p in ctx["papers"]], [paper.title])
         self.assertEqual(ctx["papers_heading"], "Most downloaded papers")
 
+        # Issue No. 1 stays all-time even when there are downloads this week...
         paper.record_download()
+        self.assertEqual(newsletter_context()["papers_heading"], "Most downloaded papers")
+        html = create_newsletter_campaign().html
+        self.assertIn("Most downloaded papers</h2>", html)
+        self.assertNotIn("this week</h2>", html)
+
+        # ...and from the second issue on, a week with downloads is ranked by the week.
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            period_start=timezone.now(), period_end=timezone.now())
         ctx = newsletter_context()
         self.assertEqual(ctx["papers_heading"], "Most downloaded papers this week")
         self.assertIn("Most downloaded papers this week", create_newsletter_campaign().html)

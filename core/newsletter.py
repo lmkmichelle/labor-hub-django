@@ -80,9 +80,11 @@ def newsletter_context(now=None):
         "deadline": _deadline_label(job.deadline, today),
     } for job in Job.objects.filter(status="approved", deadline__gte=today).order_by("deadline")]
 
-    # The last 7 days; in a quiet week (or before the timestamped log has a week of
-    # data) fall back to the all-time ranking rather than drop the section.
-    ranked = list(Publication.most_downloaded(MAX_PAPERS, since=now - timedelta(days=7)))
+    # The first issue ranks all-time: the timestamped log only began shortly before it.
+    # Later issues use the last 7 days; in a quiet week they fall back to all-time
+    # rather than drop the section.
+    ranked = [] if number == 1 else list(
+        Publication.most_downloaded(MAX_PAPERS, since=now - timedelta(days=7)))
     papers_heading = "Most downloaded papers this week"
     if not ranked:
         ranked = list(Publication.most_downloaded(MAX_PAPERS))
