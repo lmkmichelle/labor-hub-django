@@ -4,8 +4,9 @@ Under CM's terms, 1:1 transactional SMTP is for account mail; the newsletter and
 alerts are campaigns sent to list segments. See accounts.cm_sync for how members and
 their interests get onto the lists.
 
-* **Newsletter** -- identical for everyone, so one campaign goes to the fixed
-  "Newsletter weekly" segment, plus "Newsletter monthly" in the first week of the month.
+* **Newsletter** -- identical for everyone in a cohort: the weekly issue goes to the
+  "Newsletter weekly" segment every Friday, the monthly issue to "Newsletter monthly" on
+  the first Friday of the month. Admins can pause either or send it by hand.
 * **Alerts** -- each member must see only what *they* follow. One campaign is
   sent to everyone with at least one match, and every item is wrapped in CM
   ``[ifmemberof:...]`` tags naming the interest segments it is relevant to, so
@@ -29,12 +30,14 @@ from accounts.models import Profile
 from core import cm_lists
 from core.campaign_monitor import CampaignMonitorClient
 from core.links import absolute_url
-from core.models import EmailCampaign
-from core.newsletter import create_newsletter_campaign
+from core.models import EmailCampaign, NewsletterSchedule
+from core.newsletter import (
+    KINDS, MONTHLY, WEEKLY, create_newsletter_campaign, last_sent_issue,
+)
 
 NEWSLETTER_LIST_TITLE = cm_lists.TITLES[cm_lists.NEWSLETTER]
 ALERT_LIST_TITLE = cm_lists.TITLES[cm_lists.ALERTS]
-NEWSLETTER_SEGMENTS = {"weekly": "Newsletter weekly", "monthly": "Newsletter monthly"}
+NEWSLETTER_SEGMENTS = {kind: spec["segment"] for kind, spec in KINDS.items()}
 SEGMENT_PREFIX = "Alert "
 RECIPIENTS_PREFIX = "Alert recipients "
 _FIELD_FOR_PREFIX = {
@@ -101,29 +104,58 @@ def _create_and_send(client, campaign, segment_ids, list_ids=()):
 
 # -- newsletter --------------------------------------------------------------
 
-def newsletter_cohorts(now=None):
-    """Which frequency cohorts get the issue sent on ``now``: weekly always, and
-    monthly too in the first seven days of the month (one campaign, one number)."""
+def newsletter_due(kind, now=None):
+    """Whether the scheduled run should send ``kind`` now: ``(due, reason)``.
+
+    Not due while paused in the admin, within the guard window after a send (so a
+    manual send is not followed by a duplicate), or, for the monthly issue, after the
+    first seven days of the month (the first Friday)."""
     now = now or timezone.now()
-    return ["weekly", "monthly"] if timezone.localdate(now).day <= 7 else ["weekly"]
+    if NewsletterSchedule.for_kind(kind).paused:
+        return False, "paused in the admin"
+    last = last_sent_issue(kind)
+    if last and last.sent_at and now - last.sent_at < KINDS[kind]["guard"]:
+        return False, f"already sent {(now - last.sent_at).days} day(s) ago"
+    if kind == MONTHLY and timezone.localdate(now).day > 7:
+        return False, "not the first Friday of the month"
+    return True, ""
 
 
-def send_newsletter_campaign(frequencies, now=None, client=None):
-    """Create and send the newsletter to the given frequency cohorts.
+def send_newsletter_issue(kind=WEEKLY, now=None, client=None, only_if_content=False):
+    """Create the ``kind`` issue and send it to its segment of the Newsletter list.
 
-    ``None`` when there is nothing to list (a quiet week sends nothing)."""
+    ``None`` when ``only_if_content`` and there is nothing to list."""
     now = now or timezone.now()
     client = client or CampaignMonitorClient()
-    campaign = create_newsletter_campaign(now, only_if_content=True)
+    campaign = create_newsletter_campaign(kind, now, only_if_content=only_if_content)
     if campaign is None:
         return None
     segments = {s["Title"]: s["SegmentID"]
                 for s in client.segments(cm_lists.list_id(cm_lists.NEWSLETTER))}
     try:
-        segment_ids = [segments[NEWSLETTER_SEGMENTS[f]] for f in frequencies]
+        segment_ids = [segments[NEWSLETTER_SEGMENTS[kind]]]
     except KeyError as missing:
         raise RuntimeError(f"CM segment {missing} is missing; run cm_setup.") from missing
     return _create_and_send(client, campaign, segment_ids)
+
+
+def preview_newsletter_issue(kind, addresses, client=None):
+    """Send a preview of the current ``kind`` issue to up to 5 addresses. The issue is
+    stored but never marked sent, so the issue number holds."""
+    client = client or CampaignMonitorClient()
+    campaign = create_newsletter_campaign(kind)
+    html_url, text_url = (
+        absolute_url(reverse("campaign_snapshot", kwargs={"token": campaign.token, "ext": ext}))
+        for ext in ("html", "txt"))
+    campaign.cm_campaign_id = client.create_campaign(
+        name=f"Newsletter preview {timezone.now():%Y-%m-%d %H:%M}", subject=campaign.subject,
+        html_url=html_url, text_url=text_url,
+        list_ids=[cm_lists.list_id(cm_lists.NEWSLETTER)], segment_ids=[],
+        from_name="The Labor Hub", from_email=_from_address(),
+        reply_to=settings.REPLY_TO_EMAIL or _from_address())
+    client.send_preview(campaign.cm_campaign_id, addresses)
+    campaign.save()
+    return campaign
 
 
 # -- alerts ------------------------------------------------------------------

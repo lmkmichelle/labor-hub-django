@@ -62,16 +62,18 @@ applications:
         source: storage
         source_path: media
 
-    # The newsletter (core/management/commands/send_newsletter.py), Mondays.
-    # Upsun cron specs are UTC and the project's TIME_ZONE is UTC as well, so
-    # 12:00 UTC is roughly 08:00 in America/New_York (07:00 outside daylight
-    # saving) -- a morning delivery for the Cornell readership rather than an
-    # overnight one. One campaign goes to the weekly cohort, and also to the
-    # monthly cohort on the first Monday of the month; a week with nothing to
-    # list sends nothing. A no-op until Campaign Monitor is set up.
+    # The newsletters (core/management/commands/send_newsletter.py), Fridays.
+    # Upsun cron specs are UTC and the project's TIME_ZONE is America/New_York, so
+    # 12:00 UTC is roughly 08:00 in New York (07:00 outside daylight saving) -- a
+    # morning delivery for the Cornell readership. Each Friday the weekly newsletter
+    # goes out, and the monthly one too on the first Friday of the month, each as its
+    # own campaign. Admins can pause either, or send one by hand, from the Newsletters
+    # page in the admin; a newsletter that is paused, was just sent, or has nothing to
+    # list is skipped. Alerts go out the same Friday at 12:00 (below). A no-op until
+    # Campaign Monitor is set up.
     crons:
       newsletter:
-        spec: "0 12 * * 1"
+        spec: "0 12 * * 5"
         commands:
           start: "python manage.py send_newsletter --scheduled"
       # Topic/country alerts (accounts/management/commands/send_alerts.py),

@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> › Newsletters</div>
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<style>
+  .nl-module { margin-bottom: 28px; }
+  .nl-body { padding: 12px 14px; }
+  .nl-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .nl-actions form { display: inline; }
+  .nl-paused { color: #b91c1c; }
+  .nl-table { width: 100%; }
+  .nl-cut { opacity: .5; }
+  .nl-note { font-weight: normal; }
+</style>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>Each Friday the weekly newsletter goes out, and the monthly one too on the first Friday of the month. Below is what each next issue would contain right now. Pause a newsletter to stop the scheduled send, or send it yourself whenever you like.</p>
+  {% if not cm_ready %}<p class="errornote">Campaign Monitor is not set up, so test and manual sends are disabled.</p>{% endif %}
+
+  {% for panel in panels %}
+  <div class="module nl-module">
+    <h2>{{ panel.label }} newsletter</h2>
+    <div class="nl-body">
+      <p>
+        <strong>Status:</strong>
+        {% if panel.schedule.paused %}<strong class="nl-paused">Paused</strong>{% if panel.schedule.paused_by %} by {{ panel.schedule.paused_by }}{% endif %}{% if panel.schedule.paused_at %} on {{ panel.schedule.paused_at|date:"M j, Y" }}{% endif %}{% else %}Active{% endif %}
+         ·  <strong>Next scheduled send:</strong>
+        {% if panel.due %}Friday{% if panel.kind == "monthly" %} (first of the month){% endif %}{% else %}skipped, {{ panel.skip_reason }}{% endif %}
+         ·  <strong>Subscribers:</strong> {{ panel.subscribers }}
+      </p>
+      <p>
+        <strong>Last sent:</strong>
+        {% if panel.last %}{{ panel.last.sent_at|date:"M j, Y" }}, <a href="{% url 'campaign_snapshot' token=panel.last.token ext='html' %}" target="_blank" rel="noopener">{{ panel.last.subject }}</a>{% else %}never{% endif %}
+         ·  <strong>Next subject:</strong> {{ panel.context.subject }}
+      </p>
+      <p class="nl-actions">
+        <a class="button" href="{% url 'admin:core_newsletterschedule_preview' kind=panel.kind %}" target="_blank" rel="noopener">Preview email</a>
+        {% if can_change %}
+        {% if cm_ready %}
+        <a class="button" href="{% url 'admin:core_newsletterschedule_test' kind=panel.kind %}">Send test…</a>
+        <a class="button" href="{% url 'admin:core_newsletterschedule_send' kind=panel.kind %}">Send now…</a>
+        {% endif %}
+        <form method="post" action="{% url 'admin:core_newsletterschedule_toggle' kind=panel.kind %}">
+          {% csrf_token %}
+          <input type="submit" value="{% if panel.schedule.paused %}Resume scheduled sends{% else %}Pause scheduled sends{% endif %}">
+        </form>
+        {% endif %}
+      </p>
+
+      <h3>What this issue will contain</h3>
+      {% if panel.empty %}<p class="errornote">Nothing to list right now, so the scheduled run would send nothing.</p>{% endif %}
+
+      <h4>
+        {{ panel.context.papers_heading }}
+        <span class="help nl-note">
+          {% if panel.context.papers_all_time %}(ranked all-time{% if not panel.context.first_issue %}: no downloads since {{ panel.context.since|date:"M j" }}{% endif %}){% else %}(downloads since {{ panel.context.since|date:"M j, Y" }}){% endif %}
+        </span>
+      </h4>
+      {% if panel.context.papers %}
+      <table class="nl-table">
+        <thead><tr><th>#</th><th>Paper</th><th>Authors</th><th>{% if panel.context.papers_all_time %}Downloads (all-time){% else %}Downloads this period{% endif %}</th><th>All-time</th></tr></thead>
+        <tbody>
+        {% for paper in panel.context.papers %}
+        <tr><td>{{ paper.rank }}</td><td><a href="{{ paper.url }}" target="_blank" rel="noopener">{{ paper.title }}</a></td><td>{{ paper.authors }}</td><td>{{ paper.downloads }}</td><td>{{ paper.all_time }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="help">No downloaded papers yet.</p>{% endif %}
+
+      {% for title, items in panel.sections %}
+      <h4>{{ title }} <span class="help nl-note">({{ items|length }} open{% if items|length > panel.max_listed %}, the first {{ panel.max_listed }} are emailed{% endif %})</span></h4>
+      {% if items %}
+      <table class="nl-table">
+        <thead><tr><th>Title</th><th>Details</th><th>Deadline</th><th>In email</th></tr></thead>
+        <tbody>
+        {% for item in items %}
+        <tr{% if forloop.counter > panel.max_listed %} class="nl-cut"{% endif %}><td><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></td><td>{{ item.meta }}</td><td>{{ item.deadline }}</td><td>{% if forloop.counter > panel.max_listed %}not included{% else %}yes{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="help">None open.</p>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="module">
+    <h2>Recently sent</h2>
+    <table class="nl-table">
+      <thead><tr><th>Sent</th><th>Newsletter</th><th>Subject</th></tr></thead>
+      <tbody>
+      {% for issue in history %}
+      <tr><td>{{ issue.sent_at|date:"M j, Y H:i" }}</td><td>{{ issue.get_kind_display }}</td><td><a href="{% url 'campaign_snapshot' token=issue.token ext='html' %}" target="_blank" rel="noopener">{{ issue.subject }}</a></td></tr>
+      {% empty %}<tr><td colspan="3">Nothing sent yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

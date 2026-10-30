@@ -257,7 +257,7 @@ class NewsletterCampaignTests(TestCase):
 
     def test_sends_one_campaign_to_the_weekly_segment(self):
         client = FakeClient()
-        campaign = campaigns.send_newsletter_campaign(["weekly"], client=client)
+        campaign = campaigns.send_newsletter_issue("weekly", client=client)
         self.assertEqual(campaign.status, "sent")
         create = next(c for c in client.calls if c[0] == "create_campaign")[2]
         self.assertEqual(create["segment_ids"], ["seg-weekly"])
@@ -265,24 +265,42 @@ class NewsletterCampaignTests(TestCase):
         self.assertIn("Open call", campaign.html)
         self.assertNotIn("cid:", campaign.html)
 
-    def test_the_monthly_cohort_is_added_in_one_campaign(self):
+    def test_the_monthly_issue_is_its_own_campaign_to_the_monthly_segment(self):
         client = FakeClient()
-        campaigns.send_newsletter_campaign(["weekly", "monthly"], client=client)
+        campaign = campaigns.send_newsletter_issue("monthly", client=client)
+        self.assertEqual(campaign.kind, "newsletter_monthly")
         self.assertEqual(client.names().count("create_campaign"), 1)
         create = next(c for c in client.calls if c[0] == "create_campaign")[2]
-        self.assertEqual(create["segment_ids"], ["seg-weekly", "seg-monthly"])
+        self.assertEqual(create["segment_ids"], ["seg-monthly"])
 
-    def test_monthly_cohort_only_in_the_first_seven_days_of_the_month(self):
+    def test_monthly_is_due_only_on_the_first_friday(self):
         tz = timezone.get_current_timezone()
-        first = timezone.datetime(2026, 11, 2, 12, tzinfo=tz)
-        later = timezone.datetime(2026, 11, 9, 12, tzinfo=tz)
-        self.assertEqual(campaigns.newsletter_cohorts(first), ["weekly", "monthly"])
-        self.assertEqual(campaigns.newsletter_cohorts(later), ["weekly"])
+        first = timezone.datetime(2026, 11, 6, 12, tzinfo=tz)
+        later = timezone.datetime(2026, 11, 13, 12, tzinfo=tz)
+        self.assertEqual(campaigns.newsletter_due("weekly", first), (True, ""))
+        self.assertTrue(campaigns.newsletter_due("monthly", first)[0])
+        self.assertEqual(campaigns.newsletter_due("weekly", later), (True, ""))
+        self.assertFalse(campaigns.newsletter_due("monthly", later)[0])
+
+    def test_paused_or_recently_sent_newsletters_are_not_due(self):
+        from core.models import NewsletterSchedule
+        now = timezone.now().replace(day=3)
+        NewsletterSchedule.for_kind("weekly").set_paused(True)
+        self.assertEqual(campaigns.newsletter_due("weekly", now), (False, "paused in the admin"))
+        NewsletterSchedule.for_kind("weekly").set_paused(False)
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            sent_at=now - timedelta(days=2), period_start=now, period_end=now)
+        due, reason = campaigns.newsletter_due("weekly", now)
+        self.assertFalse(due)
+        self.assertIn("already sent", reason)
+        self.assertTrue(campaigns.newsletter_due("weekly", now + timedelta(days=5))[0])
 
     def test_a_week_with_nothing_to_list_sends_nothing(self):
         SpecialIssue.objects.all().delete()
         client = FakeClient()
-        self.assertIsNone(campaigns.send_newsletter_campaign(["weekly"], client=client))
+        self.assertIsNone(campaigns.send_newsletter_issue(
+            "weekly", client=client, only_if_content=True))
         self.assertEqual(client.calls, [])
         self.assertEqual(EmailCampaign.objects.count(), 0)
 
@@ -290,7 +308,7 @@ class NewsletterCampaignTests(TestCase):
         client = FakeClient()
         client.newsletter_segments = []
         with self.assertRaisesMessage(RuntimeError, "cm_setup"):
-            campaigns.send_newsletter_campaign(["weekly"], client=client)
+            campaigns.send_newsletter_issue("weekly", client=client)
 
     def test_failure_is_recorded_and_raised(self):
         client = FakeClient()
@@ -299,7 +317,7 @@ class NewsletterCampaignTests(TestCase):
             raise CampaignMonitorError("nope", status=400)
         client.create_campaign = boom
         with self.assertRaises(CampaignMonitorError):
-            campaigns.send_newsletter_campaign(["weekly"], client=client)
+            campaigns.send_newsletter_issue("weekly", client=client)
         self.assertEqual(EmailCampaign.objects.get().status, "failed")
 
 

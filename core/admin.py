@@ -1,11 +1,18 @@
 import logging
 
+from datetime import timedelta
+
 from django.contrib import admin, messages
-from django.http import HttpResponseRedirect
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
-from core.models import ApprovalStatus
+from core import cm_lists
+from core.models import ApprovalStatus, EmailCampaign, NewsletterSchedule
+from core.newsletter import KINDS, last_sent_issue, newsletter_context, render_newsletter
 from .models import ContactMessage
 
 logger = logging.getLogger(__name__)
@@ -172,3 +179,184 @@ class ContactMessageAdmin(admin.ModelAdmin):
     search_fields = ('name', 'email', 'message')
     readonly_fields = ('name', 'email', 'message', 'created_at')
     ordering = ('-created_at',)
+
+
+@admin.register(NewsletterSchedule)
+class NewsletterScheduleAdmin(admin.ModelAdmin):
+    """The Newsletters page: what the next weekly and monthly issues will contain, and
+    pause / preview / test / send-now controls, so admins run the newsletter themselves.
+
+    The list view is replaced by a dashboard; the two schedule rows are created on
+    demand, so adding and deleting are hidden."""
+
+    # Two sends of the same kind this close together are refused, even when confirmed.
+    DOUBLE_SEND_GUARD = timedelta(minutes=10)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        name = self._url_name
+        wrap = self.admin_site.admin_view
+        return [
+            path('<str:kind>/toggle/', wrap(self.toggle_view), name=name('toggle')),
+            path('<str:kind>/preview/', wrap(self.preview_view), name=name('preview')),
+            path('<str:kind>/test/', wrap(self.test_view), name=name('test')),
+            path('<str:kind>/send/', wrap(self.send_view), name=name('send')),
+        ] + super().get_urls()
+
+    @staticmethod
+    def _url_name(action):
+        return f"core_newsletterschedule_{action}"
+
+    # -- helpers --------------------------------------------------------------
+    def _kind(self, kind):
+        if kind not in KINDS:
+            raise Http404
+        return kind
+
+    def _require_change(self, request):
+        if not self.has_change_permission(request):
+            raise PermissionDenied
+
+    def _back(self):
+        return HttpResponseRedirect(reverse("admin:core_newsletterschedule_changelist"))
+
+    def _cm_ready(self):
+        from django.conf import settings
+        return bool(settings.CM_API_KEY and settings.CM_CLIENT_ID
+                    and cm_lists.list_id(cm_lists.NEWSLETTER))
+
+    def _subscribers(self, kind):
+        from accounts.models import Profile
+        return Profile.objects.filter(newsletter_frequency=kind, user__is_active=True).count()
+
+    def _recently_sent(self, kind, now=None):
+        last = last_sent_issue(kind)
+        now = now or timezone.now()
+        return last if last and last.sent_at and now - last.sent_at < KINDS[kind]["guard"] else None
+
+    def _panel(self, request, kind, now):
+        from accounts.campaigns import newsletter_due
+        schedule = NewsletterSchedule.for_kind(kind)
+        context = newsletter_context(kind, now)
+        due, reason = newsletter_due(kind, now)
+        listed = {key: context[f"all_{key}"] for key in ("events", "special_issues", "jobs")}
+        sections = [(key.replace("_", " ").capitalize(), items) for key, items in listed.items()]
+        return {
+            "kind": kind, "label": KINDS[kind]["label"], "schedule": schedule,
+            "context": context, "due": due, "skip_reason": reason,
+            "last": last_sent_issue(kind), "subscribers": self._subscribers(kind),
+            "sections": sections, "max_listed": context["max_listed"],
+            "empty": not (context["papers"] or any(listed.values())),
+        }
+
+    # -- views ----------------------------------------------------------------
+    def changelist_view(self, request, extra_context=None):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        now = timezone.now()
+        history = EmailCampaign.objects.filter(
+            kind__in=[spec["campaign_kind"] for spec in KINDS.values()],
+            status=EmailCampaign.Status.SENT).order_by("-sent_at", "-created_at")[:10]
+        return render(request, "admin/core/newsletter_dashboard.html", {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta, "title": "Newsletters",
+            "panels": [self._panel(request, kind, now) for kind in KINDS],
+            "history": history, "cm_ready": self._cm_ready(),
+            "can_change": self.has_change_permission(request),
+        })
+
+    def toggle_view(self, request, kind):
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        self._require_change(request)
+        schedule = NewsletterSchedule.for_kind(self._kind(kind))
+        schedule.set_paused(not schedule.paused, request.user)
+        self.message_user(
+            request, f"The {schedule.get_kind_display().lower()} newsletter is now "
+                     f"{'paused: scheduled sends skip it' if schedule.paused else 'active again'}.",
+            messages.WARNING if schedule.paused else messages.SUCCESS)
+        return self._back()
+
+    def preview_view(self, request, kind):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        html, _ = render_newsletter(newsletter_context(self._kind(kind)))
+        return HttpResponse(html)
+
+    def _cm_guard(self, request, kind):
+        """A redirect (with an error) when sending is not possible, else ``None``."""
+        if not self._cm_ready():
+            self.message_user(request, "Campaign Monitor is not set up, so nothing can be sent.",
+                              messages.ERROR)
+            return self._back()
+        return None
+
+    def test_view(self, request, kind):
+        from accounts.campaigns import preview_newsletter_issue
+        from core.campaign_monitor import CampaignMonitorError
+        self._require_change(request)
+        self._kind(kind)
+        blocked = self._cm_guard(request, kind)
+        if blocked:
+            return blocked
+        error = ""
+        value = request.POST.get("addresses", request.user.email)
+        if request.method == "POST":
+            addresses = [a.strip() for a in value.split(",") if a.strip()]
+            if not 1 <= len(addresses) <= 5:
+                error = "Enter 1 to 5 email addresses, separated by commas."
+            else:
+                try:
+                    campaign = preview_newsletter_issue(kind, addresses)
+                except CampaignMonitorError as exc:
+                    error = f"Campaign Monitor error: {exc}"
+                else:
+                    self.message_user(
+                        request, f"Preview of '{campaign.subject}' sent to {', '.join(addresses)}.",
+                        messages.SUCCESS)
+                    return self._back()
+        return render(request, "admin/core/newsletter_test.html", {
+            **self.admin_site.each_context(request), "opts": self.model._meta,
+            "title": f"Send a test of the {KINDS[kind]['label'].lower()} newsletter",
+            "kind": kind, "value": value, "error": error})
+
+    def send_view(self, request, kind):
+        from accounts.campaigns import send_newsletter_issue
+        from core.campaign_monitor import CampaignMonitorError
+        self._require_change(request)
+        self._kind(kind)
+        blocked = self._cm_guard(request, kind)
+        if blocked:
+            return blocked
+        now = timezone.now()
+        recent = self._recently_sent(kind, now)
+        context = newsletter_context(kind, now)
+        error = ""
+        if request.method == "POST":
+            last = last_sent_issue(kind)
+            if last and last.sent_at and now - last.sent_at < self.DOUBLE_SEND_GUARD:
+                error = "This newsletter was sent a moment ago, so it was not sent again."
+            elif recent and not request.POST.get("send_anyway"):
+                error = "Tick the box to confirm sending again."
+            else:
+                try:
+                    campaign = send_newsletter_issue(kind, now=now)
+                except (CampaignMonitorError, RuntimeError) as exc:
+                    error = f"Not sent: {exc}"
+                else:
+                    self.message_user(request, f"Sent '{campaign.subject}' to "
+                                      f"{self._subscribers(kind)} subscribers.", messages.SUCCESS)
+                    return self._back()
+        return render(request, "admin/core/newsletter_send.html", {
+            **self.admin_site.each_context(request), "opts": self.model._meta,
+            "title": f"Send the {KINDS[kind]['label'].lower()} newsletter now",
+            "kind": kind, "subject": context["subject"], "recent": recent,
+            "subscribers": self._subscribers(kind), "error": error,
+            "empty": not (context["papers"] or context["all_events"]
+                          or context["all_special_issues"] or context["all_jobs"]),
+        })

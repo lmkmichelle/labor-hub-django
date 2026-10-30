@@ -34,6 +34,24 @@ ISSUE = {
 MAX_LISTED = 6
 MAX_PAPERS = 5
 
+WEEKLY, MONTHLY = "weekly", "monthly"
+# Per newsletter: the stored campaign kind, its Campaign Monitor segment, how far back
+# the papers ranking looks when there is no earlier issue, how soon after a send the
+# scheduled run stays quiet (so a manual send is not followed by a duplicate), and the
+# wording for the period.
+KINDS = {
+    WEEKLY: {
+        "campaign_kind": EmailCampaign.Kind.NEWSLETTER, "segment": "Newsletter weekly",
+        "window": timedelta(days=7), "guard": timedelta(days=6),
+        "this_period": "This week", "label": "Weekly",
+    },
+    MONTHLY: {
+        "campaign_kind": EmailCampaign.Kind.NEWSLETTER_MONTHLY, "segment": "Newsletter monthly",
+        "window": timedelta(days=30), "guard": timedelta(days=20),
+        "this_period": "This month", "label": "Monthly",
+    },
+}
+
 
 def _deadline_label(day, today):
     if day == today:
@@ -43,15 +61,32 @@ def _deadline_label(day, today):
     return f"Deadline: {day:%b}. {day.day}, {day.year}"
 
 
-def issue_number():
+def last_sent_issue(kind=WEEKLY):
     return EmailCampaign.objects.filter(
-        kind=EmailCampaign.Kind.NEWSLETTER, status=EmailCampaign.Status.SENT).count() + 1
+        kind=KINDS[kind]["campaign_kind"], status=EmailCampaign.Status.SENT).first()
 
 
-def newsletter_context(now=None):
+def issue_number(kind=WEEKLY):
+    return EmailCampaign.objects.filter(
+        kind=KINDS[kind]["campaign_kind"], status=EmailCampaign.Status.SENT).count() + 1
+
+
+def period_start(kind=WEEKLY, now=None):
+    """Where this issue's download ranking starts: the previous issue of the same
+    kind, or the default window back from ``now`` for the first one."""
+    now = now or timezone.now()
+    last = last_sent_issue(kind)
+    if last:
+        return last.sent_at or last.period_end
+    return now - KINDS[kind]["window"]
+
+
+def newsletter_context(kind=WEEKLY, now=None):
     now = now or timezone.now()
     today = timezone.localdate(now)
-    number = issue_number()
+    number = issue_number(kind)
+    spec = KINDS[kind]
+    first_issue = kind == WEEKLY and number == 1
     url = lambda name, **kw: absolute_url(reverse(name, kwargs=kw))  # noqa: E731
 
     events = []
@@ -80,27 +115,48 @@ def newsletter_context(now=None):
         "deadline": _deadline_label(job.deadline, today),
     } for job in Job.objects.filter(status="approved", deadline__gte=today).order_by("deadline")]
 
-    # The first issue ranks all-time: the timestamped log only began shortly before it.
-    # Later issues use the last 7 days; in a quiet week they fall back to all-time
-    # rather than drop the section.
-    ranked = [] if number == 1 else list(
-        Publication.most_downloaded(MAX_PAPERS, since=now - timedelta(days=7)))
-    papers_heading = "Most downloaded papers this week"
-    if not ranked:
+    # The first weekly issue ranks all-time: the timestamped log only began shortly
+    # before it. Later issues rank the downloads since the previous issue of the same
+    # kind; a quiet period falls back to all-time rather than drop the section.
+    since = period_start(kind, now)
+    ranked = [] if first_issue else list(Publication.most_downloaded(MAX_PAPERS, since=since))
+    all_time = not ranked
+    papers_heading = f"Most downloaded papers {spec['this_period'].lower()}"
+    if all_time:
         ranked = list(Publication.most_downloaded(MAX_PAPERS))
         papers_heading = "Most downloaded papers"
     papers = [{
         "rank": i, "title": p.title, "url": url("publication_detail", pk=p.pk),
         "download_url": url("publication_download", pk=p.pk),
         "authors": ", ".join(str(a) for a in p.ordered_authors),
+        # Not shown in the email; the admin's preview lists them.
+        "downloads": p.download_count if all_time else p.recent,
+        "all_time": p.download_count,
     } for i, p in enumerate(ranked, start=1)]
+
+    if kind == MONTHLY:
+        local = timezone.localtime(now)
+        subject = f"The Labor Hub Monthly Newsletter, {local:%B} {local.year}"
+    else:
+        subject = f"The Labor Hub Newsletter No. {number}"
 
     return {
         "issue": ISSUE,
+        "kind": kind,
+        "monthly": kind == MONTHLY,
+        "this_period": spec["this_period"],
+        "subject": subject,
         "issue_number": number,
         # The welcome note and the "coming next week" block belong to the first
-        # newsletter only; later issues leave them out.
-        "first_issue": number == 1,
+        # weekly newsletter only; later issues leave them out.
+        "first_issue": first_issue,
+        "since": since,
+        "papers_all_time": all_time,
+        "max_listed": MAX_LISTED,
+        # Everything that qualifies, for the admin page to show what is cut off.
+        "all_events": events,
+        "all_special_issues": special_issues,
+        "all_jobs": jobs,
         "issue_date": now,
         "events": events[:MAX_LISTED],
         "special_issues": special_issues[:MAX_LISTED],
@@ -131,21 +187,17 @@ def has_content(context):
     return any(context[key] for key in ("events", "special_issues", "jobs", "papers"))
 
 
-def create_newsletter_campaign(now=None, only_if_content=False):
+def create_newsletter_campaign(kind=WEEKLY, now=None, only_if_content=False):
     """Render this issue and store the snapshot CM will fetch. Not sent yet.
 
     With ``only_if_content`` an issue with nothing to list returns ``None`` instead
-    (the weekly cron uses this, so a quiet week sends nothing)."""
+    (the Friday cron uses this, so a quiet period sends nothing)."""
     now = now or timezone.now()
-    context = newsletter_context(now)
+    context = newsletter_context(kind, now)
     if only_if_content and not has_content(context):
         return None
     html, text = render_newsletter(context)
-    last = EmailCampaign.objects.filter(
-        kind=EmailCampaign.Kind.NEWSLETTER, status=EmailCampaign.Status.SENT).first()
     return EmailCampaign.objects.create(
-        kind=EmailCampaign.Kind.NEWSLETTER,
-        subject=f"The Labor Hub Newsletter No. {context['issue_number']}",
-        html=html, text=text,
-        period_start=last.period_end if last else now, period_end=now,
+        kind=KINDS[kind]["campaign_kind"], subject=context["subject"],
+        html=html, text=text, period_start=context["since"], period_end=now,
     )

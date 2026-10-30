@@ -320,7 +320,7 @@ class Command(BaseCommand):
             context["logo_src"] = "data:image/png;base64," + base64.b64encode(fh.read()).decode()
         html, text = render_newsletter(context)
         message = EmailMultiAlternatives(
-            f"The Labor Hub Newsletter No. {context['issue_number']}", text,
+            context["subject"], text,
             from_email=settings.CAMPAIGN_FROM_EMAIL, to=[to])
         message.attach_alternative(html, "text/html")
         message.send()

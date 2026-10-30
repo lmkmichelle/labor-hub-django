@@ -1,8 +1,8 @@
-The Labor Hub Newsletter No. {{ issue_number }} - {{ issue_date|date:"F j, Y" }}
+{{ subject }} - {{ issue_date|date:"F j, Y" }}
 
 {% if first_issue %}{{ issue.welcome }}
 
-{% endif %}This week on the Hub: everything currently open, sorted by deadline.
+{% endif %}{{ this_period }} on the Hub: everything currently open, sorted by deadline.
 All announcements: {{ urls.announcements }}
 {% if events %}
 EVENTS

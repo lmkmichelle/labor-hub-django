@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> › <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Newsletters</a> › Send a test</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>Sends the current issue to these addresses only, through Campaign Monitor. It does not count as an issue and nobody else receives it.</p>
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <p><label for="addresses">Email addresses (up to 5, separated by commas)</label><br>
+      <input type="text" id="addresses" name="addresses" value="{{ value }}" size="60"></p>
+    <input type="submit" value="Send test" class="default">
+    <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

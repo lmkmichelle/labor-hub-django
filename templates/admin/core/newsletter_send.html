@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> › <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Newsletters</a> › Send now</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>This sends <strong>{{ subject }}</strong> to <strong>{{ subscribers }}</strong> subscribers right now. It cannot be undone.</p>
+  {% if empty %}<p class="errornote">There is nothing to list right now; the issue would be nearly empty.</p>{% endif %}
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {% if recent %}
+    <p class="errornote">This newsletter was already sent on {{ recent.sent_at|date:"M j, Y H:i" }}. Subscribers would receive it twice.</p>
+    <p><label><input type="checkbox" name="send_anyway" value="1"> Send anyway</label></p>
+    {% endif %}
+    <input type="submit" value="Send to {{ subscribers }} subscribers" class="default">
+    <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

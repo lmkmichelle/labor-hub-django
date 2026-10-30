@@ -168,7 +168,8 @@ class EmailCampaign(models.Model):
 
     class Kind(models.TextChoices):
         ALERTS = 'alerts', 'Weekly alerts'
-        NEWSLETTER = 'newsletter', 'Newsletter'
+        NEWSLETTER = 'newsletter', 'Weekly newsletter'
+        NEWSLETTER_MONTHLY = 'newsletter_monthly', 'Monthly newsletter'
 
     class Status(models.TextChoices):
         PREPARED = 'prepared', 'Prepared'
@@ -214,3 +215,40 @@ class CampaignMonitorResource(models.Model):
 
     def __str__(self):
         return f"{self.key}: {self.cm_id}"
+
+
+class NewsletterSchedule(models.Model):
+    """Admin control over one recurring newsletter (weekly or monthly).
+
+    While ``paused`` the Friday cron skips that newsletter; admins can still send
+    it by hand from the Newsletters page in the admin. Rows are created on demand.
+    """
+
+    class Kind(models.TextChoices):
+        WEEKLY = 'weekly', 'Weekly'
+        MONTHLY = 'monthly', 'Monthly'
+
+    kind = models.CharField(max_length=10, choices=Kind.choices, unique=True)
+    paused = models.BooleanField(default=False)
+    paused_at = models.DateTimeField(null=True, blank=True)
+    paused_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'newsletter'
+        verbose_name_plural = 'newsletters'
+
+    @classmethod
+    def for_kind(cls, kind):
+        return cls.objects.get_or_create(kind=kind)[0]
+
+    def set_paused(self, paused, user=None):
+        self.paused = paused
+        self.paused_at = timezone.now() if paused else None
+        self.paused_by = user if paused else None
+        self.save()
+
+    def __str__(self):
+        return f"{self.get_kind_display()} newsletter ({'paused' if self.paused else 'active'})"

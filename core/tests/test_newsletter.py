@@ -73,23 +73,65 @@ class NewsletterTests(TestCase):
         self.assertIn("Most downloaded papers</h2>", html)
         self.assertNotIn("this week</h2>", html)
 
-        # ...and from the second issue on, a week with downloads is ranked by the week.
+        # ...and from the second issue on, downloads since the last issue are ranked.
         EmailCampaign.objects.create(
             kind="newsletter", status="sent", subject="s", html="", text="",
+            sent_at=timezone.now() - timedelta(days=1),
             period_start=timezone.now(), period_end=timezone.now())
+        paper.record_download()
         ctx = newsletter_context()
         self.assertEqual(ctx["papers_heading"], "Most downloaded papers this week")
+        self.assertEqual(ctx["papers"][0]["downloads"], 2)
+        self.assertEqual(ctx["papers"][0]["all_time"], 9)
         self.assertIn("Most downloaded papers this week", create_newsletter_campaign().html)
+
+    def test_monthly_is_its_own_issue_with_its_own_numbering_and_window(self):
+        from publications.models import Publication
+        from publications.tests.test_models import make_publication
+
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            sent_at=timezone.now() - timedelta(days=1),
+            period_start=timezone.now(), period_end=timezone.now())
+        paper = make_publication(status="approved")
+        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", download_count=3)
+        paper.record_download()
+        # A weekly send does not move the monthly window or number.
+        ctx = newsletter_context("monthly")
+        self.assertEqual(ctx["issue_number"], 1)
+        self.assertFalse(ctx["first_issue"])
+        self.assertEqual(ctx["papers_heading"], "Most downloaded papers this month")
+        self.assertAlmostEqual(
+            ctx["since"], timezone.now() - timedelta(days=30), delta=timedelta(minutes=1))
+        self.assertTrue(ctx["subject"].startswith("The Labor Hub Monthly Newsletter, "))
+        campaign = create_newsletter_campaign("monthly")
+        self.assertEqual(campaign.kind, "newsletter_monthly")
+        self.assertIn("Monthly Newsletter", campaign.html)
+        self.assertNotIn("Welcome to", campaign.html)
+
+    def test_quiet_window_falls_back_to_all_time_on_later_issues(self):
+        from publications.models import Publication
+        from publications.tests.test_models import make_publication
+
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            sent_at=timezone.now(), period_start=timezone.now(), period_end=timezone.now())
+        paper = make_publication(status="approved")
+        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", download_count=7)
+        ctx = newsletter_context()
+        self.assertTrue(ctx["papers_all_time"])
+        self.assertEqual(ctx["papers"][0]["downloads"], 7)
 
     @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_NEWSLETTER_LIST_ID="members",
                        CAMPAIGN_FROM_EMAIL="The Labor Hub <digest@ilr.mail.example.edu>")
-    def test_send_goes_to_members_list_from_digest_address(self):
+    def test_send_goes_to_the_weekly_segment_from_the_campaign_address(self):
         with mock.patch("core.management.commands.send_newsletter.CampaignMonitorClient") as cls:
             client = cls.return_value
             client.create_campaign.return_value = "cm1"
+            client.segments.return_value = [{"Title": "Newsletter weekly", "SegmentID": "seg-w"}]
             call_command("send_newsletter", "--send", verbosity=0)
         kwargs = client.create_campaign.call_args.kwargs
-        self.assertEqual(kwargs["list_ids"], ["members"])
+        self.assertEqual(kwargs["segment_ids"], ["seg-w"])
         self.assertEqual(kwargs["from_email"], "digest@ilr.mail.example.edu")
         client.send_campaign.assert_called_once()
         self.assertEqual(EmailCampaign.objects.get().status, "sent")
