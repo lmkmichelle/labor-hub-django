@@ -6,13 +6,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.middleware.gzip import GZipMiddleware
 from django.utils.decorators import decorator_from_middleware
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from core.constants import COUNTRY_CHOICES
 from core.views import OwnerDeleteView
 
@@ -220,6 +220,27 @@ class SeminarCreateView(LoginRequiredMixin, CreateView):
         form.save_m2m()
         messages.success(self.request, 'Visit submitted successfully! It will be visible once approved by an administrator.')
         return redirect(self.success_url)
+
+
+class SeminarUpdateView(LoginRequiredMixin, UpdateView):
+    """Lets the poster edit their own visit (dates, details, visit type, place).
+
+    Status and poster are left alone, so an approved visit stays visible, the same
+    as editing an event."""
+    model = Seminar
+    form_class = SeminarForm
+    template_name = 'seminars/seminar_form.html'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(posted_by=self.request.user)
+
+    def get_success_url(self):
+        return reverse('seminar-detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Visit updated.')
+        return response
 
 
 def _fetch_universities_for_country(country_name):

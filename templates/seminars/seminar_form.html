@@ -4,12 +4,12 @@
 {% load static_version %}
 
 {% block title %}
-    Post a Long-Distance Visit
+    {% if object %}Edit Long-Distance Visit{% else %}Post a Long-Distance Visit{% endif %}
 {% endblock title %}
 
 {% block content %}
     <article class="format lg:format-lg max-w-none">
-        <h3 class="title">Post a Long-Distance Visit</h3>
+        <h3 class="title">{% if object %}Edit Long-Distance Visit{% else %}Post a Long-Distance Visit{% endif %}</h3>
         <form method="POST" class="mb-8" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -45,8 +45,8 @@
             {% render_field form.description %}
 
             <div class="flex gap-3 mb-5">
-                <button type="submit" class="btn-primary">Post Visit</button>
-                <a href="{% url 'seminars-list' %}" class="btn-secondary no-underline">Cancel</a>
+                <button type="submit" class="btn-primary">{% if object %}Save changes{% else %}Post Visit{% endif %}</button>
+                <a href="{% if object %}{% url 'seminar-detail' pk=object.pk %}{% else %}{% url 'seminars-list' %}{% endif %}" class="btn-secondary no-underline">Cancel</a>
             </div>
         </form>
     </article>

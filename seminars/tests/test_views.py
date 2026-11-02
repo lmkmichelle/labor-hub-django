@@ -289,3 +289,74 @@ class SeminarDeleteViewTests(TestCase):
         response = self.client.post(reverse("visit-delete", args=[self.visit.pk]))
         self.assertRedirects(response, reverse("seminars-list"))
         self.assertFalse(Seminar.objects.filter(pk=self.visit.pk).exists())
+
+
+class SeminarUpdateViewTests(TestCase):
+    def setUp(self):
+        self.owner = CustomUser.objects.create_user(
+            email="owner2@example.com", password="testpass123",
+            first_name="Own", last_name="Er", is_active=True)
+        self.other = CustomUser.objects.create_user(
+            email="other2@example.com", password="testpass123",
+            first_name="No", last_name="One", is_active=True)
+        self.visit = make_seminar(status="approved")
+        self.visit.posted_by = self.owner
+        self.visit.visit_type = "open"
+        self.visit.countries = ["US"]
+        self.visit.save()
+        self.url = reverse("visit-edit", args=[self.visit.pk])
+
+    def _data(self, **overrides):
+        data = {
+            "country_code": "US",
+            "university": self.visit.university_id or "",
+            "university_name": self.visit.university_name or "Somewhere U",
+            "visit_type": "long_term",
+            "visit_start": (timezone.localdate() + timedelta(days=10)).isoformat(),
+            "visit_end": (timezone.localdate() + timedelta(days=20)).isoformat(),
+            "description": "Updated details.",
+        }
+        data.update(overrides)
+        return data
+
+    def test_owner_can_change_type_dates_and_details_and_stays_approved(self):
+        self.client.force_login(self.owner)
+        data = self._data()
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, reverse("seminar-detail", args=[self.visit.pk]))
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.visit_type, "long_term")
+        self.assertEqual(self.visit.description, "Updated details.")
+        self.assertEqual(self.visit.visit_start.isoformat(), data["visit_start"])
+        self.assertEqual(self.visit.status, "approved")
+        self.assertEqual(self.visit.posted_by, self.owner)
+
+    def test_edit_page_is_prefilled(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Edit Long-Distance Visit")
+        self.assertContains(response, "Save changes")
+        self.assertEqual(response.context["form"]["country_code"].value(), "US")
+
+    def test_end_before_start_is_rejected(self):
+        self.client.force_login(self.owner)
+        past = (timezone.localdate() - timedelta(days=5)).isoformat()
+        response = self.client.post(self.url, self._data(visit_end=past))
+        self.assertEqual(response.status_code, 200)
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.visit_type, "open")
+
+    def test_non_owner_gets_404_and_anonymous_is_sent_to_login(self):
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        self.assertEqual(self.client.post(self.url, self._data()).status_code, 404)
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_detail_shows_edit_button_to_owner_only(self):
+        detail = reverse("seminar-detail", args=[self.visit.pk])
+        self.assertNotContains(self.client.get(detail), "Edit visit")
+        self.client.force_login(self.other)
+        self.assertNotContains(self.client.get(detail), "Edit visit")
+        self.client.force_login(self.owner)
+        self.assertContains(self.client.get(detail), "Edit visit")

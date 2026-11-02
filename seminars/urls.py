@@ -4,6 +4,7 @@ from seminars.views import (
     SeminarCreateView,
     SeminarDeleteView,
     SeminarDetailView,
+    SeminarUpdateView,
     SeminarsListView,
     universities_by_country,
     university_search,
@@ -15,5 +16,6 @@ urlpatterns = [
     path('universities/', universities_by_country, name='seminar-universities'),
     path('universities/search/', university_search, name='university-search'),
     path('<int:pk>/', SeminarDetailView.as_view(), name='seminar-detail'),
+    path('<int:pk>/edit/', SeminarUpdateView.as_view(), name='visit-edit'),
     path('<int:pk>/delete/', SeminarDeleteView.as_view(), name='visit-delete'),
 ]
