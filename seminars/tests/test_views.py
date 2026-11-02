@@ -360,3 +360,23 @@ class SeminarUpdateViewTests(TestCase):
         self.assertNotContains(self.client.get(detail), "Edit visit")
         self.client.force_login(self.owner)
         self.assertContains(self.client.get(detail), "Edit visit")
+
+
+class SeminarAdminVisitTypeTests(TestCase):
+    def test_admin_can_edit_the_visit_type(self):
+        admin_user = CustomUser.objects.create_superuser(email="adm@example.com", password="pw")
+        self.client.force_login(admin_user)
+        visit = make_seminar(status="approved")
+        visit.visit_type = "open"
+        visit.save()
+        url = reverse("admin:seminars_seminar_change", args=[visit.pk])
+        response = self.client.get(url)
+        self.assertContains(response, 'name="visit_type"')
+        form = response.context["adminform"].form
+        data = {k: (v if v is not None else "") for k, v in form.initial.items()}
+        data.update(visit_type="long_term", countries=visit.countries or ["US"],
+                    status="approved", visit_start=visit.visit_start.isoformat(),
+                    visit_end="", university=visit.university_id or "")
+        self.client.post(url, data)
+        visit.refresh_from_db()
+        self.assertEqual(visit.visit_type, "long_term")

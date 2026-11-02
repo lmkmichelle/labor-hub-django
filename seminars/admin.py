@@ -30,9 +30,9 @@ class SeminarAdminForm(forms.ModelForm):
 
 class SeminarAdmin(ApprovableAdmin):
     form = SeminarAdminForm
-    list_display = ['visitor_name', 'get_university_name', 'visit_start', 'visit_end', 'posted_by']
+    list_display = ['visitor_name', 'get_university_name', 'visit_type', 'visit_start', 'visit_end', 'posted_by']
     search_fields = [ 'visitor_name', 'visitor_email', 'university__name', 'university_name', 'description']
-    list_filter = ['visit_start', 'countries']
+    list_filter = ['visit_type', 'visit_start', 'countries']
     autocomplete_fields = ['university']
 
     fieldsets = (
@@ -44,6 +44,7 @@ class SeminarAdmin(ApprovableAdmin):
                 'visitor_affiliation',
                 'university',
                 'university_name',
+                'visit_type',
                 'visit_start',
                 'visit_end',
                 'countries',
