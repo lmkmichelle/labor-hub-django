@@ -254,7 +254,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
         if obj.status == 'rejected':
             return format_html(
                 '<span style="color: #666; font-style: italic;">Status: {}</span><br>'
-                '<a class="button" href="{}" style="white-space: nowrap;" '
+                '<a class="button" href="{}" style="white-space: nowrap; margin-top: 6px;" '
                 'title="Approve this applicant after all" '
                 'onclick="return confirm(\'Approve this applicant? An account is created and the acceptance email is sent.\');">'
                 'Undo rejection</a>',
