@@ -70,7 +70,7 @@ class UndoRejectionTests(TestCase):
         self.client.force_login(admin_user)
         app = make_application(rejected_days_ago=2)
         change = reverse("admin:accounts_userapplication_change", args=[app.pk])
-        self.assertContains(self.client.get(change), "Undo rejection (approve)")
+        self.assertContains(self.client.get(change), "Undo rejection")
         self.assertContains(self.client.get(change), "Kept until")
         self.client.get(reverse("admin:undo_rejection_application", args=[app.pk]))
         app.refresh_from_db()
