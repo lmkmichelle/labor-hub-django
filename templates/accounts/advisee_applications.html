@@ -70,9 +70,18 @@
                                 </form>
                                 <form method="post"
                                       action="{% url 'advisee_reject' application.pk %}"
-                                      onsubmit="return confirm('Decline this application? This cannot be undone.');">
+                                      onsubmit="return confirm('Decline this application? You can undo this afterwards.');">
                                     {% csrf_token %}
                                     <button type="submit" class="btn-secondary">Decline</button>
+                                </form>
+                            </div>
+                        {% elif application.status == 'rejected' %}
+                            <div class="mt-4">
+                                <form method="post"
+                                      action="{% url 'advisee_undo_reject' application.pk %}"
+                                      onsubmit="return confirm('Approve this applicant instead? An account is created and the acceptance email is sent.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-secondary">Undo decline (approve)</button>
                                 </form>
                             </div>
                         {% endif %}

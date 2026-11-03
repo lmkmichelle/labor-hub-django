@@ -321,6 +321,19 @@ def advisee_reject(request, pk):
     return redirect("advisee_applications")
 
 
+@login_required
+@require_POST
+def advisee_undo_reject(request, pk):
+    application = _get_own_advisee(request, pk)
+    try:
+        user = application.undo_rejection(admin_user=request.user, advisor=request.user)
+        messages.success(
+            request, f"Decision reversed. An account has been created for {user.email}.")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    return redirect("advisee_applications")
+
+
 @require_GET
 def newsletter_unsubscribe(request, token):
     """One-click unsubscribe link from newsletter emails sent before Campaign Monitor

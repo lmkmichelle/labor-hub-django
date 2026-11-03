@@ -88,7 +88,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'cv_link_display', 'other_networks',
-                       'returning_account_note']
+                       'returning_account_note', 'uploaded_files_note']
     ordering = ['-applied_at']
 
     fieldsets = (
@@ -98,7 +98,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
                        'previous_student_account', 'previous_jm_paper_number', 'returning_account_note')
         }),
         ('Review', {
-            'fields': ('cv_link_display', 'resume', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
+            'fields': ('cv_link_display', 'resume', 'uploaded_files_note', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
         }),
     )
 
@@ -141,6 +141,20 @@ class UserApplicationAdmin(admin.ModelAdmin):
                 notes.append(f'Claimed job market paper {paper.display_number}: {paper.title} ({authors}).')
         return ' '.join(notes) or '-'
 
+    @admin.display(description='Uploaded files')
+    def uploaded_files_note(self, obj):
+        """When the samples and resume are (or were) deleted."""
+        from accounts.models import REJECTED_FILE_RETENTION
+        if not obj.pk:
+            return '-'
+        if obj.files_purged_at:
+            return f'Deleted on {obj.files_purged_at:%b %-d, %Y}.'
+        if obj.status == 'rejected' and obj.reviewed_at:
+            return f'Kept until {obj.reviewed_at + REJECTED_FILE_RETENTION:%b %-d, %Y} (30 days after rejection).'
+        if obj.status == 'pending':
+            return 'Kept while pending; the samples are deleted on approval.'
+        return 'Samples are deleted on approval.'
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -153,6 +167,11 @@ class UserApplicationAdmin(admin.ModelAdmin):
                 '<int:application_id>/reject/',
                 self.admin_site.admin_view(self.reject_application),
                 name='reject_application',
+            ),
+            path(
+                '<int:application_id>/undo-rejection/',
+                self.admin_site.admin_view(self.undo_rejection),
+                name='undo_rejection_application',
             ),
         ]
         return custom_urls + urls
@@ -204,6 +223,26 @@ class UserApplicationAdmin(admin.ModelAdmin):
 
         return HttpResponseRedirect(reverse('admin:accounts_userapplication_changelist'))
 
+    def undo_rejection(self, request, application_id):
+        try:
+            application = UserApplication.objects.get(pk=application_id)
+            user = application.undo_rejection(request.user)
+            messages.success(
+                request,
+                f'Rejection undone: account created for {user.email} and the acceptance email sent.'
+            )
+            note = getattr(application, 'claim_note', '')
+            if note:
+                messages.warning(request, note)
+        except UserApplication.DoesNotExist:
+            messages.error(request, 'Application not found.')
+        except ValueError as e:
+            messages.error(request, f'Could not undo the rejection: {e}')
+        except Exception as e:
+            messages.error(request, f'Could not undo the rejection: {e}')
+
+        return HttpResponseRedirect(reverse('admin:accounts_userapplication_changelist'))
+
     def account_actions(self, obj):
         if obj.status == 'pending':
             return format_html(
@@ -212,11 +251,19 @@ class UserApplicationAdmin(admin.ModelAdmin):
                 reverse('admin:approve_application', args=[obj.pk]),
                 reverse('admin:reject_application', args=[obj.pk])
             )
-        else:
+        if obj.status == 'rejected':
             return format_html(
-                '<span style="color: #666; font-style: italic;">Status: {}</span>',
-                obj.get_status_display()
+                '<span style="color: #666; font-style: italic;">Status: {}</span>&nbsp;'
+                '<a class="button" href="{}" '
+                'onclick="return confirm(\'Approve this applicant? An account is created and the acceptance email is sent.\');">'
+                'Undo rejection (approve)</a>',
+                obj.get_status_display(),
+                reverse('admin:undo_rejection_application', args=[obj.pk]),
             )
+        return format_html(
+            '<span style="color: #666; font-style: italic;">Status: {}</span>',
+            obj.get_status_display()
+        )
 
     account_actions.short_description = 'Approve/Deny Application'
     account_actions.allow_tags = True

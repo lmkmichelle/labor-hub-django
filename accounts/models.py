@@ -1,12 +1,20 @@
+import logging
+from datetime import timedelta
+
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import JSONField
 from django.utils import timezone
 
 from core.constants import COUNTRY_CHOICES
 from core.storage import paper_storage
+
+logger = logging.getLogger(__name__)
+
+# Rejected applicants' uploaded files (research samples, resume) are kept this long.
+REJECTED_FILE_RETENTION = timedelta(days=30)
 
 
 class CustomUserManager(BaseUserManager):
@@ -276,6 +284,8 @@ class UserApplication(models.Model):
     # When the student was told the application is still waiting on their advisor.
     student_reminded_at = models.DateTimeField(null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    # When the uploaded files were deleted (accounts.management.commands.purge_application_files).
+    files_purged_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -364,7 +374,46 @@ class UserApplication(models.Model):
         from accounts.emails import send_application_approved_email
         send_application_approved_email(user, returning=existing is not None)
 
+        # Approval is the end of the samples' purpose; the nightly purge retries on failure.
+        self.delete_files(include_resume=False)
+
         return user
+
+    def undo_rejection(self, admin_user=None, advisor=None):
+        """Reverse a rejection by approving the application: the same account setup
+        and acceptance email as a normal approval. Works at any time, even after the
+        uploaded files were deleted (approval does not need them)."""
+        if self.status != self.Status.REJECTED:
+            raise ValueError("Only rejected applications can be reversed")
+        try:
+            with transaction.atomic():
+                self.status = self.Status.PENDING
+                return self.approve(admin_user, advisor)
+        except Exception:
+            self.status = self.Status.REJECTED
+            raise
+
+    def delete_files(self, include_resume=False):
+        """Delete the research samples (and, for a rejected application, the resume).
+
+        Never raises: a storage error is logged and ``files_purged_at`` stays unset so
+        the nightly purge tries again. Returns True when everything was deleted."""
+        try:
+            for sample in list(self.research_papers.all()):
+                sample.paper.delete(save=False)
+                sample.delete()
+            if include_resume and self.resume:
+                self.resume.delete(save=False)
+                self.resume = None
+        except Exception:
+            logger.exception("Could not delete uploaded files of application %s", self.pk)
+            return False
+        self.files_purged_at = timezone.now()
+        changes = {"files_purged_at": self.files_purged_at}
+        if include_resume:
+            changes["resume"] = None
+        type(self).objects.filter(pk=self.pk).update(**changes)
+        return True
 
     def returning_student(self):
         """The inactive student account this fellow application would reactivate,

@@ -104,6 +104,13 @@ applications:
         spec: "0 6 * * *"
         commands:
           start: "python manage.py deactivate_expired_students"
+      # Delete application uploads: research samples once approved, samples and
+      # resume 30 days after a rejection
+      # (accounts/management/commands/purge_application_files.py).
+      application-files:
+        spec: "15 6 * * *"
+        commands:
+          start: "python manage.py purge_application_files"
       # Nudge advisors who haven't acted on a student's application; tell the
       # admins' inbox after 14 days (accounts/management/commands/remind_advisors.py).
       advisor-reminders:
