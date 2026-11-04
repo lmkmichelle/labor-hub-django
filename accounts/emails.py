@@ -53,11 +53,13 @@ def send_application_rejected_email(application, fail_silently=True):
     """Email an applicant that their application was not accepted.
 
     Mirrors ``send_application_approved_email``: plain-text + HTML, no reason
-    given (none is currently recorded), and fails silently so a mail outage
+    given by default (the reviewer may edit the message), and fails silently so a mail outage
     can't disrupt the review flow -- the decision is already saved.
     """
+    from accounts.models import DEFAULT_REJECTION_MESSAGE
     context = {
         "application": application,
+        "message": application.rejection_message or DEFAULT_REJECTION_MESSAGE,
         "site_url": settings.SITE_URL.rstrip("/"),
     }
     subject = "An update on your Labor Hub application"

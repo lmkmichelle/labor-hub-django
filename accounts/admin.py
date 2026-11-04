@@ -2,6 +2,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -88,7 +89,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['university']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['applied_at', 'reviewed_at', 'reviewed_by', 'account_actions', 'resume', 'cv_link_display', 'other_networks',
-                       'returning_account_note', 'uploaded_files_note']
+                       'returning_account_note', 'uploaded_files_note', 'rejection_message_display']
     ordering = ['-applied_at']
 
     fieldsets = (
@@ -98,7 +99,7 @@ class UserApplicationAdmin(admin.ModelAdmin):
                        'previous_student_account', 'previous_jm_paper_number', 'returning_account_note')
         }),
         ('Review', {
-            'fields': ('cv_link_display', 'resume', 'uploaded_files_note', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
+            'fields': ('cv_link_display', 'resume', 'uploaded_files_note', 'rejection_message_display', 'admin_notes', 'account_actions', 'applied_at', 'reviewed_at', 'reviewed_by')
         }),
     )
 
@@ -140,6 +141,10 @@ class UserApplicationAdmin(admin.ModelAdmin):
                 authors = ', '.join(a.name or a.user.get_full_name() for a in paper.authors.select_related('user'))
                 notes.append(f'Claimed job market paper {paper.display_number}: {paper.title} ({authors}).')
         return ' '.join(notes) or '-'
+
+    @admin.display(description='Message sent')
+    def rejection_message_display(self, obj):
+        return obj.rejection_message or '-'
 
     @admin.display(description='Uploaded files')
     def uploaded_files_note(self, obj):
@@ -204,24 +209,40 @@ class UserApplicationAdmin(admin.ModelAdmin):
         return HttpResponseRedirect(reverse('admin:accounts_userapplication_changelist'))
 
     def reject_application(self, request, application_id):
-        try:
-            application = UserApplication.objects.get(pk=application_id)
-            if application.status != 'pending':
-                messages.error(request, 'This application has already been reviewed.')
-
+        """Confirm page: the decline email is shown, editable, before anything is sent."""
+        from django.template.response import TemplateResponse
+        from accounts.models import rejection_message_presets
+        application = get_object_or_404(UserApplication, pk=application_id)
+        changelist = reverse('admin:accounts_userapplication_changelist')
+        if application.status != 'pending':
+            messages.error(request, 'This application has already been reviewed.')
+            return HttpResponseRedirect(changelist)
+        presets = rejection_message_presets(application)
+        error = ''
+        if request.method == 'POST':
+            message = request.POST.get('message', '').strip()
+            if not message:
+                error = 'Write a message to send to the applicant.'
+            elif len(message) > 5000:
+                error = 'The message is too long (5,000 characters at most).'
             else:
-                application.reject(request.user)
-                messages.success(
-                    request,
-                    f'Application rejected for {application.email}'
-                )
-        except UserApplication.DoesNotExist:
-            messages.error(request, 'Application not found.')
-
-        except Exception as e:
-            messages.error(request, f'Error rejecting application: {str(e)}')
-
-        return HttpResponseRedirect(reverse('admin:accounts_userapplication_changelist'))
+                try:
+                    application.reject(request.user, message)
+                except Exception as e:
+                    messages.error(request, f'Error rejecting application: {e}')
+                else:
+                    messages.success(
+                        request, f'Application denied; the message was sent to {application.email}.')
+                return HttpResponseRedirect(changelist)
+        keys = [key for key, _, _ in presets]
+        preset = request.GET.get('preset')
+        preset = preset if preset in keys else 'default'
+        message = request.POST.get('message') or next(t for k, _, t in presets if k == preset)
+        return TemplateResponse(request, 'admin/accounts/userapplication/reject.html', {
+            **self.admin_site.each_context(request), 'opts': self.model._meta,
+            'title': 'Deny application', 'application': application,
+            'presets': presets, 'preset': preset, 'message': message, 'error': error,
+        })
 
     def undo_rejection(self, request, application_id):
         try:

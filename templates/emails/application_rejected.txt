@@ -1,7 +1,7 @@
-Hi {{ application.first_name|default:application.email }},
+{% autoescape off %}Hi {{ application.first_name|default:application.email }},
 
-Thank you for your interest in the Labor Hub. We regret to inform you that we are currently not able to accept your application. Reasons for rejecting applications are either poor fit with labor economics or insufficient evidence of recent publication record in Labor Economics. We encourage you to apply again in the future.
+{{ message }}
 
 --
 The Labor Hub team
-{{ site_url }}
+{{ site_url }}{% endautoescape %}

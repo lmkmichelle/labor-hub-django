@@ -113,13 +113,31 @@ class AdviseeRejectTests(TestCase):
         app = make_student_application(advisor)
 
         self.client.force_login(advisor)
+        page = self.client.get(reverse("advisee_reject", args=[app.pk]))
+        self.assertContains(page, "not able to accept your application")
+        app.refresh_from_db()
+        self.assertEqual(app.status, UserApplication.Status.PENDING)   # viewing declines nothing
+
         response = self.client.post(
-            reverse("advisee_reject", args=[app.pk]))
+            reverse("advisee_reject", args=[app.pk]), {"message": "Please talk to me first."})
 
         self.assertRedirects(response, reverse("advisee_applications"))
         app.refresh_from_db()
         self.assertEqual(app.status, UserApplication.Status.REJECTED)
+        self.assertEqual(app.rejection_message, "Please talk to me first.")
+        self.assertIn("Please talk to me first.", mail.outbox[-1].body)
         self.assertFalse(CustomUser.objects.filter(email=app.email).exists())
+
+    def test_empty_message_is_refused_and_other_advisors_get_404(self):
+        advisor = make_researcher()
+        app = make_student_application(advisor)
+        self.client.force_login(advisor)
+        response = self.client.post(reverse("advisee_reject", args=[app.pk]), {"message": "  "})
+        self.assertContains(response, "Write a message")
+        app.refresh_from_db()
+        self.assertEqual(app.status, UserApplication.Status.PENDING)
+        self.client.force_login(make_researcher(email="stranger@example.com"))
+        self.assertEqual(self.client.get(reverse("advisee_reject", args=[app.pk])).status_code, 404)
 
 
 class AdviseeNavAndCountTests(TestCase):
@@ -145,7 +163,7 @@ class ApplicationNotificationEmailTests(TestCase):
     def _staff(self):
         return CustomUser.objects.create_user(
             email="staff@example.com", password="x", first_name="S",
-            last_name="Taff", role=CustomUser.Role.ADMIN, is_active=True,
+            last_name="Taff", role=CustomUser.Role.RESEARCHER, is_active=True,
             is_staff=True,
         )
 

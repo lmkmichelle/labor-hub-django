@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> › <a href="{% url 'admin:accounts_userapplication_changelist' %}">User applications</a> › Deny</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>{{ application.first_name }} {{ application.last_name }} ({{ application.email }}) applied as a {{ application.get_role_display|lower }}. They will be emailed the message below. Edit it if you like, then press Send and deny.</p>
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+  {% if presets|length > 1 %}
+    <p>
+      Start from:
+      {% for key, label, text in presets %}
+        {% if key == preset %}<strong>{{ label }}</strong>{% else %}<a href="?preset={{ key }}">{{ label }}</a>{% endif %}{% if not forloop.last %} · {% endif %}
+      {% endfor %}
+    </p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <p>Hi {{ application.first_name|default:application.email }},</p>
+    <p><label for="id_message" class="visually-hidden">Message</label>
+      <textarea name="message" id="id_message" rows="10" cols="80" maxlength="5000" required>{{ message }}</textarea></p>
+    <p>The Labor Hub team</p>
+    <input type="submit" value="Send and deny" class="default">
+    <a href="{% url 'admin:accounts_userapplication_changelist' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

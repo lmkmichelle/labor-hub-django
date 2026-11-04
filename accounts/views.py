@@ -307,18 +307,27 @@ def advisee_approve(request, pk):
 
 
 @login_required
-@require_POST
 def advisee_reject(request, pk):
+    """Decline page: the email to the applicant is shown, editable, before it is sent."""
+    from accounts.models import rejection_message_presets
     application = _get_own_advisee(request, pk)
     if application.status != UserApplication.Status.PENDING:
         messages.error(request, "This application has already been reviewed.")
-    else:
-        application.reject(request.user)
-        messages.success(
-            request,
-            f"Declined the application from {application.email}.",
-        )
-    return redirect("advisee_applications")
+        return redirect("advisee_applications")
+    error = ""
+    message = request.POST.get("message") or rejection_message_presets(application)[0][2]
+    if request.method == "POST":
+        message = request.POST.get("message", "").strip()
+        if not message:
+            error = "Write a message to send to the applicant."
+        elif len(message) > 5000:
+            error = "The message is too long (5,000 characters at most)."
+        else:
+            application.reject(request.user, message)
+            messages.success(request, f"Declined the application from {application.email}.")
+            return redirect("advisee_applications")
+    return render(request, "accounts/advisee_reject.html", {
+        "application": application, "message": message, "error": error})
 
 
 @login_required

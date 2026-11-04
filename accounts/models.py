@@ -17,6 +17,35 @@ logger = logging.getLogger(__name__)
 REJECTED_FILE_RETENTION = timedelta(days=30)
 
 
+# The decline email's editable body (the greeting and sign-off are fixed).
+DEFAULT_REJECTION_MESSAGE = (
+    "Thank you for your interest in the Labor Hub. We regret to inform you that we are "
+    "currently not able to accept your application.\n\n"
+    "Reasons for rejecting applications are either poor fit with labor economics or "
+    "insufficient evidence of recent publication record in Labor Economics. We encourage "
+    "you to apply again in the future."
+)
+STUDENT_ROUTE_MESSAGE = (
+    "Thank you for your interest in the Labor Hub. You applied through the Scholar route, "
+    "which is for researchers who have completed their PhD.\n\n"
+    "As a PhD student, please apply again through the student route and name your advisor, "
+    "who approves student applications: {apply_url}"
+)
+
+
+def rejection_message_presets(application):
+    """``[(key, label, text)]`` of messages a reviewer can start from when declining."""
+    from django.conf import settings
+    from django.urls import reverse
+    presets = [("default", "Standard message", DEFAULT_REJECTION_MESSAGE)]
+    if application.role == CustomUser.Role.RESEARCHER:
+        url = settings.SITE_URL.rstrip("/") + reverse("apply_student")
+        presets.append((
+            "student_route", "Ask them to apply as a student",
+            STUDENT_ROUTE_MESSAGE.format(apply_url=url)))
+    return presets
+
+
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
 
@@ -286,6 +315,8 @@ class UserApplication(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     # When the uploaded files were deleted (accounts.management.commands.purge_application_files).
     files_purged_at = models.DateTimeField(null=True, blank=True)
+    # The body of the decline email that was sent.
+    rejection_message = models.TextField(blank=True)
     reviewed_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -448,10 +479,11 @@ class UserApplication(models.Model):
         return (f'Job market paper {paper.display_number} has no author named '
                 f'"{self.first_name} {self.last_name}", so it was not attached.')
 
-    def reject(self, admin_user):
+    def reject(self, admin_user, message=""):
         if self.status != self.Status.PENDING:
             raise ValueError("Only pending applications can be rejected")
 
+        self.rejection_message = message.strip() or DEFAULT_REJECTION_MESSAGE
         self.status = self.Status.REJECTED
         self.reviewed_at = timezone.now()
         self.reviewed_by = admin_user

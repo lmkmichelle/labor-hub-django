@@ -68,12 +68,7 @@
                                     {% csrf_token %}
                                     <button type="submit" class="btn-primary">Approve</button>
                                 </form>
-                                <form method="post"
-                                      action="{% url 'advisee_reject' application.pk %}"
-                                      onsubmit="return confirm('Decline this application? You can undo this afterwards.');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-secondary">Decline</button>
-                                </form>
+                                <a href="{% url 'advisee_reject' application.pk %}" class="btn-secondary">Decline</a>
                             </div>
                         {% elif application.status == 'rejected' %}
                             <div class="mt-4">

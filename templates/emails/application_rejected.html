@@ -3,12 +3,7 @@
 {% block content %}
   <!-- djlint:off -->
   <p style="margin:0 0 16px; font-size:16px;">Hi {{ application.first_name|default:application.email }},</p>
-  <p style="margin:0 0 16px; font-size:15px; color:#374151;">
-    Thank you for your interest in the Labor Hub. We regret to inform you that we are currently not able to accept your application.
-  </p>
-  <p style="margin:0; font-size:15px; color:#374151;">
-    Reasons for rejecting applications are either poor fit with labor economics or insufficient evidence of recent publication record in Labor Economics. We encourage you to apply again in the future.
-  </p>
+  <div style="margin:0; font-size:15px; color:#374151;">{{ message|urlize|linebreaks }}</div>
   <!-- djlint:on -->
 {% endblock %}
 {% block footer %}
