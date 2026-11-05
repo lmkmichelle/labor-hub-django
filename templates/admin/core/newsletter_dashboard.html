@@ -37,6 +37,7 @@
       </p>
       <p class="nl-actions">
         <a class="button" href="{% url 'admin:core_newsletterschedule_preview' kind=panel.kind %}" target="_blank" rel="noopener">Preview email</a>
+        <a class="button" href="{% url 'admin:core_newsletterschedule_downloads' kind=panel.kind %}">Downloads for every paper</a>
         {% if can_change %}
         {% if cm_ready %}
         <a class="button" href="{% url 'admin:core_newsletterschedule_test' kind=panel.kind %}">Send test…</a>

@@ -141,3 +141,54 @@ class NewsletterAdminTests(TestCase):
         toggle = reverse("admin:core_newsletterschedule_toggle", kwargs={"kind": "weekly"})
         self.assertEqual(self.client.post(toggle).status_code, 403)
         self.assertFalse(NewsletterSchedule.objects.filter(paused=True).exists())
+
+
+class PaperDownloadsReportTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.client.force_login(User.objects.create_superuser(email="root@example.com", password="pw"))
+        self.busy = make_publication(title="Busy paper", status="approved")
+        self.quiet = make_publication(title="=Quiet paper", status="approved")
+        self.jm = make_publication(title="Job market paper", status="approved", is_job_market=True)
+        self.pending = make_publication(title="Pending paper", status="pending")
+        Publication.objects.update(pdf="x.pdf")
+        sent()
+        for _ in range(3):
+            self.busy.record_download()
+        self.jm.record_download()
+
+    def test_lists_every_approved_discussion_paper_including_zero_downloads(self):
+        from core.newsletter import paper_downloads
+        rows = paper_downloads("weekly")["rows"]
+        self.assertEqual([(r["title"], r["period"]) for r in rows],
+                         [("Busy paper", 3), ("=Quiet paper", 0)])
+
+    def test_period_counts_only_downloads_since_the_last_issue(self):
+        from publications.models import PublicationDownload
+        PublicationDownload.objects.filter(publication=self.busy).update(
+            downloaded_at=timezone.now() - timedelta(days=30))
+        from core.newsletter import paper_downloads
+        self.assertEqual(paper_downloads("weekly")["rows"][0]["period"], 0)
+        self.assertEqual(paper_downloads("weekly")["rows"][0]["all_time"], 3)
+
+    def test_page_and_csv(self):
+        page = self.client.get(reverse("admin:core_newsletterschedule_downloads", args=["weekly"]))
+        self.assertContains(page, "Busy paper")
+        self.assertNotContains(page, "Job market paper")
+        self.assertNotContains(page, "Pending paper")
+        response = self.client.get(reverse("admin:core_newsletterschedule_downloads_csv", args=["weekly"]))
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("paper-downloads-weekly-", response["Content-Disposition"])
+        body = response.content.decode()
+        self.assertIn("Downloads this period", body)
+        self.assertIn("Busy paper", body)
+        self.assertIn("'=Quiet paper", body)       # not a spreadsheet formula
+
+    def test_unknown_kind_404_and_staff_without_permission_refused(self):
+        self.assertEqual(self.client.get(
+            reverse("admin:core_newsletterschedule_downloads", args=["daily"])).status_code, 404)
+        User = get_user_model()
+        self.client.force_login(User.objects.create_user(
+            email="s@example.com", password="pw", is_staff=True, is_active=True))
+        self.assertEqual(self.client.get(
+            reverse("admin:core_newsletterschedule_downloads_csv", args=["weekly"])).status_code, 403)

@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a> › <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Newsletters</a> › Downloads by paper</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>
+    Downloads of every approved discussion paper from {{ report.since|date:"M j, Y H:i" }} to {{ report.until|date:"M j, Y H:i" }}
+    (the period of the next {{ kind }} issue: since the previous one was sent). {{ report.rows|length }} paper{{ report.rows|length|pluralize }},
+    {{ total }} download{{ total|pluralize }} {{ this_period }}.
+    This is computed live, so download the CSV before the newsletter goes out if you want to keep this period's numbers.
+  </p>
+  <p><a class="button default" href="{% url 'admin:core_newsletterschedule_downloads_csv' kind=kind %}">Download CSV</a>
+    <a href="{% url 'admin:core_newsletterschedule_changelist' %}">Back to newsletters</a></p>
+  {% if report.rows %}
+  <table>
+    <thead><tr><th>No.</th><th>Paper</th><th>Authors</th><th>Downloads {{ this_period }}</th><th>All-time</th></tr></thead>
+    <tbody>
+    {% for row in report.rows %}
+    <tr><td>{{ row.number }}</td><td><a href="{{ row.url }}" target="_blank" rel="noopener">{{ row.title }}</a></td><td>{{ row.authors }}</td><td>{{ row.period }}</td><td>{{ row.all_time }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="help">No approved discussion papers yet.</p>{% endif %}
+</div>
+{% endblock %}

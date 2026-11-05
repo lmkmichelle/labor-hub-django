@@ -283,6 +283,16 @@ class Publication(Approvable):
                       .order_by('-recent', '-applied_at'))
         return papers.prefetch_related('author_links__author__user')[:limit]
 
+    @classmethod
+    def downloads_since(cls, since):
+        """Every approved discussion paper with a PDF and its downloads after ``since``
+        (0 included), most downloaded first. Uses the timestamped log."""
+        return (cls.objects.filter(status='approved', is_job_market=False, pdf__gt='')
+                .annotate(period_downloads=models.Count(
+                    'downloads', filter=models.Q(downloads__downloaded_at__gte=since)))
+                .order_by('-period_downloads', '-download_count', 'title')
+                .prefetch_related('author_links__author__user'))
+
     def record_download(self):
         """Bump download_count by one, atomically, without a read-modify-write
         race between two concurrent downloads. Updates the DB row directly

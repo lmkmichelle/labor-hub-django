@@ -81,6 +81,20 @@ def period_start(kind=WEEKLY, now=None):
     return now - KINDS[kind]["window"]
 
 
+def paper_downloads(kind=WEEKLY, now=None):
+    """Downloads in this issue's period for *every* approved discussion paper, not just
+    the top few: ``{"since", "until", "rows"}`` with ``rows`` most downloaded first."""
+    now = now or timezone.now()
+    since = period_start(kind, now)
+    rows = [{
+        "number": p.display_number or "", "title": p.title,
+        "url": absolute_url(reverse("publication_detail", kwargs={"pk": p.pk})),
+        "authors": ", ".join(str(a) for a in p.ordered_authors),
+        "period": p.period_downloads, "all_time": p.download_count,
+    } for p in Publication.downloads_since(since)]
+    return {"since": since, "until": now, "rows": rows}
+
+
 def newsletter_context(kind=WEEKLY, now=None):
     now = now or timezone.now()
     today = timezone.localdate(now)

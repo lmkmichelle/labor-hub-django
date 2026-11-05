@@ -1,3 +1,4 @@
+import csv
 import logging
 
 from datetime import timedelta
@@ -12,7 +13,8 @@ from django.utils.html import format_html
 
 from core import cm_lists
 from core.models import ApprovalStatus, EmailCampaign, NewsletterSchedule
-from core.newsletter import KINDS, last_sent_issue, newsletter_context, render_newsletter
+from core.newsletter import (
+    KINDS, last_sent_issue, newsletter_context, paper_downloads, render_newsletter)
 from .models import ContactMessage
 
 logger = logging.getLogger(__name__)
@@ -206,6 +208,8 @@ class NewsletterScheduleAdmin(admin.ModelAdmin):
             path('<str:kind>/preview/', wrap(self.preview_view), name=name('preview')),
             path('<str:kind>/test/', wrap(self.test_view), name=name('test')),
             path('<str:kind>/send/', wrap(self.send_view), name=name('send')),
+            path('<str:kind>/downloads/', wrap(self.downloads_view), name=name('downloads')),
+            path('<str:kind>/downloads.csv', wrap(self.downloads_csv_view), name=name('downloads_csv')),
         ] + super().get_urls()
 
     @staticmethod
@@ -287,6 +291,40 @@ class NewsletterScheduleAdmin(admin.ModelAdmin):
             raise PermissionDenied
         html, _ = render_newsletter(newsletter_context(self._kind(kind)))
         return HttpResponse(html)
+
+    def downloads_view(self, request, kind):
+        """Every discussion paper's downloads for this issue's period."""
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        report = paper_downloads(self._kind(kind))
+        spec = KINDS[kind]
+        return render(request, "admin/core/newsletter_downloads.html", {
+            **self.admin_site.each_context(request), "opts": self.model._meta,
+            "title": f"{spec['label']} newsletter: downloads by paper", "kind": kind,
+            "report": report, "this_period": spec["this_period"].lower(),
+            "total": sum(r["period"] for r in report["rows"]),
+        })
+
+    def downloads_csv_view(self, request, kind):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        report = paper_downloads(self._kind(kind))
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="paper-downloads-{kind}-{report["until"]:%Y-%m-%d}.csv"')
+        writer = csv.writer(response)
+        writer.writerow(["Paper no.", "Title", "Authors", "Downloads this period",
+                         "Downloads all-time", "Period start", "Period end"])
+
+        def safe(text):
+            # A title starting with = + - @ would run as a formula in a spreadsheet.
+            return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+        for row in report["rows"]:
+            writer.writerow([row["number"], safe(row["title"]), safe(row["authors"]), row["period"],
+                             row["all_time"], f'{report["since"]:%Y-%m-%d %H:%M}',
+                             f'{report["until"]:%Y-%m-%d %H:%M}'])
+        return response
 
     def _cm_guard(self, request, kind):
         """A redirect (with an error) when sending is not possible, else ``None``."""
