@@ -271,7 +271,10 @@ ids. Until it has succeeded nothing is pushed to Campaign Monitor.
   the most-downloaded papers and their counts), preview the email, send a test to up to 5
   addresses, pause/resume the scheduled send, or send now. The same from the shell:
   `send_newsletter --send|--test-to a@x.edu,b@x.edu [--kind monthly]`. Per-issue text lives
-  in `core/newsletter.py`.
+  in `core/newsletter.py`. Every issue ends its listings with a **Job Market Papers** box of
+  all approved job market papers (J1, J2, ...), left out when there are none; the admin page
+  lists the same papers. The email is built from this repo's template and fetched by
+  Campaign Monitor by URL, so there is no template to maintain inside Campaign Monitor.
 - **Alerts:** prepared Fridays 11:00 UTC, sent 12:00 UTC (`send_alerts`).
 
 ### Paper PDFs live in object storage

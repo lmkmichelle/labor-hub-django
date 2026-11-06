@@ -1,31 +1,44 @@
 {{ subject }} - {{ issue_date|date:"F j, Y" }}
 
-{% if first_issue %}{{ issue.welcome }}
+{% if first_issue %}{{ issue.welcome }}{% else %}{{ this_period }} in the Labor Hub: new announcements{% if job_market_papers %}, most downloaded papers and a list of all Job Market Papers we have received so far{% else %} and most downloaded papers{% endif %}. Wishing you a great {% if monthly %}month{% else %}week{% endif %}!
 
-{% endif %}{{ this_period }} on the Hub: everything currently open, sorted by deadline.
-All announcements: {{ urls.announcements }}
+Set your alerts for announcements or papers you are most interested in: {{ urls.settings }}{% endif %}
 {% if events %}
-EVENTS
+NEW EVENTS
 {% for item in events %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
   {{ item.url }}
-{% endfor %}{% endif %}{% if special_issues %}
+{% endfor %}All events: {{ urls.events }}
+{% endif %}{% if special_issues %}
 SPECIAL ISSUES
 {% for item in special_issues %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
   {{ item.url }}
-{% endfor %}{% endif %}{% if papers %}
+{% endfor %}All special issues: {{ urls.special_issues }}
+{% endif %}{% if jobs %}
+NEW JOB POSTINGS
+{% for item in jobs %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
+  {{ item.url }}
+{% endfor %}All job postings: {{ urls.jobs }}
+{% endif %}{% if papers %}
 {{ papers_heading|upper }}
 {% for paper in papers %}{{ paper.rank }}. {{ paper.title }} ({{ paper.authors }})
    {{ paper.url }}
-{% endfor %}{% endif %}
+{% endfor %}Browse all discussion papers: {{ urls.papers }}
+{% endif %}{% if job_market_papers %}
+JOB MARKET PAPERS
+{{ issue.jm_intro }}
+{% for paper in job_market_papers %}{{ paper.number }}. {{ paper.title }} ({{ paper.authors }})
+    {{ paper.url }}
+{% endfor %}{{ issue.next_note }} Apply: {{ urls.membership }}
+{% endif %}
 LONG-DISTANCE VISITS
 {{ issue.visits }}
 {{ urls.visits }}
-{% if jobs %}
-JOB POSTINGS
-{% for item in jobs %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
-  {{ item.url }}
-{% endfor %}{% endif %}
-{% if first_issue %}COMING NEXT WEEK: {{ issue.next_title }}
+
+HOW TO USE THE LABOR HUB
+The Hub is built by its members. Log in and post job postings, events, special issues, long-distance visits and research papers (working papers for our Discussion Paper series).
+Choose your alerts in your account settings: new papers on specific topics, visits to your region. Log in: {{ urls.login }}
+
+{% if first_issue and not job_market_papers %}COMING NEXT WEEK: {{ issue.next_title }}
 {{ issue.next_body }}
 {{ issue.next_note }} Apply: {{ urls.membership }}
 

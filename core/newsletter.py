@@ -25,6 +25,8 @@ ISSUE = {
     "welcome": "Thank you for joining the community. We look forward to your contributions!",
     "visits": ("Several members have posted upcoming visits, and some are open to extending "
                "their trips for seminars. Check who is coming to your region."),
+    "jm_intro": ("Here are all the job market papers we have received so far, a great way to "
+                 "discover this year's candidates."),
     "next_title": "Job Market Papers",
     "next_body": ("We'll launch a special page listing all the job market papers we have "
                   "received, a great way to discover this year's candidates."),
@@ -81,6 +83,17 @@ def period_start(kind=WEEKLY, now=None):
     return now - KINDS[kind]["window"]
 
 
+def job_market_papers():
+    """All approved job market papers for the newsletter's box, J1, J2, ..."""
+    return [{
+        "number": p.display_number, "title": p.title,
+        "url": absolute_url(reverse("publication_detail", kwargs={"pk": p.pk})),
+        "download_url": absolute_url(reverse("publication_download", kwargs={"pk": p.pk})),
+        "authors": ", ".join(str(a) for a in p.ordered_authors),
+        "all_time": p.download_count,
+    } for p in Publication.job_market_listing()]
+
+
 def paper_downloads(kind=WEEKLY, now=None):
     """Downloads in this issue's period for *every* approved discussion paper, not just
     the top few: ``{"since", "until", "rows"}`` with ``rows`` most downloaded first."""
@@ -135,7 +148,7 @@ def newsletter_context(kind=WEEKLY, now=None):
     since = period_start(kind, now)
     ranked = [] if first_issue else list(Publication.most_downloaded(MAX_PAPERS, since=since))
     all_time = not ranked
-    papers_heading = f"Most downloaded papers {spec['this_period'].lower()}"
+    papers_heading = f"New papers {spec['this_period'].lower()} (most downloaded)"
     if all_time:
         ranked = list(Publication.most_downloaded(MAX_PAPERS))
         papers_heading = "Most downloaded papers"
@@ -148,6 +161,7 @@ def newsletter_context(kind=WEEKLY, now=None):
         "all_time": p.download_count,
     } for i, p in enumerate(ranked, start=1)]
 
+    jm_papers = job_market_papers()
     if kind == MONTHLY:
         local = timezone.localtime(now)
         subject = f"The Labor Hub Monthly Newsletter, {local:%B} {local.year}"
@@ -159,6 +173,8 @@ def newsletter_context(kind=WEEKLY, now=None):
         "kind": kind,
         "monthly": kind == MONTHLY,
         "this_period": spec["this_period"],
+        "period_phrase": spec["this_period"].lower(),
+        "job_market_papers": jm_papers,
         "subject": subject,
         "issue_number": number,
         # The welcome note and the "coming next week" block belong to the first
@@ -184,6 +200,7 @@ def newsletter_context(kind=WEEKLY, now=None):
             "events": url("events-list"), "special_issues": url("special-issues-list"),
             "jobs": url("jobs-list"), "visits": url("seminars-list"),
             "papers": absolute_url(reverse("publications")) + "?type=discussion",
+            "job_market": absolute_url(reverse("publications")) + "?type=job_market",
             "membership": url("membership"), "contact": url("contact"), "faq": url("faq"),
             "settings": url("settings"),
         },

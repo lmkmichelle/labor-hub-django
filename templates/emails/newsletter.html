@@ -29,6 +29,8 @@
     </td>
   </tr>
 
+
+
   {% if first_issue %}
   <!-- Welcome -->
   <tr>
@@ -37,8 +39,45 @@
       <p style="margin:0;font-size:15px;line-height:1.6;color:#22262b;">{{ issue.welcome }}</p>
     </td>
   </tr>
+  {% else %}
+  <!-- Intro -->
+  <tr>
+    <td style="padding:26px 32px 8px 32px;">
+      <p style="margin:0;font-size:15px;line-height:1.6;color:#22262b;">{{ this_period }} in the Labor Hub: new announcements{% if job_market_papers %}, most downloaded papers and <strong style="color:#000000;">a list of all Job Market Papers we have received so far</strong>{% else %} and most downloaded papers{% endif %}. Wishing you a great {% if monthly %}month{% else %}week{% endif %}!</p><p style="margin:8px 0 0 0;font-size:15px;line-height:1.6;color:#22262b;">You can set preferences to receive alerts about announcements or papers you are most interested in! <a href="{{ urls.settings }}" style="color:#22262b;font-weight:bold;">Set your alerts &rarr;</a></p>
+    </td>
+  </tr>
   {% endif %}
-
+  {% if events %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">New events</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in events %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.events }}" style="color:#22262b;font-weight:bold;">All events &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if special_issues %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Special issues</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in special_issues %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.special_issues }}" style="color:#22262b;font-weight:bold;">All special issues &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if jobs %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">New job postings</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in jobs %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.jobs }}" style="color:#22262b;font-weight:bold;">All job postings &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if papers %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">{{ papers_heading }}</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for paper in papers %}<tr><td width="30" valign="top" style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.1;color:#b91c1c;padding:0 0 12px 0;">{{ paper.rank }}</td><td valign="top" style="vertical-align:top;padding:0 0 12px 0;font-size:14px;line-height:1.4;"><a href="{{ paper.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ paper.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ paper.authors }}</span> &middot; <a href="{{ paper.download_url }}" style="color:#22262b;font-weight:bold;font-size:14px;">PDF</a></td></tr>{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.papers }}" style="color:#22262b;font-weight:bold;">Browse all discussion papers &rarr;</a></p></td></tr>
+  {% endif %}
+  {% if job_market_papers %}
+  <!-- Job market papers -->
+  <tr>
+    <td style="padding:26px 32px 6px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6c4c4;background:#fdf6f5;">
+        <tr>
+          <td valign="top" style="vertical-align:top;padding:16px 20px;">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#b91c1c;font-weight:bold;padding-bottom:4px;">New {{ period_phrase }}</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:19px;color:#b91c1c;padding-bottom:6px;">Job Market Papers</div>
+            <p style="margin:0 0 12px 0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.jm_intro }}</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for paper in job_market_papers %}<tr><td width="44" valign="top" style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.1;color:#b91c1c;padding:0 0 12px 0;">{{ paper.number }}</td><td valign="top" style="vertical-align:top;padding:0 0 12px 0;font-size:14px;line-height:1.4;"><a href="{{ paper.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ paper.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ paper.authors }}</span> &middot; <a href="{{ paper.download_url }}" style="color:#22262b;font-weight:bold;font-size:14px;">PDF</a></td></tr>{% endfor %}</table>
+            <p style="margin:0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.next_note }} <a href="{{ urls.membership }}" style="color:#22262b;font-weight:bold;">Apply here &rarr;</a></p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Long-distance visits</h2><p style="margin:0 0 10px 0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.visits }}</p><p style="margin:0;font-size:14px;"><a href="{{ urls.visits }}" style="color:#22262b;font-weight:bold;">See upcoming visits &rarr;</a></p></td></tr>
   <!-- How to use -->
   <tr>
     <td style="padding:18px 32px 6px 32px;">
@@ -71,21 +110,8 @@
     </td>
   </tr>
 
-  <tr><td style="padding:26px 32px 0 32px;"><p style="margin:0;font-size:13px;color:#5b6370;">{{ this_period }} on the Hub: everything currently open, sorted by deadline. <a href="{{ urls.announcements }}" style="color:#22262b;font-weight:bold;">All announcements &rarr;</a></p></td></tr>
-  {% if events %}
-  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Events</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in events %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.events }}" style="color:#22262b;font-weight:bold;">All events &rarr;</a></p></td></tr>
-  {% endif %}
-  {% if special_issues %}
-  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Special issues</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in special_issues %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.special_issues }}" style="color:#22262b;font-weight:bold;">All special issues &rarr;</a></p></td></tr>
-  {% endif %}
-  {% if papers %}
-  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">{{ papers_heading }}</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for paper in papers %}<tr><td width="30" valign="top" style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.1;color:#b91c1c;padding:0 0 12px 0;">{{ paper.rank }}</td><td valign="top" style="vertical-align:top;padding:0 0 12px 0;font-size:14px;line-height:1.4;"><a href="{{ paper.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ paper.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ paper.authors }}</span> &middot; <a href="{{ paper.download_url }}" style="color:#22262b;font-weight:bold;font-size:14px;">PDF</a></td></tr>{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.papers }}" style="color:#22262b;font-weight:bold;">Browse all discussion papers &rarr;</a></p></td></tr>
-  {% endif %}
-  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Long-distance visits</h2><p style="margin:0 0 10px 0;font-size:14px;line-height:1.5;color:#22262b;">{{ issue.visits }}</p><p style="margin:0;font-size:14px;"><a href="{{ urls.visits }}" style="color:#22262b;font-weight:bold;">See upcoming visits &rarr;</a></p></td></tr>
-  {% if jobs %}
-  <tr><td style="padding:26px 32px 4px 32px;"><h2 style="margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid #e3e6eb;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:normal;color:#b91c1c;">Job postings</h2><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{% for item in jobs %}{% if forloop.counter0|divisibleby:2 %}<tr>{% endif %}<td width="298" valign="top" style="width:298px;vertical-align:top;padding:0 {% if forloop.counter0|divisibleby:2 %}18px 14px 0{% else %}0 14px 18px{% endif %};font-size:14px;line-height:1.4;"><a href="{{ item.url }}" style="color:#1d2b44;font-weight:normal;text-decoration:none;">{{ item.title }}</a><br><span style="color:#4a515c;font-size:14px;">{{ item.meta }}</span><br><span style="color:#22262b;font-size:14px;font-weight:normal;">{{ item.deadline }}</span></td>{% if not forloop.counter0|divisibleby:2 or forloop.last %}{% if forloop.last and forloop.counter0|divisibleby:2 %}<td width="298" style="width:298px;"></td>{% endif %}</tr>{% endif %}{% endfor %}</table><p style="margin:0;font-size:14px;"><a href="{{ urls.jobs }}" style="color:#22262b;font-weight:bold;">All job postings &rarr;</a></p></td></tr>
-  {% endif %}
-  {% if first_issue %}
+
+  {% if first_issue and not job_market_papers %}
   <!-- Coming next week -->
   <tr>
     <td style="padding:26px 32px 6px 32px;">

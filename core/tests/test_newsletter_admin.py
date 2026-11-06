@@ -192,3 +192,16 @@ class PaperDownloadsReportTests(TestCase):
             email="s@example.com", password="pw", is_staff=True, is_active=True))
         self.assertEqual(self.client.get(
             reverse("admin:core_newsletterschedule_downloads_csv", args=["weekly"])).status_code, 403)
+
+
+class JobMarketPapersOnDashboardTests(TestCase):
+    def test_dashboard_lists_the_job_market_papers_that_will_be_emailed(self):
+        User = get_user_model()
+        self.client.force_login(User.objects.create_superuser(email="root@example.com", password="pw"))
+        url = reverse("admin:core_newsletterschedule_changelist")
+        self.assertContains(self.client.get(url), "No approved job market papers yet", count=2)
+        paper = make_publication(title="A market paper", status="approved", is_job_market=True)
+        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", job_market_paper_number=4)
+        response = self.client.get(url)
+        self.assertContains(response, "A market paper", count=2)     # weekly and monthly panels
+        self.assertContains(response, "J4")

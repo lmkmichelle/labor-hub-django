@@ -70,6 +70,18 @@
       </table>
       {% else %}<p class="help">No downloaded papers yet.</p>{% endif %}
 
+      <h4>Job market papers <span class="help nl-note">({{ panel.job_market_papers|length }}, all of them are emailed in the Job Market Papers box)</span></h4>
+      {% if panel.job_market_papers %}
+      <table class="nl-table">
+        <thead><tr><th>No.</th><th>Paper</th><th>Authors</th><th>Downloads (all-time)</th></tr></thead>
+        <tbody>
+        {% for paper in panel.job_market_papers %}
+        <tr><td>{{ paper.number }}</td><td><a href="{{ paper.url }}" target="_blank" rel="noopener">{{ paper.title }}</a></td><td>{{ paper.authors }}</td><td>{{ paper.all_time }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="help">No approved job market papers yet; the box is left out of the email.</p>{% endif %}
+
       {% for title, items in panel.sections %}
       <h4>{{ title }} <span class="help nl-note">({{ items|length }} open{% if items|length > panel.max_listed %}, the first {{ panel.max_listed }} are emailed{% endif %})</span></h4>
       {% if items %}

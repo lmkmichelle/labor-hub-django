@@ -284,6 +284,15 @@ class Publication(Approvable):
         return papers.prefetch_related('author_links__author__user')[:limit]
 
     @classmethod
+    def job_market_listing(cls):
+        """Every approved job market paper with a PDF, in J-number order (the newsletter's
+        Job Market Papers box). Revisions are left out; they share the original's number."""
+        return (cls.objects.filter(status='approved', is_job_market=True, pdf__gt='',
+                                   revision_of__isnull=True, job_market_paper_number__isnull=False)
+                .order_by('job_market_paper_number')
+                .prefetch_related('author_links__author__user'))
+
+    @classmethod
     def downloads_since(cls, since):
         """Every approved discussion paper with a PDF and its downloads after ``since``
         (0 included), most downloaded first. Uses the timestamped log."""

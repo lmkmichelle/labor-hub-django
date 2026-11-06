@@ -255,6 +255,7 @@ class NewsletterScheduleAdmin(admin.ModelAdmin):
             "context": context, "due": due, "skip_reason": reason,
             "last": last_sent_issue(kind), "subscribers": self._subscribers(kind),
             "sections": sections, "max_listed": context["max_listed"],
+            "job_market_papers": context["job_market_papers"],
             "empty": not (context["papers"] or any(listed.values())),
         }
 
