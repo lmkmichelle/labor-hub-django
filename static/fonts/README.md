@@ -17,3 +17,10 @@ outlines directly; it needs a `glyf` table).
 **Licence:** GUST Font License (GFL), a Latin Modern/OFL-style licence permitting
 redistribution and modification, including format conversion. See
 https://www.gust.org.pl/projects/e-foundry/latin-modern/ for the full text and font family.
+
+# Inter (site font)
+
+`inter/` holds the variable-weight Inter web font (latin and latin-ext woff2 subsets) from the
+`@fontsource-variable/inter` package v5.3.0, licensed under the SIL Open Font License 1.1
+(`inter/LICENSE.txt`). It is declared in `static/src/input.css`; the site no longer contacts
+Google Fonts.

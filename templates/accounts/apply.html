@@ -149,9 +149,8 @@
 </form>
  </article>
 
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css"/>
+<script src="{% static 'js/vendor/tagify.min.js' %}"></script>
+<link href="{% static 'css/tagify.css' %}" rel="stylesheet" type="text/css"/>
 <script src="{% static_v 'js/tagify.js' %}"></script>
 <script src="{% static_v 'js/university-picker.js' %}"></script>
 <script src="{% static_v 'js/conditional-field.js' %}"></script>

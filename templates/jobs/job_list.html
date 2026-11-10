@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"
+  <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
+  <link href="{% static 'css/tagify.css' %}"
         rel="stylesheet"
         type="text/css" />
   <article class="format lg:format-lg max-w-none">

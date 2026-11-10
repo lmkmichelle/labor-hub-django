@@ -23,3 +23,16 @@ class LegalPagesTests(TestCase):
     @override_settings(LABOR_HUB_POSTAL_ADDRESS="1 Test Road")
     def test_address_comes_from_the_setting(self):
         self.assertContains(self.client.get(reverse("contact")), "1 Test Road")
+    def test_no_third_party_cdn_references_remain(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2]
+        hits = [
+            str(path.relative_to(root))
+            for path in (root / "templates").rglob("*.html")
+            if "cdn.jsdelivr" in path.read_text() or "fonts.googleapis" in path.read_text()
+        ]
+        css = (root / "static/src/input.css").read_text()
+        if "fonts.googleapis" in css:
+            hits.append("static/src/input.css")
+        self.assertEqual(hits, [])

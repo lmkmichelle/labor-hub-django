@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load form_tags %}
 
 {% block title %}Settings{% endblock title %}
@@ -104,8 +105,8 @@
   {{ alert_topic_choices|json_script:"alert-topic-choices" }}
   {{ alert_country_choices|json_script:"alert-country-choices" }}
   {{ alert_university_choices|json_script:"alert-university-choices" }}
-  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+  <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
+  <link href="{% static 'css/tagify.css' %}" rel="stylesheet" type="text/css" />
   <script>
     (function () {
       if (typeof Tagify === 'undefined') {

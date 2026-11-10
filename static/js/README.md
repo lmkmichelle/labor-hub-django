@@ -8,6 +8,12 @@ Per CLAUDE.md, no runtime CDN loads — third-party scripts are vendored here an
   Used by `avatar-editor.js` for the Edit Profile picture crop/rotate/zoom control. Its stylesheet
   is vendored alongside at `static/css/cropper.min.css`.
 
+- `vendor/tagify.min.js` — [Tagify](https://github.com/yairEO/tagify) v4.39.0, MIT licensed, pinned (it
+  used to load unpinned from a CDN). Its stylesheet is `static/css/tagify.css`. `tagify.js` here is
+  the project's own code that builds on it.
+
+Fonts: Inter is self-hosted in `static/fonts/inter/` (SIL OFL 1.1, licence file alongside).
+
 The paper-submission Authors field's reorder-by-author-name control (`tagify.js`'s
 `addAuthorReorderButtons`) is plain move up/down buttons, no vendored drag library -- two earlier
 attempts (`@yaireo/dragsort`, then `SortableJS/Sortable` with `forceFallback: true`) both hit
