@@ -35,7 +35,7 @@
 @layer components {
   /* Form controls -- single source for text/select inputs (FR-005/FR-006) */
   .form-input {
-    @apply block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-gray-500 text-heading text-sm rounded-base shadow-xs placeholder:text-body focus:ring-brand focus:border-brand;
+    @apply block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs placeholder:text-body focus:ring-brand focus:border-brand;
   }
   /* No block/w-full here (unlike .form-input) -- a full-width form field adds
      it explicitly (partials/_select_field.html, _form_field.html); a compact
@@ -45,7 +45,7 @@
      with a themed one (Flowbite's own select examples do the same) -- without
      this a select reads as plain native styling despite the custom border/bg. */
   .form-select {
-    @apply px-3 py-2.5 pr-10 bg-neutral-secondary-medium border border-gray-500 text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand appearance-none bg-no-repeat;
+    @apply px-3 py-2.5 pr-10 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand appearance-none bg-no-repeat;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
     background-position: right 0.75rem center;
     background-size: 1.25em 1.25em;
@@ -92,10 +92,10 @@
     @apply mt-0 mb-2 text-sm text-body;
   }
   .form-check {
-    @apply w-4 h-4 border border-gray-500 rounded-xs bg-neutral-secondary-medium focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1;
+    @apply w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1;
   }
   .form-radio {
-    @apply w-4 h-4 border border-gray-500 rounded-full bg-neutral-secondary-medium focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1;
+    @apply w-4 h-4 border border-default-medium rounded-full bg-neutral-secondary-medium focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1;
   }
   .form-check-label {
     @apply select-none ms-1 text-sm font-medium text-heading;
@@ -188,7 +188,7 @@
      variant) carries the height. Used by the FileInput branch of
      partials/_form_field.html. */
   .form-file {
-    @apply block w-full cursor-pointer overflow-hidden bg-neutral-secondary-medium border border-gray-500 text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand
+    @apply block w-full cursor-pointer overflow-hidden bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base shadow-xs focus:ring-brand focus:border-brand
       file:ms-0 file:me-3 file:cursor-pointer file:border-0 file:bg-neutral-tertiary-medium file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-heading hover:file:bg-neutral-tertiary;
   }
   /* Edit Profile's avatar preview (static/js/avatar-editor.js). Square, matching how
