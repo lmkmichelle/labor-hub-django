@@ -16,13 +16,13 @@ Submit Paper
 <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
 <link href="{% static 'css/tagify.css' %}" rel="stylesheet" type="text/css"/>
 <article class="format lg:format-lg max-w-none">
-<h3 aria-level="1" class="title">
+<h2 aria-level="1" class="title">
     {% if object %}
     Edit paper
     {% else %}
     Submit a paper
     {% endif %}
-</h3>
+</h2>
 <p class="mb-5 text-sm text-body">Papers are reviewed before they are published. See the <a href="{% url 'faq' %}#papers">FAQ</a> for timing and revisions. <span class="text-red-600" aria-hidden="true">*</span> indicates a required field.</p>
 
 <form method="POST" class="mb-8" enctype="multipart/form-data">

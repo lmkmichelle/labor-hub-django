@@ -9,7 +9,7 @@
 
 {% block content %}
     <article class="format lg:format-lg max-w-none">
-        <h3 aria-level="1" class="title">{% if object %}Edit Long-Distance Visit{% else %}Post a Long-Distance Visit{% endif %}</h3>
+        <h2 aria-level="1" class="title">{% if object %}Edit Long-Distance Visit{% else %}Post a Long-Distance Visit{% endif %}</h2>
         <form method="POST" class="mb-8" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
