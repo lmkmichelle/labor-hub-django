@@ -1,6 +1,7 @@
 import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -233,6 +234,27 @@ class SettingsView(LoginRequiredMixin, View):
                           self._context(request, alert_prefs_form=alert_prefs_form))
 
         return redirect("settings")
+
+
+class DeleteAccountView(LoginRequiredMixin, View):
+    """Let a member delete their own account (password required).
+
+    The cleanup itself lives in accounts.signals.clean_up_deleted_user so an
+    admin deleting a user gets exactly the same result.
+    """
+    template_name = "accounts/delete_account.html"
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        if not request.user.check_password(request.POST.get("password", "")):
+            return render(request, self.template_name,
+                          {"error": "That password is not correct."}, status=400)
+        user = request.user
+        logout(request)
+        user.delete()
+        return render(request, "accounts/account_deleted.html")
 
 
 class AdviseeApplicationsView(LoginRequiredMixin, ListView):

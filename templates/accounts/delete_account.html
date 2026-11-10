@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Delete your account{% endblock title %}
+
+{% block content %}
+  <article class="format lg:format-lg max-w-none">
+    <h1 class="title">Delete your account</h1>
+    <p>This cannot be undone. Deleting your account will:</p>
+    <ul>
+      <li>remove your profile, photo, CV and any application you submitted, with the files you uploaded;</li>
+      <li>take your email address off the newsletter and alert lists;</li>
+      <li>sign you out everywhere.</li>
+    </ul>
+    <p>
+      Papers, announcements, events and other posts you made <strong>stay on the
+      site</strong> with your name shown as plain text, no longer linked to an
+      account. To have something removed as well, delete it first or
+      <a href="{% url 'contact' %}">contact us</a>.
+    </p>
+  </article>
+  <form method="post" class="max-w-md mt-6">
+    {% csrf_token %}
+    <div class="form-field">
+      <label for="delete-password" class="form-label">Enter your password to confirm</label>
+      <input type="password"
+             name="password"
+             id="delete-password"
+             class="form-input"
+             autocomplete="current-password"
+             required
+             {% if error %}aria-invalid="true" aria-describedby="delete-error"{% endif %} />
+      {% if error %}<p id="delete-error" class="mt-2 text-sm text-red-600">{{ error }}</p>{% endif %}
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn-primary">Delete my account</button>
+      <a href="{% url 'settings' %}" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+{% endblock content %}

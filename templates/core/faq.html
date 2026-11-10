@@ -117,5 +117,16 @@
         one of them is posted.
       </p>
     </details>
+
+    <h4 id="account" class="faq-section">Your account and data</h4>
+    <details class="faq-item">
+      <summary class="faq-question">How do I delete my account?</summary>
+      <p class="faq-answer">
+        Under <a href="{% url 'settings' %}">Settings</a> → Delete account. This
+        removes your profile, photo, CV and email subscriptions. Papers and posts you
+        made stay on the site with your name as plain text; delete them first, or
+        <a href="{% url 'contact' %}">contact us</a>, if you want them removed too.
+      </p>
+    </details>
   </article>
 {% endblock content %}

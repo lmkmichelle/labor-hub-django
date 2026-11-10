@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 from .forms import LaborHubPasswordResetForm
 from .cm_webhook import cm_webhook
 from .views import ProfileView, EditProfileView, CustomLoginView, ApplicationSubmittedView, ResearcherApplicationView, \
-    StudentApplicationView, SettingsView, newsletter_unsubscribe, alerts_unsubscribe, AdviseeApplicationsView, \
+    StudentApplicationView, SettingsView, DeleteAccountView, newsletter_unsubscribe, alerts_unsubscribe, AdviseeApplicationsView, \
     advisee_approve, advisee_reject, advisee_paper, advisee_undo_reject
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path('profile/<int:pk>/', ProfileView.as_view(), name='profile'),
     path('profile/edit/', EditProfileView.as_view(), name='edit_profile'),
     path('settings/', SettingsView.as_view(), name='settings'),
+    path('settings/delete/', DeleteAccountView.as_view(), name='delete_account'),
     path('accounts/advisees/', AdviseeApplicationsView.as_view(), name='advisee_applications'),
     path('accounts/advisees/papers/<int:pk>/', advisee_paper, name='advisee_paper'),
     path('accounts/advisees/<int:pk>/approve/', advisee_approve, name='advisee_approve'),

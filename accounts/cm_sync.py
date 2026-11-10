@@ -145,3 +145,22 @@ def queue_sync(profile):
     if profile.cm_synced_state == state_hash(desired_state(profile)):
         return
     transaction.on_commit(lambda: sync_profile(profile))
+
+
+def remove_subscriber(email):
+    """Take ``email`` off both Campaign Monitor lists (account deletion).
+
+    Never raises: a CM outage is logged and must not block the deletion. Does
+    nothing when CM isn't configured."""
+    if not email or not is_configured() or not cm_lists.provisioned():
+        return
+    client = CampaignMonitorClient()
+    for key in (cm_lists.NEWSLETTER, cm_lists.ALERTS):
+        try:
+            client.delete_subscriber(cm_lists.list_id(key), email)
+        except CampaignMonitorError as exc:
+            # 203 = not on this list -- already gone.
+            if exc.code != 203:
+                logger.exception("Could not remove a deleted member from Campaign Monitor")
+        except Exception:
+            logger.exception("Could not remove a deleted member from Campaign Monitor")
