@@ -36,3 +36,26 @@ class LegalPagesTests(TestCase):
         if "fonts.googleapis" in css:
             hits.append("static/src/input.css")
         self.assertEqual(hits, [])
+
+
+class AccessibilityBasicsTests(TestCase):
+    def test_every_page_has_a_skip_link_and_a_main_landmark(self):
+        response = self.client.get(reverse("privacy"))
+        self.assertContains(response, 'href="#main"')
+        self.assertContains(response, '<main id="main"')
+
+    def test_pdf_download_link_has_an_accessible_name(self):
+        from publications.models import Publication
+        from core.models import ApprovalStatus
+        from django.core.files.base import ContentFile
+
+        paper = Publication.objects.create(
+            title="Named link", abstract="a", status=ApprovalStatus.APPROVED)
+        paper.pdf.save("p.pdf", ContentFile(b"%PDF-1.4"), save=True)
+        response = self.client.get(reverse("publication_detail", args=[paper.pk]))
+        self.assertContains(response, 'aria-label="Download PDF"')
+
+    def test_pages_have_their_own_titles(self):
+        for name in ("login", "contact", "privacy", "terms", "map"):
+            html = self.client.get(reverse(name)).content.decode()
+            self.assertNotIn("<title>Labor Hub</title>", html, name)

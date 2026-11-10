@@ -54,20 +54,53 @@
     var cropper = null;
     var objectUrl = null;
 
+    var FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function focusables() {
+      return Array.prototype.slice.call(modal.querySelectorAll(FOCUSABLE)).filter(function (el) {
+        return el.offsetParent !== null;
+      });
+    }
+
     function onKeydown(e) {
       if (e.key === 'Escape') {
         discardAndClose();
+        return;
+      }
+      // Keep Tab inside the dialog while it is open.
+      if (e.key === 'Tab') {
+        var items = focusables();
+        if (!items.length) {
+          e.preventDefault();
+          return;
+        }
+        var first = items[0];
+        var last = items[items.length - 1];
+        if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     }
 
     function openModal() {
       modal.classList.remove('hidden');
       document.addEventListener('keydown', onKeydown);
+      // Move focus into the dialog (its first control).
+      var items = focusables();
+      if (items.length) {
+        items[0].focus();
+      }
     }
 
     function closeModal() {
       modal.classList.add('hidden');
       document.removeEventListener('keydown', onKeydown);
+      // Hand focus back to the control that opened it.
+      stageButton.focus();
     }
 
     function destroyCropper() {

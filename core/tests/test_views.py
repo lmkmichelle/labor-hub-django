@@ -578,7 +578,7 @@ class ResearchersDirectoryTests(TestCase):
     def test_lives_at_researchers_and_says_researchers(self):
         self.assertEqual(reverse("scholars"), "/researchers/")
         response = self.client.get("/researchers/")
-        self.assertContains(response, "<h2>Researchers</h2>", html=True)
+        self.assertContains(response, '<h2 aria-level="1">Researchers</h2>', html=True)
         self.assertNotContains(response, "Fellows")
 
     def test_old_urls_redirect_with_their_query(self):

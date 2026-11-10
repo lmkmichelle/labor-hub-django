@@ -2,7 +2,7 @@
 {% block title %}Announcements{% endblock %}
 {% block content %}
     <article class="format lg:format-lg max-w-none">
-        <h2>Announcements</h2>
+        <h2 aria-level="1">Announcements</h2>
         {% include "partials/_announcement_tabs.html" with active="all" %}
         <p class="page-intro">The latest job postings, events, special issues and long-distance visits, newest first.</p>
         {% if user.is_authenticated %}

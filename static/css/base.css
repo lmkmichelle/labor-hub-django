@@ -10,9 +10,14 @@
 
 #map-wrap .land {
     fill: #E4E4E4;
-    stroke: #CCC;
+    stroke: #767676; /* 4.5:1 on white; graphics need 3:1 (WCAG 1.4.11) */
     transition: 250ms;
     stroke-width: 1px;
+}
+
+#map-wrap .land:focus-visible {
+    outline: 3px solid #1f2937;
+    outline-offset: 1px;
 }
 
 #map-wrap .land:hover {

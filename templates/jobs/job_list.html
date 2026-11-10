@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Job board{% endblock title %}
+
 {% block content %}
   <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
   <link href="{% static 'css/tagify.css' %}"
         rel="stylesheet"
         type="text/css" />
   <article class="format lg:format-lg max-w-none">
-    <h2>Job Board</h2>
+    <h2 aria-level="1">Job Board</h2>
     {% include "partials/_announcement_tabs.html" with active="job" %}
     <p class="mb-6">Here you will find recent job postings of academic positions in labor economics at every level, from pre-doctoral and research-assistant appointments to doctoral openings, post-doctoral fellowships, and faculty posts. Listings are contributed by members as vacancies arise. Members with a position to fill are invited to advertise it here, as it will reach labor economists across the international community. For pre-doctoral, research-assistant, and post-doctoral hiring, listings will be shared with universities directly to reach interested students broadly.</p>
     <div class="list-layout">
@@ -20,16 +22,17 @@
                  id="countries-hidden"
                  value="{{ selected_countries_serialized }}">
 
-          <div class="mb-4">
-            <h4>Countries</h4>
+          <div class="mb-4" role="group" aria-labelledby="filter-countries">
+            <h4 id="filter-countries">Countries</h4>
             <input type="text"
+                   aria-labelledby="filter-countries"
                    id="countries-pill-input"
                    class="form-input"
                    placeholder="Add countries...">
           </div>
 
-          <div class="mb-4">
-            <h4>Titles</h4>
+          <div class="mb-4" role="group" aria-labelledby="filter-titles">
+            <h4 id="filter-titles">Titles</h4>
             {% for value, label in rank_choices %}
               <div class="mb-1">
                 <input id="category-{{ value }}"

@@ -2,7 +2,7 @@
     <label for="{{ field.id_for_label }}" class="form-label">
         {{ label }}{% if required %}<span class="text-red-600 ms-0.5" aria-hidden="true">*</span>{% endif %}
     </label>
-    <select id="{{ field.id_for_label }}" name="{{ field.name }}"
+    <select id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %} name="{{ field.name }}"
             class="form-select block w-full"
             {% if required %}required{% endif %}>
         {% if empty_label %}
@@ -17,6 +17,6 @@
         {% endfor %}
     </select>
     {% if field.errors %}
-        <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+        <p id="{{ field.id_for_label }}-error" class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
     {% endif %}
 </div>

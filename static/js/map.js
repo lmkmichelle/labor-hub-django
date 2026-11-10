@@ -37,6 +37,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const count = info ? info[currentMetric] || 0 : 0;
       path.classList.toggle("has-data", count > 0);
       path.classList.toggle("selected", codeOf(path) === selectedCode);
+      // Only countries with something to show are keyboard stops (there are
+      // ~180 shapes; tabbing through the empty ones would be unusable).
+      if (count > 0) {
+        const name = path.getAttribute("title") || codeOf(path);
+        path.setAttribute("tabindex", "0");
+        path.setAttribute("role", "button");
+        path.setAttribute("aria-label", `${name}: ${count}`);
+      } else {
+        path.removeAttribute("tabindex");
+        path.removeAttribute("role");
+        path.removeAttribute("aria-label");
+      }
     });
   }
 
@@ -148,6 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   landPaths().forEach((path) => {
     path.addEventListener("click", () => showCountry(codeOf(path)));
+    path.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showCountry(codeOf(path));
+      }
+    });
   });
 
   // Delegated: the close button lives in the fetched fragment.

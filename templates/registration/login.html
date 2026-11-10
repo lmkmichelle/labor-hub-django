@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% load form_tags %}
+{% block title %}Log in{% endblock title %}
+
 {% block content %}
 <article class="format lg:format-lg max-w-none">   
-<h3 class="title">Log in</h3>
+<h3 aria-level="1" class="title">Log in</h3>
 <form method="POST">
     {% csrf_token %}
     

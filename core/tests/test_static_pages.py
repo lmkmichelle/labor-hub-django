@@ -66,7 +66,9 @@ class NavbarContactLinkTests(TestCase):
 
     def test_highlighted_on_contact_page(self):
         response = self.client.get(reverse('contact'))
-        self.assertContains(response, 'class="nav-link whitespace-nowrap text-red-700">Contact Us')
+        self.assertContains(
+            response,
+            'class="nav-link whitespace-nowrap text-red-700" aria-current="page">Contact Us')
 
 
 class NavbarPostLinksTests(TestCase):

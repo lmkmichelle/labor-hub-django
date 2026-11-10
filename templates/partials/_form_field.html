@@ -8,7 +8,7 @@
     {% endif %}
 
     {% if widget_name == 'Select' or widget_name == 'SelectMultiple' %}
-        <select id="{{ field.id_for_label }}" name="{{ field.name }}"
+        <select id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %} name="{{ field.name }}"
                 class="form-select block w-full"
                 {% if required %}required{% endif %}>
             {% for value, display in field.field.choices %}
@@ -20,24 +20,24 @@
                datepicker-format="yyyy-mm-dd"
                type="text"
                name="{{ field.name }}"
-               id="{{ field.id_for_label }}"
+               id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %}
                value="{{ date_value }}"
                class="form-input"
                {% if required %}required{% endif %} />
     {% elif widget_name == 'Textarea' %}
-        <textarea id="{{ field.id_for_label }}" name="{{ field.name }}" rows="4"
+        <textarea id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %} name="{{ field.name }}" rows="4"
                   class="form-input"
                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                   {% if required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
     {% elif is_file %}
         <input class="form-file"
-               id="{{ field.id_for_label }}" name="{{ field.name }}" type="file"
+               id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %} name="{{ field.name }}" type="file"
                {% if field.field.widget.attrs.accept %}accept="{{ field.field.widget.attrs.accept }}"{% endif %}
                {% if field.field.widget.attrs.multiple %}multiple{% endif %}>
     {% else %}
         <input type="{{ field.field.widget.input_type|default:'text' }}"
                name="{{ field.name }}"
-               id="{{ field.id_for_label }}"
+               id="{{ field.id_for_label }}"{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.id_for_label }}-error"{% endif %}
                value="{% if pill_value is not None %}{{ pill_value }}{% else %}{{ field.field.widget.attrs.value|default:field.value|default:'' }}{% endif %}"
                class="form-input"
                {% if field.field.widget.attrs.autocomplete %}autocomplete="{{ field.field.widget.attrs.autocomplete }}"{% endif %}
@@ -46,6 +46,6 @@
     {% endif %}
 
     {% if field.errors %}
-        <p class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
+        <p id="{{ field.id_for_label }}-error" class="mt-2 text-sm text-red-600">{{ field.errors.0 }}</p>
     {% endif %}
 </div>

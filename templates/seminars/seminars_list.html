@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Long-distance visits{% endblock title %}
+
 {% block content %}
     <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
     <link href="{% static 'css/tagify.css' %}"
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        <h2>Long-Distance Visits</h2>
+        <h2 aria-level="1">Long-Distance Visits</h2>
         {% include "partials/_announcement_tabs.html" with active="visit" %}
         <p class="mb-6">Here you will find information about research visits, such as a sabbatical, that members have planned, allowing colleagues to see who will be at what institutions in their area and when. It is intended to facilitate additional meetings, seminars, and new collaborations. Members are invited to post their forthcoming visits so that others in the community are aware of their presence.</p>
         <div class="list-layout">
@@ -18,8 +20,8 @@
                            name="countries"
                            id="countries-hidden"
                            value="{{ selected_countries_serialized }}">
-                    <div class="mb-4">
-                        <h4>Display</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-display">
+                        <h4 id="filter-display">Display</h4>
                         <div class="mb-1">
                             <input id="show-archived"
                                    class="form-check"
@@ -32,15 +34,16 @@
                                    for="show-archived">Show Past Visits</label>
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <h4>Countries</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-countries">
+                        <h4 id="filter-countries">Countries</h4>
                         <input type="text"
+                               aria-labelledby="filter-countries"
                                id="countries-pill-input"
                                class="form-input"
                                placeholder="Add countries...">
                     </div>
-                    <div class="mb-4">
-                        <h4>Visit Type</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-visit-type">
+                        <h4 id="filter-visit-type">Visit Type</h4>
                         {% for value, label in visit_type_choices %}
                             <div class="mb-1">
                                 <input id="visit-type-{{ value }}"

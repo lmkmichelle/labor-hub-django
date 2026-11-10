@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Researchers{% endblock title %}
+
 {% block content %}
     <script src="{% static 'js/vendor/tagify.min.js' %}"></script>
     <link href="{% static 'css/tagify.css' %}"
           rel="stylesheet"
           type="text/css" />
     <article class="format lg:format-lg max-w-none">
-        <h2>Researchers</h2>
+        <h2 aria-level="1">Researchers</h2>
         <p class="mb-6">Browse the members of the Labor Hub community. Search by name, position, or email, and filter by type, country, or research interest to find researchers and students.</p>
         <div class="not-format mb-6">
             <a href="{% url 'map' %}" class="btn-secondary no-underline">Explore world map</a>
@@ -24,8 +26,8 @@
                            name="interests"
                            id="interests-hidden"
                            value="{{ selected_interests_serialized }}">
-                    <div class="mb-4">
-                        <h4>Type</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-type">
+                        <h4 id="filter-type">Type</h4>
                         {% for value, label in role_choices %}
                             <div class="mb-1">
                                 <input id="role-{{ value }}"
@@ -39,16 +41,18 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <div class="mb-4">
-                        <h4>Countries</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-countries">
+                        <h4 id="filter-countries">Countries</h4>
                         <input type="text"
+                               aria-labelledby="filter-countries"
                                id="countries-pill-input"
                                class="form-input"
                                placeholder="Add countries...">
                     </div>
-                    <div class="mb-4">
-                        <h4>Research Interests</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-research-interests">
+                        <h4 id="filter-research-interests">Research Interests</h4>
                         <input type="text"
+                               aria-labelledby="filter-research-interests"
                                id="interests-pill-input"
                                class="form-input"
                                placeholder="Add interests...">

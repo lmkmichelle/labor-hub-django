@@ -15,6 +15,7 @@
                            aria-label="Download citation (BibTeX)"
                            title="Download citation (BibTeX)">
                             <svg xmlns="http://www.w3.org/2000/svg"
+                                 aria-hidden="true"
                                  width="20"
                                  height="20"
                                  class="inline"
@@ -27,8 +28,10 @@
                     {% if publication.pdf %}
                         <a href="{% url 'publication_download' pk=publication.pk %}"
                            rel="nofollow"
+                           aria-label="Download PDF"
                            class="p-2 -m-2">
                             <svg xmlns="http://www.w3.org/2000/svg"
+                                 aria-hidden="true"
                                  width="20"
                                  height="20"
                                  class="inline"
@@ -53,7 +56,7 @@
                 </div>
             </div>
             <div class="flex flex-row gap-2 items-center w-full overflow-auto">
-                <h3>{{ publication.title }}</h3>
+                <h3 aria-level="1">{{ publication.title }}</h3>
             </div>
             <div class="not-format mb-4">
                 {% for author in publication.ordered_authors %}

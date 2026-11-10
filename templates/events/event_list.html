@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Events{% endblock title %}
+
 {% block content %}
     <article class="format lg:format-lg max-w-none">
-        <h2>Upcoming Events</h2>
+        <h2 aria-level="1">Upcoming Events</h2>
         {% include "partials/_announcement_tabs.html" with active="event" %}
         <p class="mb-6">Here you will find announcements about upcoming conferences, workshops, or other events organized by members of the community. Events are screened for relevance and are published online as soon as approved.</p>
         <div class="list-layout">
@@ -10,8 +12,8 @@
                 <form method="GET" id="filterForm">
                     <input type="hidden" name="q" value="{{ query }}">
                     <input type="hidden" name="sort" value="{{ sort }}">
-                    <div class="mb-4">
-                        <h4>Category</h4>
+                    <div class="mb-4" role="group" aria-labelledby="filter-category">
+                        <h4 id="filter-category">Category</h4>
                         {% for value, label in category_choices %}
                             <div class="mb-1">
                                 <input id="category-{{ value }}"

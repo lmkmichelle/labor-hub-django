@@ -42,6 +42,7 @@
  */
 (function () {
   var SEARCH_THRESHOLD = 8; // more options than this gets a filter box
+  var comboboxCount = 0; // ids for selects that have none
 
   function optionsOf(select) {
     return Array.prototype.slice.call(select.options);
@@ -84,6 +85,21 @@
     trigger.setAttribute("aria-expanded", "false");
     wrapper.insertBefore(trigger, select);
 
+    // The <label for> points at the hidden select, so give the trigger the
+    // label explicitly -- otherwise a screen reader announces only the current
+    // value ("Choose...") without saying which field it is.
+    var uid = "combobox-" + (select.id || String(++comboboxCount));
+    trigger.id = uid + "-trigger";
+    var label = select.id
+      ? document.querySelector('label[for="' + select.id + '"]')
+      : null;
+    if (label) {
+      if (!label.id) {
+        label.id = uid + "-label";
+      }
+      trigger.setAttribute("aria-labelledby", label.id + " " + trigger.id);
+    }
+
     // Visually hidden but still rendered (not display:none) -- a form
     // control that's never rendered can silently lose its native "please
     // select an item" validation bubble in some browsers. tabIndex -1 takes
@@ -98,6 +114,9 @@
     var panel = document.createElement("div");
     panel.className =
       "dropdown-panel not-format hidden absolute top-full z-10 mt-1 max-h-72 w-full overflow-auto";
+    // Focusable (not tabbable) so a click on the panel's own scrollbar keeps
+    // focus inside the wrapper and doesn't trip the focusout-closes handler.
+    panel.tabIndex = -1;
     wrapper.appendChild(panel);
 
     // Always created, but only shown once the select actually has enough
@@ -121,6 +140,11 @@
 
     var list = document.createElement("ul");
     list.setAttribute("role", "listbox");
+    list.id = uid + "-list";
+    if (label) {
+      list.setAttribute("aria-labelledby", label.id);
+    }
+    trigger.setAttribute("aria-controls", list.id);
     list.className = "py-1 text-sm text-heading";
     panel.appendChild(list);
 
@@ -138,6 +162,13 @@
       if (items[index]) {
         items[index].classList.add("bg-neutral-secondary-medium");
         items[index].scrollIntoView({ block: "nearest" });
+        // Focus stays on the trigger / filter box, so tell assistive tech which
+        // option is highlighted.
+        trigger.setAttribute("aria-activedescendant", items[index].id);
+        searchInput.setAttribute("aria-activedescendant", items[index].id);
+      } else {
+        trigger.removeAttribute("aria-activedescendant");
+        searchInput.removeAttribute("aria-activedescendant");
       }
       activeIndex = index;
     }
@@ -170,10 +201,15 @@
         button.className = "dropdown-panel-item";
         button.textContent = opt.textContent;
         button.setAttribute("role", "option");
+        // Options are reached with the arrow keys, not Tab.
+        button.tabIndex = -1;
+        button.id = uid + "-opt-" + i;
         button.dataset.index = String(i);
         if (opt.value === select.value) {
           button.setAttribute("aria-selected", "true");
           selectedRow = i;
+        } else {
+          button.setAttribute("aria-selected", "false");
         }
         li.appendChild(button);
         fragment.appendChild(li);
@@ -283,6 +319,12 @@
 
     document.addEventListener("mousedown", function (event) {
       if (!panel.classList.contains("hidden") && !wrapper.contains(event.target)) {
+        closePanel();
+      }
+    });
+    // Tabbing away must close the panel too, not only a click outside.
+    wrapper.addEventListener("focusout", function (event) {
+      if (!panel.classList.contains("hidden") && !wrapper.contains(event.relatedTarget)) {
         closePanel();
       }
     });
