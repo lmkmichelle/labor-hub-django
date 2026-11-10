@@ -282,6 +282,8 @@ class UserApplication(models.Model):
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )
+    # When the applicant ticked "I agree to the Terms of Use and Privacy Policy".
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
     # Chosen on the application form (default Weekly) and copied to the member's
     # profile on approval, so nobody is subscribed without being shown the choice.
     newsletter_frequency = models.CharField(

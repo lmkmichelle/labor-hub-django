@@ -45,7 +45,7 @@ def application_post_data(**overrides):
         "country_code": "US",
         "motivation": "Please let me in.",
         "password1": "pass12345",
-        "password2": "pass12345",
+        "password2": "pass12345", "agree_terms": "on",
     }
     data.update(overrides)
     return data

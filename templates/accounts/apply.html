@@ -132,14 +132,25 @@
     {% render_field form.password1 label="Password" help_text="Enter a secure password" %}
     {% render_field form.password2 label="Confirm Password" help_text="Enter the same password as before, for verification" %}
 
-    <div class="not-format mb-5 rounded-base border border-default bg-neutral-secondary-soft p-4 text-sm text-body">
-        <p class="font-medium text-heading mb-1">Before you apply</p>
-        <ul class="list-disc ps-5 space-y-1">
-            <li>Your profile, including your email address, is shown publicly on the site.</li>
-            {% if form.advisor %}<li>Your advisor will be emailed to confirm your application.</li>{% endif %}
-            <li>Newsletter and alert emails record opens and clicks.</li>
-        </ul>
-        <p class="mt-2">By applying you agree to the <a href="{% url 'terms' %}" class="underline" target="_blank" rel="noopener">Terms of Use</a> and <a href="{% url 'privacy' %}" class="underline" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+    <div class="form-field not-format">
+        <div class="flex items-start gap-2">
+            <input type="checkbox"
+                   name="agree_terms"
+                   id="{{ form.agree_terms.id_for_label }}"
+                   class="form-check mt-0.5 shrink-0"
+                   required
+                   {% if form.agree_terms.value %}checked{% endif %}
+                   {% if form.agree_terms.errors %}aria-invalid="true" aria-describedby="agree_terms-error"{% endif %}>
+            <label for="{{ form.agree_terms.id_for_label }}" class="text-sm text-body">
+                I agree to the
+                <a href="{% url 'terms' %}" class="underline text-red-700" target="_blank" rel="noopener">Terms of Use</a>
+                and
+                <a href="{% url 'privacy' %}" class="underline text-red-700" target="_blank" rel="noopener">Privacy Policy</a>,
+                including that my profile and email address are shown publicly on the site{% if form.advisor %}, that my advisor will be emailed to confirm my application{% endif %}, and that newsletter and alert emails record opens and clicks.
+                <span class="text-red-600 ms-0.5" aria-hidden="true">*</span>
+            </label>
+        </div>
+        {% if form.agree_terms.errors %}<p id="agree_terms-error" class="mt-2 text-sm text-red-600">{{ form.agree_terms.errors.0 }}</p>{% endif %}
     </div>
 
     <div class="flex gap-3 mb-5">

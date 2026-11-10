@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import FileExtensionValidator
 from django.template import loader
+from django.utils import timezone
 from django.utils.functional import cached_property
 
 from core.constants import COUNTRY_CHOICES, OTHER_NETWORK_CHOICES, RECOMMENDED_KEYWORDS
@@ -81,6 +82,14 @@ class BaseApplicationForm(forms.ModelForm):
         help_text="Open events, jobs and the most downloaded papers. You can change this any time in Settings.",
         widget=forms.Select(),
         required=False,
+    )
+
+    # Not a model field: ticking it stamps UserApplication.terms_accepted_at in
+    # save(). The label links the two documents inline (see apply.html, which
+    # renders this field with its own markup so the links stay clickable).
+    agree_terms = forms.BooleanField(
+        required=True,
+        error_messages={"required": "Please agree to the Terms of Use and Privacy Policy to apply."},
     )
 
     password1 = forms.CharField(
@@ -184,6 +193,7 @@ class BaseApplicationForm(forms.ModelForm):
     def save(self, commit=True):
         application = super().save(commit=False)
         application.password = make_password(self.cleaned_data["password1"])
+        application.terms_accepted_at = timezone.now()
         application.other_networks = self.cleaned_data.get(
             'other_networks_payload', [])
 

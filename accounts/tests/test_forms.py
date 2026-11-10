@@ -30,7 +30,7 @@ def base_application_data(**overrides):
         "country_code": "US",
         "motivation": "I want to join.",
         "password1": "pass12345",
-        "password2": "pass12345",
+        "password2": "pass12345", "agree_terms": "on",
     }
     data.update(overrides)
     return data

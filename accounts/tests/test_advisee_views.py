@@ -171,7 +171,7 @@ class ApplicationNotificationEmailTests(TestCase):
         data = {
             "email": "newstudent@example.com", "first_name": "New",
             "last_name": "Student", "department": "Econ", "country_code": "US",
-            "motivation": "hi", "password1": "pass12345", "password2": "pass12345",
+            "motivation": "hi", "password1": "pass12345", "password2": "pass12345", "agree_terms": "on",
         }
         data.update(extra)
         return data
@@ -181,7 +181,7 @@ class ApplicationNotificationEmailTests(TestCase):
         data = {
             "email": "newapplicant@example.com", "first_name": "New",
             "last_name": "Applicant", "department": "Econ", "country_code": "US",
-            "motivation": "hi", "password1": "pass12345", "password2": "pass12345",
+            "motivation": "hi", "password1": "pass12345", "password2": "pass12345", "agree_terms": "on",
             "research_paper_1": SimpleUploadedFile("a.pdf", b"%PDF-1.4 a", content_type="application/pdf"),
             "research_paper_2": SimpleUploadedFile("b.pdf", b"%PDF-1.4 b", content_type="application/pdf"),
         }
@@ -203,7 +203,7 @@ class ApplicationNotificationEmailTests(TestCase):
         data = {
             "email": "multi@example.com", "first_name": "M", "last_name": "A",
             "department": "Econ", "country_code": "US", "motivation": "hi",
-            "password1": "pass12345", "password2": "pass12345",
+            "password1": "pass12345", "password2": "pass12345", "agree_terms": "on",
             "research_paper_1": SimpleUploadedFile("a.pdf", b"%PDF-1.4 a", content_type="application/pdf"),
             "research_paper_2": SimpleUploadedFile("b.pdf", b"%PDF-1.4 b", content_type="application/pdf"),
         }
@@ -235,7 +235,7 @@ class ApplicationNotificationEmailTests(TestCase):
         data = {
             "email": "newstudent@example.com", "first_name": "New",
             "last_name": "Student", "department": "Econ", "country_code": "US",
-            "motivation": "hi", "password1": "pass12345", "password2": "pass12345",
+            "motivation": "hi", "password1": "pass12345", "password2": "pass12345", "agree_terms": "on",
             "advisor": advisor.pk,
         }
         self.client.post(reverse("apply_student"), data)
