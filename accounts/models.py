@@ -282,6 +282,13 @@ class UserApplication(models.Model):
     resume = models.FileField(
         help_text="Please upload a copy of your resume. pdf or docx only.", blank=True, null=True
     )
+    # Chosen on the application form (default Weekly) and copied to the member's
+    # profile on approval, so nobody is subscribed without being shown the choice.
+    newsletter_frequency = models.CharField(
+        max_length=10,
+        choices=Profile.NewsletterFrequency.choices,
+        default=Profile.NewsletterFrequency.WEEKLY,
+    )
     # Preferred over resume when set -- see Profile.cv_url/cv_link(). Both are
     # carried over to the new member's profile on approve().
     cv_url = models.URLField(
@@ -388,6 +395,7 @@ class UserApplication(models.Model):
         user.profile.country_code = self.country_code
         user.profile.website = self.website
         user.profile.cv_url = self.cv_url
+        user.profile.newsletter_frequency = self.newsletter_frequency
         if self.resume:
             user.profile.cv_file = self.resume
         user.profile.save()

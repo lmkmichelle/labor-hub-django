@@ -1,6 +1,8 @@
+{% load site_info %}
 <footer class="bg-neutral-primary border-t border-default">
   <div class="max-w-screen-xl mx-auto p-4">
     <span class="block text-sm text-body">© {% now "Y" %} Labor Hub. All rights reserved.</span>
+    <span class="block text-sm text-body mt-1">{% postal_address %}</span>
     <ul class="flex flex-wrap items-center gap-4 mt-3 text-sm font-medium text-body">
       <li>
         <a href="{% url 'about' %}" class="hover:text-red-700">About</a>
@@ -18,6 +20,9 @@
       {% endif %}
       <li>
         <a href="{% url 'privacy' %}" class="hover:text-red-700">Privacy</a>
+      </li>
+      <li>
+        <a href="{% url 'terms' %}" class="hover:text-red-700">Terms</a>
       </li>
       <li>
         <a href="{% url 'accessibility' %}" class="hover:text-red-700">Accessibility</a>

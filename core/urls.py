@@ -14,6 +14,7 @@ urlpatterns = [
     path('about/', TemplateView.as_view(template_name='core/about.html'), name='about'),
     path('faq/', TemplateView.as_view(template_name='core/faq.html'), name='faq'),
     path('privacy/', TemplateView.as_view(template_name='core/privacy.html'), name='privacy'),
+    path('terms/', TemplateView.as_view(template_name='core/terms.html'), name='terms'),
     path('accessibility/', TemplateView.as_view(template_name='core/accessibility.html'), name='accessibility'),
     path('researchers/', ScholarsListView.as_view(), name='scholars'),
     # The directory has lived at /scholars/ and /fellows/; keep old links and bookmarks working.

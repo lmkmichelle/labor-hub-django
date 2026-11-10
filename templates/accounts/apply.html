@@ -125,9 +125,20 @@
     {% endif %}
 
     {% render_field form.email label="Email" placeholder="net-id@school.edu" %}
+    {% render_field form.newsletter_frequency %}
 
     {% render_field form.password1 label="Password" help_text="Enter a secure password" %}
     {% render_field form.password2 label="Confirm Password" help_text="Enter the same password as before, for verification" %}
+
+    <div class="not-format mb-5 rounded-base border border-default bg-neutral-secondary-soft p-4 text-sm text-body">
+        <p class="font-medium text-heading mb-1">Before you apply</p>
+        <ul class="list-disc ps-5 space-y-1">
+            <li>Your profile, including your email address, is shown publicly on the site.</li>
+            {% if form.advisor %}<li>Your advisor will be emailed to confirm your application.</li>{% endif %}
+            <li>Newsletter and alert emails record opens and clicks.</li>
+        </ul>
+        <p class="mt-2">By applying you agree to the <a href="{% url 'terms' %}" class="underline" target="_blank" rel="noopener">Terms of Use</a> and <a href="{% url 'privacy' %}" class="underline" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+    </div>
 
     <div class="flex gap-3 mb-5">
         <button type="submit" class="btn-primary">

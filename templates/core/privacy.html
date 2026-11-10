@@ -3,51 +3,100 @@
 {% block title %}Privacy Policy{% endblock title %}
 
 {% block content %}
-  {# Baseline privacy policy — review with your institution/legal team and tailor before launch. #}
+  {# Privacy policy matching what the code does -- have Cornell counsel review before relying on it. #}
   <article class="format lg:format-lg max-w-none">
-    <h2 class="title">Privacy Policy</h2>
-    <p>Last updated: {% now "F Y" %}</p>
+    <h1 class="title">Privacy Policy</h1>
+    <p>Last updated: November 10, 2026</p>
     <p>
-      This policy explains what information Labor Hub collects, how we use it, and
-      the choices you have. By using the site you agree to the practices described
-      here.
+      This policy explains what information Labor Hub collects, how we use it, who
+      receives it and the choices you have. See also our
+      <a href="{% url 'terms' %}">Terms of Use</a>.
     </p>
     <h3>Information we collect</h3>
     <ul>
       <li>
-        <strong>Account details</strong> you provide, such as your name, email
-        address, position, affiliation, country, biography, and research interests.
+        <strong>Application details:</strong> name, email address, position,
+        department, affiliation, country, website, other research networks,
+        your motivation for joining, a CV or resume, and, for scholars, two
+        research papers. Students also name an advisor.
       </li>
       <li>
-        <strong>Content you submit</strong>, including discussion papers, events,
-        job postings, visits, and messages sent through our contact form.
+        <strong>Profile details:</strong> photo, biography, research interests and
+        newsletter and alert preferences.
       </li>
       <li>
-        <strong>Preferences</strong>, such as how often you receive the newsletter.
+        <strong>Content you submit:</strong> discussion papers, job market papers,
+        events, job postings, special issues, long-distance visits, and messages
+        sent through the contact form.
+      </li>
+      <li>
+        <strong>Technical data:</strong> a session cookie and a security (CSRF)
+        cookie, and the number of times each paper is downloaded.
       </li>
     </ul>
+    <h3>What is public</h3>
+    <p>
+      Your name, position, affiliation, country, website, research interests,
+      photo, <strong>email address</strong> and the content you post are shown
+      publicly on your profile and on the site, by design, to anyone, whether or
+      not they are signed in.
+    </p>
     <h3>How we use your information</h3>
     <ul>
-      <li>To display your profile and the content you contribute.</li>
+      <li>To review your application and run your account.</li>
       <li>
-        To send the newsletter, alerts and other notifications you opt into (you can
-        unsubscribe at any time).
+        To email your advisor so they can confirm a student application. Your
+        advisor sees your name and a review link.
       </li>
-      <li>To respond to inquiries you send us.</li>
-      <li>To operate, maintain, and improve the site.</li>
+      <li>
+        To send the newsletter (weekly, monthly or off; you choose when you apply
+        and can change it at any time in Settings) and any alerts you turn on.
+      </li>
+      <li>To respond to messages you send us and to send account notices such as approvals.</li>
+      <li>To operate, secure and improve the site.</li>
     </ul>
-    <h3>Sharing</h3>
+    <h3>Email tracking</h3>
     <p>
-      We do not sell your personal information. Profile details and content you
-      submit are shown publicly on the site by design. We may share information
-      when required by law or to protect the security of the service.
+      Newsletter and alert emails are sent through Campaign Monitor, which
+      records whether and when emails are opened and links are clicked, so we can
+      see which content is useful. Each email has an unsubscribe link, and you
+      can switch emails off in Settings.
     </p>
-    <h3>Your choices</h3>
+    <h3>Who receives your information</h3>
+    <p>We do not sell your personal information. We use these service providers:</p>
+    <ul>
+      <li><strong>Campaign Monitor</strong>: sends the newsletter and alerts (your email, name and email preferences).</li>
+      <li><strong>Upsun</strong>: hosts the site, database and stored files.</li>
+      <li><strong>Sentry</strong>: error monitoring, without user identity.</li>
+      <li><strong>Cornell University</strong>, which hosts the Hub.</li>
+    </ul>
+    <p>We may also disclose information when required by law or to protect the security of the service.</p>
+    <h3>Cookies</h3>
     <p>
-      You can review and update your profile at any time, and change or turn off
-      the newsletter from your email settings. To request access to,
-      correction of, or deletion of your data, please
-      <a href="{% url 'contact' %}">contact us</a>.
+      We use only strictly necessary cookies: one that keeps you signed in, one
+      that protects forms from forgery, and one that shows one-time messages.
+      We do not use advertising or analytics cookies.
     </p>
+    <h3>How long we keep it</h3>
+    <ul>
+      <li>Sample papers you upload with an application are deleted when it is approved.</li>
+      <li>For rejected applications, uploaded files are deleted after 30 days; the record (name, email and answers) is kept.</li>
+      <li>Student accounts are deactivated two years after joining.</li>
+      <li>Accounts and their content stay until you delete them.</li>
+    </ul>
+    <h3>Your choices and rights</h3>
+    <ul>
+      <li>Update your profile at any time.</li>
+      <li>Change or turn off emails in <a href="{% url 'settings' %}">Settings</a>.</li>
+      <li>
+        <strong>Delete your account</strong> yourself from Settings. This removes
+        your profile, photo, CV, applications and your subscription to our emails;
+        papers and posts you made stay on the site with your name as plain text
+        (not linked to an account).
+      </li>
+      <li>For access to or correction of your data, or any other request, <a href="{% url 'contact' %}">contact us</a>.</li>
+    </ul>
+    <h3>Children</h3>
+    <p>The Hub is for adults and we do not knowingly collect data from anyone under 18.</p>
   </article>
 {% endblock content %}

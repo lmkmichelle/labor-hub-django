@@ -17,7 +17,7 @@ for exactly that reason; keep any future multi-line note in this file the
 same way.
 {% endcomment %}
 <!-- djlint:off -->
-<!DOCTYPE html>
+{% load site_info %}<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -46,6 +46,7 @@ same way.
               <td style="padding:20px 28px; background-color:#f9fafb; font-size:12px; color:#6b7280; border-top:1px solid #e5e7eb;">
                 {% block footer %}
                   <p style="margin:0;">Labor Hub, hosted by the ILR School at Cornell University.</p>
+                  <p style="margin:4px 0 0 0;">{% postal_address %}</p>
                 {% endblock %}
               </td>
             </tr>

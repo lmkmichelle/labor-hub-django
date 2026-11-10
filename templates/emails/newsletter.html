@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load site_info %}<!DOCTYPE html>
 <html lang="en">
 <!-- djlint:off -->
 <head>
@@ -146,6 +146,7 @@
   <tr>
     <td style="padding:16px 32px;background:#f4f5f8;border-top:1px solid #e3e6eb;font-size:12px;line-height:1.5;color:#5b6370;">
       <strong style="color:#1d2b44;">The Labor Hub Team</strong> &middot; Cornell ILR<br>
+      {% postal_address %}<br>
       <a href="{{ site_url }}/" style="color:#5b6370;">{{ site_url }}</a> &middot; <a href="{{ urls.contact }}" style="color:#5b6370;">Contact us</a> &middot; <a href="{{ urls.faq }}" style="color:#5b6370;">FAQ</a> &middot; <a href="{{ urls.settings }}" style="color:#5b6370;">Manage preferences</a> &middot; <unsubscribe style="color:#5b6370;text-decoration:underline;">Unsubscribe</unsubscribe>
     </td>
   </tr>

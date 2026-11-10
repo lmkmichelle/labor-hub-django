@@ -1,4 +1,4 @@
-{{ subject }} - {{ issue_date|date:"F j, Y" }}
+{% load site_info %}{{ subject }} - {{ issue_date|date:"F j, Y" }}
 
 {% if first_issue %}{{ issue.welcome }}{% else %}{{ this_period }} in the Labor Hub: new announcements{% if job_market_papers %}, most downloaded papers and a list of all Job Market Papers we have received so far{% else %} and most downloaded papers{% endif %}. Wishing you a great {% if monthly %}month{% else %}week{% endif %}!
 
@@ -47,5 +47,6 @@ Please pass the word along and invite colleagues and students to join: {{ urls.m
 
 --
 The Labor Hub Team - Cornell ILR
+{% postal_address %}
 {{ site_url }}
 Unsubscribe: [unsubscribe]

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Use{% endblock title %}
+
+{% block content %}
+  {# Draft terms of use -- have Cornell counsel review before relying on them. #}
+  <article class="format lg:format-lg max-w-none">
+    <h1 class="title">Terms of Use</h1>
+    <p>Last updated: November 10, 2026</p>
+    <p>
+      These terms govern your use of Labor Hub, a community site for the labor
+      economics community hosted by the ILR School at Cornell University. By
+      applying for an account or using the site you agree to them and to our
+      <a href="{% url 'privacy' %}">Privacy Policy</a>.
+    </p>
+    <h3>Who may use the Hub</h3>
+    <p>
+      The Hub is for academic and professional use by adults (18 or older).
+      Browsing is open to everyone; posting requires an approved account.
+    </p>
+    <h3>Your account</h3>
+    <ul>
+      <li>Give accurate information when you apply and keep your profile up to date.</li>
+      <li>Keep your password secret. You are responsible for activity under your account.</li>
+      <li>
+        Student accounts expire after two years and are deactivated, with a month's
+        notice by email.
+      </li>
+    </ul>
+    <h3>Content you submit</h3>
+    <ul>
+      <li>
+        You keep the copyright in the papers, announcements and other content you
+        submit. You must have the right to share them.
+      </li>
+      <li>
+        You grant Labor Hub a non-exclusive, worldwide licence to host, display,
+        copy and distribute that content (including in the newsletter and alerts)
+        for as long as it is on the site.
+      </li>
+      <li>
+        Papers are listed as working papers. Submitting one does not prevent you
+        from publishing it elsewhere.
+      </li>
+    </ul>
+    <h3>Acceptable use</h3>
+    <p>
+      Do not post unlawful, misleading, harassing or off-topic content, upload
+      malware, scrape the site in a way that disrupts it, or use member contact
+      details for unsolicited bulk mail or marketing.
+    </p>
+    <h3>Review and removal</h3>
+    <p>
+      Applications and posts are reviewed by the Hub's administrators. We may
+      decline, edit or remove content, and suspend or close accounts that break
+      these terms.
+    </p>
+    <h3>No warranties</h3>
+    <p>
+      The Hub is provided "as is". We do not guarantee the accuracy of content
+      posted by members, that the site will always be available, or that
+      listings such as jobs and events are endorsed by Cornell University.
+    </p>
+    <h3>Limitation of liability</h3>
+    <p>
+      To the extent permitted by law, Labor Hub and Cornell University are not
+      liable for indirect or consequential losses arising from your use of the
+      site.
+    </p>
+    <h3>Ending your account</h3>
+    <p>
+      You can delete your account at any time from your
+      <a href="{% url 'settings' %}">Settings</a>.
+    </p>
+    <h3>Changes</h3>
+    <p>
+      We may update these terms. The date above shows the latest revision;
+      continued use after a change means you accept it.
+    </p>
+    <h3>Contact</h3>
+    <p>
+      Questions? <a href="{% url 'contact' %}">Contact us</a>.
+    </p>
+  </article>
+{% endblock content %}

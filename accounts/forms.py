@@ -5,6 +5,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth.hashers import make_password
 from django.core.mail import EmailMultiAlternatives
+from django.core.validators import FileExtensionValidator
 from django.template import loader
 from django.utils.functional import cached_property
 
@@ -69,7 +70,17 @@ class BaseApplicationForm(forms.ModelForm):
 
     resume = forms.FileField(
         label="Upload your resume/CV (PDF only)",
-        required=False
+        required=False,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
+
+    newsletter_frequency = forms.ChoiceField(
+        choices=Profile.NewsletterFrequency.choices,
+        initial=Profile.NewsletterFrequency.WEEKLY,
+        label="Newsletter",
+        help_text="Open events, jobs and the most downloaded papers. You can change this any time in Settings.",
+        widget=forms.Select(),
+        required=False,
     )
 
     password1 = forms.CharField(
@@ -137,6 +148,7 @@ class BaseApplicationForm(forms.ModelForm):
             "website",
             "cv_url",
             "resume",
+            "newsletter_frequency",
             "email",
         )
 
@@ -201,6 +213,12 @@ class BaseApplicationForm(forms.ModelForm):
     # Fellow applications let a deactivated student reuse their email, so the
     # account (and everything on it) can be upgraded in place.
     allow_returning_students = False
+
+    def clean_newsletter_frequency(self):
+        # The select always posts a value; a missing one means the form's own
+        # displayed default.
+        return (self.cleaned_data.get("newsletter_frequency")
+                or Profile.NewsletterFrequency.WEEKLY)
 
     def clean_email(self):
         email = self.cleaned_data.get('email')

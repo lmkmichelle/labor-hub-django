@@ -221,6 +221,14 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@laborhub.com")
 
+# Postal address shown in the site footer and printed in every bulk email
+# (CAN-SPAM requires one). One setting so it can be refined without a deploy of
+# template changes.
+LABOR_HUB_POSTAL_ADDRESS = os.environ.get(
+    "LABOR_HUB_POSTAL_ADDRESS",
+    "Labor Hub, ILR School, Cornell University, Ithaca, NY 14853",
+)
+
 # Sender for Django's own error/security mail (e.g. mail_admins, a broken-link
 # report). Unset previously, which meant it fell back to Django's built-in
 # default of "root@localhost" -- silently undeliverable through the same relay

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load form_tags %}
+{% load site_info %}
 
 {% block title %}Contact{% endblock title %}
 
@@ -10,6 +11,7 @@
       Have a question, spotted a bug, or want to get in touch? Send us a message
       and we'll get back to you.
     </p>
+    <p class="text-sm">{% postal_address %}</p>
   </article>
 
   {% if sent %}
