@@ -72,3 +72,10 @@ def nav_section(request):
         if path.startswith(prefixes):
             return {"nav_section": section}
     return {"nav_section": ""}
+
+
+def test_site(request):
+    """True on staging/preview environments, so base.html can say so."""
+    from django.conf import settings
+
+    return {"is_test_site": settings.IS_TEST_SITE}

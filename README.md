@@ -304,3 +304,9 @@ build container, so the stylesheet is *not* compiled during the build. Run
 Everything environment-specific is still driven by plain environment variables
 (`DEBUG=0`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, the
 `DATABASE_*` values); see `.env.example` for the full list if you deploy elsewhere.
+
+### Staging
+
+Pushing a branch to GitHub makes Upsun create an environment for it, cloned from production's data. The branch named `staging` is the long-lived test site professors review before changes go to `main`; it sits behind HTTP basic auth (`upsun environment:http-access -e staging`).
+
+Because a clone also inherits production's project variables, **non-production environments never use Campaign Monitor and never deliver email**: `nole/settings.py` ignores `CM_API_KEY` unless `PLATFORM_ENVIRONMENT_TYPE` is `production` (or `CM_ALLOW_NON_PRODUCTION` is set), and `.environment` switches to the console mail backend (unless `ALLOW_NON_PRODUCTION_EMAIL` is set). Pages show a "Test site" banner there.

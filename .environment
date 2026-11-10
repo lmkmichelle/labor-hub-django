@@ -67,6 +67,14 @@ elif [ -n "$PLATFORM_SMTP_HOST" ]; then
     export EMAIL_USE_TLS="False"
 fi
 
+# A staging/preview environment holds a copy of production's data -- real
+# members' addresses -- so it must never deliver mail. Production (and local,
+# where PLATFORM_ENVIRONMENT_TYPE is unset) are untouched; set
+# ALLOW_NON_PRODUCTION_EMAIL on purpose to test real delivery from a preview.
+if [ -n "$PLATFORM_ENVIRONMENT_TYPE" ] && [ "$PLATFORM_ENVIRONMENT_TYPE" != "production" ] && [ -z "$ALLOW_NON_PRODUCTION_EMAIL" ]; then
+    export EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend"
+fi
+
 # Sender and inbox for site mail. ":=" assigns only when the variable is unset,
 # so setting DEFAULT_FROM_EMAIL / CONTACT_EMAIL as an Upsun project variable
 # overrides these without touching the repository -- which is how the Cornell

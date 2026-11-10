@@ -133,6 +133,7 @@ TEMPLATES = [
                 "core.context_processors.pending_advisee_count",
                 "core.context_processors.pending_paper_ack_count",
                 "core.context_processors.nav_section",
+                "core.context_processors.test_site",
             ],
         },
     },
@@ -286,8 +287,17 @@ CM_ALERT_LIST_ID = os.environ.get("CM_ALERT_LIST_ID", "")
 CM_WEBHOOK_SECRET = os.environ.get("CM_WEBHOOK_SECRET") or (
     hmac.new(SECRET_KEY.encode(), b"campaign-monitor-webhook", hashlib.sha256).hexdigest()[:40]
     if SECRET_KEY else "")
+# Upsun gives every non-production environment (staging, preview branches) a
+# copy of production's data AND its project-level variables, including the live
+# CM_API_KEY. Left alone, a test site could register webhooks on, email, or
+# delete members from the real Campaign Monitor lists. So Campaign Monitor is
+# only used on production (or where PLATFORM_ENVIRONMENT_TYPE is unset: local
+# and CI), unless CM_ALLOW_NON_PRODUCTION is set on purpose.
+NON_PRODUCTION_ENV = os.environ.get("PLATFORM_ENVIRONMENT_TYPE", "production") != "production"
+IS_TEST_SITE = NON_PRODUCTION_ENV
+CM_ENABLED_HERE = not NON_PRODUCTION_ENV or bool(os.environ.get("CM_ALLOW_NON_PRODUCTION"))
 # "cm" only when configured, so dev/CI/preview keep per-user SMTP delivery.
-CAMPAIGN_DELIVERY = "cm" if CM_API_KEY and CM_CLIENT_ID else "smtp"
+CAMPAIGN_DELIVERY = "cm" if CM_API_KEY and CM_CLIENT_ID and CM_ENABLED_HERE else "smtp"
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour (in seconds)
