@@ -130,6 +130,9 @@ class Publication(Approvable):
     # None = not answered, True = acknowledged, False = declined.
     jm_advisor_acknowledged = models.BooleanField(null=True, blank=True)
     jm_advisor_responded_at = models.DateTimeField(null=True, blank=True)
+    # When the advisor was nudged after a week without an answer (once; see
+    # accounts/management/commands/remind_advisors.py).
+    jm_advisor_reminded_at = models.DateTimeField(null=True, blank=True)
 
     # Incremented by record_download() (publications/utils.py) -- once per
     # session per paper, and only for an approved paper -- so it reflects

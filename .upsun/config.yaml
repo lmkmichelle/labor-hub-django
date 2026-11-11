@@ -111,8 +111,9 @@ applications:
         spec: "15 6 * * *"
         commands:
           start: "python manage.py purge_application_files"
-      # Nudge advisors who haven't acted on a student's application; tell the
-      # admins' inbox after 14 days (accounts/management/commands/remind_advisors.py).
+      # Nudge advisors who haven't acted on a student's application (admins' inbox
+      # told after 14 days) or a job market paper (one reminder after 7 days)
+      # (accounts/management/commands/remind_advisors.py).
       advisor-reminders:
         spec: "0 14 * * *"
         commands:

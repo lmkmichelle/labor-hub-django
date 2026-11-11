@@ -3,6 +3,9 @@
 {% block content %}
   <!-- djlint:off -->
   <p style="margin:0 0 16px; font-size:16px;">Hi {{ advisor.first_name|default:advisor.email }},</p>
+  {% if reminder %}
+  <p style="margin:0 0 16px; font-size:15px; color:#374151;"><strong>A reminder:</strong> this job market paper is still waiting for your response, and we can&rsquo;t publish it until you respond.</p>
+  {% endif %}
   <p style="margin:0 0 16px; font-size:15px; color:#374151;">
     {% if submitter %}<strong>{{ submitter.get_full_name }}</strong>{% else %}Someone{% endif %}
     has submitted a job market paper to Labor Hub and listed you as

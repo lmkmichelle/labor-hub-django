@@ -1,6 +1,8 @@
 Hi {{ advisor.first_name|default:advisor.email }},
 
-{% if submitter %}{{ submitter.get_full_name }}{% else %}Someone{% endif %} has submitted a job market paper to Labor Hub and listed you as the advisor on it:
+{% if reminder %}A reminder: this job market paper is still waiting for your response, and we can't publish it until you respond.
+
+{% endif %}{% if submitter %}{{ submitter.get_full_name }}{% else %}Someone{% endif %} has submitted a job market paper to Labor Hub and listed you as the advisor on it:
 
 "{{ publication.title }}"
 

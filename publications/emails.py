@@ -15,7 +15,7 @@ def _absolute_url(path):
     return "{}{}".format(settings.SITE_URL.rstrip("/"), path)
 
 
-def send_paper_advisor_ack_email(publication, fail_silently=True):
+def send_paper_advisor_ack_email(publication, fail_silently=True, reminder=False):
     """Ask the named advisor to acknowledge a job market paper.
 
     No-op unless the paper is flagged job-market and has an advisor with an
@@ -33,9 +33,10 @@ def send_paper_advisor_ack_email(publication, fail_silently=True):
         "submitter": submitter,
         "review_url": _absolute_url(reverse("advised_papers")),
         "site_url": settings.SITE_URL.rstrip("/"),
+        "reminder": reminder,
     }
     subject = (
-        f"[Action Required] You were listed as the advisor on a job market "
+        f"{'Reminder: ' if reminder else ''}[Action Required] You were listed as the advisor on a job market "
         f"paper: {publication.title}"
     )
     text_body = render_to_string("emails/paper_advisor_ack.txt", context)
