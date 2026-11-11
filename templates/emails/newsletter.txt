@@ -1,23 +1,41 @@
 {{ subject }} - {{ issue_date|date:"F j, Y" }}
 
-{% if first_issue %}{{ issue.welcome }}{% else %}{{ this_period }} in the Labor Hub: new announcements{% if job_market_papers %}, most downloaded papers and a list of all Job Market Papers we have received so far{% else %} and most downloaded papers{% endif %}. Wishing you a great {% if monthly %}month{% else %}week{% endif %}!
+{% if first_issue %}{{ issue.welcome }}{% else %}{{ this_period }} in the Labor Hub: new announcements, upcoming deadlines{% if job_market_papers %}, the most downloaded new papers and a list of all Job Market Papers we have received so far{% else %} and the most downloaded new papers{% endif %}. Wishing you a great {% if monthly %}month{% else %}week{% endif %}!
 
 Set your alerts for announcements or papers you are most interested in: {{ urls.settings }}{% endif %}
-{% if events %}
-NEW EVENTS
-{% for item in events %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
+{% if new_events or due_events %}
+{% if new_events %}
+EVENTS - NEWLY ADDED
+{% for item in new_events %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
   {{ item.url }}
-{% endfor %}All events: {{ urls.events }}
-{% endif %}{% if special_issues %}
-SPECIAL ISSUES
-{% for item in special_issues %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
+{% endfor %}{% endif %}{% if due_events %}
+EVENTS - DEADLINES THIS WEEK
+{% for item in due_events %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
   {{ item.url }}
-{% endfor %}All special issues: {{ urls.special_issues }}
-{% endif %}{% if jobs %}
-NEW JOB POSTINGS
-{% for item in jobs %}* {{ item.title }} - {{ item.meta }} - {{ item.deadline }}
+{% endfor %}{% endif %}
+All events: {{ urls.events }}
+{% endif %}{% if new_special_issues or due_special_issues %}
+{% if new_special_issues %}
+SPECIAL ISSUES - NEWLY ADDED
+{% for item in new_special_issues %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
   {{ item.url }}
-{% endfor %}All job postings: {{ urls.jobs }}
+{% endfor %}{% endif %}{% if due_special_issues %}
+SPECIAL ISSUES - DEADLINES THIS WEEK
+{% for item in due_special_issues %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
+  {{ item.url }}
+{% endfor %}{% endif %}
+All special issues: {{ urls.special_issues }}
+{% endif %}{% if new_jobs or due_jobs %}
+{% if new_jobs %}
+JOB POSTINGS - NEWLY ADDED
+{% for item in new_jobs %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
+  {{ item.url }}
+{% endfor %}{% endif %}{% if due_jobs %}
+JOB POSTINGS - DEADLINES THIS WEEK
+{% for item in due_jobs %}* {{ item.title }} - {{ item.meta }}{% if item.deadline %} - {{ item.deadline }}{% endif %}
+  {{ item.url }}
+{% endfor %}{% endif %}
+All job postings: {{ urls.jobs }}
 {% endif %}{% if papers %}
 {{ papers_heading|upper }}
 {% for paper in papers %}{{ paper.rank }}. {{ paper.title }} ({{ paper.authors }})

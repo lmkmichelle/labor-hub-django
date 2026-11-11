@@ -1,7 +1,8 @@
 """The Labor Hub newsletter: live listings around hand-written issue text.
 
 ``newsletter_context`` pulls what is open right now (events, special issues and
-jobs by deadline, the most downloaded discussion papers) and wraps it in the
+jobs, split into newly added and deadlines this week, plus the most downloaded
+discussion papers added since the last issue) and wraps it in the
 intro and "coming next week" text below. Edit ``ISSUE`` for each issue; the
 issue number and date fill in themselves.
 """
@@ -35,6 +36,7 @@ ISSUE = {
 
 MAX_LISTED = 6
 MAX_PAPERS = 5
+DEADLINE_DAYS = 7  # "Deadlines This Week" window, for the monthly issue too
 
 WEEKLY, MONTHLY = "weekly", "monthly"
 # Per newsletter: the stored campaign kind, its Campaign Monitor segment, how far back
@@ -116,50 +118,62 @@ def newsletter_context(kind=WEEKLY, now=None):
     first_issue = kind == WEEKLY and number == 1
     url = lambda name, **kw: absolute_url(reverse(name, kwargs=kw))  # noqa: E731
 
-    events = []
-    for event in (Event.objects.filter(status="approved", deadline__isnull=False,
-                                       deadline__gte=now - timedelta(days=1))
-                  .order_by("deadline")):
-        day = timezone.localtime(event.deadline).date()
-        if day < today:
-            continue
-        place = f" · {event.location}" if event.location else ""
-        events.append({
-            "title": event.title, "url": url("event-detail", pk=event.pk),
-            "meta": f"{event.get_category_display()}{place} · {event.date:%B} {event.date.day}, {event.date.year}",
-            "deadline": _deadline_label(day, today),
-        })
-
-    special_issues = [{
-        "title": si.title, "url": url("special-issue-detail", pk=si.pk), "meta": si.journal,
-        "deadline": _deadline_label(si.submission_deadline, today),
-    } for si in SpecialIssue.objects.filter(status="approved", submission_deadline__gte=today)
-        .order_by("submission_deadline")]
-
-    jobs = [{
-        "title": job.title, "url": url("job-detail", pk=job.pk),
-        "meta": " · ".join(x for x in [job.employer, ", ".join(job.country_labels())] if x),
-        "deadline": _deadline_label(job.deadline, today),
-    } for job in Job.objects.filter(status="approved", deadline__gte=today).order_by("deadline")]
-
-    # The first weekly issue ranks all-time: the timestamped log only began shortly
-    # before it. Later issues rank the downloads since the previous issue of the same
-    # kind; a quiet period falls back to all-time rather than drop the section.
     since = period_start(kind, now)
-    ranked = [] if first_issue else list(Publication.most_downloaded(MAX_PAPERS, since=since))
-    all_time = not ranked
-    papers_heading = f"New papers {spec['this_period'].lower()} (most downloaded)"
-    if all_time:
-        ranked = list(Publication.most_downloaded(MAX_PAPERS))
-        papers_heading = "Most downloaded papers"
+    window_end = today + timedelta(days=DEADLINE_DAYS)
+
+    def split(objs, day_of, item):
+        """Newly added since the last issue (newest first) and, of the rest, those whose
+        deadline falls in the next DEADLINE_DAYS (soonest first). A new item that is also
+        due soon stays in "new" only."""
+        new, due = [], []
+        for obj in objs:
+            day = day_of(obj)
+            added = obj.reviewed_at or obj.created_at
+            if added >= since:
+                new.append((added, item(obj, day)))
+            elif day is not None and today <= day < window_end:
+                due.append(item(obj, day))
+        return [row for _, row in sorted(new, key=lambda t: t[0], reverse=True)], due
+
+    def event_item(event, day):
+        place = f" \u00b7 {event.location}" if event.location else ""
+        return {
+            "title": event.title, "url": url("event-detail", pk=event.pk),
+            "meta": f"{event.get_category_display()}{place} \u00b7 {event.date:%B} {event.date.day}, {event.date.year}",
+            "deadline": _deadline_label(day, today) if day and day >= today else "",
+        }
+
+    new_events, due_events = split(
+        Event.objects.filter(Q(date__gte=now) | Q(deadline__gte=now - timedelta(days=1)),
+                             status="approved").order_by("deadline"),
+        lambda e: timezone.localtime(e.deadline).date() if e.deadline else None, event_item)
+
+    new_special_issues, due_special_issues = split(
+        SpecialIssue.objects.filter(status="approved", submission_deadline__gte=today)
+        .order_by("submission_deadline"),
+        lambda si: si.submission_deadline,
+        lambda si, day: {
+            "title": si.title, "url": url("special-issue-detail", pk=si.pk), "meta": si.journal,
+            "deadline": _deadline_label(day, today)})
+
+    new_jobs, due_jobs = split(
+        Job.objects.filter(status="approved", deadline__gte=today).order_by("deadline"),
+        lambda j: j.deadline,
+        lambda job, day: {
+            "title": job.title, "url": url("job-detail", pk=job.pk),
+            "meta": " \u00b7 ".join(x for x in [job.employer, ", ".join(job.country_labels())] if x),
+            "deadline": _deadline_label(day, today)})
+
+    # Only papers added since the last issue, most downloaded in that period first
+    # (a paper nobody has downloaded yet still counts). No new papers, no section.
     papers = [{
         "rank": i, "title": p.title, "url": url("publication_detail", pk=p.pk),
         "download_url": url("publication_download", pk=p.pk),
         "authors": ", ".join(str(a) for a in p.ordered_authors),
         # Not shown in the email; the admin's preview lists them.
-        "downloads": p.download_count if all_time else p.recent,
+        "downloads": p.period_downloads,
         "all_time": p.download_count,
-    } for i, p in enumerate(ranked, start=1)]
+    } for i, p in enumerate(Publication.new_since(since)[:MAX_PAPERS], start=1)]
 
     jm_papers = job_market_papers()
     if kind == MONTHLY:
@@ -181,18 +195,18 @@ def newsletter_context(kind=WEEKLY, now=None):
         # weekly newsletter only; later issues leave them out.
         "first_issue": first_issue,
         "since": since,
-        "papers_all_time": all_time,
         "max_listed": MAX_LISTED,
         # Everything that qualifies, for the admin page to show what is cut off.
-        "all_events": events,
-        "all_special_issues": special_issues,
-        "all_jobs": jobs,
+        "all_new_events": new_events, "all_due_events": due_events,
+        "all_new_special_issues": new_special_issues, "all_due_special_issues": due_special_issues,
+        "all_new_jobs": new_jobs, "all_due_jobs": due_jobs,
         "issue_date": now,
-        "events": events[:MAX_LISTED],
-        "special_issues": special_issues[:MAX_LISTED],
-        "jobs": jobs[:MAX_LISTED],
+        "new_events": new_events[:MAX_LISTED], "due_events": due_events[:MAX_LISTED],
+        "new_special_issues": new_special_issues[:MAX_LISTED],
+        "due_special_issues": due_special_issues[:MAX_LISTED],
+        "new_jobs": new_jobs[:MAX_LISTED], "due_jobs": due_jobs[:MAX_LISTED],
         "papers": papers,
-        "papers_heading": papers_heading,
+        "papers_heading": "Most downloaded new papers",
         "site_url": settings.SITE_URL.rstrip("/"),
         "logo_src": absolute_url(static("images/logo.png")),
         "urls": {
@@ -215,7 +229,9 @@ def render_newsletter(context):
 
 def has_content(context):
     """True when at least one listing section would appear in the issue."""
-    return any(context[key] for key in ("events", "special_issues", "jobs", "papers"))
+    return any(context[key] for key in (
+        "new_events", "due_events", "new_special_issues", "due_special_issues",
+        "new_jobs", "due_jobs", "papers"))
 
 
 def create_newsletter_campaign(kind=WEEKLY, now=None, only_if_content=False):

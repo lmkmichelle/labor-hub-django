@@ -14,7 +14,7 @@ from django.utils.html import format_html
 from core import cm_lists
 from core.models import ApprovalStatus, EmailCampaign, NewsletterSchedule
 from core.newsletter import (
-    KINDS, last_sent_issue, newsletter_context, paper_downloads, render_newsletter)
+    KINDS, has_content, last_sent_issue, newsletter_context, paper_downloads, render_newsletter)
 from .models import ContactMessage
 
 logger = logging.getLogger(__name__)
@@ -248,8 +248,12 @@ class NewsletterScheduleAdmin(admin.ModelAdmin):
         schedule = NewsletterSchedule.for_kind(kind)
         context = newsletter_context(kind, now)
         due, reason = newsletter_due(kind, now)
-        listed = {key: context[f"all_{key}"] for key in ("events", "special_issues", "jobs")}
-        sections = [(key.replace("_", " ").capitalize(), items) for key, items in listed.items()]
+        listed = {}
+        for key in ("events", "special_issues", "jobs"):
+            name = key.replace("_", " ")
+            listed[f"Newly added {name}"] = context[f"all_new_{key}"]
+            listed[f"{name.capitalize()}: deadlines this week"] = context[f"all_due_{key}"]
+        sections = list(listed.items())
         return {
             "kind": kind, "label": KINDS[kind]["label"], "schedule": schedule,
             "context": context, "due": due, "skip_reason": reason,
@@ -396,6 +400,5 @@ class NewsletterScheduleAdmin(admin.ModelAdmin):
             "title": f"Send the {KINDS[kind]['label'].lower()} newsletter now",
             "kind": kind, "subject": context["subject"], "recent": recent,
             "subscribers": self._subscribers(kind), "error": error,
-            "empty": not (context["papers"] or context["all_events"]
-                          or context["all_special_issues"] or context["all_jobs"]),
+            "empty": not has_content(context),
         })

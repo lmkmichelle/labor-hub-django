@@ -26,8 +26,8 @@ class NewsletterTests(TestCase):
 
     def test_only_open_approved_items_and_empty_sections_hidden(self):
         ctx = newsletter_context()
-        self.assertEqual([i["title"] for i in ctx["special_issues"]], ["Open call"])
-        self.assertEqual(ctx["jobs"], [])
+        self.assertEqual([i["title"] for i in ctx["new_special_issues"]], ["Open call"])
+        self.assertEqual(ctx["new_jobs"] + ctx["due_jobs"], [])
         html = create_newsletter_campaign().html
         self.assertIn("Open call", html)
         self.assertNotIn("Closed call", html)
@@ -56,34 +56,42 @@ class NewsletterTests(TestCase):
         self.assertNotIn("COMING NEXT WEEK", second.text)
         self.assertNotIn("Thank you for joining", second.text)
 
-    def test_papers_fall_back_to_all_time_when_the_week_is_quiet(self):
+    def test_papers_are_only_those_added_since_the_last_issue(self):
         from publications.models import Publication
         from publications.tests.test_models import make_publication
 
-        paper = make_publication(status="approved")
-        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", download_count=7)
-        ctx = newsletter_context()
-        self.assertEqual([p["title"] for p in ctx["papers"]], [paper.title])
-        self.assertEqual(ctx["papers_heading"], "Most downloaded papers")
-
-        # Issue No. 1 stays all-time even when there are downloads this week...
-        paper.record_download()
-        self.assertEqual(newsletter_context()["papers_heading"], "Most downloaded papers")
-        html = create_newsletter_campaign().html
-        self.assertIn("Most downloaded papers</h2>", html)
-        self.assertNotIn("(most downloaded)</h2>", html)
-
-        # ...and from the second issue on, downloads since the last issue are ranked.
+        old = make_publication(title="Old paper", status="approved")
+        new = make_publication(title="New paper", status="approved")
+        Publication.objects.filter(pk__in=[old.pk, new.pk]).update(pdf="x.pdf")
         EmailCampaign.objects.create(
             kind="newsletter", status="sent", subject="s", html="", text="",
             sent_at=timezone.now() - timedelta(days=1),
             period_start=timezone.now(), period_end=timezone.now())
-        paper.record_download()
+        Publication.objects.filter(pk=old.pk).update(
+            applied_at=timezone.now() - timedelta(days=3))
+        for _ in range(5):
+            old.record_download()  # popular, but not new: stays out
+        new.record_download()
         ctx = newsletter_context()
-        self.assertEqual(ctx["papers_heading"], "New papers this week (most downloaded)")
-        self.assertEqual(ctx["papers"][0]["downloads"], 2)
-        self.assertEqual(ctx["papers"][0]["all_time"], 9)
-        self.assertIn("New papers this week (most downloaded)", create_newsletter_campaign().html)
+        self.assertEqual([p["title"] for p in ctx["papers"]], ["New paper"])
+        self.assertEqual(ctx["papers"][0]["downloads"], 1)
+        self.assertEqual(ctx["papers_heading"], "Most downloaded new papers")
+        self.assertIn("Most downloaded new papers</h2>", create_newsletter_campaign().html)
+
+    def test_new_paper_without_downloads_is_listed_and_no_new_papers_hides_the_section(self):
+        from publications.models import Publication
+        from publications.tests.test_models import make_publication
+
+        paper = make_publication(status="approved")
+        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf")
+        self.assertEqual(newsletter_context()["papers"][0]["downloads"], 0)
+        EmailCampaign.objects.create(
+            kind="newsletter", status="sent", subject="s", html="", text="",
+            sent_at=timezone.now() + timedelta(minutes=1),
+            period_start=timezone.now(), period_end=timezone.now())
+        paper.record_download()  # downloaded, but added before the last issue
+        self.assertEqual(newsletter_context()["papers"], [])
+        self.assertNotIn("Most downloaded new papers", create_newsletter_campaign().html)
 
     def test_monthly_is_its_own_issue_with_its_own_numbering_and_window(self):
         from publications.models import Publication
@@ -100,7 +108,7 @@ class NewsletterTests(TestCase):
         ctx = newsletter_context("monthly")
         self.assertEqual(ctx["issue_number"], 1)
         self.assertFalse(ctx["first_issue"])
-        self.assertEqual(ctx["papers_heading"], "New papers this month (most downloaded)")
+        self.assertEqual([p["title"] for p in ctx["papers"]], [paper.title])
         self.assertAlmostEqual(
             ctx["since"], timezone.now() - timedelta(days=30), delta=timedelta(minutes=1))
         self.assertTrue(ctx["subject"].startswith("The Labor Hub Monthly Newsletter, "))
@@ -109,18 +117,40 @@ class NewsletterTests(TestCase):
         self.assertIn("Monthly Newsletter", campaign.html)
         self.assertNotIn("Welcome to", campaign.html)
 
-    def test_quiet_window_falls_back_to_all_time_on_later_issues(self):
-        from publications.models import Publication
-        from publications.tests.test_models import make_publication
-
+    def test_new_items_and_deadlines_are_split_and_never_listed_twice(self):
+        from events.models import Event
+        today = timezone.localdate()
+        past = timezone.now() - timedelta(days=20)
         EmailCampaign.objects.create(
             kind="newsletter", status="sent", subject="s", html="", text="",
-            sent_at=timezone.now(), period_start=timezone.now(), period_end=timezone.now())
-        paper = make_publication(status="approved")
-        Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf", download_count=7)
+            sent_at=timezone.now() - timedelta(days=7),
+            period_start=timezone.now(), period_end=timezone.now())
+
+        def job(title, days, added):
+            j = Job.objects.create(title=title, description="d", url="https://e.com/",
+                                   deadline=today + timedelta(days=days), status="approved")
+            Job.objects.filter(pk=j.pk).update(created_at=added)
+
+        job("Fresh and soon", 3, timezone.now())
+        job("Fresh and far", 30, timezone.now())
+        job("Old and soon", 2, past)
+        job("Old and far", 10, past)
         ctx = newsletter_context()
-        self.assertTrue(ctx["papers_all_time"])
-        self.assertEqual(ctx["papers"][0]["downloads"], 7)
+        self.assertEqual(sorted(j["title"] for j in ctx["new_jobs"]), ["Fresh and far", "Fresh and soon"])
+        self.assertEqual([j["title"] for j in ctx["due_jobs"]], ["Old and soon"])
+
+        # An event with no deadline is still listed as new; one reviewed this week counts as new.
+        Event.objects.create(title="No deadline", description="d", status="approved",
+                             date=timezone.now() + timedelta(days=30))
+        ctx = newsletter_context()
+        self.assertEqual([e["title"] for e in ctx["new_events"]], ["No deadline"])
+        self.assertEqual(ctx["new_events"][0]["deadline"], "")
+        html = create_newsletter_campaign().html
+        for marker in (">Job postings</h2>", "Newly Added", "Deadlines This Week"):
+            self.assertIn(marker, html)
+        self.assertEqual(html.count("Old and soon"), 1)
+        self.assertEqual(html.count("Fresh and soon"), 1)
+        self.assertNotIn("Old and far", html)
 
     @override_settings(CM_API_KEY="k", CM_CLIENT_ID="c", CM_NEWSLETTER_LIST_ID="members",
                        CAMPAIGN_FROM_EMAIL="The Labor Hub <digest@ilr.mail.example.edu>")
@@ -199,11 +229,11 @@ class JobMarketPapersBoxTests(TestCase):
         html = self._issue().html
         self.assertNotIn("Job Market Papers</div>", html)
         self.assertNotIn("a list of all Job Market Papers", html)
-        self.assertIn("new announcements and most downloaded papers", html)
+        self.assertIn("new announcements, upcoming deadlines and the most downloaded new papers", html)
 
     def test_intro_mentions_the_list_and_follows_the_period(self):
         html = self._issue().html
-        self.assertIn("This week in the Labor Hub: new announcements, most downloaded papers and", html)
+        self.assertIn("This week in the Labor Hub: new announcements, upcoming deadlines, the most downloaded new papers and", html)
         self.assertIn("a list of all Job Market Papers we have received so far", html)
         self.assertIn("Wishing you a great week!", html)
         self.assertIn("Set your alerts", html)
@@ -226,7 +256,7 @@ class JobMarketPapersBoxTests(TestCase):
                              deadline=timezone.now() + timedelta(days=5))
         html = self._issue().html
         order = [html.index(marker) for marker in (
-            ">New events</h2>", ">Special issues</h2>", ">New job postings</h2>",
+            ">Events</h2>", ">Special issues</h2>", ">Job postings</h2>",
             ">Job Market Papers</div>", ">Long-distance visits</h2>", "How to use the Labor Hub")]
         self.assertEqual(order, sorted(order))
         self.assertNotIn("everything currently open", html)

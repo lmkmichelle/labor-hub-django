@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import F, JSONField, Max
+from django.db.models.functions import Coalesce
 from django.utils.text import slugify
 
 from accounts.models import CustomUser
@@ -300,6 +301,18 @@ class Publication(Approvable):
                 .annotate(period_downloads=models.Count(
                     'downloads', filter=models.Q(downloads__downloaded_at__gte=since)))
                 .order_by('-period_downloads', '-download_count', 'title')
+                .prefetch_related('author_links__author__user'))
+
+    @classmethod
+    def new_since(cls, since):
+        """Approved discussion papers with a PDF added (approved) after ``since``, with
+        their downloads in that time (0 included), most downloaded first."""
+        return (cls.objects.filter(status='approved', is_job_market=False, pdf__gt='')
+                .annotate(added=Coalesce('reviewed_at', 'applied_at'))
+                .filter(added__gte=since)
+                .annotate(period_downloads=models.Count(
+                    'downloads', filter=models.Q(downloads__downloaded_at__gte=since)))
+                .order_by('-period_downloads', '-added')
                 .prefetch_related('author_links__author__user'))
 
     def record_download(self):
