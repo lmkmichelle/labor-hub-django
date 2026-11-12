@@ -26,4 +26,5 @@ venv/
 /media/*
 !/media/avatars/
 /media/avatars/*
-!/media/avatars/default.pngnewsletter-preview/
+!/media/avatars/default.png
+newsletter-preview/
