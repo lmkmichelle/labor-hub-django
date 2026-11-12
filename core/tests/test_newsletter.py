@@ -56,21 +56,17 @@ class NewsletterTests(TestCase):
         self.assertNotIn("COMING NEXT WEEK", second.text)
         self.assertNotIn("Thank you for joining", second.text)
 
-    def test_papers_are_only_those_added_since_the_last_issue(self):
+    def test_papers_are_only_those_added_in_the_last_two_weeks(self):
         from publications.models import Publication
         from publications.tests.test_models import make_publication
 
         old = make_publication(title="Old paper", status="approved")
         new = make_publication(title="New paper", status="approved")
         Publication.objects.filter(pk__in=[old.pk, new.pk]).update(pdf="x.pdf")
-        EmailCampaign.objects.create(
-            kind="newsletter", status="sent", subject="s", html="", text="",
-            sent_at=timezone.now() - timedelta(days=1),
-            period_start=timezone.now(), period_end=timezone.now())
         Publication.objects.filter(pk=old.pk).update(
-            applied_at=timezone.now() - timedelta(days=3))
+            applied_at=timezone.now() - timedelta(days=15))
         for _ in range(5):
-            old.record_download()  # popular, but not new: stays out
+            old.record_download()  # popular, but older than two weeks: stays out
         new.record_download()
         ctx = newsletter_context()
         self.assertEqual([p["title"] for p in ctx["papers"]], ["New paper"])
@@ -85,11 +81,9 @@ class NewsletterTests(TestCase):
         paper = make_publication(status="approved")
         Publication.objects.filter(pk=paper.pk).update(pdf="x.pdf")
         self.assertEqual(newsletter_context()["papers"][0]["downloads"], 0)
-        EmailCampaign.objects.create(
-            kind="newsletter", status="sent", subject="s", html="", text="",
-            sent_at=timezone.now() + timedelta(minutes=1),
-            period_start=timezone.now(), period_end=timezone.now())
-        paper.record_download()  # downloaded, but added before the last issue
+        Publication.objects.filter(pk=paper.pk).update(
+            applied_at=timezone.now() - timedelta(days=15))
+        paper.record_download()  # downloaded, but added over two weeks ago
         self.assertEqual(newsletter_context()["papers"], [])
         self.assertNotIn("Most downloaded new papers", create_newsletter_campaign().html)
 

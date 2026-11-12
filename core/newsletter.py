@@ -2,7 +2,7 @@
 
 ``newsletter_context`` pulls what is open right now (events, special issues and
 jobs, split into newly added and deadlines this week, plus the most downloaded
-discussion papers added since the last issue) and wraps it in the
+discussion papers added in the last two weeks) and wraps it in the
 intro and "coming next week" text below. Edit ``ISSUE`` for each issue; the
 issue number and date fill in themselves.
 """
@@ -37,6 +37,7 @@ ISSUE = {
 MAX_LISTED = 6
 MAX_PAPERS = 5
 DEADLINE_DAYS = 7  # "Deadlines This Week" window, for the monthly issue too
+PAPER_WINDOW = timedelta(days=14)  # a paper is "new" for two weeks, in both issues
 
 WEEKLY, MONTHLY = "weekly", "monthly"
 # Per newsletter: the stored campaign kind, its Campaign Monitor segment, how far back
@@ -164,8 +165,9 @@ def newsletter_context(kind=WEEKLY, now=None):
             "meta": " \u00b7 ".join(x for x in [job.employer, ", ".join(job.country_labels())] if x),
             "deadline": _deadline_label(day, today)})
 
-    # Only papers added since the last issue, most downloaded in that period first
+    # Only papers added in the last two weeks, most downloaded in that time first
     # (a paper nobody has downloaded yet still counts). No new papers, no section.
+    papers_since = now - PAPER_WINDOW
     papers = [{
         "rank": i, "title": p.title, "url": url("publication_detail", pk=p.pk),
         "download_url": url("publication_download", pk=p.pk),
@@ -173,7 +175,7 @@ def newsletter_context(kind=WEEKLY, now=None):
         # Not shown in the email; the admin's preview lists them.
         "downloads": p.period_downloads,
         "all_time": p.download_count,
-    } for i, p in enumerate(Publication.new_since(since)[:MAX_PAPERS], start=1)]
+    } for i, p in enumerate(Publication.new_since(papers_since)[:MAX_PAPERS], start=1)]
 
     jm_papers = job_market_papers()
     if kind == MONTHLY:
@@ -195,6 +197,7 @@ def newsletter_context(kind=WEEKLY, now=None):
         # weekly newsletter only; later issues leave them out.
         "first_issue": first_issue,
         "since": since,
+        "papers_since": papers_since,
         "max_listed": MAX_LISTED,
         # Everything that qualifies, for the admin page to show what is cut off.
         "all_new_events": new_events, "all_due_events": due_events,

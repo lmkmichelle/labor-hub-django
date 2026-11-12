@@ -56,7 +56,7 @@
       <h4>
         {{ panel.context.papers_heading }}
         <span class="help nl-note">
-          (papers added since {{ panel.context.since|date:"M j, Y" }}, ranked by downloads since then)
+          (papers added since {{ panel.context.papers_since|date:"M j, Y" }}, ranked by downloads since then)
         </span>
       </h4>
       {% if panel.context.papers %}
