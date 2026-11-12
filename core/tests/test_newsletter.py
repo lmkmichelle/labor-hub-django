@@ -207,13 +207,13 @@ class JobMarketPapersBoxTests(TestCase):
             period_start=timezone.now(), period_end=timezone.now())
         return create_newsletter_campaign(kind)
 
-    def test_box_lists_only_approved_job_market_papers_in_j_order(self):
+    def test_box_lists_only_approved_job_market_papers_newest_first(self):
         ctx = newsletter_context()
         self.assertEqual([(p["number"], p["title"]) for p in ctx["job_market_papers"]],
-                         [("J1", "First JM"), ("J2", "Second JM")])
+                         [("J2", "Second JM"), ("J1", "First JM")])
         html = self._issue().html
         self.assertIn("Job Market Papers</div>", html)
-        self.assertLess(html.index("First JM"), html.index("Second JM"))
+        self.assertLess(html.index("Second JM"), html.index("First JM"))
         self.assertNotIn("Pending JM", html)
         self.assertIn(f"/publications/{self.first.pk}/download/", html)
         self.assertIn("Students on the market can still join the Hub", html)
@@ -234,7 +234,7 @@ class JobMarketPapersBoxTests(TestCase):
         monthly = create_newsletter_campaign("monthly").html
         self.assertIn("This month in the Labor Hub", monthly)
         self.assertIn("Wishing you a great month!", monthly)
-        self.assertIn("New this month", monthly)
+        self.assertNotIn("New this month", monthly)
 
     def test_section_order(self):
         from jobs.models import Job

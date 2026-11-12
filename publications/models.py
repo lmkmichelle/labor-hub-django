@@ -289,11 +289,12 @@ class Publication(Approvable):
 
     @classmethod
     def job_market_listing(cls):
-        """Every approved job market paper with a PDF, in J-number order (the newsletter's
-        Job Market Papers box). Revisions are left out; they share the original's number."""
+        """Every approved job market paper with a PDF, newest (highest J-number) first
+        (the newsletter's Job Market Papers box). Revisions are left out; they share the
+        original's number."""
         return (cls.objects.filter(status='approved', is_job_market=True, pdf__gt='',
                                    revision_of__isnull=True, job_market_paper_number__isnull=False)
-                .order_by('job_market_paper_number')
+                .order_by('-job_market_paper_number')
                 .prefetch_related('author_links__author__user'))
 
     @classmethod

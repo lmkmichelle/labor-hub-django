@@ -87,7 +87,7 @@ def period_start(kind=WEEKLY, now=None):
 
 
 def job_market_papers():
-    """All approved job market papers for the newsletter's box, J1, J2, ..."""
+    """All approved job market papers for the newsletter's box, newest first (J2, J1)."""
     return [{
         "number": p.display_number, "title": p.title,
         "url": absolute_url(reverse("publication_detail", kwargs={"pk": p.pk})),
@@ -189,7 +189,6 @@ def newsletter_context(kind=WEEKLY, now=None):
         "kind": kind,
         "monthly": kind == MONTHLY,
         "this_period": spec["this_period"],
-        "period_phrase": spec["this_period"].lower(),
         "job_market_papers": jm_papers,
         "subject": subject,
         "issue_number": number,
