@@ -161,7 +161,7 @@
         enforceWhitelist: true,
         whitelist: universitySaved,
         tagTextProp: 'label',
-        dropdown: { enabled: 2, closeOnSelect: true, maxItems: 20, searchKeys: ['label'], classname: 'dropdown-panel' }
+        dropdown: { enabled: 2, closeOnSelect: true, maxItems: 20, mapValueTo: 'label', searchKeys: ['label'], classname: 'dropdown-panel' }
       });
       if (universityTagify && universityInput) {
         var searchTimer = null;
@@ -192,7 +192,7 @@
         whitelist: countryWhitelist,
         // Pills show the country name; the hidden field still stores the code.
         tagTextProp: 'label',
-        dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, searchKeys: ['value', 'label'], classname: 'dropdown-panel' },
+        dropdown: { enabled: 0, closeOnSelect: false, maxItems: 10, mapValueTo: 'label', searchKeys: ['value', 'label'], classname: 'dropdown-panel' },
         templates: {
           dropdownItem: function (tagData) {
             return '<div ' + this.getAttributes(tagData) + ' class="tagify__dropdown__item" tabindex="0" role="option">' +
